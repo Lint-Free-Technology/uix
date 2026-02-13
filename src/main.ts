@@ -41,7 +41,7 @@ if (resources.some((r) => r.includes("/card-mod.js"))) {
   // console.info("Card-mod is loaded as a module");
 } else {
   console.info(
-    "You may not be getting optimal performance out of card-mod.\nSee https://github.com/thomasloven/lovelace-card-mod#performance-improvements"
+    "You may not be getting optimal performance out of card-mod.\nSee https://github.com/Lint-Free-Technology/lovelace-card-mod#performance-improvements"
   );
 }
 

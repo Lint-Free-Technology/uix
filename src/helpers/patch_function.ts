@@ -69,7 +69,7 @@ function log_patch_warning(key) {
     "Card-mod likely loaded twice with different resource URLs.",
     "Make sure all card-mod resource URLs including hacstag match EXACTLY.",
     "Also check other custom elements including cards and themes which may load card-mod.",
-    "See https://github.com/thomasloven/lovelace-card-mod/blob/master/README.md#performance-improvements for details.",
+    "See https://github.com/Lint-Free-Technology/lovelace-card-mod/blob/master/README.md#performance-improvements for details.",
     "If you have corrected this issue in config, then the device generating this notification needs its Frontend cache cleared."
   ];
 
