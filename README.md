@@ -1,8 +1,8 @@
-# card-mod
+# Card-mod Plus
 
-Forked from [thomasloven/lovelace-card-mod](https://github.com/thomasloven/lovelace-card-mod).
+![light-logo-icon](/brand-images/icon.png)
 
-Allows you to apply CSS styles to various elements of the Home Assistant frontend.
+Card-mod plus integration developed from [thomasloven/lovelace-card-mod](https://github.com/thomasloven/lovelace-card-mod) to be able to fully manage javascript resource updates and open the way to server side features that may be developed in the future.
 
 ## Installing
 
