@@ -45,7 +45,7 @@ markdown_extensions:
 nav:
   - 'index.md'
   - 'quick-start.md'
-  - 'chapter/faq/faq.md'
+  - 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
 repo_name: GitHub
 edit_uri: blob/master/docs/source/
