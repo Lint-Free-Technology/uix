@@ -1,1 +1,1 @@
-# About Card-mod Plus
+# About UI eXtension

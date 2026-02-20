@@ -1,4 +1,4 @@
-site_name: Card-mod Plus Documentation
+site_name: UI eXtension Documentation
 docs_dir: source
 theme:
   name: material
@@ -25,7 +25,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  logo: assets/images/dark_icon.png
+  logo: assets/images/icon.png
   favicon: assets/images/icon.png
 extra:
   generator: false
@@ -46,7 +46,7 @@ nav:
   - 'index.md'
   - 'quick-start.md'
   - 'chapter/faq/faq.md'
-repo_url: https://github.com/Lint-Free-Technology/card-mod-plus
+repo_url: https://github.com/Lint-Free-Technology/uix
 repo_name: GitHub
 edit_uri: blob/master/docs/source/
 extra_css:
