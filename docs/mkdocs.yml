@@ -19,11 +19,11 @@ theme:
   palette:
     - schema: default
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
       toggle:
-        icon: material/toggle-switch
+        icon: material/brightness-4
         name: Switch to light mode
   logo: assets/images/dark_icon.png
   favicon: assets/images/icon.png
