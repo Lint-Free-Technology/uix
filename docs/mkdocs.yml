@@ -54,6 +54,9 @@ nav:
       - using/cards.md
       - using/entities.md
       - using/icons.md
+      - using/templates.md
+      - using/themes.md
+      - using/other.md
   - Debugging UIX:
       - debugging/cards.md
       - debugging/templates.md
@@ -62,6 +65,7 @@ nav:
       - concepts/application.md
   - Developers: 'developers.md'
   - Contributing: 'contributing.md'
+  - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
 repo_name: GitHub
