@@ -1,6 +1,6 @@
 # UI eXtension for Home Assistant
 
-![light-logo-icon](/docs/site/assets/images/mixed.png)
+![light-logo-icon](/docs/source/assets/images/mixed.png)
 
 ## Introduction
 
