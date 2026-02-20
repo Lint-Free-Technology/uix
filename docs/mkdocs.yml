@@ -45,9 +45,10 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 nav:
-  - 'index.md'
-  - 'quick-start.md'
-  - 'faq.md'
+  - About: 'index.md'
+  - Quick Start: 'quick-start.md'
+  - Using UIX: 'using-uix.md'
+  - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
 repo_name: GitHub
 edit_uri: blob/master/docs/source/
