@@ -49,7 +49,19 @@ markdown_extensions:
 nav:
   - About: 'index.md'
   - Quick Start: 'quick-start.md'
-  - Using UIX: 'using-uix.md'
+  - Using UIX:
+      - using/overview.md
+      - using/cards.md
+      - using/entities.md
+      - using/icons.md
+  - Debugging UIX:
+      - debugging/cards.md
+      - debugging/templates.md
+  - UIX Concepts:
+      - concepts/dom.md
+      - concepts/application.md
+  - Developers: 'developers.md'
+  - Contributing: 'contributing.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
 repo_name: GitHub
