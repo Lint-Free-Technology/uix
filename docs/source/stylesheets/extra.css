@@ -20,3 +20,9 @@
 .md-header__topic:first-child {
   font-weight: 500;
 }
+
+@media screen and (min-width: 45em) {
+  .md-typeset .inline {
+    width: 15rem;
+  }
+}
