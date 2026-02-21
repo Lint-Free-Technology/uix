@@ -1,3 +1,10 @@
+## [5.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v5.0.0-beta.3...v5.0.0-beta.4) (2026-02-21)
+
+### 🐞 Bug Fixes
+
+* Fix reading uix-theme. ([b645d17](https://github.com/Lint-Free-Technology/uix/commit/b645d17d12e95b43f57f133e911e094e38e7d81f))
+* Restore babel in rollup ([d216a38](https://github.com/Lint-Free-Technology/uix/commit/d216a3895f90c090d8ff6191d197d5259f31d79b))
+
 ## [5.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v5.0.0-beta.2...v5.0.0-beta.3) (2026-02-20)
 
 ### 🐞 Bug Fixes
