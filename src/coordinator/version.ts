@@ -42,7 +42,7 @@ export const VersionMixin = (SuperClass) => {
                 false,
                 1000)
       } while (haToast);
-      const message = `UIX version mismatch! Browser: ${clientVersion}, Home Assistant: ${serverVersion}`;
+      const message = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reload to update.`;
       const action = {
         text: "Reload",
         action: () => Actions.clear_cache()
