@@ -36,6 +36,18 @@ class ConfigElementPatch extends LitElement {
     }
 
     _orig(newConfig, ...rest);
+
+    // Restore UIX config for entities
+    if (Array.isArray(newConfig.entities)) {
+      for (const [i, e] of newConfig.entities?.entries?.()) {
+        if (this._uixData?.entities[i]?.uix) {
+          e.uix = this._uixData.entities[i].uix;
+        }
+        if (this._uixData?.entities[i]?.card_mod) {
+          e.card_mod = this._uixData.entities[i].card_mod;
+        }
+      }
+    }
   }
 }
 
@@ -51,25 +63,14 @@ class HuiCardElementEditorPatch extends LitElement {
     return retval;
   }
 
-  _handleConfigChanged(_orig, ev, ...rest) {
+  _handleUIConfigChanged(_orig, ev, ...rest) {
     const uixData = this._configElement?._uixData;
     if (uixData && (uixData.uix)) {
-      ev.detail.config.uix = uixData.card;
+      ev.detail.config.uix = uixData.uix;
     }
     if (uixData && uixData.card_mod) {
       ev.detail.config.card_mod = uixData.card_mod;
     }
-    if (uixData && Array.isArray(uixData.entities)) {
-      for (const [i, e] of uixData.entities.entries()) {
-        if (e.uix) {
-          ev.detail.config.entities[i].uix = e.uix;
-        }
-        if (e.card_mod) {
-          ev.detail.config.entities[i].card_mod = e.card_mod;
-        }
-      }
-    }
-
     _orig(ev, ...rest);
   }
 }
