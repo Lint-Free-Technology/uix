@@ -35,5 +35,5 @@ Also `<any variable>-yaml`.
 Set a class with:
     ```yaml
     uix:
-        class: red
+      class: red
     ```
