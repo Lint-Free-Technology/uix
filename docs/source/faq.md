@@ -32,4 +32,4 @@ UI eXtension will show a toast message when it detects that a reload is needed t
 
 ## How do I uninstall UI eXtension?
 
-Uninstallation of UI eXtensions is a two step process. First, remove the service entry in Devices & services. Next uninstall the integration either HACS or manually removing the `uix` folder from `custom_components` directory.
+Uninstallation of UI eXtensions is a two step process. First, remove the service entry in Devices & services. Next uninstall the integration either using HACS or manually removing the `uix` folder from `custom_components` directory if you installed manually.

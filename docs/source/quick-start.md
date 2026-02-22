@@ -27,6 +27,9 @@ Once the integration is downloaded and available in Home Assistant, you need to 
 
 Once the UI eXtension service has been added, refresh the page to make the Frontend resource available.
 
+!!! question "Can't find UIX?"
+    If you can't find UIX make sure that you have restarted Home Assistant after installing the integration via HACS or manually. If you installed via HACS you will have a repair notification waiting which you can use to restart Home Assistant.
+
 ## Your First UIX
 
 - Open your card in the Home Assistant GUI editor

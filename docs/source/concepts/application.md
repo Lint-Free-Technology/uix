@@ -1,3 +1,6 @@
+---
+description: Learn about how UI eXtension patches and applies to UI elements in Home Assistant.
+---
 # UIX application
 
 UIX has near 100% coverage of standard Home Assistant Frontend cards while still supporting custom cards not utilising the modern Home Assistant rendering container for cards.
@@ -67,28 +70,28 @@ ___
     `:host(.my-class) ha-card` selector for cards loaded by Frontend. `ha-card.myclass` for custom cards using a divergent structure, or for cards loaded by custom cards.
     ```yaml
     uix:
-        style: |
+      style: |
         :host(.my-class) ha-card,
         ha-card.myclass {
-            background-color: red !important;
+          background-color: red !important;
         }
     ```
 
 !!! example "Streamlined-card structure examples"
     ```yaml
     uix:
-        style:
+      style:
         "* $": |
-            ha-card {
-                --card-background-color: red;
-            }
+          ha-card {
+            --card-background-color: red;
+          }
     ```
     OR
     ```yaml
     uix:
-        style:
+      style:
         "* $ ha-card": |
-            :host {
-                --card-background-color: red;
-            }
+          :host {
+            --card-background-color: red;
+          }
     ```

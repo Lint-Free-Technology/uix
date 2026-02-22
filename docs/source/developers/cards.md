@@ -1,3 +1,6 @@
+---
+description: Information for developers of custom cards
+---
 # Developers - Custom cards
 
 Generally UIX should work with all custom cards.
@@ -28,7 +31,7 @@ customElements.whenDefined("uix").then((uix) => {
 
 The UIX configuration is an object with the following optional properties:
 
-- `style` - card mod style definition (string or object)
+- `style` - UIX style definition (string or object)
 - `class` - string or array of classes to apply to the element
 - `debug` - boolean to enable debugging mode for the element (default `false`)
 
@@ -50,8 +53,8 @@ class MyAwesomeCard extends LitElement {
   firstUpdated() {
     customElements
       .whenDefined("uix-node")
-      .then((cardMod) =>
-        cardMod.applyToElement(
+      .then((uix) =>
+        uix.applyToElement(
           this,
           "card",
           this._config.uix,
@@ -106,5 +109,5 @@ UIX Test:
   dark:
 ```
 
-![Output](./assets/page-assets/developers/developers-1-light.png#only-light){: width="500"}
-![Output](./assets/page-assets/developers/developers-1-dark.png#only-dark){: width="500"}
+![Output](../assets/page-assets/developers/developers-1-light.png#only-light){: width="500"}
+![Output](../assets/page-assets/developers/developers-1-dark.png#only-dark){: width="500"}

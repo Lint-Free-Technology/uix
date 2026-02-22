@@ -1,3 +1,6 @@
+---
+description: Learn how to review the Home Assistant DOM to become a UI eXtension expert.
+---
 # DOM navigation
 
 Home Assistant makes extensive use of concept called [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). This allows for easy reuse of components (such as `<ha-card>` or `<ha-icon>`) but requires some advanced techniques when applying CSS styles to elements.
