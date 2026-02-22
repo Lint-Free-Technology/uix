@@ -23,7 +23,7 @@ const _load_yaml2json = async () => {
     const dtr: any = document.createElement("developer-tools-router");
     await dtr.routerOptions.routes.event.load();
   } catch (err) {
-    console.error("CARD-MOD: Error loading yaml2json:", err);
+    console.error("UIX: Error loading yaml2json:", err);
   }
 };
 
@@ -34,7 +34,7 @@ export const yaml2json = async (yaml) => {
   el.hass.localize = (any) => "Invalid YAML";
   el._onChange(new CustomEvent("yaml", { detail: { value: yaml } }));
   if (!el.isValid) {
-    console.error("CARD-MOD: Error loading theme yaml:", yaml);
+    console.error("UIX: Error loading theme yaml:", yaml);
     return {};
   }
   return el.value;
