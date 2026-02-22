@@ -12,6 +12,6 @@ It will also set the icon color to the value found in the CSS variable `--uix-ic
   uix:
     style: |
       :host {
-        --card-mod-icon: mdi:bed;
+        --uix-icon: mdi:bed;
       }
 ```

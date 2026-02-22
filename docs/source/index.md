@@ -18,5 +18,5 @@ Go to [Quick Start](./quick-start.md) for installation instructions and a short 
 
 ## ➡️ Next up
 
-- [Using UIX](./using/overview.md)
+- [Using UIX](./using/index.md)
 - [FAQ](/faq)
