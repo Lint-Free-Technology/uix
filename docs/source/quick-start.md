@@ -4,6 +4,9 @@ description: Get started using UI eXtension for Home Assistant.
 ---
 # Quick Start
 
+!!! note inline end "Card-mod users"
+    If you are migrating from Card-mod check out the [FAQ](./faq.md) where most of your questions will be answered. If you need to ask anything further, use the [GitHb discussions](https://github.com/Lint-Free-Technology/uix/discussions).
+
 ## Download
 
 ### HACS

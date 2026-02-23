@@ -6,6 +6,12 @@ hide:
 ---
 # FAQ
 
+## How do I best migrate from Card-mod?
+
+- Uninstall card-mod.
+- If you use extra_module_url for card-mod resource, remove and restart Home Assistant.
+- Process to follow the [UI eXtension quick start guide](./quick-start.md).
+
 ## Is UI eXtension a drop in replacement for Card-mod?
 
 Yes, UI eXtension is a drop in replacement for Card-mod versions up to 4.2.1. All Card-mod card and themes configurations are supported. While you are encouraged to update to use `uix:` in your cards and `uix-<thing>(-yaml)` for your themes, it is not required.
