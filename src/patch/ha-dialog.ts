@@ -56,6 +56,9 @@ class HaDialogPatch extends ModdedElement {
         haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog");
       }
       if (!haDialog) {
+        haDialog = this.shadowRoot.querySelector("ha-toast");
+      }
+      if (!haDialog) {
         haDialog = this.shadowRoot.querySelector("ha-wa-dialog");
       }
       if (!haDialog) {
@@ -91,4 +94,14 @@ function patchDialog(ev: Event) {
   }
 }
 
+function patchNotification(ev: Event) {
+  const notificationTag = "notification-manager";
+
+  if (notificationTag && !is_patched(notificationTag)) {
+    set_patched(notificationTag);
+    patch_prototype(notificationTag, HaDialogPatch);
+  }
+}
+
 window.addEventListener("show-dialog", patchDialog, { capture: true });
+window.addEventListener("hass-notification", patchNotification, { capture: true });

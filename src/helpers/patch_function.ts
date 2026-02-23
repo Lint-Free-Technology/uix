@@ -20,12 +20,12 @@ const patch_method = function (obj, method, override) {
   obj[method] = fn;
 };
 
-export const set_patched = (element: HTMLElement) => {
+export const set_patched = (element: HTMLElement | string) => {
   const key = typeof element === "string" ? element : element.constructor.name;
   patchState[key] = {patched: true, version: pjson.version};
 };
 
-export const is_patched = (element: HTMLElement) => {
+export const is_patched = (element: HTMLElement | string) => {
   const key = typeof element === "string" ? element : element.constructor.name;
   return patchState[key]?.patched ?? patchState[key] ?? false;
 };
