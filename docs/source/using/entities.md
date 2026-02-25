@@ -48,13 +48,13 @@ Rows in entities conditional rows can be styled directly. If you style the condi
           entity: input_boolean.test_boolean
           state: "off"
         row:
-        entity: sun.sun
-        name: Conditional Sun
-        uix:
-          style: |
-            :host {
+          entity: sun.sun
+          name: Conditional Sun
+          uix:
+            style: |
+              :host {
                 color: red;
-            }
+              }
     ```
     Styling a conditional row config using shadowRoot. This method is available for legacy configurations.
     ```yaml
