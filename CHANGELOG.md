@@ -1,3 +1,9 @@
+## [5.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.2.0-beta.1...v5.2.0-beta.2) (2026-02-26)
+
+### 🐞 Bug Fixes
+
+* Apply dialog patch to edit card dialog. Previously this was missed by dialog patch as edit card has its own patch for brush icon. ([ae1d818](https://github.com/Lint-Free-Technology/uix/commit/ae1d8184b58a7cc43af2c849440004f829416106))
+
 ## [5.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.1.0...v5.2.0-beta.1) (2026-02-26)
 
 ### ⭐ New Features
