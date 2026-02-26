@@ -1,5 +1,7 @@
 import { LitElement } from "lit";
 import { patch_element, patch_object } from "../helpers/patch_function";
+import { apply_uix, ModdedElement } from "../helpers/apply_uix";
+import { stripHtmlAndFunctions } from "./ha-dialog";
 
 class ConfigElementPatch extends LitElement {
   _uixData?;
@@ -79,6 +81,29 @@ class HuiCardElementEditorPatch extends LitElement {
 class HuiDialogEditCardPatch extends LitElement {
   _uixIcon?;
   _cardConfig?;
+
+  async showDialog(_orig, params, ...rest) {
+    await _orig?.(params, ...rest);
+
+    this.requestUpdate();
+    this.updateComplete.then(async () => {
+      let haDialog: HTMLElement | null =
+        this.shadowRoot.querySelector("ha-dialog");
+      if (!haDialog) {
+        haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog");
+      }
+      apply_uix(
+        haDialog as ModdedElement,
+        "dialog",
+        undefined,
+        {
+          params: stripHtmlAndFunctions(params),
+        },
+        false,
+        "type-dialog-edit-card"
+      );
+    });
+  }
 
   updated(_orig, ...args) {
     _orig?.(...args);

@@ -24,7 +24,7 @@ export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
   if (t !== "object") return value;
 
   // Prevent infinite recursion on circular refs
-  if (seen.has(value)) return undefined;
+  if (seen.has(value)) return value;
   seen.add(value);
 
   // Arrays: sanitize elements and remove stripped ones
