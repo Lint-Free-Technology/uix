@@ -1,8 +1,9 @@
 from homeassistant.core import HomeAssistant
 
-from .const import CARD_MOD_FRONTEND_SCRIPT_URL
-
-DATA_EXTRA_MODULE_URL = "frontend_extra_module_url"
+from .const import (
+    CARD_MOD_FRONTEND_SCRIPT_URL,
+    DATA_EXTRA_MODULE_URL
+)
 
 async def check_card_mod_frontend_script_resource(hass: HomeAssistant) -> bool:
     """Check if the card_mod frontend script is registered as a resource."""
