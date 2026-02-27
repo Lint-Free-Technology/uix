@@ -1,5 +1,6 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.config_validation import config_validation as cv
 
 from .const import FRONTEND_SCRIPT_URL
 from .frontend import (
@@ -8,6 +9,8 @@ from .frontend import (
     async_remove_frontend_script_resource
 )
 from .connection import async_setup_connection
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema
 
 async def _async_initialize_integration(
     hass: HomeAssistant,
