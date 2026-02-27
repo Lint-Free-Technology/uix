@@ -4,7 +4,7 @@
 
 ## Introduction
 
-UI eXtension (UIX) comes from the heritage of [card-mod](https://github.com/thomasloven/lovelace-card-mod) by [@thomasloven](https://github.com/thomasloven). With an ever growing number of features that go beyond cards and dashboards, UIX was created to keep pushing the boundaries of custom CSS across your Home Assistant UI.
+With an ever growing number of features that go beyond cards and dashboards, UI eXtension (UIX) was created to keep pushing the boundaries of custom CSS across your Home Assistant UI. comes from the heritage of [card-mod](https://github.com/thomasloven/lovelace-card-mod) by [@thomasloven](https://github.com/thomasloven).
 
 ## 🚀 Quick Start
 
