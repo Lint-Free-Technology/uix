@@ -1,3 +1,19 @@
+## [5.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.2.0-beta.1...v5.2.0-beta.2) (2026-02-26)
+
+### 🐞 Bug Fixes
+
+* Apply dialog patch to edit card dialog. Previously this was missed by dialog patch as edit card has its own patch for brush icon. ([ae1d818](https://github.com/Lint-Free-Technology/uix/commit/ae1d8184b58a7cc43af2c849440004f829416106))
+
+## [5.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.1.0...v5.2.0-beta.1) (2026-02-26)
+
+### ⭐ New Features
+
+* Add dashboard resources and extra_module_url to UIX diagnostics download ([7219214](https://github.com/Lint-Free-Technology/uix/commit/72192140504caa065f1be64832ddba9ea7f66282)), closes [#57](https://github.com/Lint-Free-Technology/uix/issues/57)
+
+### ⚙️ Miscellaneous
+
+* Add local brand icons which can be used by Home Assistant 2026.3+ ([4bf0662](https://github.com/Lint-Free-Technology/uix/commit/4bf0662a00e17f8d036f432929e7d5eaaafeaaeb))
+
 ## [5.1.0](https://github.com/Lint-Free-Technology/uix/compare/v5.0.0...v5.1.0) (2026-02-24)
 
 ### ⭐ New Features
