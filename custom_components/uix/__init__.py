@@ -1,8 +1,11 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.config_validation import config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
-from .const import FRONTEND_SCRIPT_URL
+from .const import (
+    DOMAIN,
+    FRONTEND_SCRIPT_URL
+)
 from .frontend import (
     async_register_frontend_script_resource,
     async_register_static_path, 
@@ -10,7 +13,7 @@ from .frontend import (
 )
 from .connection import async_setup_connection
 
-CONFIG_SCHEMA = cv.config_entry_only_config_schema
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def _async_initialize_integration(
     hass: HomeAssistant,
