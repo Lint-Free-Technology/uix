@@ -22,7 +22,7 @@
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
     "conventional-changelog-conventionalcommits": "^9.1.0",
-    "rollup": "^2.79.2",
+    "rollup": "^2.80.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.36.0",
     "semantic-release": "^25.0.3",
