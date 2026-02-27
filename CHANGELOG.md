@@ -1,3 +1,9 @@
+## [5.2.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.2.0...v5.2.1-beta.1) (2026-02-27)
+
+### 🐞 Bug Fixes
+
+* hassfest updates ahead of submission to HACS ([065dc1c](https://github.com/Lint-Free-Technology/uix/commit/065dc1cbe07297bdd73aa0023722ad44be317dee))
+
 ## [5.2.0](https://github.com/Lint-Free-Technology/uix/compare/v5.1.0...v5.2.0) (2026-02-27)
 
 ### ⭐ New Features
