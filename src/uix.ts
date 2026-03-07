@@ -11,6 +11,8 @@ import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
   apply_uix_compatible,
+  buildMacros,
+  MacroConfig,
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
@@ -29,6 +31,7 @@ export class Uix extends LitElement {
   uix_parent?: Uix = undefined;
   uix_class?: string = undefined;
   classes: string[] = [];
+  macros: Record<string, MacroConfig> = {};
 
   debug: boolean = false;
 
@@ -181,7 +184,7 @@ export class Uix extends LitElement {
       const uix = await apply_uix(
         ch,
         `${this.type}-child`,
-        { style, debug: this.debug },
+        { style, debug: this.debug, macros: this.macros },
         this.variables,
         false
       );
@@ -280,7 +283,8 @@ export class Uix extends LitElement {
 
     if (hasTemplate(this._styles)) {
       this._renderer = this._renderer || this._style_rendered.bind(this);
-      bind_template(this._renderer, this._styles as string, this.variables);
+      const macroStr = buildMacros(this.macros);
+      bind_template(this._renderer, `${macroStr}${this._styles}`, this.variables);
     } else {
       this._style_rendered(this._styles || "");
     }
