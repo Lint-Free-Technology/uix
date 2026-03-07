@@ -42,16 +42,20 @@ interface UixConfig {
   class?: string | string[];
   debug?: boolean;
   prepend?: boolean;
-  macros?: Record<string, MacroConfig>;
+  macros?: Record<string, MacroConfig | string>;
 }
 
-export function buildMacros(macros: Record<string, MacroConfig>): string {
+export function buildMacros(macros: Record<string, MacroConfig | string>): string {
   if (!macros || Object.keys(macros).length === 0) return "";
   const renderParam = (p: MacroParam): string =>
     typeof p === "string" ? p : `${p.name} = ${p.default}`;
   return (
     Object.entries(macros)
       .map(([name, config]) => {
+        // String value: import the named macro from a custom_templates file.
+        if (typeof config === "string") {
+          return `{% from '${config}' import ${name} %}`;
+        }
         const params = (config.params ?? []).map(renderParam).join(", ");
         if (config.returns) {
           // Follow HA's as_function convention: define the macro as macro_<name>

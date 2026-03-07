@@ -112,6 +112,40 @@ This generates the following Jinja2 block that is prepended to every template:
 {% set is_on = macro_is_on | as_function %}
 ```
 
+### Importing macros from custom template files
+
+In addition to defining macros inline, you can import macros from [Home Assistant custom template files](https://www.home-assistant.io/docs/configuration/templating/#custom-templates) stored in `/config/custom_templates/*.jinja`. To do this, set the macro entry's value to the filename (a plain string) instead of a macro definition object:
+
+```yaml
+type: tile
+entity: light.living_room
+uix:
+  macros:
+    state_color: "my_macros.jinja"
+  style: |
+    ha-card {
+      background: {{ state_color(config.entity) }};
+    }
+```
+
+This generates the following import statement that is prepended to every template:
+
+```jinja
+{% from 'my_macros.jinja' import state_color %}
+```
+
+The macro `state_color` must be defined in `/config/custom_templates/my_macros.jinja`. Each entry in `macros` imports its own named macro, so you can import multiple macros from the same or different files:
+
+```yaml
+uix:
+  macros:
+    state_color: "my_macros.jinja"
+    is_on: "my_macros.jinja"
+    format_date: "utils.jinja"
+```
+
+Inline and file-import macros can be freely mixed within the same card.
+
 ### Theme macros
 
 Macros can also be defined in a theme so they are available to all cards that use it. See [Themes - Macros](themes.md#macros) for details.

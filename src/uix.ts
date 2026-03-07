@@ -31,13 +31,13 @@ export class Uix extends LitElement {
   uix_parent?: Uix = undefined;
   uix_class?: string = undefined;
   classes: string[] = [];
-  macros: Record<string, MacroConfig> = {};
+  macros: Record<string, MacroConfig | string> = {};
 
   debug: boolean = false;
 
   uix_input: UixStyle;
   _fixed_styles: Record<string, UixStyle> = {};
-  _fixed_macros: Record<string, MacroConfig> = {};
+  _fixed_macros: Record<string, MacroConfig | string> = {};
   _macro_string: string = "";
   _styles: string = "";
   _processStylesOnConnect: boolean = false;

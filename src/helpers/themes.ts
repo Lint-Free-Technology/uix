@@ -58,7 +58,7 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
   }
 }
 
-export async function get_theme_macros(root: Uix): Promise<Record<string, MacroConfig>> {
+export async function get_theme_macros(root: Uix): Promise<Record<string, MacroConfig | string>> {
   await themesReady().catch(() => {});
 
   const el = root.parentElement ? root.parentElement : root;
