@@ -5,3 +5,4 @@ __pycache__/
 .venv/
 docs/site/
 docs/.cache/
+custom_components/uix/uix.js
