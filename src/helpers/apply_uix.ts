@@ -9,8 +9,8 @@ export class ModdedElement extends LitElement {
     _orig?.(config, ...args);
     this._uix.forEach((uix) => {
       uix.variables = { config };
-      uix.styles = config.uix?.style || config.card_mod?.style || {};
       uix.macros = config.uix?.macros || config.card_mod?.macros || {};
+      uix.styles = config.uix?.style || config.card_mod?.style || {};
     });
   }
 
@@ -51,10 +51,17 @@ export function buildMacros(macros: Record<string, MacroConfig>): string {
         const params = (config.params ?? [])
           .map((p) => (typeof p === "string" ? p : p.name))
           .join(", ");
+        // Emit typed params as Jinja2 comments so the type info is visible in
+        // the rendered template without affecting execution (Jinja2 macros do
+        // not support typed parameters natively).
+        const typeAnnotations = (config.params ?? [])
+          .filter((p): p is MacroParam => typeof p !== "string" && !!p.type)
+          .map((p) => `{# param ${p.name}: ${p.type} #}`)
+          .join("");
         // When returns is true the template body calls HA's returns() extension
         // function. No extra wrapping is needed; returns() is available inside
         // any Jinja macro executed by Home Assistant.
-        return `{% macro ${name}(${params}) %}${config.template}{% endmacro %}`;
+        return `{% macro ${name}(${params}) %}${typeAnnotations}${config.template}{% endmacro %}`;
       })
       .join("\n") + "\n"
   );
