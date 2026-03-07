@@ -44,13 +44,16 @@ export function buildMacros(macros: Record<string, MacroConfig>): string {
     Object.entries(macros)
       .map(([name, config]) => {
         const params = (config.params ?? []).join(", ");
-        let macro = `{% macro ${name}(${params}) %}${config.template}{% endmacro %}`;
-        // When returns is true, apply HA's as_function filter so the macro
-        // can be called as a regular function and returns() is injected automatically.
         if (config.returns) {
-          macro += `\n{% set ${name} = ${name} | as_function %}`;
+          // Follow HA's as_function convention: define the macro as macro_<name>
+          // then expose it as <name> via the as_function filter so returns() is
+          // injected automatically when called as a regular function.
+          return (
+            `{% macro macro_${name}(${params}) %}${config.template}{% endmacro %}\n` +
+            `{% set ${name} = macro_${name} | as_function %}`
+          );
         }
-        return macro;
+        return `{% macro ${name}(${params}) %}${config.template}{% endmacro %}`;
       })
       .join("\n") + "\n"
   );
