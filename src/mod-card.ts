@@ -33,6 +33,7 @@ class ModCard extends LitElement {
     this._config.uix = {
       style,
       debug: this._config.uix?.debug || this._config.card_mod?.debug || false,
+      macros: this._config.uix?.macros || this._config.card_mod?.macros,
     };
 
     this.build_card(config.card);

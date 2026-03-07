@@ -9,6 +9,7 @@ export class ModdedElement extends LitElement {
     _orig?.(config, ...args);
     this._uix.forEach((uix) => {
       uix.variables = { config };
+      uix.macros = config.uix?.macros || config.card_mod?.macros || {};
       uix.styles = config.uix?.style || config.card_mod?.style || {};
     });
   }
@@ -23,11 +24,41 @@ export class ModdedElement extends LitElement {
 
 export type UixStyle = string | { [key: string]: UixStyle };
 
+export interface MacroConfig {
+  params?: string[];
+  returns?: boolean;
+  template: string;
+}
+
 interface UixConfig {
   style?: UixStyle;
   class?: string | string[];
   debug?: boolean;
   prepend?: boolean;
+  macros?: Record<string, MacroConfig>;
+}
+
+export function buildMacros(macros: Record<string, MacroConfig>): string {
+  if (!macros || Object.keys(macros).length === 0) return "";
+  return (
+    Object.entries(macros)
+      .map(([name, config]) => {
+        const params = (config.params ?? []).join(", ");
+        if (config.returns) {
+          // Follow HA's as_function convention: define the macro as macro_<name>
+          // with `returns` as the last parameter (injected by as_function), then
+          // expose it as <name> via the as_function filter so it can be called
+          // as a regular function.
+          const returnsParams = [...(config.params ?? []), "returns"].join(", ");
+          return (
+            `{% macro macro_${name}(${returnsParams}) %}${config.template}{% endmacro %}\n` +
+            `{% set ${name} = macro_${name} | as_function %}`
+          );
+        }
+        return `{% macro ${name}(${params}) %}${config.template}{% endmacro %}`;
+      })
+      .join("\n") + "\n"
+  );
 }
 
 export async function apply_uix_compatible(
@@ -80,7 +111,7 @@ export async function apply_uix_compatible(
   if (
     uix_config &&
     Object.keys(uix_config).length !== 0 &&
-    (uix_config?.style ?? uix_config?.class ?? uix_config?.debug) === undefined
+    (uix_config?.style ?? uix_config?.class ?? uix_config?.debug ?? uix_config?.macros) === undefined
   ) {
     // Old style call with object styles
     uix_config = { style: uix_config as UixStyle };
@@ -172,6 +203,7 @@ export async function apply_uix(
     }
 
     uix.variables = variables;
+    uix.macros = uix_config?.macros ?? {};
     uix.styles = uix_config?.style ?? "";
   }, 1);
 

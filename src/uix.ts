@@ -6,11 +6,13 @@ import {
   unbind_template,
 } from "./helpers/templates";
 import pjson from "../package.json";
-import { get_theme } from "./helpers/themes";
+import { get_theme, get_theme_macros } from "./helpers/themes";
 import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
   apply_uix_compatible,
+  buildMacros,
+  MacroConfig,
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
@@ -29,11 +31,14 @@ export class Uix extends LitElement {
   uix_parent?: Uix = undefined;
   uix_class?: string = undefined;
   classes: string[] = [];
+  macros: Record<string, MacroConfig> = {};
 
   debug: boolean = false;
 
   uix_input: UixStyle;
   _fixed_styles: Record<string, UixStyle> = {};
+  _fixed_macros: Record<string, MacroConfig> = {};
+  _macro_string: string = "";
   _styles: string = "";
   _processStylesOnConnect: boolean = false;
   @property() _rendered_styles: string = "";
@@ -152,6 +157,10 @@ export class Uix extends LitElement {
     const theme_styles = await get_theme(this);
     merge_deep(styles, theme_styles);
 
+    // Merge theme macros (base) with card-level macros (override)
+    const theme_macros = await get_theme_macros(this);
+    this._fixed_macros = { ...theme_macros, ...this.macros };
+
     // Save processed styles
     this._fixed_styles = styles;
 
@@ -181,7 +190,7 @@ export class Uix extends LitElement {
       const uix = await apply_uix(
         ch,
         `${this.type}-child`,
-        { style, debug: this.debug },
+        { style, debug: this.debug, macros: this._fixed_macros },
         this.variables,
         false
       );
@@ -274,13 +283,15 @@ export class Uix extends LitElement {
     }
 
     // Process styles applicable to this card-mod element
-    if (this._styles === thisStyle && !this.dynamicVariablesHaveChanged) return;
+    const macroStr = buildMacros(this._fixed_macros);
+    if (this._styles === thisStyle && !this.dynamicVariablesHaveChanged && this._macro_string === macroStr) return;
     this._styles = thisStyle;
+    this._macro_string = macroStr;
     this.dynamicVariablesHaveChanged = false;
 
     if (hasTemplate(this._styles)) {
       this._renderer = this._renderer || this._style_rendered.bind(this);
-      bind_template(this._renderer, this._styles as string, this.variables);
+      bind_template(this._renderer, `${macroStr}${this._styles}`, this.variables);
     } else {
       this._style_rendered(this._styles || "");
     }

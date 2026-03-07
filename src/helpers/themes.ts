@@ -1,7 +1,7 @@
 import { hass } from "./hass";
 import { yaml2json } from "./yaml2json";
 import { Uix } from "../uix";
-import { UixStyle } from "./apply_uix";
+import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
 
 function cssValueIsTrue(v: string): boolean {
@@ -56,4 +56,27 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
   } else {
     return {};
   }
+}
+
+export async function get_theme_macros(root: Uix): Promise<Record<string, MacroConfig>> {
+  await themesReady().catch(() => {});
+
+  const el = root.parentElement ? root.parentElement : root;
+  const cs = window.getComputedStyle(el);
+  const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+
+  const hs = await hass();
+  if (!hs) return {};
+  const themes = hs?.themes.themes ?? {};
+  if (!themes[theme]) return {};
+
+  if (themes[theme]["uix-macros-yaml"]) {
+    try {
+      return await yaml2json(themes[theme]["uix-macros-yaml"]) ?? {};
+    } catch (e) {
+      console.error("UIX: Error parsing uix-macros-yaml from theme:", theme, e);
+      return {};
+    }
+  }
+  return {};
 }
