@@ -87,3 +87,86 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
     then UIX will be able to retry looking from the `ha-map $` point at a later time, which may lead to more stable results.
 
     In short, if things seem to be working intermittently, then try splitting up the chain into several steps.
+
+## DOM inspection helpers
+
+!!! tip "DOM inspection helpers"
+    DOM inspection helpers currently available in 5.3.0 beta
+
+UIX ships two browser console helpers that make it easier to discover valid style paths and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
+
+### `uix_tree($0)` — general helper
+
+Reports everything UIX knows about the area surrounding the selected element:
+
+| Section | What it shows |
+|---------|---------------|
+| **📦 Closest UIX Parent** | The nearest ancestor element that has a non-child `uix-node` attached, with its UIX type (e.g. `card`, `view`). |
+| **👶 Active UIX Children** | Paths that are currently being styled as children of the UIX parent, with the resolved DOM elements shown. |
+| **🗺️ Available YAML Selectors** | Every YAML style key reachable within the UIX parent's shadow DOM subtree (stopping at the next UIX parent boundary). Each key maps to one shadow context; inside you'll find the CSS selectors valid for that key's style string. |
+
+```js
+uix_tree($0)
+```
+
+??? example
+    After selecting a card element in the inspector and running `uix_tree($0)`, the console output might look like:
+
+    ```
+    💡 UIX Tree 💡
+      Target element: <hui-card>
+      📦 Closest UIX Parent
+        Element: <hui-card>
+        UIX type: card
+      👶 Active UIX Children: none
+      🗺️ Available YAML Selectors  (2 YAML selectors, 5 CSS selectors)
+        ".":  (2 CSS selectors)
+          ha-card  <ha-card>
+          ha-card ha-markdown  <ha-markdown>
+        "ha-markdown $":  (3 CSS selectors)
+          h3  <h3>
+          p  <p>
+          p span  <span>
+    ```
+
+    Each group label shows a YAML style key followed by the required `:` syntax. The CSS selectors inside are valid within that key's style string. Each selector is followed by a clickable element reference — click it to jump straight to that element in the DevTools inspector.
+
+### `uix_path($0)` — specific helper
+
+Reports the exact UIX path to the selected element and generates a ready-to-paste YAML snippet:
+
+| Section | What it shows |
+|---------|---------------|
+| **📦 Closest UIX Parent** | Same as `uix_tree`. |
+| **📍 UIX Path to Target** | The exact path string (using `$` for shadow-root crossings) from the UIX parent context to `$0`. Use this as the key in a UIX `style:` config. |
+| **🎨 CSS Target** | Tag name, id, classes and a suggested CSS selector for the element — each followed by a clickable element reference to jump straight to it in the DevTools inspector. |
+| **📝 Boilerplate UIX YAML** | A paste-ready YAML snippet to get you started. |
+
+```js
+uix_path($0)
+```
+
+??? example
+    After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
+
+    ```
+    💡 UIX Path 💡
+      Target element: <h3>
+      📦 Closest UIX Parent
+        Element: <hui-markdown-card>
+        UIX type: card
+      📍 UIX Path to Target
+        Path: "ha-markdown $":
+      🎨 CSS Target
+        Tag: h3
+        Suggested CSS selector: h3  <h3>
+      📝 Boilerplate UIX YAML
+        uix:
+          style:
+            "ha-markdown $": |
+              h3 {
+                /* your styles for h3 */
+              }
+    ```
+
+    The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
