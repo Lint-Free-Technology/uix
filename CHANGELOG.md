@@ -1,3 +1,9 @@
+## [5.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0-beta.2...v5.3.0-beta.3) (2026-03-08)
+
+### 🐞 Bug Fixes
+
+* Applying Uix to section strategy causes it to not show and console errors ([899163e](https://github.com/Lint-Free-Technology/uix/commit/899163ee2dd07b6b060d46f91e148a54013ac60b))
+
 ## [5.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0-beta.1...v5.3.0-beta.2) (2026-03-08)
 
 ### ⭐ New Features
