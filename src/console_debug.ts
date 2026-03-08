@@ -338,6 +338,7 @@ async function getActiveChildren(
   }
 
   const TITLE_STYLE = "color:#CE3226;font-weight:bold;font-size:1.1em;";
+  const SECTION_STYLE = "color:#888;font-weight:bold;";
   console.group("%c🌳 UIX Tree Debug", TITLE_STYLE);
   console.log("Target element:", element);
 
@@ -349,51 +350,51 @@ async function getActiveChildren(
   }
 
   // --- UIX Parent ---
-  console.group("📦 Closest UIX Parent");
-  console.log("Element:", parent.element);
-  console.log("UIX type:", parent.primaryType);
+  // Use a styled log instead of a nested group to avoid Chrome DevTools nesting bugs.
+  console.log("%c📦 Closest UIX Parent", SECTION_STYLE);
+  console.log("  Element:", parent.element);
+  console.log("  UIX type:", parent.primaryType);
   if (parent.uixNodes.length > 1)
-    console.log("All UIX nodes on this element:", parent.uixNodes);
-  console.groupEnd();
+    console.log("  All UIX nodes on this element:", parent.uixNodes);
 
   // --- Active UIX Children ---
   const children = await getActiveChildren(parent);
+  const pl = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`;
   if (children.length > 0) {
-    console.group(
-      `👶 Active UIX Children  (${children.length} path${children.length !== 1 ? "s" : ""})`
+    console.log(
+      `%c👶 Active UIX Children  (${pl(children.length, "path")})`,
+      SECTION_STYLE
     );
     for (const { path, elements } of children) {
       if (elements.length === 1) {
-        console.log(`"${path}"  →`, elements[0]);
+        console.log(`  "${path}"  →`, elements[0]);
       } else if (elements.length > 1) {
-        console.groupCollapsed(`"${path}"  (${elements.length} elements)`);
+        console.groupCollapsed(`  "${path}"  (${elements.length} elements)`);
         elements.forEach((el) => console.log(el));
         console.groupEnd();
       } else {
-        console.log(`"${path}"  (no resolved elements)`);
+        console.log(`  "${path}"  (no resolved elements)`);
       }
     }
-    console.groupEnd();
   } else {
-    console.log("👶 Active UIX Children: none");
+    console.log("%c👶 Active UIX Children: none", SECTION_STYLE);
   }
 
   // --- Available Style Paths ---
   const groups = collectSubtreeGroups(parent.element);
   const totalSelectors = groups.reduce((n, g) => n + g.cssSelectors.length, 0);
-  const pl = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`;
-  console.group(
-    `🗺️ Available Style Paths  (${pl(groups.length, "shadow context")}, ${pl(totalSelectors, "selector")})`
+  console.log(
+    `%c🗺️ Available Style Paths  (${pl(groups.length, "shadow context")}, ${pl(totalSelectors, "selector")})`,
+    SECTION_STYLE
   );
   console.log(
-    "Each group is a YAML path key; selectors inside are valid CSS within that key's style string:"
+    "  Each group is a YAML path key; selectors inside are valid CSS within that key's style string:"
   );
   for (const { pathKey, cssSelectors } of groups) {
-    console.groupCollapsed(`"${pathKey}"  (${pl(cssSelectors.length, "selector")})`);
+    console.groupCollapsed(`  "${pathKey}"  (${pl(cssSelectors.length, "selector")})`);
     cssSelectors.forEach((s) => console.log(`  ${s}`));
     console.groupEnd();
   }
-  console.groupEnd();
 
   console.groupEnd();
 };
@@ -411,6 +412,7 @@ async function getActiveChildren(
   }
 
   const TITLE_STYLE = "color:#CE3226;font-weight:bold;font-size:1.1em;";
+  const SECTION_STYLE = "color:#888;font-weight:bold;";
   console.group("%c🎯 UIX Path Debug", TITLE_STYLE);
   console.log("Target element:", element);
 
@@ -422,10 +424,10 @@ async function getActiveChildren(
   }
 
   // --- UIX Parent ---
-  console.group("📦 Closest UIX Parent");
-  console.log("Element:", parent.element);
-  console.log("UIX type:", parent.primaryType);
-  console.groupEnd();
+  // Use a styled log instead of a nested group to avoid Chrome DevTools nesting bugs.
+  console.log("%c📦 Closest UIX Parent", SECTION_STYLE);
+  console.log("  Element:", parent.element);
+  console.log("  UIX type:", parent.primaryType);
 
   // --- Path key and CSS selector ---
   const result = buildPathKeyAndCssSelector(parent.element, element);
@@ -439,24 +441,22 @@ async function getActiveChildren(
 
   const { pathKey, cssSelector } = result;
 
-  console.group("📍 UIX Path to Target");
-  console.log("Path:", `"${pathKey}"`);
-  console.groupEnd();
+  console.log("%c📍 UIX Path to Target", SECTION_STYLE);
+  console.log("  Path:", `"${pathKey}"`);
 
   // --- CSS target info ---
-  console.group("🎨 CSS Target");
-  console.log("Tag:", element.localName);
-  if (element.id) console.log("ID:", `#${element.id}`);
+  console.log("%c🎨 CSS Target", SECTION_STYLE);
+  console.log("  Tag:", element.localName);
+  if (element.id) console.log("  ID:", `#${element.id}`);
   if (element.classList.length > 0) {
     console.log(
-      "Classes:",
+      "  Classes:",
       Array.from(element.classList)
         .map((c) => `.${c}`)
         .join("  ")
     );
   }
-  console.log("Suggested CSS selector:", cssSelector);
-  console.groupEnd();
+  console.log("  Suggested CSS selector:", cssSelector);
 
   // --- Boilerplate YAML ---
   let yaml: string;
@@ -477,9 +477,8 @@ async function getActiveChildren(
       `      }`;
   }
 
-  console.group("📝 Boilerplate UIX YAML");
+  console.log("%c📝 Boilerplate UIX YAML", SECTION_STYLE);
   console.log(yaml);
-  console.groupEnd();
 
   console.groupEnd();
 };
