@@ -63,11 +63,20 @@ function findUixParent(element: Element): UixParentInfo | null {
 // Build a CSS selector string for a single element
 // ---------------------------------------------------------------------------
 
+// Returns false for IDs that appear auto-generated (e.g. "wa-dropdown-trigger-mN3vlGLuTVbO3N4eJ1k5I").
+// An ID segment is treated as auto-generated when it is 8+ characters long and contains
+// both upper- and lower-case letters, which is the hallmark of random/hashed identifiers.
+function isStableId(id: string): boolean {
+  return !id.split("-").some(
+    (seg) => seg.length >= 8 && /[A-Z]/.test(seg) && /[a-z]/.test(seg)
+  );
+}
+
 function buildSelector(el: Element): string {
   const tag = el.localName;
 
-  // ID is the most specific and unambiguous selector
-  if (el.id) return `${tag}#${el.id}`;
+  // ID is the most specific and unambiguous selector — but only if it looks stable.
+  if (el.id && isStableId(el.id)) return `${tag}#${el.id}`;
 
   const parent = el.parentNode as ParentNode | null;
   const sameSiblings = parent
