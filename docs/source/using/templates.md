@@ -28,6 +28,9 @@ UI eXtension also makes the following variables available for templates:
 
 ## Macros
 
+!!! tip "Macros"
+    Macros currently available in 5.3.0 beta
+
 UI eXtension supports reusable [Jinja2 macros](https://jinja.palletsprojects.com/en/stable/templates/#macros) that can be defined at card level or via a theme, and are prepended to every template in the card.
 
 ### Defining macros on a card
@@ -46,7 +49,7 @@ uix:
           default: "'yellow'"
         - name: color_off
           default: "'gray'"
-      template: "{{ color_on if states(entity_id) == 'on' else color_off }}"
+      template: "{{ color_on if is_state(entity_id, 'on') else color_off }}"
   style: |
     ha-card {
       background: {{ state_color(config.entity) }};
@@ -78,14 +81,16 @@ params:
 This generates the following Jinja2 macro signature:
 
 ```jinja
-{% macro state_color(entity_id, color_on = 'yellow', color_off = 'gray') %}{{ color_on if states(entity_id) == 'on' else color_off }}{% endmacro %}
+{% macro state_color(entity_id, color_on = 'yellow', color_off = 'gray') %}
+{{ color_on if is_state(entity_id, 'on') else color_off }}
+{% endmacro %}
 ```
 
 The `default` value is injected verbatim as a Jinja2 expression. Quote string values with single quotes inside the YAML string (e.g. `"'yellow'"`).
 
 ### Macros with `returns`
 
-When a macro renders inline (no `returns`), its output is always a string — even `{{ states(entity_id) == 'on' }}` produces the string `"True"` or `"False"`, and any non-empty string is truthy in Jinja2. To return an actual boolean or numeric value that behaves correctly in conditionals and comparisons, use `returns: true`.
+When a macro renders inline (no `returns`), its output is always a string — even `{{ is_state(entity_id, "on") }}` produces the string `"True"` or `"False"`, and any non-empty string is truthy in Jinja2. To return an actual boolean or numeric value that behaves correctly in conditionals and comparisons, use `returns: true`.
 
 When `returns: true`, the macro follows Home Assistant's [`as_function`](https://www.home-assistant.io/docs/configuration/templating/#as_function) convention: the macro is internally named `macro_<name>` with `returns` added as its last parameter, then exposed as `<name>` via the `as_function` filter. The `returns` callable is injected automatically when the macro is invoked as a function:
 
@@ -98,7 +103,7 @@ uix:
       params:
         - entity_id
       returns: true
-      template: "{%- do returns(states(entity_id) == 'on') -%}"
+      template: "{%- do returns(is_state(entity_id, 'on')) -%}"
   style: |
     ha-card {
       --tile-color: {{ 'yellow' if is_on(config.entity) else 'gray' }};
@@ -108,13 +113,15 @@ uix:
 This generates the following Jinja2 block that is prepended to every template:
 
 ```jinja
-{% macro macro_is_on(entity_id, returns) %}{%- do returns(states(entity_id) == 'on') -%}{% endmacro %}
+{% macro macro_is_on(entity_id, returns) %}
+{%- do returns(is_state(entity_id, 'on')) -%}
+{% endmacro %}
 {% set is_on = macro_is_on | as_function %}
 ```
 
 ### Importing macros from custom template files
 
-In addition to defining macros inline, you can import macros from [Home Assistant custom template files](https://www.home-assistant.io/docs/configuration/templating/#custom-templates) stored in `/config/custom_templates/*.jinja`. To do this, set the macro entry's value to the filename (a plain string) instead of a macro definition object:
+In addition to defining macros inline, you can import macros from [Home Assistant reusable templates](https://www.home-assistant.io/docs/configuration/templating/#reusing-templates) stored in `/config/custom_templates/*.jinja`. To do this, set the macro entry's value to the filename (a plain string) instead of a macro definition object:
 
 ```yaml
 type: tile
@@ -143,6 +150,9 @@ uix:
     is_on: "my_macros.jinja"
     format_date: "utils.jinja"
 ```
+
+!!! tip "Using template file macros"
+    All template files must have the .jinja extension and be less than 5MiB. Templates in the `/config/custom_template` folder will be loaded at Home Assistant startup. To reload the templates without restarting Home Assistant, invoke the `homeassistant.reload_custom_templates` action.
 
 Inline and file-import macros can be freely mixed within the same card.
 
