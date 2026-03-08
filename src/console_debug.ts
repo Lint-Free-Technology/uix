@@ -100,18 +100,6 @@ function buildSelector(el: Element): string {
 }
 
 // ---------------------------------------------------------------------------
-// Build a CSS identifier (class / id / element) for the element itself,
-// without disambiguation – used for the CSS-target report.
-// ---------------------------------------------------------------------------
-
-function buildCssIdentifier(el: Element): string {
-  if (el.id) return `#${el.id}`;
-  const firstClass = Array.from(el.classList).find((c) => c.length > 0);
-  if (firstClass) return `.${firstClass}`;
-  return el.localName;
-}
-
-// ---------------------------------------------------------------------------
 // The "UIX context" for a parent element is its shadow root when present,
 // otherwise the element itself.  Paths in selectTree are relative to this.
 // ---------------------------------------------------------------------------
@@ -121,27 +109,42 @@ function uixContext(uixParentEl: Element): Element | ShadowRoot {
 }
 
 // ---------------------------------------------------------------------------
-// Build UIX-style path from the UIX parent context to a target element.
-// Returns null when the target is not reachable.
-// Returns "." when the target IS the UIX parent.
+// Build the UIX YAML path key and matching CSS selector for a target element.
+//
+// The path KEY stops at the last shadow-root crossing (ends with "$"), so the
+// CSS value injected at that key can target the element using a plain selector.
+// When no shadow root is crossed between the UIX parent context and the target,
+// the key is "." (the UIX parent itself) and the CSS selector covers the full
+// element chain from that context.
 // ---------------------------------------------------------------------------
 
-function buildUixPath(uixParentEl: Element, targetEl: Element): string | null {
-  if (targetEl === uixParentEl) return ".";
+interface PathAndSelector {
+  /** YAML path key – ends at the last shadow-root boundary or "." */
+  pathKey: string;
+  /** CSS selector to use inside the style string at pathKey */
+  cssSelector: string;
+}
+
+function buildPathKeyAndCssSelector(
+  uixParentEl: Element,
+  targetEl: Element
+): PathAndSelector | null {
+  if (targetEl === uixParentEl) {
+    return { pathKey: ".", cssSelector: ":host" };
+  }
 
   const ctx = uixContext(uixParentEl);
-  const parts: string[] = [];
+  type Segment = { kind: "element"; sel: string } | { kind: "shadow" };
+  const segments: Segment[] = [];
   let current: Node = targetEl;
 
-  while (current) {
-    if (current === ctx || current === uixParentEl) break;
-
+  while (current && current !== ctx && current !== uixParentEl) {
     if (current instanceof ShadowRoot) {
-      parts.unshift("$");
+      segments.unshift({ kind: "shadow" });
       current = current.host;
     } else if (current instanceof Element) {
       if (current.localName !== "uix-node") {
-        parts.unshift(buildSelector(current));
+        segments.unshift({ kind: "element", sel: buildSelector(current) });
       }
       current = current.parentNode ?? null;
     } else {
@@ -150,7 +153,45 @@ function buildUixPath(uixParentEl: Element, targetEl: Element): string | null {
   }
 
   if (current !== ctx && current !== uixParentEl) return null;
-  return parts.join(" ").trim() || ".";
+
+  // Find the last shadow-root crossing in the walk
+  let lastShadowIdx = -1;
+  for (let i = segments.length - 1; i >= 0; i--) {
+    if (segments[i].kind === "shadow") {
+      lastShadowIdx = i;
+      break;
+    }
+  }
+
+  if (lastShadowIdx === -1) {
+    // No shadow crossing – use "." as the key; CSS targets the element directly
+    const cssSelector =
+      segments
+        .filter((s): s is { kind: "element"; sel: string } => s.kind === "element")
+        .map((s) => s.sel)
+        .join(" ")
+        .trim() || targetEl.localName;
+    return { pathKey: ".", cssSelector };
+  }
+
+  // Path key: everything up to and including the last "$"
+  const keyParts: string[] = [];
+  for (let i = 0; i <= lastShadowIdx; i++) {
+    const seg = segments[i];
+    keyParts.push(seg.kind === "element" ? seg.sel : "$");
+  }
+  const pathKey = keyParts.join(" ").trim();
+
+  // CSS selector: the element chain after the last "$"
+  const afterShadow = segments.slice(lastShadowIdx + 1);
+  const cssSelector =
+    afterShadow
+      .filter((s): s is { kind: "element"; sel: string } => s.kind === "element")
+      .map((s) => s.sel)
+      .join(" ")
+      .trim() || targetEl.localName;
+
+  return { pathKey, cssSelector };
 }
 
 // ---------------------------------------------------------------------------
@@ -334,9 +375,9 @@ async function getActiveChildren(
   console.log("UIX type:", parent.primaryType);
   console.groupEnd();
 
-  // --- Path to target ---
-  const path = buildUixPath(parent.element, element);
-  if (path === null) {
+  // --- Path key and CSS selector ---
+  const result = buildPathKeyAndCssSelector(parent.element, element);
+  if (result === null) {
     console.warn(
       "Could not build a path: the element may not be a descendant of the UIX parent."
     );
@@ -344,15 +385,14 @@ async function getActiveChildren(
     return;
   }
 
+  const { pathKey, cssSelector } = result;
+
   console.group("📍 UIX Path to Target");
-  console.log("Path:", `"${path}"`);
-  console.log(
-    "Use this as the key in the UIX style config (styles apply within this element's shadow-root context)."
-  );
+  console.log("Path:", `"${pathKey}"`);
   console.groupEnd();
 
   // --- CSS target info ---
-  console.group("🎨 CSS Target  (within the element's containing shadow root)");
+  console.group("🎨 CSS Target");
   console.log("Tag:", element.localName);
   if (element.id) console.log("ID:", `#${element.id}`);
   if (element.classList.length > 0) {
@@ -363,75 +403,26 @@ async function getActiveChildren(
         .join("  ")
     );
   }
-
-  // Determine whether $0 lives directly inside a shadow root.
-  const parentNode = element.parentNode;
-  if (parentNode instanceof ShadowRoot) {
-    const hostPath = buildUixPath(parent.element, parentNode.host as Element);
-    const cssSel = buildCssIdentifier(element);
-    console.log(
-      "Suggested CSS selector within shadow root:",
-      cssSel
-    );
-    if (hostPath !== null) {
-      console.log(
-        "Tip: target the shadow-root host using path",
-        `"${hostPath}"`,
-        "and then use",
-        `${cssSel} { … }`,
-        "as the CSS rule."
-      );
-    }
-  } else {
-    console.log("Suggested CSS identifier:", buildCssIdentifier(element));
-  }
+  console.log("Suggested CSS selector:", cssSelector);
   console.groupEnd();
 
   // --- Boilerplate YAML ---
-  const cssSel = buildCssIdentifier(element);
   let yaml: string;
-
-  if (path === ".") {
+  if (pathKey === ".") {
     yaml =
       `uix:\n` +
       `  style: |\n` +
-      `    ${cssSel} {\n` +
+      `    ${cssSelector} {\n` +
       `      /* your styles for ${element.localName} */\n` +
       `    }`;
   } else {
-    // If $0 is in a shadow root, the most natural pattern is to target $0's
-    // shadow-root host with the path key and use a CSS selector within.
-    const elementParentNode = element.parentNode;
-    if (elementParentNode instanceof ShadowRoot) {
-      const hostPath = buildUixPath(
-        parent.element,
-        elementParentNode.host as Element
-      );
-      if (hostPath && hostPath !== ".") {
-        yaml =
-          `uix:\n` +
-          `  style:\n` +
-          `    "${hostPath}": |\n` +
-          `      ${cssSel} {\n` +
-          `        /* your styles for ${element.localName} */\n` +
-          `      }`;
-      } else {
-        yaml =
-          `uix:\n` +
-          `  style: |\n` +
-          `    ${cssSel} {\n` +
-          `      /* your styles for ${element.localName} */\n` +
-          `    }`;
-      }
-    } else {
-      yaml =
-        `uix:\n` +
-        `  style:\n` +
-        `    "${path}": |\n` +
-        `      :host {\n` +
-        `        /* your styles for ${element.localName} */\n` +
-        `      }`;
-    }
+    yaml =
+      `uix:\n` +
+      `  style:\n` +
+      `    "${pathKey}": |\n` +
+      `      ${cssSelector} {\n` +
+      `        /* your styles for ${element.localName} */\n` +
+      `      }`;
   }
 
   console.group("📝 Boilerplate UIX YAML");
