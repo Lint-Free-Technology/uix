@@ -45,12 +45,18 @@ interface UixConfig {
   macros?: Record<string, MacroConfig | string>;
 }
 
-export function buildMacros(macros: Record<string, MacroConfig | string>): string {
+export function buildMacros(macros: Record<string, MacroConfig | string>, usedIn?: string): string {
   if (!macros || Object.keys(macros).length === 0) return "";
   const renderParam = (p: MacroParam): string =>
     typeof p === "string" ? p : `${p.name} = ${p.default}`;
+  const entries = Object.entries(macros).filter(([name]) => {
+    // When a template is provided, only include macros actually referenced in it.
+    if (!usedIn) return true;
+    return new RegExp(`\\b${name}\\b`).test(usedIn);
+  });
+  if (entries.length === 0) return "";
   return (
-    Object.entries(macros)
+    entries
       .map(([name, config]) => {
         // String value: import the named macro from a custom_templates file.
         if (typeof config === "string") {

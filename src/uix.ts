@@ -283,7 +283,7 @@ export class Uix extends LitElement {
     }
 
     // Process styles applicable to this card-mod element
-    const macroStr = buildMacros(this._fixed_macros);
+    const macroStr = buildMacros(this._fixed_macros, thisStyle);
     if (this._styles === thisStyle && !this.dynamicVariablesHaveChanged && this._macro_string === macroStr) return;
     this._styles = thisStyle;
     this._macro_string = macroStr;
