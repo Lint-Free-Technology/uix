@@ -1,3 +1,9 @@
+## [5.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0-beta.1...v5.3.0-beta.2) (2026-03-08)
+
+### ⭐ New Features
+
+* DOM inspecton helpers uix_tree() and uix_path() ([#78](https://github.com/Lint-Free-Technology/uix/issues/78)) ([51cabd5](https://github.com/Lint-Free-Technology/uix/commit/51cabd5fb5665131b6dd272b6269a03579d02a84))
+
 ## [5.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.2.2...v5.3.0-beta.1) (2026-03-08)
 
 ### ⭐ New Features
