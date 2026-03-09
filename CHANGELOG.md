@@ -1,3 +1,9 @@
+## [5.3.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0-beta.3...v5.3.0-beta.4) (2026-03-09)
+
+### ⭐ New Features
+
+* Add UIX parent variables to uix_tree() and uix_path(). ([6e027b3](https://github.com/Lint-Free-Technology/uix/commit/6e027b3e125a1a7520b752fabd5bc7e8091601ce))
+
 ## [5.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0-beta.2...v5.3.0-beta.3) (2026-03-08)
 
 ### 🐞 Bug Fixes
