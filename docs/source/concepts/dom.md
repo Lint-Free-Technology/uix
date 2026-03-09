@@ -101,7 +101,7 @@ Reports everything UIX knows about the area surrounding the selected element:
 
 | Section | What it shows |
 |---------|---------------|
-| **📦 Closest UIX Parent** | The nearest ancestor element that has a non-child `uix-node` attached, with its UIX type (e.g. `card`, `view`). |
+| **📦 Closest UIX Parent** | The nearest ancestor element that has a non-child `uix-node` attached, with UIX template variables (usually `config`) and its UIX type (e.g. `card`, `view`). |
 | **👶 Active UIX Children** | Paths that are currently being styled as children of the UIX parent, with the resolved DOM elements shown. |
 | **🗺️ Available YAML Selectors** | Every YAML style key reachable within the UIX parent's shadow DOM subtree (stopping at the next UIX parent boundary). Each key maps to one shadow context; inside you'll find the CSS selectors valid for that key's style string. |
 

@@ -372,6 +372,7 @@ async function getActiveChildren(
   // Use a styled log instead of a nested group to avoid Chrome DevTools nesting bugs.
   console.log("%c📦 Closest UIX Parent", SECTION_STYLE);
   console.log("  Element:", parent.element);
+  console.log("  Variables: ", parent.uixNodes[0].variables ?? {});
   console.log("  UIX type:", parent.primaryType);
   if (parent.uixNodes.length > 1)
     console.log("  All UIX nodes on this element:", parent.uixNodes);
@@ -446,6 +447,7 @@ async function getActiveChildren(
   // Use a styled log instead of a nested group to avoid Chrome DevTools nesting bugs.
   console.log("%c📦 Closest UIX Parent", SECTION_STYLE);
   console.log("  Element:", parent.element);
+  console.log("  Variables: ", parent.uixNodes[0].variables ?? {});
   console.log("  UIX type:", parent.primaryType);
 
   // --- Path key and CSS selector ---
