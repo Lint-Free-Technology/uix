@@ -31,7 +31,7 @@ Patch the hui-section element on first update:
 
 @patch_element("hui-section")
 class HuiSectionPatch extends ModdedElement {
-  async _createCards(_orig, ...args) {
+  _createCards(_orig, ...args) {
     const strategyConfig = (this as LovelaceSection).config?.strategy;
     const dynamicConfig: LovelaceSectionConfig | undefined = { ...args[0] };
     if (strategyConfig && (strategyConfig.uix || strategyConfig.card_mod)) {
