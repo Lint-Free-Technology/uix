@@ -33,30 +33,27 @@ Also `<any variable>-yaml`.
 
 ## Macros
 
-!!! tip "Macros"
-    Macros currently available in 5.3.0 beta
-
 Themes can define reusable Jinja2 macros available to all cards that use the theme. Macros are specified under the `uix-macros-yaml` theme key as a YAML dictionary of macro definitions — see [Templates - Macros](templates.md#macros) for the full macro configuration reference.
 
-```yaml
-my-awesome-theme:
-  uix-theme: my-awesome-theme
+    ```yaml
+    my-awesome-theme:
+      uix-theme: my-awesome-theme
 
-  uix-macros-yaml: |
-    is_on:
-      params:
-        - entity_id
-      returns: true
-      template: "{%- do returns(is_state(entity_id, 'on')) -%}"
-    badge_color:
-      params:
-        - entity_id
-        - name: color_on
-          default: "'yellow'"
-        - name: color_off
-          default: "'gray'"
-      template: "{{ color_on if is_state(entity_id, 'on') else color_off }}"
-```
+      uix-macros-yaml: |
+        is_on:
+          params:
+            - entity_id
+          returns: true
+          template: "{%- do returns(is_state(entity_id, 'on')) -%}"
+        badge_color:
+          params:
+            - entity_id
+            - name: color_on
+              default: "'yellow'"
+            - name: color_off
+              default: "'gray'"
+          template: "{{ color_on if is_state(entity_id, 'on') else color_off }}"
+    ```
 
 Card-level `uix.macros` take precedence over theme macros of the same name.
 

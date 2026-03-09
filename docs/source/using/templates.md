@@ -28,9 +28,6 @@ UI eXtension also makes the following variables available for templates:
 
 ## Macros
 
-!!! tip "Macros"
-    Macros currently available in 5.3.0 beta
-
 UI eXtension supports reusable [Jinja2 macros](https://jinja.palletsprojects.com/en/stable/templates/#macros) that can be defined at card level or via a theme, and are prepended to every template in the card.
 
 ### Defining macros on a card
@@ -59,7 +56,7 @@ uix:
 Each macro entry supports the following keys:
 
 | Key | Required | Description |
-|-----|----------|-------------|
+| --- | -------- | ----------- |
 | `template` | Yes | The Jinja2 template body of the macro. |
 | `params` | No | A list of parameters the macro accepts. Each entry is either a plain string (parameter name) or a mapping with `name` and `default` keys (see below). |
 | `returns` | No | Set to `true` to make the macro callable as a function using Home Assistant's `as_function` filter. When `true`, use `{%- do returns(<value>) -%}` inside the template to return a typed value (boolean, number, etc.). |
