@@ -1,3 +1,9 @@
+## [5.3.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0...v5.3.1-beta.1) (2026-03-11)
+
+### 🐞 Bug Fixes
+
+* Console error with uix_path(). Don't allow selection of shadow root. ([#83](https://github.com/Lint-Free-Technology/uix/issues/83)) ([d61692d](https://github.com/Lint-Free-Technology/uix/commit/d61692d4ad473ae2311ba5a32530c5fbb117cb54))
+
 ## [5.3.0](https://github.com/Lint-Free-Technology/uix/compare/v5.2.2...v5.3.0) (2026-03-09)
 
 ### ⭐ New Features
