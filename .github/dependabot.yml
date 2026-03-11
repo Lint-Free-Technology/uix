@@ -11,3 +11,4 @@ updates:
     schedule:
       interval: 'weekly'
     target-branch: 'dev'
+    prefix: "chore(deps)"
