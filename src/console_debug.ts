@@ -431,6 +431,11 @@ async function getActiveChildren(
     return;
   }
 
+  if (element instanceof ShadowRoot) {
+    console.error("UIX Debug: please select an element, not a shadow root.");
+    return;
+  }
+
   const TITLE_STYLE = "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;";
   const SECTION_STYLE = "color:#888;font-weight:bold;";
   console.group("%c💡 UIX Path 💡", TITLE_STYLE);
@@ -469,7 +474,7 @@ async function getActiveChildren(
   console.log("%c🎨 CSS Target", SECTION_STYLE);
   console.log("  Tag:", element.localName);
   if (element.id) console.log("  ID:", `#${element.id}`);
-  if (element.classList.length > 0) {
+  if (element.classList?.length > 0) {
     console.log(
       "  Classes:",
       Array.from(element.classList)
