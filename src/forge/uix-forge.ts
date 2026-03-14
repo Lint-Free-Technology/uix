@@ -5,6 +5,7 @@ import { hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
 import { buildMacros } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
+import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -27,6 +28,7 @@ export class UixForge extends LitElement {
   private _showError: boolean;
   private _forgeConfig: UixForgeConfigBuilder;
   private _forgedElementConfig: UixForgeConfigBuilder;
+  private _sparkController: UixForgeSparkController;
   private _disconnectTimeout?: number;
 
   constructor() {
@@ -36,6 +38,7 @@ export class UixForge extends LitElement {
       this._showError = false;
       this._forgeConfig = new UixForgeConfigBuilder(this.refreshForge.bind(this));
       this._forgedElementConfig = new UixForgeConfigBuilder(this.refreshForgedElement.bind(this));
+      this._sparkController = new UixForgeSparkController(this);
   }
 
   public static getStubConfig(): UixForgeConfig {
@@ -97,6 +100,7 @@ export class UixForge extends LitElement {
       }
       this.templatesBound = true;
       this.refreshForge([]);
+      this._sparkController.setConfig(this._forgeConfig.config.sparks);
     });
   }
 
@@ -147,6 +151,7 @@ export class UixForge extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this._mold.connectedCallback();
+    this._sparkController.connectedCallback();
     if (this._disconnectTimeout) {
       clearTimeout(this._disconnectTimeout);
       this._disconnectTimeout = undefined;
@@ -167,6 +172,7 @@ export class UixForge extends LitElement {
       ]).then(() => {
         this.templatesBound = true;
         this.refreshForge([]);
+        this._sparkController.setConfig(this._forgeConfig.config.sparks);
       });
     }
   }
@@ -174,6 +180,7 @@ export class UixForge extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this._mold.disconnectedCallback();
+    this._sparkController.disconnectedCallback();
     // Delay unbinding to allow for quick reconnects without rebinding
     this._disconnectTimeout = window.setTimeout(() => {
       super.disconnectedCallback();
@@ -227,7 +234,7 @@ export class UixForge extends LitElement {
         bind_template(
           callback,
           `${macroStr}${template}`,
-          { config: this.config }
+          { config: this.config, uixForge: this._sparkController.templateVariables() }
         );
         base.setBinding(bindingPath, callback);
       } else if (typeof current[k] === "string") {
@@ -236,7 +243,26 @@ export class UixForge extends LitElement {
     }
   }
 
-  private refreshForge(path: UixForgeConfigPath) {
+  refreshForgeTemplates() {
+    this.templatesBound = false;
+    const forgeConfig = { ...this.config.forge };
+    delete forgeConfig.type;
+    delete forgeConfig.mold;
+    delete forgeConfig.macros;
+    delete forgeConfig.show_error;
+    delete forgeConfig.template_nesting;
+    this.forgeConfig = forgeConfig;
+    this.forgedElementConfig = { ...this.config.element };
+    Promise.all([
+      this.bindTemplates(this._forgeConfig),
+      this.bindTemplates(this._forgedElementConfig)
+    ]).then(() => {
+      this.templatesBound = true;
+      this.refreshForge([]);
+    });
+  }
+
+  refreshForge(path: UixForgeConfigPath) {
     this._mold.refresh(path);
   }
 
