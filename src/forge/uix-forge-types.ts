@@ -19,6 +19,7 @@ export interface UixForgeForge {
     hidden?: string | boolean;
     grid_options?: Record<string, any>;
     macros?: UixMacroConfig;
+    template_nesting?: string;
     sparks?: Record<string, any>;
 }
 

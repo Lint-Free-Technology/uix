@@ -22,6 +22,8 @@ export class UixForge extends LitElement {
   @state() templatesBound: boolean;
   private _mold: UixForgeMold;
   private _macros: UixMacroConfig;
+  private _templateNestingOpen: string;
+  private _templateNestingClose: string;
   private _showError: boolean;
   private _forgeConfig: UixForgeConfigBuilder;
   private _forgedElementConfig: UixForgeConfigBuilder;
@@ -65,16 +67,25 @@ export class UixForge extends LitElement {
     if (config.forge.macros && typeof config.forge.macros !== "object") {
       throw new Error("forge macros must be an object");
     }
+    if (config.forge.template_nesting && typeof config.forge.template_nesting !== "string") {
+      throw new Error("forge template_nesting must be a string");
+    }
+    if (config.forge.template_nesting && config.forge.template_nesting.length !== 4) {
+      throw new Error("forge template_nesting must be four characters");
+    }
     this.templatesBound = false;
     this.config = config;
     this._mold = new UIX_FORGE_MOLD_CLASSES[config.forge.mold](this);
     this._macros = config.forge.macros;
     this._showError = config.forge.show_error || false;
+    this._templateNestingOpen = config.forge.template_nesting ? config.forge.template_nesting.slice(0, 2) : "<<";
+    this._templateNestingClose = config.forge.template_nesting ? config.forge.template_nesting.slice(2) : ">>";
     const forgeConfig = { ...config.forge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
+    delete forgeConfig.template_nesting;
     this.forgeConfig = forgeConfig;
     this.forgedElementConfig = { ...config.element };
     Promise.all([
@@ -146,6 +157,8 @@ export class UixForge extends LitElement {
       delete forgeConfig.type;
       delete forgeConfig.mold;
       delete forgeConfig.macros;
+      delete forgeConfig.show_error;
+      delete forgeConfig.template_nesting;
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...this.config.element };
       Promise.all([
@@ -200,9 +213,12 @@ export class UixForge extends LitElement {
             unbind_template(binding.callback);
           }
         }
-        const macroStr = buildMacros(this._macros, current[k]);
+        const template = current[k].replaceAll(this._templateNestingOpen, "{% raw %}{{{% endraw %}").replaceAll(this._templateNestingClose, "{% raw %}}}{% endraw %}");
+        const macroStr = buildMacros(this._macros, template);
         const callback = (res: any) => {
-          if (typeof res === "string") res = translate(hs, res);
+          if (typeof res === "string") {
+            res = translate(hs, res);
+          }
           base.nested = { keys: currentPath, value: res };
           if (this.templatesBound) {
             base.refreshCallback?.(currentPath);
@@ -210,7 +226,7 @@ export class UixForge extends LitElement {
         };
         bind_template(
           callback,
-          `${macroStr}${current[k]}`,
+          `${macroStr}${template}`,
           { config: this.config }
         );
         base.setBinding(bindingPath, callback);
