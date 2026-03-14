@@ -25,3 +25,14 @@ export async function provideHass(el) {
   const base: any = await hass_base_el();
   base.provideHass(el);
 }
+
+const LOCALIZE_PATTERN = /__[^_]+__/g;
+
+export const translate = (hass, text: String) => {
+  return text.replace(LOCALIZE_PATTERN, (key) => {
+    const params = key
+      .slice(2, -2)
+      .split(/\s*,\s*/);
+    return hass?.localize?.apply(null, params) || key;
+  });
+};

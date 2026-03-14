@@ -37,7 +37,7 @@ export interface MacroConfig {
   template: string;
 }
 
-interface UixConfig {
+export interface UixConfig {
   style?: UixStyle;
   class?: string | string[];
   debug?: boolean;

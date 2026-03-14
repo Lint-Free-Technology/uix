@@ -139,9 +139,9 @@ export async function bind_template(
   }
 }
 
-export async function unbind_template(
+export function unbind_template(
   callback: (string) => void
-): Promise<void> {
+): void {
   for (const [key, cache] of Object.entries(cachedTemplates)) {
     if (cache.callbacks.has(callback)) {
       cache.callbacks.delete(callback);

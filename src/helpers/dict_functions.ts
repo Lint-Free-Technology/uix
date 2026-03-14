@@ -35,3 +35,13 @@ export function compare_deep(a: any, b: any) {
   }
   return true;
 }
+
+export const dynamicAccess = (arr, path) => {
+    // The reduce function iterates through each index in the path array.
+    // 'current' (c) is the current level of the array/object being accessed.
+    // 'index' (i) is the current index from the path array.
+    return path.reduce((current, index) => {
+        // Access the next nested level using the current index
+        return current && current[index];
+    }, arr); // Start with the original array
+};
