@@ -179,7 +179,7 @@ As you develop your UIX themes you are likely to come to a point where you start
 
 ```yaml
 red-theme:
-  uix-theme: red-theme # this variable much match the theme name including case
+  uix-theme: red-theme # this variable must match the theme name including case
 
   primary-color: red
   ha-card-border-radius: 20px
