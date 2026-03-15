@@ -43,7 +43,7 @@ red-theme:
 
 ```yaml
 red-theme:
-  uix-theme: red-theme # this variable much match the theme name including case
+  uix-theme: red-theme # this variable must match the theme name including case
 
   primary-color: red
   primary-text-color: white
