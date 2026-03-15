@@ -1,3 +1,13 @@
+## [5.3.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1-beta.1...v5.3.1-beta.2) (2026-03-15)
+
+### 🐞 Bug Fixes
+
+* **console_debug:** correct shadow-root path key for dialog/theme elements and add theme boilerplate ([#94](https://github.com/Lint-Free-Technology/uix/issues/94)) ([85bcea8](https://github.com/Lint-Free-Technology/uix/commit/85bcea816daf35b05f1b2da9a73b1b78cc6ea82a)), closes [#86](https://github.com/Lint-Free-Technology/uix/issues/86) [#86](https://github.com/Lint-Free-Technology/uix/issues/86)
+
+### 📦 Dependency Upgrades
+
+* bump tar and npm ([#85](https://github.com/Lint-Free-Technology/uix/issues/85)) ([be38cbc](https://github.com/Lint-Free-Technology/uix/commit/be38cbc53956fa8b56aa8c1d90609960ab4c6638))
+
 ## [5.3.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0...v5.3.1-beta.1) (2026-03-11)
 
 ### 🐞 Bug Fixes
