@@ -109,13 +109,35 @@ function buildSelector(el: Element): string {
 }
 
 // ---------------------------------------------------------------------------
-// The "UIX context" for a parent element is its shadow root when present,
-// otherwise the element itself.  Paths in selectTree are relative to this.
+// The "UIX context" for a parent element is determined by where the uix-nodes
+// are actually placed:
+//   - Inside the shadow root  (apply_uix called with shadow=true, the default):
+//       the shadow root is the context.
+//   - Inside the element itself (apply_uix called with shadow=false, used for
+//       dialogs, sidebar, view, etc.):
+//       the element itself is the context, and its shadow root (if any) is
+//       crossed via the "$" path key.
 // ---------------------------------------------------------------------------
 
-function uixContext(uixParentEl: Element): Element | ShadowRoot {
+function uixContext(uixParentEl: Element, uixNodes?: any[]): Element | ShadowRoot {
+  if (uixNodes && uixNodes.length > 0) {
+    const parent = uixNodes[0].parentNode;
+    if (parent instanceof ShadowRoot) return parent;
+    if (parent instanceof Element) return parent;
+  }
   return uixParentEl.shadowRoot ?? uixParentEl;
 }
+
+// ---------------------------------------------------------------------------
+// UIX types that are theme-only: they are applied by UIX internally and cannot
+// be targeted via a card-level `uix:` key.  uix_path should show theme YAML
+// boilerplate for these types rather than card YAML.
+// ---------------------------------------------------------------------------
+
+const THEME_UIX_TYPES = new Set([
+  "dialog", "root", "view", "more-info", "sidebar",
+  "config", "panel-custom", "top-app-bar-fixed", "developer-tools",
+]);
 
 // ---------------------------------------------------------------------------
 // Build the UIX YAML path key and matching CSS selector for a target element.
@@ -136,13 +158,14 @@ interface PathAndSelector {
 
 function buildPathKeyAndCssSelector(
   uixParentEl: Element,
-  targetEl: Element
+  targetEl: Element,
+  uixNodes?: any[]
 ): PathAndSelector | null {
   if (targetEl === uixParentEl) {
     return { pathKey: ".", cssSelector: ":host" };
   }
 
-  const ctx = uixContext(uixParentEl);
+  const ctx = uixContext(uixParentEl, uixNodes);
   type Segment = { kind: "element"; sel: string } | { kind: "shadow" };
   const segments: Segment[] = [];
   let current: Node = targetEl;
@@ -240,7 +263,7 @@ interface StyleGroup {
 // hierarchies found in Home Assistant cards.
 const MAX_TRAVERSAL_DEPTH = 6;
 
-function collectSubtreeGroups(uixParentEl: Element): StyleGroup[] {
+function collectSubtreeGroups(uixParentEl: Element, uixNodes?: any[]): StyleGroup[] {
   // Preserve insertion order so groups appear top-down as encountered.
   const groups = new Map<string, CssSelectorEntry[]>();
   const visited = new WeakSet<Element>();
@@ -296,7 +319,16 @@ function collectSubtreeGroups(uixParentEl: Element): StyleGroup[] {
     }
   }
 
-  traverse(uixContext(uixParentEl), [], [], 0);
+  const ctx = uixContext(uixParentEl, uixNodes);
+  if (ctx instanceof Element && ctx.shadowRoot) {
+    // The uix-node lives in the element itself (shadow=false).  The element's
+    // shadow root is reached from style YAML via the "$" path key.
+    traverse(ctx.shadowRoot, ["$"], [], 0);
+  } else {
+    // ctx is the shadow root (shadow=true) or an element with no shadow root –
+    // traverse directly from ctx with no initial path prefix.
+    traverse(ctx, [], [], 0);
+  }
   return Array.from(groups.entries()).map(([pathKey, cssSelectors]) => ({
     pathKey,
     cssSelectors,
@@ -401,7 +433,7 @@ async function getActiveChildren(
   }
 
   // --- Available YAML Selectors ---
-  const groups = collectSubtreeGroups(parent.element);
+  const groups = collectSubtreeGroups(parent.element, parent.uixNodes);
   const totalSelectors = groups.reduce((n, g) => n + g.cssSelectors.length, 0);
   console.log(
     `%c🗺️ Available YAML Selectors  (${pl(groups.length, "YAML selector")}, ${pl(totalSelectors, "CSS selector")})`,
@@ -456,7 +488,7 @@ async function getActiveChildren(
   console.log("  UIX type:", parent.primaryType);
 
   // --- Path key and CSS selector ---
-  const result = buildPathKeyAndCssSelector(parent.element, element);
+  const result = buildPathKeyAndCssSelector(parent.element, element, parent.uixNodes);
   if (result === null) {
     console.warn(
       "Could not build a path: the element may not be a descendant of the UIX parent."
@@ -485,26 +517,61 @@ async function getActiveChildren(
   console.log("  Suggested CSS selector:", cssSelector, element);
 
   // --- Boilerplate YAML ---
-  let yaml: string;
-  if (pathKey === ".") {
-    yaml =
-      `uix:\n` +
-      `  style: |\n` +
-      `    ${cssSelector} {\n` +
-      `      /* your styles for ${element.localName} */\n` +
-      `    }`;
-  } else {
-    yaml =
+  const isThemeType = THEME_UIX_TYPES.has(parent.primaryType);
+  const themeKey = `uix-${parent.primaryType}`;
+  const localName = element.localName;
+
+  function buildCardYaml(): string {
+    if (pathKey === ".") {
+      return (
+        `uix:\n` +
+        `  style: |\n` +
+        `    ${cssSelector} {\n` +
+        `      /* your styles for ${localName} */\n` +
+        `    }`
+      );
+    }
+    return (
       `uix:\n` +
       `  style:\n` +
       `    "${pathKey}": |\n` +
       `      ${cssSelector} {\n` +
-      `        /* your styles for ${element.localName} */\n` +
-      `      }`;
+      `        /* your styles for ${localName} */\n` +
+      `      }`
+    );
   }
 
-  console.log("%c📝 Boilerplate UIX YAML", SECTION_STYLE);
-  console.log(yaml);
+  function buildThemeYaml(): string {
+    if (pathKey === ".") {
+      return (
+        `my-awesome-theme:\n` +
+        `  uix-theme: my-awesome-theme\n` +
+        `  ${themeKey}: |\n` +
+        `    ${cssSelector} {\n` +
+        `      /* your styles for ${localName} */\n` +
+        `    }`
+      );
+    }
+    return (
+      `my-awesome-theme:\n` +
+      `  uix-theme: my-awesome-theme\n` +
+      `  ${themeKey}-yaml: |\n` +
+      `    "${pathKey}": |\n` +
+      `      ${cssSelector} {\n` +
+      `        /* your styles for ${localName} */\n` +
+      `      }`
+    );
+  }
+
+  if (isThemeType) {
+    console.log("%c📝 Boilerplate Theme YAML", SECTION_STYLE);
+    console.log(buildThemeYaml());
+  } else {
+    console.log("%c📝 Boilerplate UIX YAML", SECTION_STYLE);
+    console.log(buildCardYaml());
+    console.log("%c📝 Boilerplate Theme YAML", SECTION_STYLE);
+    console.log(buildThemeYaml());
+  }
 
   console.groupEnd();
 };
