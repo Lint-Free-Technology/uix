@@ -11,7 +11,7 @@ frontend:
   themes: !include_dir_merge_named themes/
 ```
 
-After restarting Home Assistant, you can place theme files in that directory, load them with the Frontend.[reload_theme](https://www.home-assistant.io/integrations/frontend/#setting-themes)s service.
+After restarting Home Assistant, you can place theme files in that directory, load them with the Frontend. [reload_theme](https://www.home-assistant.io/integrations/frontend/#setting-themes) service.
 
 Theme files are normally yaml documents, which contain settings for the many themeable variables available in Home Assistant.
 
