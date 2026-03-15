@@ -137,13 +137,14 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **📦 Closest UIX Parent** | Same as `uix_tree`. |
 | **📍 UIX Path to Target** | The exact path string (using `$` for shadow-root crossings) from the UIX parent context to `$0`. Use this as the key in a UIX `style:` config. |
 | **🎨 CSS Target** | Tag name, id, classes and a suggested CSS selector for the element — each followed by a clickable element reference to jump straight to it in the DevTools inspector. |
-| **📝 Boilerplate UIX YAML** | A paste-ready YAML snippet to get you started. |
+| **📝 Boilerplate UIX YAML** | A paste-ready card-level YAML snippet to get you started. Shown only for types that can be styled via a card-level `uix:` key. |
+| **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used. |
 
     ```js
     uix_path($0)
     ```
 
-??? example
+??? example "Card element (shows both card and theme boilerplate)"
     After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
 
     ```
@@ -164,6 +165,40 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
               h3 {
                 /* your styles for h3 */
               }
+      📝 Boilerplate Theme YAML
+        my-awesome-theme:
+          uix-theme: my-awesome-theme
+          uix-card-yaml: |
+            "ha-markdown $": |
+              h3 {
+                /* your styles for h3 */
+              }
     ```
 
     The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
+
+??? example "Dialog element (shows theme boilerplate only)"
+    After selecting an element inside a dialog and running `uix_path($0)`:
+
+    ```
+    💡 UIX Path 💡
+      Target element: <ha-dialog-header>
+      📦 Closest UIX Parent
+        Element: <ha-more-info-dialog>
+        UIX type: dialog
+      📍 UIX Path to Target
+        Path: "$":
+      🎨 CSS Target
+        Tag: ha-dialog-header
+        Suggested CSS selector: ha-dialog-header  <ha-dialog-header>
+      📝 Boilerplate Theme YAML
+        my-awesome-theme:
+          uix-theme: my-awesome-theme
+          uix-dialog-yaml: |
+            "$": |
+              ha-dialog-header {
+                /* your styles for ha-dialog-header */
+              }
+    ```
+
+    Theme-only types (`dialog`, `root`, `view`, `more-info`, `sidebar`, `config`, `panel-custom`, `top-app-bar-fixed`, `developer-tools`) only show theme boilerplate because they cannot be styled via a card-level `uix:` key. When shadow-root crossings appear in the path, the `-yaml` variant of the theme variable is used.
