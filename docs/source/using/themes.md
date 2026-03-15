@@ -175,7 +175,7 @@ red-theme:
 !!! tip "UIX theme variable precedence"
     `uix-<thing>-yaml` always takes precedence over `uix-<thing>` which is NOT used if `uix-<thing>-yaml` is present in the theme.
 
-As you develop your UIX themes you are likely to come to a point where you started with straight CSS strings with `uix-thing` but need to update to use `uix-<thing>-yaml`. You can do this by using the root yaml selector `.:`. Below is the full example of the red theme using `uix-row-yaml1`.
+As you develop your UIX themes you are likely to come to a point where you started with straight CSS strings with `uix-<thing>` but need to update to use `uix-<thing>-yaml`. You can do this by using the root yaml selector `.:`. Below is the full example of the red theme using `uix-row-yaml`.
 
 ```yaml
 red-theme:
