@@ -102,9 +102,9 @@ Reports everything UIX knows about the area surrounding the selected element:
 | **👶 Active UIX Children** | Paths that are currently being styled as children of the UIX parent, with the resolved DOM elements shown. |
 | **🗺️ Available YAML Selectors** | Every YAML style key reachable within the UIX parent's shadow DOM subtree (stopping at the next UIX parent boundary). Each key maps to one shadow context; inside you'll find the CSS selectors valid for that key's style string. |
 
-    ```js
-    uix_tree($0)
-    ```
+```js
+uix_tree($0)
+```
 
 ??? example
     After selecting a card element in the inspector and running `uix_tree($0)`, the console output might look like:
@@ -138,11 +138,13 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **📍 UIX Path to Target** | The exact path string (using `$` for shadow-root crossings) from the UIX parent context to `$0`. Use this as the key in a UIX `style:` config. |
 | **🎨 CSS Target** | Tag name, id, classes and a suggested CSS selector for the element — each followed by a clickable element reference to jump straight to it in the DevTools inspector. |
 | **📝 Boilerplate UIX YAML** | A paste-ready card-level YAML snippet to get you started. Shown only for types that can be styled via a card-level `uix:` key. |
-| **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used. |
+| **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used.
 
-    ```js
-    uix_path($0)
-    ```
+To use `uix_path($0)`, open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), and run the function:
+
+```js
+uix_path($0)
+```
 
 ??? example "Card element (shows both card and theme boilerplate)"
     After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
