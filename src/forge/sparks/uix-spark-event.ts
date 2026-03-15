@@ -1,4 +1,3 @@
-import { merge_deep } from "../../helpers/dict_functions";
 import { UixForgeSparkBase } from "./uix-spark-base";
 
 export class UixForgeSparkDomEvents extends UixForgeSparkBase {

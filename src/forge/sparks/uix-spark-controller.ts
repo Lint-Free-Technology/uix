@@ -1,11 +1,14 @@
 export type UixForgeSpark = UixForgeSparkBase;
 
+import { PropertyValues } from "lit";
 import { UixForge } from "../uix-forge";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
+import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
+    "tooltip": UixForgeSparkTooltip,
 };
 
 export class UixForgeSparkController {
@@ -49,6 +52,10 @@ export class UixForgeSparkController {
     this.sparks.forEach(spark => spark.disconnectedCallback());
   }
 
+  updated(_changedProperties: PropertyValues) {
+    this.sparks.forEach(spark => spark.updated(_changedProperties));
+  }
+
   refreshForgeTemplates() {
     this.forge.refreshForgeTemplates();
   }
@@ -63,6 +70,10 @@ export class UixForgeSparkController {
 
   refreshForgeHidden() {
     this.forge.refreshForge(["hidden"]);
+  }
+
+  forgedElement() {
+    return this.forge.forgedElement;
   }
 
   mergeDeep(target: Record<string, any>, source: Record<string, any>): Record<string, any> {

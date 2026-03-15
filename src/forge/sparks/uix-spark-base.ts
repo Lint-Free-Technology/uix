@@ -1,5 +1,5 @@
-import { UixForge } from "../uix-forge";
-import { UixForgeSpark, UixForgeSparkController } from "./uix-spark-controller";
+import { PropertyValues } from "lit";
+import { UixForgeSparkController } from "./uix-spark-controller";
 
 export abstract class UixForgeSparkBase {
   controller: UixForgeSparkController;
@@ -19,6 +19,8 @@ export abstract class UixForgeSparkBase {
   connectedCallback() {}
 
   disconnectedCallback() {}
+
+  updated(_changedProperties: PropertyValues) {}
 
   configUpdated(config: Record<string, any>) {
     this.config = config;
