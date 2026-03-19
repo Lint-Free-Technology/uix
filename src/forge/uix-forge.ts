@@ -100,7 +100,7 @@ export class UixForge extends LitElement {
       }
       this.templatesBound = true;
       this.refreshForge([]);
-      this._sparkController.setConfig(this._forgeConfig.config.sparks);
+      this._sparkController.setConfig(this.forgeConfig.sparks);
     });
   }
 
@@ -172,7 +172,7 @@ export class UixForge extends LitElement {
       ]).then(() => {
         this.templatesBound = true;
         this.refreshForge([]);
-        this._sparkController.setConfig(this._forgeConfig.config.sparks);
+        this._sparkController.setConfig(this.forgeConfig.sparks);
       });
     }
   }
@@ -263,7 +263,11 @@ export class UixForge extends LitElement {
   }
 
   refreshForge(path: UixForgeConfigPath) {
-    this._mold.refresh(path);
+    if (path.includes("sparks")) {
+      this._sparkController.setConfig(this.forgeConfig.sparks);
+    } else {
+      this._mold.refresh(path);
+    }
   }
 
   refreshForgedElement(path?: UixForgeConfigPath) {
