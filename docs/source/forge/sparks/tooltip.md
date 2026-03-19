@@ -3,7 +3,7 @@ description: Learn about the tooltip spark for UIX Forge — add rich, styled to
 ---
 # Tooltip spark
 
-The `tooltip` spark attaches a styled tooltip to any element inside a [UIX Forge](./index.md) card or badge. It uses Home Assistant's `wa-tooltip` component (the same component used throughout the HA frontend), so it integrates with the HA design system, supports 12 placement positions and floats above all other UI layers via the browser's Popover API.
+The `tooltip` spark attaches a styled tooltip to any element inside a [UIX Forge](../index.md) card or badge. It uses Home Assistant's `wa-tooltip` component (the same component used throughout the HA frontend), so it integrates with the HA design system, supports 12 placement positions and floats above all other UI layers via the browser's Popover API.
 
 ## Basic usage
 
@@ -22,7 +22,7 @@ element:
   entity: light.living_room
 ```
 
-The `for` value is a selector that locates the target element within the forged card. It supports the same [DOM navigation syntax](../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
+The `for` value is a selector that locates the target element within the forged card. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
 ```yaml
 # Cross a shadow root to target an icon inside a tile card
@@ -53,7 +53,7 @@ Only the **first** element matched by `for` gets the tooltip.
 
 ## Jinja2 templates in content
 
-The `content` value is part of the `forge` config and is therefore processed as a Jinja2 template, giving you access to entity states, the `config` object and any other [UIX template variables](../using/templates.md):
+The `content` value is part of the `forge` config and is therefore processed as a Jinja2 template, giving you access to entity states, the `config` object and any other [UIX template variables](../../using/templates.md):
 
 ```yaml
 type: custom:uix-forge

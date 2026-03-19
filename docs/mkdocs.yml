@@ -6,8 +6,8 @@ theme:
   variant: classic
   features:
     - navigation.tabs
-    - navigation.sections
     - navigation.indexes
+    - navigation.expand
     - toc.integrate
     - navigation.top
     - navigation.footer
@@ -50,30 +50,33 @@ markdown_extensions:
 nav:
   - About: 'index.md'
   - Quick Start: 'quick-start.md'
-  - Using UIX:
-      - using/index.md
-      - using/cards.md
-      - using/entities.md
-      - using/icons.md
-      - using/templates.md
-      - using/themes.md
-      - using/other.md
+  - UIX Styling:
+      -  Styling:
+          - using/index.md
+          - using/cards.md
+          - using/entities.md
+          - using/icons.md
+          - using/templates.md
+          - using/themes.md
+          - using/other.md
+      - Debugging:
+          - debugging/index.md
+          - debugging/cards.md
+          - debugging/templates.md
+          - debugging/cache.md
+      - Concepts:
+          - concepts/index.md
+          - concepts/dom.md
+          - concepts/application.md
+      - Developers:
+          - developers/index.md
+          - developers/cards.md
+          - developers/themes.md
   - UIX Forge:
       - forge/index.md
-      - forge/tooltip.md
-  - Debugging UIX:
-      - debugging/index.md
-      - debugging/cards.md
-      - debugging/templates.md
-      - debugging/cache.md
-  - UIX Concepts:
-      - concepts/index.md
-      - concepts/dom.md
-      - concepts/application.md
-  - Developers:
-      - developers/index.md
-      - developers/cards.md
-      - developers/themes.md
+      - Sparks:
+          - forge/sparks/index.md
+          - forge/sparks/tooltip.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'

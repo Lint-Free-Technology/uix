@@ -63,4 +63,4 @@ Sparks are optional behaviours that you add to the `forge.sparks` list. Each spa
 
 Available sparks:
 
-- :speech_balloon: [Tooltip spark](./tooltip.md) — attach a styled `wa-tooltip` to any element inside the forged card.
+- :speech_balloon: [Tooltip spark](./sparks/tooltip.md) — attach a styled `wa-tooltip` to any element inside the forged card.
