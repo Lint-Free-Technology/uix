@@ -2,7 +2,7 @@
 description: Use the attribute spark to replace or remove an HTML attribute on a target element within a Forge card.
 ---
 
-# Forge Spark — attribute
+# Attribute spark
 
 The `attribute` spark lets you **replace** or **remove** an HTML attribute on any element inside a Forge card. A common use-case is removing or overriding the `title` attribute on a `hui-generic-entity-row` info element so that the browser's native tooltip no longer appears, or so that a custom value is shown instead.
 
@@ -20,53 +20,66 @@ The `attribute` spark lets you **replace** or **remove** an HTML attribute on an
 
 ### Remove a native tooltip (title attribute)
 
-Entity rows in Home Assistant often carry a `title` attribute on their info class element, which causes a native browser tooltip to appear on hover. To remove it:
+Weather forecast card has a `title` attribute on the name, which causes a native browser tooltip to appear on hover. To remove it:
 
 ```yaml
-type: custom:forge-card
-entities:
-  - entity: light.living_room
-sparks:
-  - type: attribute
-    for: "hui-generic-entity-row $ .info"
-    attribute: title
-    action: remove
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: attribute
+      for: hui-weather-forecast-card $ div.name
+      attribute: title
+      action: remove
+element:
+  show_current: true
+  show_forecast: false
+  type: weather-forecast
+  entity: weather.carlingford
+  forecast_type: daily
 ```
 
 ### Replace the title attribute with a custom value
 
 ```yaml
-type: custom:forge-card
-entities:
-  - entity: light.living_room
-sparks:
-  - type: attribute
-    for: "hui-generic-entity-row $ .info"
-    attribute: title
-    action: replace
-    value: "My custom tooltip text"
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: attribute
+      for: hui-weather-forecast-card $ div.name
+      attribute: title
+      action: replace
+      value: Weather forecast for Carlingford and surrounding districts.
+element:
+  show_current: true
+  show_forecast: false
+  type: weather-forecast
+  entity: weather.carlingford
+  forecast_type: daily
 ```
 
 ### Use a template for the value
 
-The `value` field supports [Jinja2 templates](../../using/templates.md), giving you access to entity states and other template variables:
+The `value` field supports [templates](../../using/templates.md), giving you access to entity states and other template variables:
 
 ```yaml
-type: custom:forge-card
-entities:
-  - entity: light.living_room
-sparks:
-  - type: attribute
-    for: "hui-generic-entity-row $ .info"
-    attribute: title
-    action: replace
-    value: >
-      {{ states('light.living_room') | capitalize }}
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: attribute
+      for: hui-tile-card
+      attribute: title
+      action: replace
+      value: |
+        {{ relative_time(states[config.element.entity].last_changed) }} ago
+element:
+  type: tile
+  entity: light.bed_light
 ```
 
 ## Notes
 
 - The spark targets the **first** matching element found by the `for` selector.
-- The original attribute value is automatically **restored** when the spark is disconnected (e.g. when the card is removed from the dashboard).
-- If the target element does not yet exist when the card loads, the spark retries automatically for a short period before giving up.
 - When `action` is `replace` and `value` is an empty string, an empty attribute (e.g. `title=""`) is set — not removed. Use `action: remove` to delete the attribute entirely.
