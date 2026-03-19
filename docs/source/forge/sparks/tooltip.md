@@ -41,16 +41,16 @@ Only the **first** element matched by `for` gets the tooltip.
 
 ## Configuration
 
-| Key | Type | Default | Description |
-| --- | ---- | ------- | ----------- |
-| `for` | string | (required) | UIX selector for the target element. |
-| `content` | string | `""` | HTML content of the tooltip body. |
-| `placement` | string | `"top"` | Tooltip position relative to the target. Placement values are `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right` · `right-start`, `right-end`. |
-| `distance` | number | `8` | Gap in pixels between the tooltip and the target element. |
-| `skidding` | number | `0` | Offset in pixels along the target element's axis. |
-| `show_delay` | number | `150` | Milliseconds to wait before showing the tooltip. |
-| `hide_delay` | number | `150` | Milliseconds to wait before hiding the tooltip. |
-| `without_arrow` | boolean | `false` | Set to `true` to hide the directional arrow. |
+| Key | Type | Required | Default | Description |
+| --- | ---- | -------- | ------- | ----------- |
+| `for` | string | ✅ | - | UIX selector for the target element. |
+| `content` | string | | `""` | HTML content of the tooltip body. |
+| `placement` | string | | `"top"` | Tooltip position relative to the target. Placement values are `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right` · `right-start`, `right-end`. |
+| `distance` | number | | `8` | Gap in pixels between the tooltip and the target element. |
+| `skidding` | number | | `0` | Offset in pixels along the target element's axis. |
+| `show_delay` | number | | `150` | Milliseconds to wait before showing the tooltip. |
+| `hide_delay` | number | | `150` | Milliseconds to wait before hiding the tooltip. |
+| `without_arrow` | boolean | | `false` | Set to `true` to hide the directional arrow. |
 
 ## Templates in content
 
