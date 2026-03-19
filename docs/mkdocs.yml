@@ -67,6 +67,8 @@ nav:
       - concepts/index.md
       - concepts/dom.md
       - concepts/application.md
+  - Forge Sparks:
+      - forge/sparks/attribute.md
   - Developers:
       - developers/index.md
       - developers/cards.md
