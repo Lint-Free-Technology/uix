@@ -5,6 +5,7 @@ import { UixForge } from "../uix-forge";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
+import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
@@ -74,6 +75,37 @@ export class UixForgeSparkController {
 
   forgedElement() {
     return this.forge.forgedElement;
+  }
+
+  async target(selector: string, cancelCallbacks: Array<() => void>): Promise<HTMLElement[] | void> {
+    return this._target(selector, cancelCallbacks).catch((e) => {
+      if (e.message === "NoElements") {
+        console.info(`UIX Forge: spark: No elements found. Looked for ${selector}`);
+        return;
+      }
+      if (e.message === "Cancelled") {
+        return;
+      }
+      throw e;
+    });
+  }
+
+  async _target(selector: string, cancelCallbacks: Array<() => void>, retries = 0): Promise<HTMLElement[]> {
+    const parent = this.forgedElement();
+    const result = await selectTree(parent, selector, true);
+    const foundElements: HTMLElement[] = result ? Array.from(result as NodeListOf<HTMLElement>) : [];
+    if (foundElements.length === 0) {
+      if (retries > 5) throw new Error("NoElements");
+      let timeout = new Promise((resolve, reject) => {
+        setTimeout(resolve, retries * 100);
+        cancelCallbacks.push(reject);
+      });
+      await timeout.catch(() => {
+        throw new Error("Cancelled");
+      });
+      return this._target(selector, cancelCallbacks, retries + 1);
+    }
+    return foundElements;
   }
 
   mergeDeep(target: Record<string, any>, source: Record<string, any>): Record<string, any> {
