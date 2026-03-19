@@ -1,7 +1,8 @@
 ---
 description: Learn about the tooltip spark for UIX Forge — add rich, styled tooltips to any DOM element in a UIX Forge element.
+icon: material/chat-outline
 ---
-# Tooltip spark
+# :speech_balloon: Tooltip spark
 
 The `tooltip` spark attaches a styled tooltip to any element inside a [UIX Forge](../index.md) forged element. It uses Home Assistant's `wa-tooltip` component (the same component used throughout the HA frontend), so it integrates with the HA design system, supports 12 placement positions and floats above all other UI layers via the browser's Popover API.
 

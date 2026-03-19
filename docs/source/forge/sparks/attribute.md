@@ -1,8 +1,9 @@
 ---
 description: Use the attribute spark to replace or remove an HTML attribute on a target element within a UIX Forge element.
+icon: material/label-outline
 ---
 
-# Attribute spark
+# :label: Attribute spark
 
 The `attribute` spark lets you **replace** or **remove** an HTML attribute on any element inside a forged element. A common use-case is removing or overriding the `title` attribute on an element so that the browser's native tooltip no longer appears, or so that a custom value is shown instead.
 

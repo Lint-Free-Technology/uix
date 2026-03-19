@@ -1,8 +1,9 @@
 ---
 description: Use the event spark to receive DOM events from `fire-dom-event` actions and expose their data as template variables in a UIX Forge element.
+icon: material/lightning-bolt-outline
 ---
 
-# Event spark
+# :zap: Event spark
 
 The `event` spark receives events fired with Home Assistant action `fire-dom-event` and exposes the received data as template variables inside forged element. Use it to build cards that react to user interactions or automation-triggered events elsewhere in the dashboard.
 
