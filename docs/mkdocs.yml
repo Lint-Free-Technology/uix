@@ -77,6 +77,7 @@ nav:
       - Sparks:
           - forge/sparks/index.md
           - forge/sparks/tooltip.md
+          - forge/sparks/attribute.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'

@@ -5,11 +5,13 @@ import { UixForge } from "../uix-forge";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
+import { UixForgeSparkAttribute } from "./uix-spark-attribute";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
     "tooltip": UixForgeSparkTooltip,
+    "attribute": UixForgeSparkAttribute,
 };
 
 export class UixForgeSparkController {
