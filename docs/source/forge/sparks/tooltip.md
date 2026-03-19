@@ -15,7 +15,7 @@ forge:
   mold: card
   sparks:
     - type: tooltip
-      for: ha-icon
+      for: hui-tile-card
       content: "Turn on the lights"
 element:
   type: tile
@@ -25,11 +25,16 @@ element:
 The `for` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
 ```yaml
-# Cross a shadow root to target an icon inside a tile card
-sparks:
-  - type: tooltip
-    for: "hui-tile-card $ ha-tile-icon"
-    content: "Toggle the living room light"
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: tooltip
+      for: "hui-tile-card $ ha-tile-icon"
+      content: "Toggle the living room light"
+element:
+  type: tile
+  entity: light.living_room
 ```
 
 Only the **first** element matched by `for` gets the tooltip.
@@ -40,20 +45,16 @@ Only the **first** element matched by `for` gets the tooltip.
 | --- | ---- | ------- | ----------- |
 | `for` | string | (required) | UIX selector for the target element. |
 | `content` | string | `""` | HTML content of the tooltip body. |
-| `placement` | string | `"top"` | Tooltip position relative to the target. See [placement values](#placement-values) below. |
+| `placement` | string | `"top"` | Tooltip position relative to the target. Placement values are `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right` · `right-start`, `right-end`. |
 | `distance` | number | `8` | Gap in pixels between the tooltip and the target element. |
 | `skidding` | number | `0` | Offset in pixels along the target element's axis. |
 | `show_delay` | number | `150` | Milliseconds to wait before showing the tooltip. |
 | `hide_delay` | number | `150` | Milliseconds to wait before hiding the tooltip. |
 | `without_arrow` | boolean | `false` | Set to `true` to hide the directional arrow. |
 
-### Placement values
+## Templates in content
 
-`top` · `top-start` · `top-end` · `bottom` · `bottom-start` · `bottom-end` · `left` · `left-start` · `left-end` · `right` · `right-start` · `right-end`
-
-## Jinja2 templates in content
-
-The `content` value is part of the `forge` config and is therefore processed as a Jinja2 template, giving you access to entity states, the `config` object and any other [UIX template variables](../../using/templates.md):
+The `content` value is part of the `forge` config and is therefore processed as a template, giving you access to entity states, the `config` object and any other [UIX template variables](../../using/templates.md):
 
 ```yaml
 type: custom:uix-forge
@@ -63,8 +64,8 @@ forge:
     - type: tooltip
       for: "hui-tile-card $ ha-tile-icon"
       content: >-
-        {{ state_attr(config.entity, 'friendly_name') }} is
-        {{ states(config.entity) }}
+        {{ state_attr(config.element.entity, 'friendly_name') }} is
+        {{ states(config.element.entity) }}
 element:
   type: tile
   entity: light.living_room
@@ -72,7 +73,10 @@ element:
 
 ## Customising tooltip appearance
 
-The tooltip spark injects CSS variables into the `wa-tooltip` element. Override them by setting `--uix-tooltip-*` variables on the forged element's `uix.style` (or in a theme):
+The tooltip spark injects CSS variables into the `wa-tooltip` element. Override them by setting `--uix-tooltip-*` variables on the forged element's `uix.style` (or in a theme).
+
+!!! note
+    As a tooltip is added as a sibling to the element it is `for`, if you wish to style the tooltip you will need to make sure your styled element is a parent of the `for` element. In the styling example, the styles are applied to `:host` and the tooltip applied to `ha-card` in the hosts shadow root.
 
 ```yaml
 type: custom:uix-forge
@@ -80,17 +84,17 @@ forge:
   mold: card
   sparks:
     - type: tooltip
-      for: ha-icon
+      for: hui-tile-card $ ha-card
       content: "Custom styled tooltip"
 element:
   type: tile
   entity: light.living_room
   uix:
     style: |
-      ha-card {
+      :host {
         --uix-tooltip-background-color: #333;
         --uix-tooltip-content-color: #fff;
-        --uix-tooltip-border-radius: 4px;
+        --uix-tooltip-border-radius: 999px;
       }
 ```
 
@@ -119,70 +123,3 @@ element:
 | `--uix-tooltip-text-decoration` | `none` | Text decoration. |
 | `--uix-tooltip-text-transform` | `none` | Text transform. |
 | `--uix-tooltip-overflow-wrap` | `normal` | Overflow-wrap behaviour. |
-
-## Examples
-
-??? example "Tooltip on a tile card icon"
-    ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: tooltip
-          for: "hui-tile-card $ ha-tile-icon"
-          content: "Toggle the living room light"
-    element:
-      type: tile
-      entity: light.living_room
-    ```
-
-??? example "Tooltip below the element, without arrow"
-    ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: tooltip
-          for: ha-icon
-          content: "Settings"
-          placement: bottom
-          without_arrow: true
-    element:
-      type: tile
-      entity: light.living_room
-    ```
-
-??? example "Tooltip with custom show/hide delay"
-    ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: tooltip
-          for: ha-icon
-          content: "Hover to learn more"
-          show_delay: 500
-          hide_delay: 200
-    element:
-      type: tile
-      entity: light.living_room
-    ```
-
-??? example "State-based tooltip content via Jinja2"
-    ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: tooltip
-          for: "hui-tile-card $ ha-tile-icon"
-          content: >-
-            {% if is_state(config.entity, 'on') %}
-              Light is on — click to turn off
-            {% else %}
-              Light is off — click to turn on
-            {% endif %}
-    element:
-      type: tile
-      entity: light.living_room
-    ```
