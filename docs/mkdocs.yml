@@ -58,6 +58,9 @@ nav:
       - using/templates.md
       - using/themes.md
       - using/other.md
+  - UIX Forge:
+      - forge/index.md
+      - forge/tooltip.md
   - Debugging UIX:
       - debugging/index.md
       - debugging/cards.md
