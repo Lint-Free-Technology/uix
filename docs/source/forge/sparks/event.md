@@ -4,14 +4,14 @@ description: Use the event spark to receive browser events and expose their data
 
 # Event spark
 
-The `event` spark listens for [`ll-custom`](https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/#firing-events) browser events fired on the `document` and exposes the received data as template variables inside the [UIX Forge](../index.md) element. Use it to build cards that react to user interactions or automation-triggered events elsewhere in the dashboard.
+The `event` spark receives events fired with `fire-dom-event` and exposes the received data as template variables inside the [UIX Forge](../index.md) element. Use it to build cards that react to user interactions or automation-triggered events elsewhere in the dashboard.
 
 ## Configuration
 
 | Key | Type | Required | Default | Description |
 |-----|------|----------|---------|-------------|
 | `type` | `string` | ✅ | — | Must be `event`. |
-| `forge_id` | `string` | | — | ID for this forge element. Data from `ll-custom` events whose `forge_id` matches is spread directly into `uixForge.event`. |
+| `forge_id` | `string` | | — | ID for this forge element. Data from `fire-dom-event` events whose `forge_id` matches is spread directly into `uixForge.event`. |
 | `other_forge_ids` | list of strings | | — | IDs of other forge elements to listen to. Data for each ID is available as `uixForge.event.<id>`. |
 
 At least one of `forge_id` or `other_forge_ids` should be set for the spark to receive anything.
@@ -29,7 +29,7 @@ Data accumulates across events — each new event is deep-merged into the existi
 
 ## Firing an event
 
-The event spark reacts to `ll-custom` DOM events dispatched on the `document`. Any HA element that supports `tap_action` can fire one with `action: fire-dom-event`. The extra keys you add alongside `action` become the event detail:
+Any Home Assistant element that supports `tap_action` can fire an event using `action: fire-dom-event`. Add a `uix_forge` key alongside `action` containing a list of forge event objects:
 
 ```yaml
 tap_action:
@@ -39,8 +39,6 @@ tap_action:
       data:
         selected: living_room
 ```
-
-This fires `ll-custom` with `detail.uix_forge` set to the list above.
 
 ## Usage
 
