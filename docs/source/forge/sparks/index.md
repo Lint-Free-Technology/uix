@@ -8,5 +8,5 @@ Sparks are optional behaviours added to a [UIX Forge](../index.md) forged elemen
 
 Available sparks:
 
-- :speech_balloon: [Tooltip](./tooltip.md) — attach a styled `wa-tooltip` to any element within the forged element.
+- :speech_balloon: [Tooltip](./tooltip.md) — attach a styled tooltip to any element within the forged element.
 - :label: [Attribute](attribute.md) - add, replace or remove an attribute of any element within the forged element.
