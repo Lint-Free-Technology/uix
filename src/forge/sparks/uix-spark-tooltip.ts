@@ -74,14 +74,30 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     const element = elements?.[0];
     if (!element) return;
     const parent = element.parentElement || element.parentNode;
+    if (!parent) return;
     if (!element.id) {
       element.id = `for-uix-forge-tooltip-${Math.random().toString(36).substr(2, 9)}`;
     }
-    if (parent.querySelector("wa-tooltip")) {
-      return;
+    let tooltip = parent.querySelector(`wa-tooltip`);
+    if (!tooltip || tooltip.for !== element.id) {
+      tooltip = document.createElement("wa-tooltip");
+      tooltip.for = element.id;
     }
-    const tooltip: any = document.createElement("wa-tooltip");
-    tooltip.for = element.id;
+    let content = tooltip.querySelector("div");
+    if (content) {
+      content.innerHTML = this.content;
+    } else {
+      content = document.createElement("div");
+      tooltip.appendChild(content);
+    }
+    let style = tooltip.querySelector("style");
+    if (style) {
+      style.textContent = this.styles();
+    } else {
+      style = document.createElement("style");
+      style.textContent = this.styles();
+      tooltip.appendChild(style);
+    }
     tooltip.placement = this.placement;
     tooltip.skidding = this.skidding;
     tooltip.distance = this.distance;
@@ -90,13 +106,8 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     if (this.withoutArrow) {
       tooltip.setAttribute("without-arrow", "");
     }
-    const content = document.createElement("div");
     content.innerHTML = this.content;
-    const style = document.createElement("style");
-    style.textContent = this.styles();
     parent.appendChild(tooltip);
-    tooltip.appendChild(content);
-    tooltip.appendChild(style);
   }
 
   private async resolveTarget() {
