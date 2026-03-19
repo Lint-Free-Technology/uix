@@ -1,7 +1,5 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
-import { Uix } from "../../uix";
-import { selectTree } from "../../helpers/selecttree";
 import { apply_uix } from "../../helpers/apply_uix";
 
 export class UixForgeSparkTooltip extends UixForgeSparkBase {
@@ -9,7 +7,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
 
   private for: string = "";
   private content: string = "";
-  private _tooltipElement: Promise<HTMLElement | void>;
+  private _targetElements: Promise<HTMLElement[] | void> | undefined;
   private _cancel_tooltip: (() => void)[] = [];
 
   constructor(controller: any, config: Record<string, any>) {
@@ -36,10 +34,10 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
 
   disconnectedCallback(): void {
     this.cancelTooltip();
-    if (this._tooltipElement) {
-      this._tooltipElement.then((el) => {
-        if (el) {
-          el.remove();
+    if (this._targetElements) {
+      this._targetElements.then((elements) => {
+        if (elements?.[0]) {
+          elements[0].remove();
         }
       });
     }
@@ -48,11 +46,14 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   private cancelTooltip() {
     this._cancel_tooltip.forEach((cancel) => cancel());
     this._cancel_tooltip = [];
-    this._tooltipElement = Promise.resolve();
+    this._targetElements = undefined;
   }
 
   private async attachTooltip() {
-    const element = await this._tooltipElement || await this.tooltipElement();
+    const elements = this._targetElements
+      ? await this._targetElements
+      : await this.resolveTarget();
+    const element = elements?.[0];
     if (!element) return;
     const parent = element.parentElement || element.parentNode;
     if (!element.id) {
@@ -69,35 +70,8 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     tooltip.appendChild(content);
   }
 
-  private async tooltipElement() {
-    this._tooltipElement = this._tooltip().catch((e) => {
-      if (e.message == "NoElements") {
-          console.info(`UIX Forge: spark: tooltip: No elements found. Looked for ${this.for}`);
-        return;
-      }
-      if (e.message == "Cancelled") {
-        return;
-      }
-      throw e;
-    });
-    return this._tooltipElement;
+  private async resolveTarget() {
+    this._targetElements = this.controller.target(this.for, this._cancel_tooltip);
+    return this._targetElements;
   }
-
-  private async _tooltip(retries = 0): Promise<HTMLElement> {
-    const parent = this.controller.forgedElement();
-    const element = await selectTree(parent, this.for);
-    if (!element) {
-      if (retries > 5) throw new Error("NoElements");
-      let timeout = new Promise((resolve, reject) => {
-        setTimeout(resolve, retries * 100);
-        this._cancel_tooltip.push(reject);
-      });
-      await timeout.catch((e) => {
-        throw new Error("Cancelled");
-      });
-      return this._tooltip(retries + 1);
-    }
-
-    return element;
-  };
 }
