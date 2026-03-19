@@ -1,18 +1,18 @@
 ---
-description: Use the attribute spark to replace or remove an HTML attribute on a target element within a Forge card.
+description: Use the attribute spark to replace or remove an HTML attribute on a target element within a UIX Forge element.
 ---
 
 # Attribute spark
 
-The `attribute` spark lets you **replace** or **remove** an HTML attribute on any element inside a Forge card. A common use-case is removing or overriding the `title` attribute on a `hui-generic-entity-row` info element so that the browser's native tooltip no longer appears, or so that a custom value is shown instead.
+The `attribute` spark lets you **replace** or **remove** an HTML attribute on any element inside a forged element. A common use-case is removing or overriding the `title` attribute on an element so that the browser's native tooltip no longer appears, or so that a custom value is shown instead.
 
 ## Configuration
 
 | Key | Type | Required | Default | Description |
-|-----|------|----------|---------|-------------|
+| --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `attribute`. |
 | `for` | `string` | ✅ | — | CSS/UIX selector to the target element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). |
-| `attribute` | `string` | ✅ | — | Name of the HTML attribute to target (e.g. `title`, `aria-label`). |
+| `attribute` | `string` | ✅ | — | Name of the HTML attribute to target (e.g. `title`). |
 | `action` | `string` | | `replace` | What to do with the attribute. Either `replace` (set a new value) or `remove` (delete the attribute entirely). |
 | `value` | `string` | | `""` | The new attribute value. Only used when `action` is `replace`. Supports [Jinja2 templates](../../using/templates.md). |
 
@@ -79,7 +79,6 @@ element:
   entity: light.bed_light
 ```
 
-## Notes
-
-- The spark targets the **first** matching element found by the `for` selector.
-- When `action` is `replace` and `value` is an empty string, an empty attribute (e.g. `title=""`) is set — not removed. Use `action: remove` to delete the attribute entirely.
+!!! note
+    - The spark targets the **first** matching element found by the `for` selector.
+    - When `action` is `replace` and `value` is an empty string, an empty attribute (e.g. `title=""`) is set — not removed. Use `action: remove` to delete the attribute entirely.

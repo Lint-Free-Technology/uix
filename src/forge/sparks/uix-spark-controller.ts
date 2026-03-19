@@ -38,10 +38,14 @@ export class UixForgeSparkController {
   }
 
   templateVariables() {
-    return this.sparks.reduce((acc, spark) => {
-      const vars = spark.templateVariables();
-      if (vars && Object.keys(vars).length > 0) {
-        acc[spark.type] = vars;
+    return Object.keys(UIX_FORGE_SPARK_CLASSES).reduce((acc, SparkType) => {
+      const spark = this.sparks.find(s => s.type === SparkType);
+      acc[SparkType] = {};
+      if (spark) {
+        const vars = spark.templateVariables();
+        if (vars && Object.keys(vars).length > 0) {
+          acc[SparkType] = vars;
+        }
       }
       return acc;
     }, {} as Record<string, any>);
