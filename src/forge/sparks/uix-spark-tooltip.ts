@@ -85,6 +85,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
       if (element.getAttribute("slot")) {
         tooltip.setAttribute("slot", element.getAttribute("slot")!);
       }
+      element.style.setProperty("pointer-events", "auto");
     }
     let content = tooltip.querySelector("div");
     if (content) {
