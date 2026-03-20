@@ -5,7 +5,7 @@ icon: material/image-outline
 
 # :frame_photo: Tile Icon spark
 
-The `tile-icon` spark inserts a [`ha-tile-icon`](https://github.com/home-assistant/frontend) element as a DOM sibling immediately **before** or **after** a target element inside a [UIX Forge](../index.md) forged element.
+The `tile-icon` spark inserts a `ha-tile-icon` element as a DOM sibling immediately **before** or **after** a target element inside a forged element.
 
 The icon source can be:
 
@@ -46,9 +46,9 @@ The `after`/`before` value is a selector that locates the target element within 
 | `icon_path` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | SVG path string passed to `ha-tile-icon` as its `iconPath` property (rendered via `ha-svg-icon`). |
 | `image_url` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | URL of an image to display inside the tile icon. |
 | `entity` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | Entity ID whose current state object is passed to a `ha-state-icon` placed in the tile icon's `icon` slot, displaying the entity's native state icon. |
-| `interactive` | `boolean` | — | `false` | Makes the tile icon interactive (pointer events enabled). Set automatically to `true` when any action is configured. |
-| `tap_action` | action | — | — | Action to perform on tap. |
-| `hold_action` | action | — | — | Action to perform on hold. |
+| `color` | CSS color | | - | Color to apply to tile icon. Overrides entity state color |
+| `tap_action` | action | | — | Action to perform on tap. |
+| `hold_action` | action | | — | Action to perform on hold. |
 | `double_tap_action` | action | — | — | Action to perform on double tap. |
 
 !!! note
