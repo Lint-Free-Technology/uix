@@ -78,6 +78,9 @@ export class UixForgeSparkIcon extends UixForgeSparkBase {
         iconEl.stateObj = hass.states[this.entity];
       }
     }
+    if (element.getAttribute("slot")) {
+      iconEl.setAttribute("slot", element.getAttribute("slot")!);
+    }
 
     if (this.after) {
       const nextSibling = element.nextSibling;
