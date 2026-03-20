@@ -41,7 +41,7 @@ element:
 
 Any valid Lovelace element configuration. Every string value in `element` is processed as a template, giving access to the same variables as [UIX templates](../using/templates.md) (`config`, `user`, `browser`, `hash`, `panel`).
 
-The `uix` key inside `element` is passed through as is to UIX styling, with UIX styling rendering any templates. Use it to style the forged element as you would any other element:
+The `uix` key inside `element` is passed through as is to [UIX Styling](../using/index.md), with [UIX Styling](../using/index.md) rendering any templates. Use it to style the forged element as you would any other element:
 
 ```yaml
 type: custom:uix-forge
