@@ -1,5 +1,11 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
+import { computeDomain } from "../../helpers/common/entity/compute_domain";
+import { stateActive } from "../../helpers/common/entity/state_active";
+import { computeCssColor } from "../../helpers/common/entity/compute_color";
+import { stateColorCss } from "../../helpers/common/entity/state_color";
+import { hsv2rgb, rgb2hex, rgb2hsv } from "../../helpers/common/color/convert_color";
+import memoizeOne from 'memoize-one';
 
 const TILE_ICON_ID_ATTR = "data-uix-forge-tile-icon-id";
 
@@ -9,6 +15,7 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   private after: string = "";
   private before: string = "";
   private icon: string = "";
+  private color: string = "";
   private iconPath: string = "";
   private imageUrl: string = "";
   private entity: string = "";
@@ -35,6 +42,7 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
     this.after = config.after || "";
     this.before = config.before || "";
     this.icon = config.icon || "";
+    this.color = config.color || "";
     this.iconPath = config.icon_path || "";
     this.imageUrl = config.image_url || "";
     this.entity = config.entity || "";
@@ -148,6 +156,10 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
       if (hass?.states?.[this.entity]) {
         stateIconEl.stateObj = hass.states[this.entity];
         stateIconEl.hass = hass;
+        const color = this._computeStateColor(stateIconEl.stateObj, this.color);
+        if (color) {
+          tileIconEl.style.setProperty("--tile-color", color);
+        }
       }
       tileIconEl.icon = undefined;
       tileIconEl.iconPath = undefined;
@@ -182,4 +194,43 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
       })
     );
   }
+
+  private _computeStateColor = memoizeOne(
+    (entity: any, color?: string) => {
+      // Use custom color if active
+      if (color) {
+        return stateActive(entity) ? computeCssColor(color) : undefined;
+      }
+
+      // Use default color for person/device_tracker because color is on the badge
+      if (
+        computeDomain(entity.entity_id) === "person" ||
+        computeDomain(entity.entity_id) === "device_tracker"
+      ) {
+        return undefined;
+      }
+
+      // Use light color if the light support rgb
+      if (
+        computeDomain(entity.entity_id) === "light" &&
+        entity.attributes.rgb_color
+      ) {
+        const hsvColor = rgb2hsv(entity.attributes.rgb_color);
+
+        // Modify the real rgb color for better contrast
+        if (hsvColor[1] < 0.4) {
+          // Special case for very light color (e.g: white)
+          if (hsvColor[1] < 0.1) {
+            hsvColor[2] = 225;
+          } else {
+            hsvColor[1] = 0.4;
+          }
+        }
+        return rgb2hex(hsv2rgb(hsvColor));
+      }
+
+      // Fallback to state color
+      return stateColorCss(entity);
+    }
+  );
 }
