@@ -66,7 +66,7 @@ export class UixForgeSparkIcon extends UixForgeSparkBase {
     const element = elements?.[0];
     if (!element) return;
 
-    const parent = element.parentElement;
+    const parent = element.parentElement || element.parentNode;
     if (!parent) return;
 
     const iconEl = document.createElement("ha-state-icon") as any;
