@@ -155,6 +155,3 @@ element:
 !!! note
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-tile-icon` element is placed in the same parent as the target element — it is a sibling, not a child.
-    - If the target element is assigned to a named slot, the inserted tile icon is given the same slot automatically.
-    - The tile icon element is tracked by a unique ID and **updated in place** on config or state changes — it is never duplicated.
-    - The tile icon element is removed automatically when the forge element is disconnected from the DOM.
