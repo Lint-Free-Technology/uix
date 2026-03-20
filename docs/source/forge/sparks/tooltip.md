@@ -45,7 +45,7 @@ Only the **first** element matched by `for` gets the tooltip.
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `tooltip`. |
-| `for` | string | ✅ | - | UIX selector for the target element. |
+| `for` | string | | `element` | UIX selector for the target element. Default `element` refers the the root of the forged element. |
 | `content` | string | | `""` | HTML content of the tooltip body. |
 | `placement` | string | | `"top"` | Tooltip position relative to the target. Placement values are `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right` · `right-start`, `right-end`. |
 | `distance` | number | | `8` | Gap in pixels between the tooltip and the target element. |

@@ -84,6 +84,15 @@ export class UixForgeSparkController {
   }
 
   async target(selector: string, cancelCallbacks: Array<() => void>): Promise<HTMLElement[] | void> {
+    if (selector == "element") {
+      const element = this.forgedElement();
+      if (element) {
+        return [element];
+      } else {
+        console.info(`UIX Forge: spark: No element found for 'element' selector.`);
+        return;
+      }
+    }
     return this._target(selector, cancelCallbacks).catch((e) => {
       if (e.message === "NoElements") {
         console.info(`UIX Forge: spark: No elements found. Looked for ${selector}`);
