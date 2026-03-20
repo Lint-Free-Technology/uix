@@ -12,8 +12,8 @@ The `attribute` spark lets you **replace** or **remove** an HTML attribute on an
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `attribute`. |
-| `for` | `string` | ✅ | — | CSS/UIX selector to the target element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). |
 | `attribute` | `string` | ✅ | — | Name of the HTML attribute to target (e.g. `title`). |
+| `for` | `string` | | `element` | CSS/UIX selector to the target element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). Default `element` refers the the root of the forged element. |
 | `action` | `string` | | `replace` | What to do with the attribute. Either `replace` (set a new value) or `remove` (delete the attribute entirely). |
 | `value` | `string` | | `""` | The new attribute value. Only used when `action` is `replace`. Supports [Jinja2 templates](../../using/templates.md). |
 
