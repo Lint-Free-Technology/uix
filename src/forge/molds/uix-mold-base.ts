@@ -53,11 +53,19 @@ export abstract class UixForgeMoldBase {
 
   disconnectedCallback() {}
 
+  hidden(): boolean {
+    return false;
+  }
+
   getGridOptions(): Record<string, any> {
     return {};
   }
 
   isPreview(): boolean {
     return this.forge.preview;
+  }
+
+  async cardHelpers() {
+    return await (window as any).loadCardHelpers();
   }
 }

@@ -63,9 +63,9 @@ export class UixForge extends LitElement {
         throw new Error(`unexpected config key ${k}`);
       }
     });
-    // Only support card and badge molds at this time
-    if (config.forge.mold !== "card" && config.forge.mold !== "badge") {
-      throw new Error("only forge mold of card or badge is supported at this time");
+    // Only support card, badge, and row molds at this time
+    if (config.forge.mold !== "card" && config.forge.mold !== "badge" && config.forge.mold !== "row") {
+      throw new Error("only forge mold of card, badge, or row is supported at this time");
     }
     if (config.forge.macros && typeof config.forge.macros !== "object") {
       throw new Error("forge macros must be an object");
@@ -127,14 +127,7 @@ export class UixForge extends LitElement {
     let error = false;
     error = this._mold.isError();
     if (error) return !this._showError;
-    if (this.forgeConfig.hidden !== undefined) {
-      if (typeof this.forgeConfig.hidden === "boolean") { 
-        return this.forgeConfig.hidden;
-      } else if (this.forgeConfig.hidden === "") {
-        return true;
-      }
-    }
-    return false;
+    return this.hiddenByConfig() || this._mold.hidden();
   }
 
   public getGridOptions() {
@@ -280,8 +273,19 @@ export class UixForge extends LitElement {
       this.forgedElement.config = this.forgedElementConfig;
       (this.forgedElement as HuiBadge).load();
     }
+    if (this._mold.isRow()) {
+      this._mold.cardHelpers().then((helpers) => {
+        const newElement = helpers.createRowElement(this.forgedElementConfig);
+        newElement.hass = this.hass
+        newElement.preview = this._mold.isPreview();
+        this.forgedElement.replaceWith(newElement);
+        this.forgedElement = newElement;
+      });
+    }
     this.refreshForge(["hidden"]);
-    this.refreshForge(["grid_options"]);
+    if (this._mold.isCard()) {
+      this.refreshForge(["grid_options"]);
+    }
   }
 
   private forgeElement() {
@@ -303,6 +307,25 @@ export class UixForge extends LitElement {
       this.forgedElement.preview = this._mold.isPreview();
       return;
     }
+    if (this._mold.isRow()) {
+      this._mold.cardHelpers().then((helpers) => {
+        this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
+        this.forgedElement.hass = this.hass;
+        this.forgedElement.preview = this._mold.isPreview();
+      });
+      return;
+    }
+  }
+
+  private hiddenByConfig() {
+    if (this.forgeConfig.hidden !== undefined) {
+      if (typeof this.forgeConfig.hidden === "boolean") {
+        return this.forgeConfig.hidden;
+      } else if (this.forgeConfig.hidden === "") {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected shouldUpdate(_changedProperties: PropertyValues): boolean {
