@@ -1,9 +1,9 @@
 ---
 description: Use the tile-icon spark to insert a ha-tile-icon element as a sibling before or after a target element within a UIX Forge element.
-icon: material/image-outline
+icon: material/star-outline
 ---
 
-# :frame_photo: Tile Icon spark
+# :star: Tile Icon spark
 
 The `tile-icon` spark inserts a `ha-tile-icon` element as a DOM sibling immediately **before** or **after** a target element inside a forged element.
 
