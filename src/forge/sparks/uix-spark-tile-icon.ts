@@ -145,7 +145,9 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   }
 
   private _updateElement(tileIconEl: any) {
-    const hasActions = !!(this.tapAction || this.holdAction || this.doubleTapAction);
+    const hasActions = !!(( this.tapAction && this.tapAction.action !== "none") || 
+                            (this.holdAction && this.holdAction.action !== "none") || 
+                            (this.doubleTapAction && this.doubleTapAction.action !== "none"));
     tileIconEl.interactive = hasActions;
 
     if (hasActions) {
