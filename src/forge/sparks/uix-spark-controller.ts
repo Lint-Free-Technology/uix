@@ -109,6 +109,9 @@ export class UixForgeSparkController {
 
   async _target(selector: string, cancelCallbacks: Array<() => void>, retries = 0): Promise<HTMLElement[]> {
     const parent = this.forgedElement();
+    if (!parent?.isConnected) {
+      return [];
+    }
     const result = await selectTree(parent, selector, true);
     const foundElements: HTMLElement[] = result ? Array.from(result as NodeListOf<HTMLElement>) : [];
     if (foundElements.length === 0) {
