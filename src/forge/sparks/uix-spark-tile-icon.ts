@@ -5,9 +5,19 @@ import { stateActive } from "../../helpers/common/entity/state_active";
 import { computeCssColor } from "../../helpers/common/entity/compute_color";
 import { stateColorCss } from "../../helpers/common/entity/state_color";
 import { hsv2rgb, rgb2hex, rgb2hsv } from "../../helpers/common/color/convert_color";
+import { DOMAINS_TOGGLE } from "../../helpers/common/const";
 import memoizeOne from 'memoize-one';
 
 const TILE_ICON_ID_ATTR = "data-uix-forge-tile-icon-id";
+
+export const getEntityDefaultTileIconAction = (entityId: string) => {
+  const domain = computeDomain(entityId);
+  const supportsIconAction =
+    DOMAINS_TOGGLE.has(domain) ||
+    ["button", "input_button", "scene"].includes(domain);
+
+  return supportsIconAction ? "toggle" : "none";
+};
 
 export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   type = "tile-icon";
@@ -46,10 +56,13 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
     this.iconPath = config.icon_path || "";
     this.imageUrl = config.image_url || "";
     this.entity = config.entity || "";
-    this.interactive = config.interactive || false;
     this.tapAction = config.tap_action || null;
     this.holdAction = config.hold_action || null;
     this.doubleTapAction = config.double_tap_action || null;
+
+    if (!this.tapAction && this.entity) {
+      this.tapAction = { action: getEntityDefaultTileIconAction(this.entity) };
+    }
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -133,10 +146,9 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
 
   private _updateElement(tileIconEl: any) {
     const hasActions = !!(this.tapAction || this.holdAction || this.doubleTapAction);
-    const isInteractive = this.interactive || hasActions;
-    tileIconEl.interactive = isInteractive;
+    tileIconEl.interactive = hasActions;
 
-    if (isInteractive) {
+    if (hasActions) {
       tileIconEl.actionHandlerOptions = {
         hasHold: !!this.holdAction,
         hasDoubleClick: !!this.doubleTapAction,
@@ -160,6 +172,11 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
         if (color) {
           tileIconEl.style.setProperty("--tile-color", color);
         }
+        if (this.icon) {
+          stateIconEl.icon = this.icon;
+        } else {
+          stateIconEl.icon = undefined;
+        }
       }
       tileIconEl.icon = undefined;
       tileIconEl.iconPath = undefined;
@@ -180,6 +197,7 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
 
     const actionKey = `${action}_action`;
     const config: Record<string, any> = {};
+    config.entity = this.entity;
     if (this.tapAction) config.tap_action = this.tapAction;
     if (this.holdAction) config.hold_action = this.holdAction;
     if (this.doubleTapAction) config.double_tap_action = this.doubleTapAction;

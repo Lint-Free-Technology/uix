@@ -42,7 +42,7 @@ The `after`/`before` value is a selector that locates the target element within 
 | `type` | `string` | ✅ | — | Must be `tile-icon`. |
 | `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The icon is inserted as a sibling **after** the matched element. |
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The icon is inserted as a sibling **before** the matched element. |
-| `icon` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | MDI icon string (e.g. `mdi:star`) passed to `ha-tile-icon` as its `icon` property. |
+| `icon` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | MDI icon string (e.g. `mdi:star`). `icon` can also be used to replace the default entity icon if `entity` is set. |
 | `icon_path` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | SVG path string passed to `ha-tile-icon` as its `iconPath` property (rendered via `ha-svg-icon`). |
 | `image_url` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | URL of an image to display inside the tile icon. |
 | `entity` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | Entity ID whose current state object is passed to a `ha-state-icon` placed in the tile icon's `icon` slot, displaying the entity's native state icon. |
