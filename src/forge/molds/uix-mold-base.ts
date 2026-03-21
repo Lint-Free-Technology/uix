@@ -46,12 +46,18 @@ export abstract class UixForgeMoldBase {
     return this.isRows() || this.isBadges() || this.isElements();
   }
 
-  abstract isError(): boolean;
+  isError() : boolean {
+    return false;
+  }
   abstract refresh(path: UixForgeConfigPath): void;
 
   connectedCallback() {}
 
   disconnectedCallback() {}
+
+  hidden(): boolean {
+    return false;
+  }
 
   getGridOptions(): Record<string, any> {
     return {};
@@ -59,5 +65,9 @@ export abstract class UixForgeMoldBase {
 
   isPreview(): boolean {
     return this.forge.preview;
+  }
+
+  async cardHelpers() {
+    return await (window as any).loadCardHelpers();
   }
 }

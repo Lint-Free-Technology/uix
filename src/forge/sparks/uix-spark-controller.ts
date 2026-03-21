@@ -6,12 +6,14 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
 import { UixForgeSparkAttribute } from "./uix-spark-attribute";
+import { UixForgeSparkTileIcon } from "./uix-spark-tile-icon";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
     "tooltip": UixForgeSparkTooltip,
     "attribute": UixForgeSparkAttribute,
+    "tile-icon": UixForgeSparkTileIcon,
 };
 
 export class UixForgeSparkController {
@@ -24,6 +26,9 @@ export class UixForgeSparkController {
 
   setConfig(sparkConfigs?: Record<string, any>[]) {
     sparkConfigs?.forEach(config => {
+      if (!config?.type) {
+        return;
+      }
       const existingSpark = this.sparks.find(spark => spark.type === config.type);
       if (existingSpark) {
         existingSpark.configUpdated(config);
@@ -107,6 +112,9 @@ export class UixForgeSparkController {
 
   async _target(selector: string, cancelCallbacks: Array<() => void>, retries = 0): Promise<HTMLElement[]> {
     const parent = this.forgedElement();
+    if (!parent?.isConnected) {
+      return [];
+    }
     const result = await selectTree(parent, selector, true);
     const foundElements: HTMLElement[] = result ? Array.from(result as NodeListOf<HTMLElement>) : [];
     if (foundElements.length === 0) {
