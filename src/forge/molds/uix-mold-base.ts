@@ -46,7 +46,9 @@ export abstract class UixForgeMoldBase {
     return this.isRows() || this.isBadges() || this.isElements();
   }
 
-  abstract isError(): boolean;
+  isError() : boolean {
+    return false;
+  }
   abstract refresh(path: UixForgeConfigPath): void;
 
   connectedCallback() {}

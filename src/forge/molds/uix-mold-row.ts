@@ -5,12 +5,6 @@ export class UixForgeMoldRow extends UixForgeMoldBase {
   type = "row";
   _hidden = false;
 
-  isError(): boolean {
-    return false;
-    //TODO
-    //return (this.forge.forgedElement as HuiCard)?._element?.tagName?.toLowerCase() === "hui-error-card" ? true : false;
-  }
-
   hidden(): boolean {
     return this._hidden;
   }

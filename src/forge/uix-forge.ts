@@ -276,7 +276,7 @@ export class UixForge extends LitElement {
     if (this._mold.isRow()) {
       this._mold.cardHelpers().then((helpers) => {
         const newElement = helpers.createRowElement(this.forgedElementConfig);
-        newElement.hass = this.hass
+        newElement.hass = this.hass;
         newElement.preview = this._mold.isPreview();
         this.forgedElement.replaceWith(newElement);
         this.forgedElement = newElement;
