@@ -26,6 +26,9 @@ export class UixForgeSparkController {
 
   setConfig(sparkConfigs?: Record<string, any>[]) {
     sparkConfigs?.forEach(config => {
+      if (!config?.type) {
+        return;
+      }
       const existingSpark = this.sparks.find(spark => spark.type === config.type);
       if (existingSpark) {
         existingSpark.configUpdated(config);
