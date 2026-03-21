@@ -37,6 +37,9 @@ element:
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape `{{ }}` in templates. Use when the element config itself contains Jinja2-like syntax. |
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
 
+!!! info "Template nesting"
+    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. `<<` is replaced with `{% raw %}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{% endraw %}`.
+
 ## Element config
 
 Any valid Lovelace element configuration. Every string value in `element` is processed as a template, giving access to the same variables as [UIX templates](../using/templates.md) (`config`, `user`, `browser`, `hash`, `panel`).
