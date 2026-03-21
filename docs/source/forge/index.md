@@ -66,3 +66,4 @@ Available sparks:
 - :speech_balloon: [Tooltip spark](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.
 - :label: [Attribute](./sparks/attribute.md) — add, replace or remove an attribute of any element within the forged element.
 - :zap: [Event](./sparks/event.md) — receive DOM events from `fire-dom-event` actions and expose their data as template variables.
+- :star: [Tile Icon](tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.
