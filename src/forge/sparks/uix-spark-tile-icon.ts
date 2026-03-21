@@ -152,8 +152,8 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
 
     if (hasActions) {
       tileIconEl.actionHandlerOptions = {
-        hasHold: !!this.holdAction,
-        hasDoubleClick: !!this.doubleTapAction,
+        hasHold: !!(this.holdAction && this.holdAction.action !== "none"),
+        hasDoubleClick: !!(this.doubleTapAction && this.doubleTapAction.action !== "none"),
       };
     }
 
@@ -172,7 +172,7 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
         stateIconEl.hass = hass;
         const color = this._computeStateColor(stateIconEl.stateObj, this.color);
         if (color) {
-          tileIconEl.style.setProperty("--tile-color", color);
+          tileIconEl.style.setProperty("--tile-icon-color", color);
         }
         if (this.icon) {
           stateIconEl.icon = this.icon;
@@ -190,6 +190,11 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
       tileIconEl.imageUrl = this.imageUrl || undefined;
       tileIconEl.iconPath = this.iconPath || undefined;
       tileIconEl.icon = this.icon || undefined;
+      if (this.color) {
+        tileIconEl.style.setProperty("--tile-icon-color", this.color);
+      } else {
+        tileIconEl.style.removeProperty("--tile-icon-color");
+      }
     }
   }
 

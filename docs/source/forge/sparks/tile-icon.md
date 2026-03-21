@@ -18,7 +18,12 @@ Optionally the tile icon can be made interactive with tap/hold/double-tap [actio
 
 ## Basic usage
 
-Add a `tile-icon` entry to `forge.sparks` with either `after` or `before` to specify the target element, and one of `icon`, `icon_path`, `image_url`, or `entity` to provide the icon source:
+Add a `tile-icon` entry to `forge.sparks` with either `after` or `before` to specify the target element, and one of `icon`, `icon_path`, `image_url`, or `entity` to provide the icon source.
+
+The `after`/`before` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
+
+!!! tip
+    If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an ID that starts with `uix` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([id^="uix"])`
 
 ```yaml
 type: custom:uix-forge
@@ -26,14 +31,13 @@ forge:
   mold: card
   sparks:
     - type: tile-icon
-      after: ha-tile-icon
+      before: hui-tile-card $ ha-tile-icon:not([id^="uix"])
       icon: mdi:star
+      color: red
 element:
   type: tile
   entity: light.living_room
 ```
-
-The `after`/`before` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
 ## Configuration
 
@@ -56,7 +60,7 @@ The `after`/`before` value is a selector that locates the target element within 
 
 ## Actions
 
-When one or more action keys are set (`tap_action`, `hold_action`, `double_tap_action`), the tile icon is automatically made interactive and action events bubble up through the DOM for Home Assistant to handle:
+When one or more action keys are set (`tap_action`, `hold_action`, `double_tap_action`), the tile icon is automatically made interactive.
 
 ```yaml
 type: custom:uix-forge
@@ -64,8 +68,8 @@ forge:
   mold: card
   sparks:
     - type: tile-icon
-      after: ha-tile-icon
-      entity: light.living_room
+      after: hui-tile-card $ ha-tile-icon
+      entity: light.ceiling_lights
       tap_action:
         action: toggle
       hold_action:
@@ -75,83 +79,84 @@ element:
   entity: light.living_room
 ```
 
-## Examples
-
-### Insert an icon after an element using a fixed icon
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: tile-icon
-      after: ha-tile-icon
-      icon: mdi:chevron-right
-element:
-  type: tile
-  entity: light.living_room
-```
-
-### Insert an entity state icon before an element
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: tile-icon
-      before: ha-tile-info
-      entity: light.living_room
-element:
-  type: tile
-  entity: light.living_room
-```
-
-### Insert an icon using an SVG path
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: tile-icon
-      after: ha-tile-icon
-      icon_path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-element:
-  type: tile
-  entity: light.living_room
-```
-
-### Insert an image icon
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: tile-icon
-      after: ha-tile-icon
-      image_url: /local/my-icon.png
-element:
-  type: tile
-  entity: light.living_room
-```
-
-### Cross a shadow boundary to reach a deeply nested element
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: tile-icon
-      after: "hui-tile-card $ ha-tile-icon"
-      icon: mdi:star
-element:
-  type: tile
-  entity: light.living_room
-```
-
 !!! note
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-tile-icon` element is placed in the same parent as the target element — it is a sibling, not a child.
+    - If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an ID that starts with `uix` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([id^="uix"])`
+
+## Examples
+
+??? example "Insert an icon after an element using a fixed icon with color blue"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: tile-icon
+          after: hui-tile-card $ ha-tile-icon
+          icon: mdi:chevron-right
+          color: blue
+    element:
+      type: tile
+      entity: light.living_room
+    ```
+
+??? example "Insert an entity state icon before an element"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: tile-icon
+          before: hui-tile-card $ ha-tile-icon:not([id^="uix"])
+          entity: light.ceiling_lights
+    element:
+      type: tile
+      entity: light.living_room
+    ```
+
+??? example "Insert an icon using an SVG path"
+    Path is a filled circle
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: tile-icon
+          after: hui-tile-card $ ha-tile-icon
+          icon_path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+          color: red
+    element:
+      type: tile
+      entity: light.living_room
+    ```
+
+??? example "Insert an image icon"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: tile-icon
+          after: hui-tile-card $ ha-tile-icon
+          image_url: /local/my-icon.png
+    element:
+      type: tile
+      entity: light.living_room
+    ```
+
+??? example "Cross a shadow boundary to reach a deeply nested element"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: tile-icon
+          before: hui-alarm-panel-card $ ha-textfield
+          icon: mdi:star
+          color: red
+    element:
+      type: alarm-panel
+      states: []
+      entity: alarm_control_panel.test_panel
+    ```
