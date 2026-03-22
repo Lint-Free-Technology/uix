@@ -29,7 +29,6 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   private iconPath: string = "";
   private imageUrl: string = "";
   private entity: string = "";
-  private interactive: boolean = false;
   private tapAction: Record<string, any> | null = null;
   private holdAction: Record<string, any> | null = null;
   private doubleTapAction: Record<string, any> | null = null;
