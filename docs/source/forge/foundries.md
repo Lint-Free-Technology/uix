@@ -1,22 +1,22 @@
 ---
 title: Foundries
-description: Foundries are server-stored UIX Forge templates that let you define reusable forge and element configs once and apply them to many cards.
+description: Foundries are server-stored UIX Forge configurations that let you define reusable forge, element and uix configurations once and apply them to many elements.
 ---
 # Foundries
 
-A **foundry** is a named UIX Forge template stored in Home Assistant. It acts as a reusable base configuration: define a `forge`, `element`, or `uix` config once, give it a name, and reference it in any number of cards with a single `foundry:` key. Local card config is merged on top, so you can still override any value per card.
+A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define a `forge`, `element`, or `uix` config once, give it a name, and reference it in any number of elements with a single `foundry:` key. Local element config is merged on top, so you can still override any value per element.
 
 ## Managing foundries
 
 Foundries are managed through the **UI eXtension** integration options in Home Assistant.
 
-1. Go to **Settings → Devices & Services → UI eXtension → Configure**.
+1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose one of the three menu options:
    - **Add a foundry** — enter a name and a YAML config object.
    - **Edit a foundry** — select an existing foundry from the dropdown, then update its config.
    - **Delete a foundry** — select an existing foundry from the dropdown and confirm.
 
-The foundry name must be unique. It is used as the `foundry:` key in your card config.
+The foundry name must be unique. It is used as the `foundry:` key in your element config.
 
 ## Using a foundry
 
@@ -27,7 +27,7 @@ type: custom:uix-forge
 foundry: my_tile
 ```
 
-The foundry's `forge`, `element`, and `uix` configs are applied as if they were written directly on the card.
+The foundry's `forge`, `element`, and `uix` configs are applied as if they were written directly on the element.
 
 You can add or override any key locally — local values take precedence over the foundry:
 
@@ -47,22 +47,23 @@ forge:
   mold: card
 element:
   type: tile
-  entity: light.living_room
+  entity: "{{ 'sun.sun' }}"
 uix:
-  style: |
-    ha-card {
-      --tile-color: teal;
-    }
+  style:
+    hui-tile-card $: |
+      ha-card {
+        --tile-color: red !important;
+      }
 ```
 
-The same keys are valid here as on a normal `uix-forge` card. See the [UIX Forge index](./index.md) for details on `forge` and `element` options.
+The same keys are valid here as on a normal `uix-forge` element. See the [UIX Forge index](./index.md) for details on `forge` and `element` options.
 
 ## Merge behaviour
 
 When a foundry is resolved, keys are merged in this order — later entries win:
 
 1. **Foundry** — the stored foundry config.
-2. **Local card** — keys defined directly on the card.
+2. **Local element** — keys defined directly on the element.
 
 For **object values** (e.g. `forge`, `element`, `uix`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. For **array and scalar values**, the local value replaces the foundry value entirely.
 
@@ -74,14 +75,14 @@ Foundry `weather_tile`:
 forge:
   mold: card
   macros:
-    state_color: "my_macros.jinja"
+    entity_color: "my_macros.jinja"
 element:
   type: weather-forecast
   show_current: true
   show_forecast: false
 ```
 
-Card config:
+Element config:
 
 ```yaml
 type: custom:uix-forge
@@ -97,12 +98,12 @@ Resolved config:
 forge:
   mold: card
   macros:
-    state_color: "my_macros.jinja"
+    entity_color: "my_macros.jinja"
 element:
   type: weather-forecast
-  entity: weather.home        # from card
+  entity: weather.home        # from element
   show_current: true          # from foundry
-  show_forecast: true         # overridden by card
+  show_forecast: true         # overridden by element
 ```
 
 ## Nested foundries
@@ -117,10 +118,11 @@ forge:
 element:
   type: tile
 uix:
-  style: |
-    ha-card {
-      border-radius: 20px;
-    }
+  style:
+    hui-tile-card $: |
+      ha-card {
+        border-radius: 20px;
+      }
 ```
 
 Foundry `light_tile` (extends `base_tile`):
@@ -128,11 +130,13 @@ Foundry `light_tile` (extends `base_tile`):
 ```yaml
 foundry: base_tile
 element:
-  color_on: yellow
-  color_off: gray
+  vertical: false
+  features_position: inline
+  features:
+    - type: light-brightness
 ```
 
-Card:
+Element:
 
 ```yaml
 type: custom:uix-forge
@@ -141,14 +145,17 @@ element:
   entity: light.living_room
 ```
 
-The resolved config merges all three layers: `base_tile` → `light_tile` → card.
+The resolved config merges all three layers: `base_tile` → `light_tile` → element.
 
 !!! warning "Circular references"
     If a chain of foundry references loops back to a foundry already in the chain, UIX detects the cycle and throws an error. Always ensure your foundry hierarchy is acyclic.
 
 ## UIX styling from a foundry
 
-A foundry can include a `uix` key that applies [UIX styling](../using/index.md) to the forged element. Foundry styles are merged with any `uix` key on the local card, with the local card taking precedence:
+A foundry can include a `uix` key that applies [UIX styling](../using/index.md) to the forged element. Foundry styles are merged with any `uix` key on the local element, with the local element taking precedence.
+
+!!! tip "Combining styles"
+    If you need to have root styling and shadow root styling, use YAML selectors placing your root styling in the root key `.:`. If you use text only for `style:` on element you will override all yaml styles in foundries.
 
 ```yaml
 # Foundry: "styled_tile"
@@ -156,31 +163,24 @@ forge:
   mold: card
 element:
   type: tile
-  entity: light.living_room
 uix:
-  style: |
-    ha-card {
-      --tile-color: teal;
-    }
+  style:
+    hui-tile-card $: |
+      ha-card {
+        --tile-color: red !important;
+      }
 ```
 
 ```yaml
-# Card — adds its own uix style on top
+# Element — adds its own uix style on top
 type: custom:uix-forge
 foundry: styled_tile
+element:
+  entity: light.living_room
 uix:
-  style: |
-    ha-card {
-      border-radius: 20px;
-    }
-```
-
-## `disabled` key
-
-Set `disabled: true` on a `uix-forge` card to suppress the element entirely. This key can be set locally or come from a foundry.
-
-```yaml
-type: custom:uix-forge
-foundry: my_tile
-disabled: true
+  style:
+    .: |
+      :host {
+        --ha-card-border-radius: 20px;
+      }
 ```
