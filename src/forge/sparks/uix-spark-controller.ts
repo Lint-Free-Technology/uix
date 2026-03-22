@@ -7,6 +7,7 @@ import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
 import { UixForgeSparkAttribute } from "./uix-spark-attribute";
 import { UixForgeSparkTileIcon } from "./uix-spark-tile-icon";
+import { UixForgeSparkStateBadge } from "./uix-spark-state-badge";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -14,6 +15,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "tooltip": UixForgeSparkTooltip,
     "attribute": UixForgeSparkAttribute,
     "tile-icon": UixForgeSparkTileIcon,
+    "state-badge": UixForgeSparkStateBadge,
 };
 
 export class UixForgeSparkController {
