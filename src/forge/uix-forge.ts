@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -217,7 +217,9 @@ export class UixForge extends LitElement {
             unbind_template(binding.callback);
           }
         }
-        const template = current[k].replaceAll(this._templateNestingOpen, "{% raw %}{{{% endraw %}").replaceAll(this._templateNestingClose, "{% raw %}}}{% endraw %}");
+        const template = current[k]
+          .replaceAll(this._templateNestingOpen, `{% raw %}{{${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`)
+          .replaceAll(this._templateNestingClose, `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}}}{% endraw %}`);
         const macroStr = buildMacros(this._macros, template);
         const callback = (res: any) => {
           if (typeof res === "string") {
@@ -253,7 +255,9 @@ export class UixForge extends LitElement {
     this.forgedElementConfig = { ...this.config.element };
     Promise.all([
       this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._forgedElementConfig)
+      this.bindTemplates(this._forgedElementConfig),
+      this._forgeConfig.configIsReady(),
+      this._forgedElementConfig.configIsReady()
     ]).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
@@ -359,7 +363,7 @@ export class UixForge extends LitElement {
     if(_changedProperties.has("layout")) {
       this.forgedElement && (this.forgedElement.layout = this.layout);
     }
-    if (_changedProperties.has("templatesBound")) {
+    if (_changedProperties.has("templatesReady")) {
       this.refreshForgedElement([]);
     }
     this._sparkController.updated(_changedProperties);

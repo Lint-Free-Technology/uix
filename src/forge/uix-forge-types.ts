@@ -15,6 +15,8 @@ export const UIX_FORGE_DEFAULT_GRID_OPTIONS = {
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 
+export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
+
 export interface UixForgeForge {
     type?: string;
     mold?: string;
@@ -83,7 +85,7 @@ export class UixForgeConfigBuilder {
     function _checkReady(value) {
       for (const key of Object.keys(value)) {
         const val = value[key];
-        if (hasTemplate(val)) return false;
+        if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
           if (!_checkReady(val)) return false;

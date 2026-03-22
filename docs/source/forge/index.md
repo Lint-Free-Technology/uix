@@ -38,7 +38,7 @@ element:
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
 
 !!! info "Template nesting"
-    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. `<<` is replaced with `{% raw %}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{% endraw %}`.
+    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{{{#uix#}{% endraw %}` and `>>` is replaced with `{% raw %}{#uix#}}}{% endraw %}`.
 
 ## Element config
 
