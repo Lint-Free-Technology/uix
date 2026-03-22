@@ -13,16 +13,9 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   private overrideImage: string = "";
   private color: string = "";
   private stateColor: boolean | undefined = undefined;
-  private tapAction: Record<string, any> | null = null;
-  private holdAction: Record<string, any> | null = null;
-  private doubleTapAction: Record<string, any> | null = null;
   private _cancel: (() => void)[] = [];
   private _badgeElement: HTMLElement | null = null;
   private readonly _id: string;
-  private _holdTimer: number | null = null;
-  private _longpressTriggered: boolean = false;
-  private _clickCount: number = 0;
-  private _clickTimer: number | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -43,9 +36,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     this.overrideImage = config.override_image || "";
     this.color = config.color || "";
     this.stateColor = config.state_color !== undefined ? config.state_color : undefined;
-    this.tapAction = config.tap_action || null;
-    this.holdAction = config.hold_action || null;
-    this.doubleTapAction = config.double_tap_action || null;
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -117,81 +107,10 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
       } else {
         parent.insertBefore(badgeEl, element);
       }
-
-      this._attachActionHandlers(badgeEl);
     }
 
     this._updateElement(badgeEl);
     this._badgeElement = badgeEl;
-  }
-
-  private _attachActionHandlers(badgeEl: any) {
-    const hasHold = () => !!(this.holdAction && this.holdAction.action !== "none");
-    const hasDoubleTap = () => !!(this.doubleTapAction && this.doubleTapAction.action !== "none");
-
-    badgeEl.addEventListener("pointerdown", () => {
-      if (!hasHold()) return;
-      this._longpressTriggered = false;
-      this._holdTimer = window.setTimeout(() => {
-        this._longpressTriggered = true;
-        this._dispatchAction(badgeEl, "hold");
-      }, 500);
-    });
-
-    const clearHoldTimer = () => {
-      if (this._holdTimer !== null) {
-        window.clearTimeout(this._holdTimer);
-        this._holdTimer = null;
-      }
-    };
-
-    badgeEl.addEventListener("pointerup", clearHoldTimer);
-    badgeEl.addEventListener("pointercancel", clearHoldTimer);
-
-    badgeEl.addEventListener("click", () => {
-      if (this._longpressTriggered) {
-        this._longpressTriggered = false;
-        return;
-      }
-      if (hasDoubleTap()) {
-        this._clickCount++;
-        if (this._clickTimer !== null) {
-          window.clearTimeout(this._clickTimer);
-        }
-        if (this._clickCount >= 2) {
-          this._clickCount = 0;
-          this._clickTimer = null;
-          this._dispatchAction(badgeEl, "double_tap");
-        } else {
-          this._clickTimer = window.setTimeout(() => {
-            this._clickCount = 0;
-            this._clickTimer = null;
-            this._dispatchAction(badgeEl, "tap");
-          }, 250);
-        }
-      } else {
-        this._dispatchAction(badgeEl, "tap");
-      }
-    });
-  }
-
-  private _dispatchAction(badgeEl: any, action: string) {
-    const actionKey = `${action}_action`;
-    const config: Record<string, any> = {};
-    config.entity = this.entity;
-    if (this.tapAction) config.tap_action = this.tapAction;
-    if (this.holdAction) config.hold_action = this.holdAction;
-    if (this.doubleTapAction) config.double_tap_action = this.doubleTapAction;
-
-    if (!config[actionKey] || config[actionKey].action === "none") return;
-
-    badgeEl.dispatchEvent(
-      new CustomEvent("hass-action", {
-        bubbles: true,
-        composed: true,
-        detail: { config, action },
-      })
-    );
   }
 
   private _updateElement(badgeEl: any) {
@@ -211,12 +130,5 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     if (this.stateColor !== undefined) {
       badgeEl.stateColor = this.stateColor;
     }
-
-    const hasActions = !!(
-      (this.tapAction && this.tapAction.action !== "none") ||
-      (this.holdAction && this.holdAction.action !== "none") ||
-      (this.doubleTapAction && this.doubleTapAction.action !== "none")
-    );
-    badgeEl.style.cursor = hasActions ? "pointer" : "";
   }
 }

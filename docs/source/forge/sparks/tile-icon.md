@@ -23,7 +23,7 @@ Add a `tile-icon` entry to `forge.sparks` with either `after` or `before` to spe
 The `after`/`before` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
 !!! tip
-    If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an ID that starts with `uix` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([id^="uix"])`
+    If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an attribute `data-uix-forge-tile-icon-id` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([data-uix-forge-tile-icon-id])`
 
 ```yaml
 type: custom:uix-forge
@@ -31,7 +31,7 @@ forge:
   mold: card
   sparks:
     - type: tile-icon
-      before: hui-tile-card $ ha-tile-icon:not([id^="uix"])
+      before: hui-tile-card $ ha-tile-icon:not([data-uix-forge-tile-icon-id])
       icon: mdi:star
       color: red
 element:
@@ -82,7 +82,7 @@ element:
 !!! note
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-tile-icon` element is placed in the same parent as the target element — it is a sibling, not a child.
-    - If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an ID that starts with `uix` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([id^="uix"])`
+    - If you are inserting a tile icon **before** another tile icon, you will need to be specific in your selector so as to not select the inserted icon on updates. Tile icons added by this spark have an attribute `data-uix-forge-tile-icon-id` so you can use this with your selector. e.g. `hui-tile-card $ ha-tile-icon:not([data-uix-forge-tile-icon-id])`
 
 ## Examples
 
@@ -108,7 +108,7 @@ element:
       mold: card
       sparks:
         - type: tile-icon
-          before: hui-tile-card $ ha-tile-icon:not([id^="uix"])
+          before: hui-tile-card $ ha-tile-icon:not([data-uix-forge-tile-icon-id])
           entity: light.ceiling_lights
     element:
       type: tile
