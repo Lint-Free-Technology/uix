@@ -54,6 +54,7 @@ export class UixForge extends LitElement {
   private _sparkController: UixForgeSparkController;
   private _disconnectTimeout?: number;
   private _foundryUpdateListener?: EventListener;
+  private _originalUix?: any;
 
   constructor() {
       super();
@@ -133,6 +134,7 @@ export class UixForge extends LitElement {
 
     this.templatesReady = false;
     this.config = config;
+    this._originalUix = config.uix;
 
     const resolved = this._resolveFoundry(config);
     if (!resolved) {
@@ -252,7 +254,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this.forgedElement && !this.templatesReady) {
-      const resolved = this._resolveFoundry(this.config);
+      const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
       if (!resolved) return;
       const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
@@ -305,7 +307,7 @@ export class UixForge extends LitElement {
     if (!this.config?.foundry) return;
     // If the forge was waiting for foundry to load initially, complete setup now
     if (!this._mold) {
-      const resolved = this._resolveFoundry(this.config);
+      const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
       if (!resolved) return;
       // Merge foundry uix into this.config
       this._applyFoundryUix(resolved.uix);
@@ -371,7 +373,7 @@ export class UixForge extends LitElement {
 
   refreshForgeTemplates() {
     this.templatesReady = false;
-    const resolved = this._resolveFoundry(this.config);
+    const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
     if (!resolved) return;
     // Merge foundry uix into this.config
     this._applyFoundryUix(resolved.uix);
