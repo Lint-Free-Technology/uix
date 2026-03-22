@@ -154,7 +154,7 @@ Just like with UIX styles applied to a card, you can traverse the shadow DOM str
 red-theme:
   uix-theme: red-theme
   ...
-  uix-row: |
+  uix-row-yaml: |
     ...
     hui-generic-entity-row $ state-badge $: |
       @keyframes pulse {
