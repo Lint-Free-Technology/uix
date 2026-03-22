@@ -1,6 +1,15 @@
 from typing import Any
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+import voluptuous as vol
+import yaml
+
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.selector import (
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 
 from .checks import (
     check_card_mod_frontend_script_extra_module, 
@@ -9,7 +18,8 @@ from .checks import (
 from .const import (
     DOMAIN, 
     NAME, 
-    CARD_MOD_FRONTEND_SCRIPT_URL
+    CARD_MOD_FRONTEND_SCRIPT_URL,
+    CONF_FOUNDRIES,
 )
 
 class UixConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -44,4 +54,92 @@ class UixConfigFlow(ConfigFlow, domain=DOMAIN):
             title=NAME,
             data={},
             description="refresh_message",
+        )
+
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return UixOptionsFlow(config_entry)
+
+
+class UixOptionsFlow(OptionsFlow):
+    """Options flow for managing UIX foundries."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize the options flow."""
+        self._config_entry = config_entry
+        self._foundries: dict[str, Any] = dict(
+            config_entry.options.get(CONF_FOUNDRIES, {})
+        )
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the foundry management menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["add_foundry", "delete_foundry"],
+        )
+
+    async def async_step_add_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add or update a foundry."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            name = user_input["name"].strip()
+            config_yaml = user_input["config"]
+            try:
+                config = yaml.safe_load(config_yaml)
+                if not isinstance(config, dict):
+                    raise ValueError("Config must be a YAML mapping")
+                self._foundries[name] = config
+                return self.async_create_entry(
+                    title="",
+                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+                )
+            except yaml.YAMLError:
+                errors["config"] = "invalid_yaml"
+            except ValueError:
+                errors["config"] = "invalid_config"
+
+        return self.async_show_form(
+            step_id="add_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): cv.string,
+                    vol.Required("config"): TextSelector(
+                        TextSelectorConfig(multiline=True, type=TextSelectorType.TEXT)
+                    ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_delete_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Delete a foundry."""
+        errors: dict[str, str] = {}
+
+        if not self._foundries:
+            return self.async_abort(reason="no_foundries")
+
+        if user_input is not None:
+            name = user_input["name"]
+            if name in self._foundries:
+                del self._foundries[name]
+            return self.async_create_entry(
+                title="",
+                data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+            )
+
+        return self.async_show_form(
+            step_id="delete_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): vol.In(list(self._foundries.keys())),
+                }
+            ),
+            errors=errors,
         )

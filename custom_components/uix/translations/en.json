@@ -10,5 +10,37 @@
         },
         "step": {
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Manage Foundries",
+                "menu_options": {
+                    "add_foundry": "Add or update a foundry",
+                    "delete_foundry": "Delete a foundry"
+                }
+            },
+            "add_foundry": {
+                "title": "Add or update a foundry",
+                "description": "Enter the foundry name and its YAML configuration. The config should be a mapping that may include a 'forge' key and/or an 'element' key.",
+                "data": {
+                    "name": "Foundry name",
+                    "config": "Foundry configuration (YAML)"
+                }
+            },
+            "delete_foundry": {
+                "title": "Delete a foundry",
+                "data": {
+                    "name": "Foundry to delete"
+                }
+            }
+        },
+        "abort": {
+            "no_foundries": "No foundries are configured yet. Add one first."
+        },
+        "error": {
+            "invalid_yaml": "The configuration is not valid YAML.",
+            "invalid_config": "The configuration must be a YAML mapping."
+        }
     }
 }

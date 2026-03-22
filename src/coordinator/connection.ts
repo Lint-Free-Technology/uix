@@ -9,6 +9,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _data;
     private _connected = false;
     private _connectionResolve;
+    private _foundries: Record<string, any> = {};
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -54,6 +55,7 @@ export const ConnectionMixin = (SuperClass) => {
         .catch((err) => {
           console.log(`UIX: ${err}. User Frontend settings have not been applied`);
         });
+      this.fetchFoundries();
     }
 
     // WebSocket has connected
@@ -123,6 +125,20 @@ export const ConnectionMixin = (SuperClass) => {
       // if (update) this.sendUpdate({});
     }
 
+    public async fetchFoundries() {
+      if (!this.connection) return;
+      try {
+        const result = await this.connection.sendMessagePromise({
+          type: "uix/get_foundries",
+        });
+        this._foundries = (result as any)?.foundries ?? {};
+        this.LOG("Foundries loaded:", this._foundries);
+        this.fireBrowserEvent("uix-foundries-updated", { foundries: this._foundries });
+      } catch (err) {
+        console.log("UIX: Error fetching foundries:", err);
+      }
+    }
+
     async connect() {
       const conn = (await hass()).connection;
       this.connection = conn;
@@ -147,6 +163,12 @@ export const ConnectionMixin = (SuperClass) => {
           connectUixComponent();
         }
       }, "component_loaded");
+
+      // Subscribe to foundry update events from the integration
+      conn.subscribeEvents(() => {
+        this.LOG("Foundries updated on server, reloading");
+        this.fetchFoundries();
+      }, "uix_foundries_updated");
 
       // Keep connection status up to date
       conn.addEventListener("ready", () => {
@@ -177,6 +199,10 @@ export const ConnectionMixin = (SuperClass) => {
 
     get version() {
       return this._data?.version;
+    }
+
+    get foundries(): Record<string, any> {
+      return this._foundries;
     }
   }
 

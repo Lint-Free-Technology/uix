@@ -35,6 +35,7 @@ export interface UixForgeElement {
 
 export interface UixForgeConfig {
   type: string;
+  foundry?: string;
   forge?: UixForgeForge;
   element?: UixForgeElement;
 }
