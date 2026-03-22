@@ -121,3 +121,26 @@ entities:
         element:
           entity: light.bed_light
     ```
+
+??? example "Adding a tooltip spark to the added state-badge"
+    The tooltip spark will retry attaching the tooltip so will find the added state badge on retry
+    ```yaml
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: tooltip
+              for: >-
+                $ hui-generic-entity-row $
+                state-badge[data-uix-forge-state-badge-id]
+              content: Ceiling lights badge
+            - type: state-badge
+              after: $ hui-generic-entity-row $ state-badge
+              entity: light.ceiling_lights
+              override_icon: mdi:star
+              state_color: false
+        element:
+          entity: light.bed_light
+    ```
