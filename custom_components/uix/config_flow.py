@@ -73,30 +73,62 @@ class UixOptionsFlow(OptionsFlow):
         """Show the foundry management menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["add_foundry", "delete_foundry"],
+            menu_options=["add_foundry", "edit_foundry", "delete_foundry"],
         )
 
     async def async_step_add_foundry(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 1: collect the foundry name."""
+        """Add a new foundry (name + config in one form)."""
+        errors: dict[str, str] = {}
+
         if user_input is not None:
-            self._foundry_name = user_input["name"].strip()
-            return await self.async_step_add_foundry_config()
+            name = user_input["name"].strip()
+            config = user_input["config"]
+            if not isinstance(config, dict):
+                errors["config"] = "invalid_config"
+            else:
+                self._foundries[name] = config
+                return self.async_create_entry(
+                    title="",
+                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+                )
 
         return self.async_show_form(
             step_id="add_foundry",
             data_schema=vol.Schema(
                 {
                     vol.Required("name"): cv.string,
+                    vol.Required("config"): ObjectSelector(),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_edit_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 1: select an existing foundry to edit."""
+        if not self._foundries:
+            return self.async_abort(reason="no_foundries")
+
+        if user_input is not None:
+            self._foundry_name = user_input["name"]
+            return await self.async_step_edit_foundry_config()
+
+        return self.async_show_form(
+            step_id="edit_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): vol.In(list(self._foundries.keys())),
                 }
             ),
         )
 
-    async def async_step_add_foundry_config(
+    async def async_step_edit_foundry_config(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 2: collect (or edit) the foundry configuration."""
+        """Step 2: edit the selected foundry's configuration."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -112,7 +144,7 @@ class UixOptionsFlow(OptionsFlow):
 
         existing = self._foundries.get(self._foundry_name)
         return self.async_show_form(
-            step_id="add_foundry_config",
+            step_id="edit_foundry_config",
             data_schema=vol.Schema(
                 {
                     vol.Required("config", default=existing): ObjectSelector(),
