@@ -65,6 +65,7 @@ class UixOptionsFlow(OptionsFlow):
         self._foundries: dict[str, Any] = dict(
             config_entry.options.get(CONF_FOUNDRIES, {})
         )
+        self._foundry_name: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -78,29 +79,46 @@ class UixOptionsFlow(OptionsFlow):
     async def async_step_add_foundry(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Add or update a foundry."""
-        errors: dict[str, str] = {}
-
+        """Step 1: collect the foundry name."""
         if user_input is not None:
-            name = user_input["name"].strip()
-            config = user_input["config"]
-            if not isinstance(config, dict):
-                errors["config"] = "invalid_config"
-            else:
-                self._foundries[name] = config
-                return self.async_create_entry(
-                    title="",
-                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
-                )
+            self._foundry_name = user_input["name"].strip()
+            return await self.async_step_add_foundry_config()
 
         return self.async_show_form(
             step_id="add_foundry",
             data_schema=vol.Schema(
                 {
                     vol.Required("name"): cv.string,
-                    vol.Required("config"): ObjectSelector(),
                 }
             ),
+        )
+
+    async def async_step_add_foundry_config(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 2: collect (or edit) the foundry configuration."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            config = user_input["config"]
+            if not isinstance(config, dict):
+                errors["config"] = "invalid_config"
+            else:
+                self._foundries[self._foundry_name] = config
+                return self.async_create_entry(
+                    title="",
+                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+                )
+
+        existing = self._foundries.get(self._foundry_name)
+        return self.async_show_form(
+            step_id="add_foundry_config",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("config", default=existing): ObjectSelector(),
+                }
+            ),
+            description_placeholders={"name": self._foundry_name},
             errors=errors,
         )
 

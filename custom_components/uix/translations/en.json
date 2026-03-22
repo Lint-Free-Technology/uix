@@ -22,10 +22,16 @@
             },
             "add_foundry": {
                 "title": "Add or update a foundry",
-                "description": "Enter the foundry name and its YAML configuration. The config should be a mapping that may include a 'forge' key and/or an 'element' key.",
+                "description": "Enter the name of the foundry to add or update.",
                 "data": {
-                    "name": "Foundry name",
-                    "config": "Foundry configuration (YAML)"
+                    "name": "Foundry name"
+                }
+            },
+            "add_foundry_config": {
+                "title": "Configure foundry \"{name}\"",
+                "description": "Enter the configuration for the foundry. It should be a mapping that may include a 'forge' key and/or an 'element' key.",
+                "data": {
+                    "config": "Foundry configuration"
                 }
             },
             "delete_foundry": {
