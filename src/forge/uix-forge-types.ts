@@ -13,6 +13,8 @@ export const UIX_FORGE_DEFAULT_GRID_OPTIONS = {
   columns: 6,
 };
 
+export const UIX_FORGE_ALLOWED_CONFIG_KEYS = ["type", "foundry", "forge", "element", "disabled", "uix"];
+
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
@@ -38,6 +40,8 @@ export interface UixForgeConfig {
   foundry?: string;
   forge?: UixForgeForge;
   element?: UixForgeElement;
+  uix?: UixConfig;
+  disabled?: boolean;
 }
 
 export class UixForgeConfigBuilder {

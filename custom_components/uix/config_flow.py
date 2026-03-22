@@ -1,15 +1,10 @@
 from typing import Any
 
 import voluptuous as vol
-import yaml
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.selector import (
-    TextSelector,
-    TextSelectorConfig,
-    TextSelectorType,
-)
+from homeassistant.helpers.selector import ObjectSelector
 
 from .checks import (
     check_card_mod_frontend_script_extra_module, 
@@ -88,29 +83,22 @@ class UixOptionsFlow(OptionsFlow):
 
         if user_input is not None:
             name = user_input["name"].strip()
-            config_yaml = user_input["config"]
-            try:
-                config = yaml.safe_load(config_yaml)
-                if not isinstance(config, dict):
-                    raise ValueError("Config must be a YAML mapping")
+            config = user_input["config"]
+            if not isinstance(config, dict):
+                errors["config"] = "invalid_config"
+            else:
                 self._foundries[name] = config
                 return self.async_create_entry(
                     title="",
                     data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
                 )
-            except yaml.YAMLError:
-                errors["config"] = "invalid_yaml"
-            except ValueError:
-                errors["config"] = "invalid_config"
 
         return self.async_show_form(
             step_id="add_foundry",
             data_schema=vol.Schema(
                 {
                     vol.Required("name"): cv.string,
-                    vol.Required("config"): TextSelector(
-                        TextSelectorConfig(multiline=True, type=TextSelectorType.TEXT)
-                    ),
+                    vol.Required("config"): ObjectSelector(),
                 }
             ),
             errors=errors,

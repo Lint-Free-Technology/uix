@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -71,27 +71,49 @@ export class UixForge extends LitElement {
     };
   }
 
-  private _resolveFoundry(config: UixForgeConfig): { forge: any; element: any } | null {
-    const coordinator = (window as any).uixCoordinator;
+  private _applyFoundryUix(resolvedUix: any) {
+    if (resolvedUix && Object.keys(resolvedUix).length > 0) {
+      this.config = { ...this.config, uix: resolvedUix };
+    }
+  }
+
+  private _resolveFoundry(
+    config: { foundry?: string; forge?: any; element?: any; uix?: any },
+    visited: Set<string> = new Set()
+  ): { forge: any; element: any; uix: any } | null {
     const foundryName = config.foundry;
 
     if (foundryName) {
+      const coordinator = (window as any).uixCoordinator;
       // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
       if (!coordinator?.foundries || (Object.keys(coordinator.foundries).length === 0 && !coordinator.ready)) {
         return null;
       }
-      const foundryConfig = coordinator.foundries[foundryName];
-      if (!foundryConfig) {
+      const foundryData = coordinator.foundries[foundryName];
+      if (!foundryData) {
         throw new Error(`Foundry '${foundryName}' not found. Check that it is defined in the UIX integration.`);
       }
-      const mergedForge = _mergeFoundryConfig(foundryConfig?.forge, config.forge);
-      const mergedElement = _mergeFoundryConfig(foundryConfig?.element, config.element);
-      return { forge: mergedForge, element: mergedElement };
+      if (visited.has(foundryName)) {
+        throw new Error(`Circular foundry reference detected: '${foundryName}'.`);
+      }
+      const nextVisited = new Set(visited);
+      nextVisited.add(foundryName);
+
+      // Recursively resolve the foundry's own base (if it also references another foundry)
+      const baseResolved = this._resolveFoundry(foundryData, nextVisited);
+      if (baseResolved === null) return null;
+
+      // foundryData overrides base, local config overrides foundry
+      const mergedForge = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.forge, foundryData.forge), config.forge);
+      const mergedElement = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.element, foundryData.element), config.element);
+      const mergedUix = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.uix, foundryData.uix), config.uix);
+      return { forge: mergedForge, element: mergedElement, uix: mergedUix };
     }
 
     return {
       forge: config.forge ?? {},
       element: config.element ?? {},
+      uix: config.uix ?? {},
     };
   }
 
@@ -104,7 +126,7 @@ export class UixForge extends LitElement {
       throw new Error("element config is required");
     }
     Object.keys(config).forEach((k) => {
-      if (k !== "type" && k !== "foundry" && k !== "forge" && k !== "element") {
+      if (!UIX_FORGE_ALLOWED_CONFIG_KEYS.includes(k)) {
         throw new Error(`unexpected config key ${k}`);
       }
     });
@@ -121,6 +143,9 @@ export class UixForge extends LitElement {
       }
       return;
     }
+
+    // Merge foundry uix into this.config so UIX styling picks it up
+    this._applyFoundryUix(resolved.uix);
 
     this._applyResolvedConfig(resolved.forge, resolved.element);
   }
@@ -282,6 +307,8 @@ export class UixForge extends LitElement {
     if (!this._mold) {
       const resolved = this._resolveFoundry(this.config);
       if (!resolved) return;
+      // Merge foundry uix into this.config
+      this._applyFoundryUix(resolved.uix);
       try {
         this._applyResolvedConfig(resolved.forge, resolved.element);
       } catch (err) {
@@ -346,6 +373,8 @@ export class UixForge extends LitElement {
     this.templatesReady = false;
     const resolved = this._resolveFoundry(this.config);
     if (!resolved) return;
+    // Merge foundry uix into this.config
+    this._applyFoundryUix(resolved.uix);
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
     this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : "<<";

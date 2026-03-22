@@ -14,7 +14,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "Manage Foundries",
+                "title": "Manage UIX Forge Foundries",
                 "menu_options": {
                     "add_foundry": "Add or update a foundry",
                     "delete_foundry": "Delete a foundry"
@@ -39,7 +39,6 @@
             "no_foundries": "No foundries are configured yet. Add one first."
         },
         "error": {
-            "invalid_yaml": "The configuration is not valid YAML.",
             "invalid_config": "The configuration must be a YAML mapping."
         }
     }
