@@ -60,6 +60,12 @@ element:
       }
 ```
 
+## Foundries
+
+A **foundry** is a server-stored UIX Forge template that lets you define reusable `forge`, `element`, and `uix` configs once and share them across many cards. Reference a foundry with the `foundry:` key and override only what you need locally.
+
+See [Foundries](./foundries.md) for a full guide including merge behaviour, nested foundries, and management via the integration options.
+
 ## Sparks
 
 Sparks are optional behaviours that you add to the `forge.sparks` list. Each spark has a `type` key and its own options.
