@@ -30,7 +30,9 @@
   },
   "dependencies": {
     "@watchable/unpromise": "^1.0.2",
+    "culori": "^4.0.2",
     "lit": "^3.1.0",
+    "memoize-one": "^6.0.0",
     "tslib": "^2.6.2"
   }
 }

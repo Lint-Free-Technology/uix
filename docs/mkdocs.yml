@@ -80,6 +80,7 @@ nav:
           - forge/sparks/attribute.md
           - forge/sparks/event.md
           - forge/sparks/tile-icon.md
+          - forge/sparks/state-badge.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
