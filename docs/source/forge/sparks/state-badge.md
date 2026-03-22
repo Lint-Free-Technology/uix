@@ -21,18 +21,20 @@ Add a `state-badge` entry to `forge.sparks` with either `after` or `before` to s
 
 The `after`/`before` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
+Since `state-badge` is most commonly found inside entity rows, the typical use case is with `mold: row`. The row element itself has a shadow root, so use `$` to cross into it and target the `state-badge` inside.
+
 ```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: state-badge
-      before: hui-entities-card $ hui-generic-entity-row $ state-badge
-      entity: light.ceiling_lights
-element:
-  type: entities
-  entities:
-    - light.bed_light
+type: entities
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: row
+      sparks:
+        - type: state-badge
+          before: $ state-badge:not([data-uix-forge-state-badge-id])
+          entity: light.ceiling_lights
+    element:
+      entity: light.bed_light
 ```
 
 ## Configuration
@@ -59,21 +61,21 @@ element:
 When one or more action keys are set (`tap_action`, `hold_action`, `double_tap_action`), the badge cursor is automatically changed to `pointer` to indicate interactivity.
 
 ```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: state-badge
-      after: hui-entities-card $ hui-generic-entity-row $ state-badge
-      entity: light.ceiling_lights
-      tap_action:
-        action: toggle
-      hold_action:
-        action: more-info
-element:
-  type: entities
-  entities:
-    - light.bed_light
+type: entities
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: row
+      sparks:
+        - type: state-badge
+          after: $ state-badge
+          entity: light.ceiling_lights
+          tap_action:
+            action: toggle
+          hold_action:
+            action: more-info
+    element:
+      entity: light.bed_light
 ```
 
 !!! note
@@ -83,82 +85,82 @@ element:
 
 ## Examples
 
-??? example "Insert an entity state badge after an existing badge"
+??? example "Insert an entity state badge after the existing badge"
     ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: state-badge
-          after: hui-entities-card $ hui-generic-entity-row $ state-badge
-          entity: light.ceiling_lights
-    element:
-      type: entities
-      entities:
-        - light.bed_light
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: state-badge
+              after: $ state-badge
+              entity: light.ceiling_lights
+        element:
+          entity: light.bed_light
     ```
 
 ??? example "Insert a state badge with a fixed color"
     ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: state-badge
-          before: hui-entities-card $ hui-generic-entity-row $ state-badge:not([data-uix-forge-state-badge-id])
-          entity: light.ceiling_lights
-          color: teal
-    element:
-      type: entities
-      entities:
-        - light.bed_light
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: state-badge
+              before: $ state-badge:not([data-uix-forge-state-badge-id])
+              entity: light.ceiling_lights
+              color: teal
+        element:
+          entity: light.bed_light
     ```
 
 ??? example "Insert a badge with an override icon and no state coloring"
     ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: state-badge
-          after: hui-entities-card $ hui-generic-entity-row $ state-badge
-          entity: light.ceiling_lights
-          override_icon: mdi:star
-          state_color: false
-    element:
-      type: entities
-      entities:
-        - light.bed_light
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: state-badge
+              after: $ state-badge
+              entity: light.ceiling_lights
+              override_icon: mdi:star
+              state_color: false
+        element:
+          entity: light.bed_light
     ```
 
 ??? example "Insert a badge with an image override"
     ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: state-badge
-          after: hui-entities-card $ hui-generic-entity-row $ state-badge
-          override_image: /local/my-icon.png
-    element:
-      type: entities
-      entities:
-        - light.bed_light
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: state-badge
+              after: $ state-badge
+              override_image: /local/my-icon.png
+        element:
+          entity: light.bed_light
     ```
 
 ??? example "Interactive badge that navigates to more-info on tap"
     ```yaml
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: state-badge
-          after: hui-entities-card $ hui-generic-entity-row $ state-badge
-          entity: light.ceiling_lights
-          tap_action:
-            action: more-info
-    element:
-      type: entities
-      entities:
-        - light.bed_light
+    type: entities
+    entities:
+      - type: custom:uix-forge
+        forge:
+          mold: row
+          sparks:
+            - type: state-badge
+              after: $ state-badge
+              entity: light.ceiling_lights
+              tap_action:
+                action: more-info
+        element:
+          entity: light.bed_light
     ```
