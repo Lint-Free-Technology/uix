@@ -37,6 +37,9 @@ element:
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape `{{ }}` in templates. Use when the element config itself contains Jinja2-like syntax. |
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
 
+!!! info "Template nesting"
+    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{{{#uix#}{% endraw %}` and `>>` is replaced with `{% raw %}{#uix#}}}{% endraw %}`.
+
 ## Element config
 
 Any valid Lovelace element configuration. Every string value in `element` is processed as a template, giving access to the same variables as [UIX templates](../using/templates.md) (`config`, `user`, `browser`, `hash`, `panel`).
@@ -66,3 +69,4 @@ Available sparks:
 - :speech_balloon: [Tooltip spark](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.
 - :label: [Attribute](./sparks/attribute.md) — add, replace or remove an attribute of any element within the forged element.
 - :zap: [Event](./sparks/event.md) — receive DOM events from `fire-dom-event` actions and expose their data as template variables.
+- :star: [Tile Icon](tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.

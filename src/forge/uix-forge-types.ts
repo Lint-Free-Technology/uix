@@ -1,5 +1,6 @@
 import { LitElement } from "lit";
 import { UixConfig, MacroConfig } from "../helpers/apply_uix";
+import { hasTemplate } from "../helpers/templates";
 
 export const UIX_FORGE_TYPE = "uix-forge";
 
@@ -11,6 +12,10 @@ export const UIX_FORGE_DEFAULT_GRID_OPTIONS = {
   rows: 2,
   columns: 6,
 };
+
+export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
+
+export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
 
 export interface UixForgeForge {
     type?: string;
@@ -37,11 +42,14 @@ export interface UixForgeConfig {
 export class UixForgeConfigBuilder {
   _config: {};
   _templateBindings: Map<string, { callback: (res: string) => void }>;
+  _resolveReady: (value?: unknown) => void;
+  _readyPromise: Promise<void>;
   refreshCallback: (key: string) => void;
 
   constructor(refreshCallback?: (key: string) => void) {
     this._config = {};
     this._templateBindings = new Map();
+    this.ready = false;
     this.refreshCallback = refreshCallback;
   }
 
@@ -51,7 +59,45 @@ export class UixForgeConfigBuilder {
 
   set config(config: any) {
     this._config = config;
+    this.ready = false;
+    this.checkReady();
   };
+
+  public configIsReady(config: any = this._config): Promise<boolean> {
+    return this.ready;
+  }
+
+  private set ready(value: boolean) {
+    if (value) {
+      this._resolveReady();
+    } else {
+      this._readyPromise = new Promise((resolve) => {
+        this._resolveReady = resolve;
+      });
+    }
+  }
+
+  private get ready(): Promise<boolean> {
+    return this._readyPromise ? this._readyPromise.then(() => true) : Promise.reject("Ready promise not initialized");
+  }
+
+  private checkReady() {
+    function _checkReady(value) {
+      for (const key of Object.keys(value)) {
+        const val = value[key];
+        if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
+        if (val === undefined || val === null) continue;
+        if (typeof val === "object") {
+          if (!_checkReady(val)) return false;
+        }
+        if (val === UIX_FORGE_DEFAULT_TEMPLATE_VALUE) return false;
+      }
+      return true;
+    }
+    if (_checkReady(this._config)) {
+      this.ready = true;
+    }
+  }
 
   set nested(update: { keys: string[]; value: any }) {
     const { keys, value } = update;
@@ -67,6 +113,7 @@ export class UixForgeConfigBuilder {
         }
     });
     this._config = updated;
+    this.checkReady();
   };
 
   public hasBinding(path: string) {

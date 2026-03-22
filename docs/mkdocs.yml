@@ -79,6 +79,7 @@ nav:
           - forge/sparks/tooltip.md
           - forge/sparks/attribute.md
           - forge/sparks/event.md
+          - forge/sparks/tile-icon.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
