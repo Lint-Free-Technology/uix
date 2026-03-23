@@ -62,20 +62,20 @@ element:
 
 ## UIX styling
 
-A top-level `uix` key can be added to the `uix-forge` element to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables.
+Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables.
 
 ```yaml
 type: custom:uix-forge
 forge:
   mold: card
+  uix:
+    style: |
+      :host {
+        --ha-card-border-radius: 20px;
+      }
 element:
   type: tile
   entity: light.living_room
-uix:
-  style: |
-    :host {
-      --ha-card-border-radius: 20px;
-    }
 ```
 
 ## Foundries

@@ -73,9 +73,9 @@ export class UixForge extends LitElement {
   }
 
   private _resolveFoundry(
-    config: { foundry?: string; forge?: any; element?: any; uix?: any },
+    config: { foundry?: string; forge?: any; element?: any },
     visited: Set<string> = new Set()
-  ): { forge: any; element: any; uix: any } | null {
+  ): { forge: any; element: any } | null {
     const foundryName = config.foundry;
 
     if (foundryName) {
@@ -101,14 +101,12 @@ export class UixForge extends LitElement {
       // foundryData overrides base, local config overrides foundry
       const mergedForge = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.forge, foundryData.forge), config.forge);
       const mergedElement = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.element, foundryData.element), config.element);
-      const mergedUix = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.uix, foundryData.uix), config.uix ?? {});
-      return { forge: mergedForge, element: mergedElement, uix: mergedUix };
+      return { forge: mergedForge, element: mergedElement };
     }
 
     return {
       forge: config.forge ?? {},
       element: config.element ?? {},
-      uix: config.uix ?? {},
     };
   }
 
@@ -139,7 +137,7 @@ export class UixForge extends LitElement {
       return;
     }
 
-    this._resolvedUix = resolved.uix;
+    this._resolvedUix = resolved.forge?.uix;
 
     this._applyResolvedConfig(resolved.forge, resolved.element);
   }
@@ -175,6 +173,7 @@ export class UixForge extends LitElement {
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
     delete forgeConfig.template_nesting;
+    delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     this.forgedElementConfig = { ...resolvedElement };
     Promise.all([
@@ -248,13 +247,14 @@ export class UixForge extends LitElement {
     if (this.forgedElement && !this.templatesReady) {
       const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
-      this._resolvedUix = resolved.uix;
+      this._resolvedUix = resolved.forge?.uix;
       const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
       delete forgeConfig.mold;
       delete forgeConfig.macros;
       delete forgeConfig.show_error;
       delete forgeConfig.template_nesting;
+      delete forgeConfig.uix;
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...resolved.element };
       Promise.all([
@@ -302,7 +302,7 @@ export class UixForge extends LitElement {
     if (!this._mold) {
       const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
-      this._resolvedUix = resolved.uix;
+      this._resolvedUix = resolved.forge?.uix;
       try {
         this._applyResolvedConfig(resolved.forge, resolved.element);
       } catch (err) {
@@ -367,7 +367,7 @@ export class UixForge extends LitElement {
     this.templatesReady = false;
     const resolved = this._resolveFoundry({ ...this.config });
     if (!resolved) return;
-    this._resolvedUix = resolved.uix;
+    this._resolvedUix = resolved.forge?.uix;
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
     this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : "<<";
@@ -377,6 +377,7 @@ export class UixForge extends LitElement {
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
     delete forgeConfig.template_nesting;
+    delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     this.forgedElementConfig = { ...resolved.element };
     Promise.all([
