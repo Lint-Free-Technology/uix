@@ -1,21 +1,24 @@
-import { formatHex, parse } from "culori";
-
 /**
- * Expands a 3-digit hex color to a 6-digit hex color.
- * @param hex - The hex color to expand.
- * @returns The expanded hex color.
+ * Expands a 3-digit hex color to a 6-digit hex color, stripping any alpha channel.
+ * @param hex - The hex color to expand (#rgb, #rgba, #rrggbb, or #rrggbbaa).
+ * @returns The 6-digit hex color without '#'.
  * @throws If the hex color is invalid.
  */
 export const expandHex = (hex: string): string => {
-  const color = parse(hex);
-  if (!color) {
-    throw new Error(`Invalid hex color: ${hex}`);
+  const h = hex.replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(h)) {
+    return `${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`;
   }
-  const formattedColor = formatHex(color);
-  if (!formattedColor) {
-    throw new Error(`Could not format hex color: ${hex}`);
+  if (/^[0-9a-fA-F]{4}$/.test(h)) {
+    return `${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`;
   }
-  return formattedColor.replace("#", "");
+  if (/^[0-9a-fA-F]{6}$/.test(h)) {
+    return h;
+  }
+  if (/^[0-9a-fA-F]{8}$/.test(h)) {
+    return h.substring(0, 6);
+  }
+  throw new Error(`Invalid hex color: ${hex}`);
 };
 
 /**
