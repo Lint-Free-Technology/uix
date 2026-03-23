@@ -407,42 +407,28 @@ function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | nu
 
   if (current !== rootEl) return null;
 
-  // Find the index of the last shadow-root crossing in the segment list.
-  let lastShadowIdx = -1;
-  for (let i = segments.length - 1; i >= 0; i--) {
-    if (segments[i].kind === "shadow") {
-      lastShadowIdx = i;
-      break;
-    }
-  }
-
-  if (lastShadowIdx === -1) {
-    // No shadow-root crossings: plain CSS selector chain from rootEl.
-    const sel = segments
-      .filter((s): s is { kind: "element"; sel: string } => s.kind === "element")
-      .map((s) => s.sel)
-      .join(" ")
-      .trim();
-    return sel || null;
-  }
-
-  // Build a concise path:
-  // – before/at the last "$": keep only the element directly preceding each "$"
-  // – after the last "$": keep all element segments (CSS selector within the final shadow context)
+  // Build a concise selectTree path:
+  // – keep only the element directly preceding each "$" (shadow-root crossing)
+  // – drop all intermediate light DOM elements before the target
+  // – always append just the target element as the final step
+  //
+  // Because the walk unshifts from targetEl upward, segments[segments.length - 1]
+  // is always the targetEl's own selector — so we stop the loop one short and
+  // append it explicitly.
   const parts: string[] = [];
-  for (let i = 0; i < segments.length; i++) {
+  for (let i = 0; i < segments.length - 1; i++) {
     const seg = segments[i];
     if (seg.kind === "shadow") {
       parts.push("$");
-    } else if (i + 1 < segments.length && segments[i + 1].kind === "shadow") {
+    } else if (segments[i + 1].kind === "shadow") {
       // Element directly before a shadow-root crossing — keep it.
       parts.push(seg.sel);
-    } else if (i > lastShadowIdx) {
-      // Element after the last shadow-root crossing — part of the final CSS selector.
-      parts.push(seg.sel);
     }
-    // Otherwise: intermediate element between two non-shadow-root-crossing steps, drop for conciseness.
+    // Otherwise: intermediate light DOM element — drop for conciseness.
   }
+
+  // Append the direct target selector as the final step.
+  parts.push(buildSelector(targetEl));
 
   return parts.join(" ").trim() || null;
 }
