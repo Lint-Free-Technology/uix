@@ -3,7 +3,7 @@ import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_
 import { property, state } from "lit/decorators.js";
 import { hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { buildMacros } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, ModdedElement } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -11,6 +11,29 @@ declare global {
   interface HTMLElementTagNameMap {
     [UIX_FORGE_TYPE]: UixForge;
   }
+}
+
+function _mergeFoundryConfig(foundry: any, local: any): any {
+  if (!foundry) return local ?? {};
+  if (!local) return foundry ?? {};
+  const result = { ...foundry };
+  for (const key of Object.keys(local)) {
+    const lv = local[key];
+    const fv = result[key];
+    if (
+      lv !== null &&
+      typeof lv === "object" &&
+      !Array.isArray(lv) &&
+      fv !== null &&
+      typeof fv === "object" &&
+      !Array.isArray(fv)
+    ) {
+      result[key] = _mergeFoundryConfig(fv, lv);
+    } else {
+      result[key] = lv;
+    }
+  }
+  return result;
 }
 
 export class UixForge extends LitElement {
@@ -30,6 +53,8 @@ export class UixForge extends LitElement {
   private _forgedElementConfig: UixForgeConfigBuilder;
   private _sparkController: UixForgeSparkController;
   private _disconnectTimeout?: number;
+  private _foundryUpdateListener?: EventListener;
+  private _originalUix?: any;
 
   constructor() {
       super();
@@ -47,50 +72,119 @@ export class UixForge extends LitElement {
     };
   }
 
+  private _applyFoundryUix(resolvedUix: any) {
+    if (resolvedUix && Object.keys(resolvedUix).length > 0) {
+      this.config = { ...this.config, uix: resolvedUix };
+    }
+  }
+
+  private _resolveFoundry(
+    config: { foundry?: string; forge?: any; element?: any; uix?: any },
+    visited: Set<string> = new Set()
+  ): { forge: any; element: any; uix: any } | null {
+    const foundryName = config.foundry;
+
+    if (foundryName) {
+      const coordinator = (window as any).uixCoordinator;
+      // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
+      if (!coordinator?.foundries || (Object.keys(coordinator.foundries).length === 0 && !coordinator.ready)) {
+        return null;
+      }
+      const foundryData = coordinator.foundries[foundryName];
+      if (!foundryData) {
+        throw new Error(`Foundry '${foundryName}' not found. Check that it is defined in the UIX integration.`);
+      }
+      if (visited.has(foundryName)) {
+        throw new Error(`Circular foundry reference detected: '${foundryName}'.`);
+      }
+      const nextVisited = new Set(visited);
+      nextVisited.add(foundryName);
+
+      // Recursively resolve the foundry's own base (if it also references another foundry)
+      const baseResolved = this._resolveFoundry(foundryData, nextVisited);
+      if (baseResolved === null) return null;
+
+      // foundryData overrides base, local config overrides foundry
+      const mergedForge = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.forge, foundryData.forge), config.forge);
+      const mergedElement = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.element, foundryData.element), config.element);
+      const mergedUix = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.uix, foundryData.uix), this._originalUix ?? {});
+      return { forge: mergedForge, element: mergedElement, uix: mergedUix };
+    }
+
+    return {
+      forge: config.forge ?? {},
+      element: config.element ?? {},
+      uix: config.uix ?? {},
+    };
+  }
+
   public setConfig(config: UixForgeConfig) {
     if (!config) throw new Error("No config");
-    if (!config.forge) {
-      throw new Error("forge config is required");
+    if (!config.foundry && !config.forge) {
+      throw new Error("forge config or foundry is required");
     }
-    if (!config.element) {
+    if (!config.foundry && !config.element) {
       throw new Error("element config is required");
-    }
-    if (!config.forge?.mold) {
-      throw new Error("forge mold is required");
     }
     Object.keys(config).forEach((k) => {
       if (!UIX_FORGE_ALLOWED_CONFIG_KEYS.includes(k)) {
         throw new Error(`unexpected config key ${k}`);
       }
     });
-    // Only support card, badge, and row molds at this time
-    if (config.forge.mold !== "card" && config.forge.mold !== "badge" && config.forge.mold !== "row") {
-      throw new Error("only forge mold of card, badge, or row is supported at this time");
-    }
-    if (config.forge.macros && typeof config.forge.macros !== "object") {
-      throw new Error("forge macros must be an object");
-    }
-    if (config.forge.template_nesting && typeof config.forge.template_nesting !== "string") {
-      throw new Error("forge template_nesting must be a string");
-    }
-    if (config.forge.template_nesting && config.forge.template_nesting.length !== 4) {
-      throw new Error("forge template_nesting must be four characters");
-    }
+
     this.templatesReady = false;
     this.config = config;
-    this._mold = new UIX_FORGE_MOLD_CLASSES[config.forge.mold](this);
-    this._macros = config.forge.macros;
-    this._showError = config.forge.show_error || false;
-    this._templateNestingOpen = config.forge.template_nesting ? config.forge.template_nesting.slice(0, 2) : "<<";
-    this._templateNestingClose = config.forge.template_nesting ? config.forge.template_nesting.slice(2) : ">>";
-    const forgeConfig = { ...config.forge };
+    this._originalUix = config.uix;
+
+    const resolved = this._resolveFoundry(config);
+    if (!resolved) {
+      // Foundry not yet available – defer until foundries are loaded
+      if (!this._foundryUpdateListener) {
+        this._foundryUpdateListener = () => this._onFoundryUpdate();
+        window.addEventListener("uix-foundries-updated", this._foundryUpdateListener);
+      }
+      return;
+    }
+
+    // Merge foundry uix into this.config so UIX styling picks it up
+    this._applyFoundryUix(resolved.uix);
+
+    this._applyResolvedConfig(resolved.forge, resolved.element);
+  }
+
+  private _applyResolvedConfig(resolvedForge: any, resolvedElement: any) {
+    if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
+      throw new Error("forge config is required (not provided locally or via foundry)");
+    }
+    if (!resolvedElement || Object.keys(resolvedElement).length === 0) {
+      throw new Error("element config is required (not provided locally or via foundry)");
+    }
+    // Only support card, badge, and row molds at this time
+    if (resolvedForge.mold !== "card" && resolvedForge.mold !== "badge" && resolvedForge.mold !== "row") {
+      throw new Error("only forge mold of card, badge, or row is supported at this time");
+    }
+    if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
+      throw new Error("forge macros must be an object");
+    }
+    if (resolvedForge.template_nesting && typeof resolvedForge.template_nesting !== "string") {
+      throw new Error("forge template_nesting must be a string");
+    }
+    if (resolvedForge.template_nesting && resolvedForge.template_nesting.length !== 4) {
+      throw new Error("forge template_nesting must be four characters");
+    }
+    this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
+    this._macros = resolvedForge.macros;
+    this._showError = resolvedForge.show_error || false;
+    this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : "<<";
+    this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : ">>";
+    const forgeConfig = { ...resolvedForge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
     delete forgeConfig.template_nesting;
     this.forgeConfig = forgeConfig;
-    this.forgedElementConfig = { ...config.element };
+    this.forgedElementConfig = { ...resolvedElement };
     Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
@@ -145,22 +239,31 @@ export class UixForge extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this._mold.connectedCallback();
+    this._mold?.connectedCallback();
     this._sparkController.connectedCallback();
+
+    // Listen for foundry updates from the coordinator
+    if (this.config?.foundry && !this._foundryUpdateListener) {
+      this._foundryUpdateListener = () => this._onFoundryUpdate();
+      window.addEventListener("uix-foundries-updated", this._foundryUpdateListener);
+    }
+
     if (this._disconnectTimeout) {
       clearTimeout(this._disconnectTimeout);
       this._disconnectTimeout = undefined;
       return;
     }
     if (this.forgedElement && !this.templatesReady) {
-      const forgeConfig = { ...this.config.forge };
+      const resolved = this._resolveFoundry({ ...this.config });
+      if (!resolved) return;
+      const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
       delete forgeConfig.mold;
       delete forgeConfig.macros;
       delete forgeConfig.show_error;
       delete forgeConfig.template_nesting;
       this.forgeConfig = forgeConfig;
-      this.forgedElementConfig = { ...this.config.element };
+      this.forgedElementConfig = { ...resolved.element };
       Promise.all([
         this.bindTemplates(this._forgeConfig),
         this.bindTemplates(this._forgedElementConfig),
@@ -176,8 +279,14 @@ export class UixForge extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this._mold.disconnectedCallback();
+    this._mold?.disconnectedCallback();
     this._sparkController.disconnectedCallback();
+
+    if (this._foundryUpdateListener) {
+      window.removeEventListener("uix-foundries-updated", this._foundryUpdateListener);
+      this._foundryUpdateListener = undefined;
+    }
+
     // Delay unbinding to allow for quick reconnects without rebinding
     this._disconnectTimeout = window.setTimeout(() => {
       super.disconnectedCallback();
@@ -192,6 +301,25 @@ export class UixForge extends LitElement {
       this.templatesReady = false;
       this._disconnectTimeout = undefined;
     }, 1000); // 1000ms timeout, adjust as needed
+  }
+
+  private _onFoundryUpdate() {
+    if (!this.config?.foundry) return;
+    // If the forge was waiting for foundry to load initially, complete setup now
+    if (!this._mold) {
+      const resolved = this._resolveFoundry({ ...this.config });
+      if (!resolved) return;
+      // Merge foundry uix into this.config
+      this._applyFoundryUix(resolved.uix);
+      try {
+        this._applyResolvedConfig(resolved.forge, resolved.element);
+      } catch (err) {
+        console.error("UIX Forge: Error applying foundry config:", err);
+      }
+      return;
+    }
+    // Otherwise refresh templates with updated foundry data
+    this.refreshForgeTemplates();
   }
 
   private async bindTemplates(base: any, current: any = undefined, path: string[] = []) {
@@ -245,14 +373,21 @@ export class UixForge extends LitElement {
 
   refreshForgeTemplates() {
     this.templatesReady = false;
-    const forgeConfig = { ...this.config.forge };
+    const resolved = this._resolveFoundry({ ...this.config });
+    if (!resolved) return;
+    // Merge foundry uix into this.config
+    this._applyFoundryUix(resolved.uix);
+    const forgeConfig = { ...resolved.forge };
+    this._macros = forgeConfig.macros;
+    this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : "<<";
+    this._templateNestingClose = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(2) : ">>";
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
     delete forgeConfig.template_nesting;
     this.forgeConfig = forgeConfig;
-    this.forgedElementConfig = { ...this.config.element };
+    this.forgedElementConfig = { ...resolved.element };
     Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
@@ -270,6 +405,19 @@ export class UixForge extends LitElement {
     } else {
       this._mold.refresh(path);
     }
+    apply_uix(
+      (this as any),
+      "card",
+      this.config.uix,
+      { config: 
+        { forge: this.forgeConfig, 
+          element: this.forgedElementConfig 
+        }, 
+        uixForge: this._sparkController.templateVariables() 
+      },
+      true,
+      "type-custom-uix-forge"
+    );
   }
 
   refreshForgedElement(path?: UixForgeConfigPath) {

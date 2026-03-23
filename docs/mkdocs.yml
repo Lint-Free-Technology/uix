@@ -74,6 +74,7 @@ nav:
           - developers/themes.md
   - UIX Forge:
       - forge/index.md
+      - forge/foundries.md
       - Sparks:
           - forge/sparks/index.md
           - forge/sparks/tooltip.md

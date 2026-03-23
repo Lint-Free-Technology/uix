@@ -10,5 +10,51 @@
         },
         "step": {
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Manage UIX Forge Foundries",
+                "menu_options": {
+                    "add_foundry": "Add a foundry",
+                    "edit_foundry": "Edit a foundry",
+                    "delete_foundry": "Delete a foundry"
+                }
+            },
+            "add_foundry": {
+                "title": "Add a foundry",
+                "description": "Enter a name and configuration for the new foundry. The config should be a mapping that may include 'forge', 'element', and/or 'uix' keys.",
+                "data": {
+                    "name": "Foundry name",
+                    "config": "Foundry configuration"
+                }
+            },
+            "edit_foundry": {
+                "title": "Edit a foundry",
+                "description": "Select the foundry you want to edit.",
+                "data": {
+                    "name": "Foundry to edit"
+                }
+            },
+            "edit_foundry_config": {
+                "title": "Edit foundry \"{name}\"",
+                "description": "Update the configuration for this foundry.",
+                "data": {
+                    "config": "Foundry configuration"
+                }
+            },
+            "delete_foundry": {
+                "title": "Delete a foundry",
+                "data": {
+                    "name": "Foundry to delete"
+                }
+            }
+        },
+        "abort": {
+            "no_foundries": "No foundries are configured yet. Add one first."
+        },
+        "error": {
+            "invalid_config": "The configuration must be a YAML mapping."
+        }
     }
 }

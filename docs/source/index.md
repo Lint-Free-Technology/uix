@@ -20,5 +20,6 @@ Go to [Quick Start](./quick-start.md) for installation instructions and a short 
 
 ## ➡️ Next up
 
-- [Using UIX](./using/index.md)
+- [Using UIX Styling](./using/index.md)
+- [Using UIX Forge](./forge/index.md)
 - [FAQ](/faq)

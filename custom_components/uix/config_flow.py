@@ -1,6 +1,10 @@
 from typing import Any
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+import voluptuous as vol
+
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.selector import ObjectSelector
 
 from .checks import (
     check_card_mod_frontend_script_extra_module, 
@@ -9,7 +13,8 @@ from .checks import (
 from .const import (
     DOMAIN, 
     NAME, 
-    CARD_MOD_FRONTEND_SCRIPT_URL
+    CARD_MOD_FRONTEND_SCRIPT_URL,
+    CONF_FOUNDRIES,
 )
 
 class UixConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -44,4 +49,135 @@ class UixConfigFlow(ConfigFlow, domain=DOMAIN):
             title=NAME,
             data={},
             description="refresh_message",
+        )
+
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return UixOptionsFlow(config_entry)
+
+
+class UixOptionsFlow(OptionsFlow):
+    """Options flow for managing UIX foundries."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize the options flow."""
+        self._config_entry = config_entry
+        self._foundries: dict[str, Any] = dict(
+            config_entry.options.get(CONF_FOUNDRIES, {})
+        )
+        self._foundry_name: str | None = None
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the foundry management menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["add_foundry", "edit_foundry", "delete_foundry"],
+        )
+
+    async def async_step_add_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add a new foundry (name + config in one form)."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            name = user_input["name"].strip()
+            config = user_input["config"]
+            if not isinstance(config, dict):
+                errors["config"] = "invalid_config"
+            else:
+                self._foundries[name] = config
+                return self.async_create_entry(
+                    title="",
+                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+                )
+
+        return self.async_show_form(
+            step_id="add_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): cv.string,
+                    vol.Required("config"): ObjectSelector(),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_edit_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 1: select an existing foundry to edit."""
+        if not self._foundries:
+            return self.async_abort(reason="no_foundries")
+
+        if user_input is not None:
+            self._foundry_name = user_input["name"]
+            return await self.async_step_edit_foundry_config()
+
+        return self.async_show_form(
+            step_id="edit_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): vol.In(list(self._foundries.keys())),
+                }
+            ),
+        )
+
+    async def async_step_edit_foundry_config(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 2: edit the selected foundry's configuration."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            config = user_input["config"]
+            if not isinstance(config, dict):
+                errors["config"] = "invalid_config"
+            else:
+                self._foundries[self._foundry_name] = config
+                return self.async_create_entry(
+                    title="",
+                    data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+                )
+
+        existing = self._foundries.get(self._foundry_name)
+        return self.async_show_form(
+            step_id="edit_foundry_config",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("config", default=existing): ObjectSelector(),
+                }
+            ),
+            description_placeholders={"name": self._foundry_name},
+            errors=errors,
+        )
+
+    async def async_step_delete_foundry(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Delete a foundry."""
+        errors: dict[str, str] = {}
+
+        if not self._foundries:
+            return self.async_abort(reason="no_foundries")
+
+        if user_input is not None:
+            name = user_input["name"]
+            if name in self._foundries:
+                del self._foundries[name]
+            return self.async_create_entry(
+                title="",
+                data={**self._config_entry.options, CONF_FOUNDRIES: self._foundries},
+            )
+
+        return self.async_show_form(
+            step_id="delete_foundry",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("name"): vol.In(list(self._foundries.keys())),
+                }
+            ),
+            errors=errors,
         )

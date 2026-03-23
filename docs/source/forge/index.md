@@ -8,7 +8,7 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 
 - **Forge** any standard Home Assistant element from templates, allowing the entire element config to react to entity states, user, browser and other template variables.
 - **Add sparks** — self-contained behaviours such that augment the forged element.
-- **Apply UIX styles** to the forged element, exactly like any other element.
+- **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables and made available in `uixForge` template variable.
 
 ## Basic structure
 
@@ -59,6 +59,12 @@ element:
         --tile-color: teal;
       }
 ```
+
+## Foundries
+
+A **foundry** is a server-stored UIX Forge template that lets you define reusable `forge`, `element`, and `uix` configs once and share them across many cards. Reference a foundry with the `foundry:` key and override only what you need locally.
+
+See [Foundries](./foundries.md) for a full guide including merge behaviour, nested foundries, and management via the integration options.
 
 ## Sparks
 
