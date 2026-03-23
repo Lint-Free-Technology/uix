@@ -17,6 +17,9 @@ The `attribute` spark lets you **replace** or **remove** an HTML attribute on an
 | `action` | `string` | | `replace` | What to do with the attribute. Either `replace` (set a new value) or `remove` (delete the attribute entirely). |
 | `value` | `string` | | `""` | The new attribute value. Only used when `action` is `replace`. Supports [Jinja2 templates](../../using/templates.md). |
 
+!!! tip
+    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.
+
 ## Usage
 
 ### Remove a native tooltip (title attribute)

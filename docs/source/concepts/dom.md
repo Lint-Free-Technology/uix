@@ -90,7 +90,7 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 ## DOM inspection helpers
 
-UIX ships two browser console helpers that make it easier to discover valid style paths and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
+UIX ships three browser console helpers that make it easier to discover valid style paths, forge spark paths, and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
 
 ### `uix_tree($0)` — general helper
 
@@ -102,9 +102,9 @@ Reports everything UIX knows about the area surrounding the selected element:
 | **👶 Active UIX Children** | Paths that are currently being styled as children of the UIX parent, with the resolved DOM elements shown. |
 | **🗺️ Available YAML Selectors** | Every YAML style key reachable within the UIX parent's shadow DOM subtree (stopping at the next UIX parent boundary). Each key maps to one shadow context; inside you'll find the CSS selectors valid for that key's style string. |
 
-    ```js
-    uix_tree($0)
-    ```
+```js
+uix_tree($0)
+```
 
 ??? example
     After selecting a card element in the inspector and running `uix_tree($0)`, the console output might look like:
@@ -128,7 +128,7 @@ Reports everything UIX knows about the area surrounding the selected element:
 
     Each group label shows a YAML style key followed by the required `:` syntax. The CSS selectors inside are valid within that key's style string. Each selector is followed by a clickable element reference — click it to jump straight to that element in the DevTools inspector.
 
-### `uix_path($0)` — specific helper
+### `uix_style_path($0)` — specific helper
 
 Reports the exact UIX path to the selected element and generates a ready-to-paste YAML snippet:
 
@@ -139,15 +139,17 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **🎨 CSS Target** | Tag name, id, classes and a suggested CSS selector for the element — each followed by a clickable element reference to jump straight to it in the DevTools inspector. |
 | **📝 Boilerplate UIX YAML** | A paste-ready YAML snippet to get you started. |
 
-    ```js
-    uix_path($0)
-    ```
+```js
+uix_style_path($0)
+```
+
+`uix_path($0)` is a shorthand alias for `uix_style_path($0)`.
 
 ??? example
-    After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
+    After selecting the `<h3>` heading inside a markdown card and running `uix_style_path($0)`:
 
     ```
-    💡 UIX Path 💡
+    💡 UIX Style Path 💡
       Target element: <h3>
       📦 Closest UIX Parent
         Element: <hui-markdown-card>
@@ -167,3 +169,41 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
     ```
 
     The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
+
+### `uix_forge_path($0)` — forge helper
+
+Reports the path from the closest `uix-forge` forge to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config.
+
+| Section | What it shows |
+| ------- | ------------- |
+| **📦 Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element. |
+| **📍 Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the forged element to `$0`. |
+| **📝 Boilerplate Spark YAML** | A paste-ready spark YAML snippet showing how to use the path. |
+
+```js
+uix_forge_path($0)
+```
+
+!!! warning
+    If you are adding a spark element of the same type, e.g. a tile icon **before** `ha-tile-icon` then pay particular attention to the documentation for that spark which will provide guidance on path specificity so as to not select the spark element itself during updates.
+
+??? example
+    After selecting `ha-tile-icon` in a tile card and running `uix_forge_path($0)`
+
+    ```
+    📦 Closest UIX Forge Parent
+      Element: <uix-forge class=​"type-custom-uix-forge">​…​</uix-forge>​
+    📍 Forge Path to Target
+      Path: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+      Use this path as the value of `for`, `before`, or `after` in a spark config.
+    📝 Boilerplate Spark YAML
+    forge:
+      sparks:
+        - type: tooltip
+          for: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+          content: "..."
+        # for tile-icon / state-badge sparks:
+        # - type: tile-icon
+        #   before: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+        #   icon: mdi:home
+    ```

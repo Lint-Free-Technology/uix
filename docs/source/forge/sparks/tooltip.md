@@ -54,6 +54,9 @@ Only the **first** element matched by `for` gets the tooltip.
 | `hide_delay` | number | | `150` | Milliseconds to wait before hiding the tooltip. |
 | `without_arrow` | boolean | | `false` | Set to `true` to hide the directional arrow. |
 
+!!! tip
+    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.
+
 ## Templates in content
 
 The `content` value is part of the `forge` config and is therefore processed as a template, giving you access to entity states, the `config` object and any other [UIX template variables](../../using/templates.md):

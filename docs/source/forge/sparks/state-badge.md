@@ -56,6 +56,9 @@ entities:
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `state-badge` element is placed in the same parent as the target element — it is a sibling, not a child.
     - If you are inserting a state badge **before** another state badge, be specific in your selector to avoid re-selecting the inserted badge on updates. State badges added by this spark have a `data-uix-forge-state-badge-id` attribute you can use for exclusion, e.g. `state-badge:not([data-uix-forge-state-badge-id])`.
+  
+!!! tip
+    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper)DOM helper to take the guesswork out of finding the right path for `before/after`.
 
 ## Examples
 
