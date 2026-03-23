@@ -1,3 +1,9 @@
+## [6.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1-beta.2...v6.0.0-beta.1) (2026-03-23)
+
+### ⭐ New Features
+
+* **major:** UIX Forge - see https://uix.lf.technology/forge ([#110](https://github.com/Lint-Free-Technology/uix/issues/110)) ([ec48f88](https://github.com/Lint-Free-Technology/uix/commit/ec48f88e62f65dacea496af90b3eafa74968b3f1)), closes [#98](https://github.com/Lint-Free-Technology/uix/issues/98)
+
 ## [5.3.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1-beta.1...v5.3.1-beta.2) (2026-03-15)
 
 ### 🐞 Bug Fixes
