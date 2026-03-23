@@ -3,7 +3,7 @@ import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_
 import { property, state } from "lit/decorators.js";
 import { hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { buildMacros } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, ModdedElement } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -107,7 +107,7 @@ export class UixForge extends LitElement {
       // foundryData overrides base, local config overrides foundry
       const mergedForge = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.forge, foundryData.forge), config.forge);
       const mergedElement = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.element, foundryData.element), config.element);
-      const mergedUix = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.uix, foundryData.uix), config.uix);
+      const mergedUix = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.uix, foundryData.uix), this._originalUix ?? {});
       return { forge: mergedForge, element: mergedElement, uix: mergedUix };
     }
 
@@ -254,7 +254,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this.forgedElement && !this.templatesReady) {
-      const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
+      const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
       const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
@@ -307,7 +307,7 @@ export class UixForge extends LitElement {
     if (!this.config?.foundry) return;
     // If the forge was waiting for foundry to load initially, complete setup now
     if (!this._mold) {
-      const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
+      const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
       // Merge foundry uix into this.config
       this._applyFoundryUix(resolved.uix);
@@ -373,7 +373,7 @@ export class UixForge extends LitElement {
 
   refreshForgeTemplates() {
     this.templatesReady = false;
-    const resolved = this._resolveFoundry({ ...this.config, uix: this._originalUix });
+    const resolved = this._resolveFoundry({ ...this.config });
     if (!resolved) return;
     // Merge foundry uix into this.config
     this._applyFoundryUix(resolved.uix);
@@ -405,6 +405,19 @@ export class UixForge extends LitElement {
     } else {
       this._mold.refresh(path);
     }
+    apply_uix(
+      (this as any),
+      "card",
+      this.config.uix,
+      { config: 
+        { forge: this.forgeConfig, 
+          element: this.forgedElementConfig 
+        }, 
+        uixForge: this._sparkController.templateVariables() 
+      },
+      true,
+      "type-custom-uix-forge"
+    );
   }
 
   refreshForgedElement(path?: UixForgeConfigPath) {

@@ -32,6 +32,11 @@ export const ConnectionMixin = (SuperClass) => {
       }
     }
 
+    // Fire window event
+    private fireWindowEvent(event, detail = undefined) {
+      window.dispatchEvent(new CustomEvent(event, { detail }));
+    }
+
     // Propagate internal browser event
     private fireBrowserEvent(event, detail = undefined) {
       this.dispatchEvent(new CustomEvent(event, { detail, bubbles: true }));
@@ -133,7 +138,7 @@ export const ConnectionMixin = (SuperClass) => {
         });
         this._foundries = (result as any)?.foundries ?? {};
         this.LOG("Foundries loaded:", this._foundries);
-        this.fireBrowserEvent("uix-foundries-updated", { foundries: this._foundries });
+        this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
       } catch (err) {
         console.log("UIX: Error fetching foundries:", err);
       }
