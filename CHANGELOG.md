@@ -1,3 +1,9 @@
+## [6.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.1...v6.0.0-beta.2) (2026-03-23)
+
+### ⚙️ Miscellaneous
+
+* **forge:** Move forge uix config under forge key ([#111](https://github.com/Lint-Free-Technology/uix/issues/111)) ([1969c34](https://github.com/Lint-Free-Technology/uix/commit/1969c34a3d245ff517c679cd17496e7931c60099))
+
 ## [6.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1-beta.2...v6.0.0-beta.1) (2026-03-23)
 
 ### ⭐ New Features
