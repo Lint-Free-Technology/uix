@@ -90,7 +90,7 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 ## DOM inspection helpers
 
-UIX ships two browser console helpers that make it easier to discover valid style paths and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
+UIX ships three browser console helpers that make it easier to discover valid style paths, forge spark paths, and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
 
 ### `uix_tree($0)` — general helper
 
@@ -128,7 +128,7 @@ Reports everything UIX knows about the area surrounding the selected element:
 
     Each group label shows a YAML style key followed by the required `:` syntax. The CSS selectors inside are valid within that key's style string. Each selector is followed by a clickable element reference — click it to jump straight to that element in the DevTools inspector.
 
-### `uix_path($0)` — specific helper
+### `uix_style_path($0)` — specific helper
 
 Reports the exact UIX path to the selected element and generates a ready-to-paste YAML snippet:
 
@@ -140,14 +140,16 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **📝 Boilerplate UIX YAML** | A paste-ready YAML snippet to get you started. |
 
     ```js
-    uix_path($0)
+    uix_style_path($0)
     ```
+
+`uix_path($0)` is a shorthand alias for `uix_style_path($0)`.
 
 ??? example
-    After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
+    After selecting the `<h3>` heading inside a markdown card and running `uix_style_path($0)`:
 
     ```
-    💡 UIX Path 💡
+    💡 UIX Style Path 💡
       Target element: <h3>
       📦 Closest UIX Parent
         Element: <hui-markdown-card>
@@ -167,3 +169,17 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
     ```
 
     The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
+
+### `uix_forge_path($0)` — forge helper
+
+Reports the path from the closest `uix-forge` parent's forged element to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config.
+
+| Section | What it shows |
+| ------- | ------------- |
+| **📦 Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element. |
+| **📍 Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the forged element to `$0`. |
+| **📝 Boilerplate Spark YAML** | A paste-ready spark YAML snippet showing how to use the path. |
+
+    ```js
+    uix_forge_path($0)
+    ```
