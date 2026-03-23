@@ -26,3 +26,16 @@
     width: 15rem;
   }
 }
+
+.md-banner {
+    background: #473cd3;
+}
+
+.md-banner__inner {
+  font-family: 'Beon-Regular', sans-serif;
+  font-size: 1.5em !important;
+  font-weight: 600;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  text-align: center;
+}
