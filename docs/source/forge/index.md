@@ -60,6 +60,24 @@ element:
       }
 ```
 
+## UIX styling
+
+A top-level `uix` key can be added to the `uix-forge` element to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+element:
+  type: tile
+  entity: light.living_room
+uix:
+  style: |
+    :host {
+      --ha-card-border-radius: 20px;
+    }
+```
+
 ## Foundries
 
 A **foundry** is a server-stored UIX Forge template that lets you define reusable `forge`, `element`, and `uix` configs once and share them across many cards. Reference a foundry with the `foundry:` key and override only what you need locally.
