@@ -5,10 +5,12 @@ updates:
     schedule:
       interval: "daily"
     target-branch: "dev"
-    prefix: "deps"
+    commit-message:
+      prefix: "deps"
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'weekly'
     target-branch: 'dev'
-    prefix: "chore(deps)"
+    commit-message:
+      prefix: "chore(deps)"

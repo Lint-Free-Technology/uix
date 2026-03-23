@@ -243,7 +243,7 @@ Themes can also define macros available to all cards using that theme via `uix-m
 
 ## Browser Console Debugging Helpers
 
-UIX ships two functions attached to `window` for use in the browser DevTools console. Open DevTools, select an element in the **Elements** panel (it becomes `$0`), then call one of the helpers.
+UIX ships three functions attached to `window` for use in the browser DevTools console. Open DevTools, select an element in the **Elements** panel (it becomes `$0`), then call one of the helpers.
 
 ### `uix_tree($0)` — general helper
 
@@ -280,13 +280,15 @@ uix_tree($0)
 
 Each CSS selector entry is followed by a clickable element reference—click it in the DevTools console to jump to that element in the inspector.
 
-### `uix_path($0)` — specific helper
+### `uix_style_path($0)` — specific helper
 
 Reports the exact UIX path to the selected element and generates a ready-to-paste YAML snippet.
 
 ```js
-uix_path($0)
+uix_style_path($0)
 ```
+
+`uix_path($0)` is a shorthand alias for `uix_style_path($0)`.
 
 | Section | What it shows |
 |---------|---------------|
@@ -299,7 +301,7 @@ uix_path($0)
 **Example output (selecting an `<h3>` inside a markdown card — shows both card and theme boilerplate):**
 
 ```
-💡 UIX Path 💡
+💡 UIX Style Path 💡
   Target element: <h3>
   📦 Closest UIX Parent
     Element: <hui-markdown-card>
@@ -350,6 +352,20 @@ uix_path($0)
 ```
 
 Theme-only types (`dialog`, `root`, `view`, `more-info`, `sidebar`, `config`, `panel-custom`, `top-app-bar-fixed`, `developer-tools`) only show theme boilerplate because they cannot be styled via a card-level `uix:` key.
+
+### `uix_forge_path($0)` — forge helper
+
+Reports the selector path from the closest `uix-forge` parent's forged element to the selected element. Use the path as the value of `for`, `before`, or `after` in a forge spark config.
+
+```js
+uix_forge_path($0)
+```
+
+| Section | What it shows |
+|---------|---------------|
+| 📦 **Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element |
+| 📍 **Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the forged element to `$0` |
+| 📝 **Boilerplate Spark YAML** | A paste-ready spark YAML snippet showing how to use the path |
 
 ---
 
