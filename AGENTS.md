@@ -295,9 +295,10 @@ uix_style_path($0)
 | 📦 **Closest UIX Parent** | Same as `uix_tree` |
 | 📍 **UIX Path to Target** | The exact YAML style key (using `$` for shadow-root crossings) to reach `$0` |
 | 🎨 **CSS Target** | Tag name, ID, classes, and a suggested CSS selector for `$0` |
-| 📝 **Boilerplate UIX YAML** | A paste-ready YAML snippet with the correct selector |
+| 📝 **Boilerplate UIX YAML** | A paste-ready card-level YAML snippet. Shown only for types that support a card-level `uix:` key. |
+| 📝 **Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types. For theme-only types this is the only boilerplate shown; uses the `-yaml` variable variant when shadow-root crossings appear in the path. |
 
-**Example output (selecting an `<h3>` inside a markdown card):**
+**Example output (selecting an `<h3>` inside a markdown card — shows both card and theme boilerplate):**
 
 ```
 💡 UIX Style Path 💡
@@ -317,7 +318,40 @@ uix_style_path($0)
           h3 {
             /* your styles for h3 */
           }
+  📝 Boilerplate Theme YAML
+    my-awesome-theme:
+      uix-theme: my-awesome-theme
+      uix-card-yaml: |
+        "ha-markdown $": |
+          h3 {
+            /* your styles for h3 */
+          }
 ```
+
+**Example output (selecting an element inside a dialog — shows theme boilerplate only):**
+
+```
+💡 UIX Path 💡
+  Target element: <ha-dialog-header>
+  📦 Closest UIX Parent
+    Element: <ha-more-info-dialog>
+    UIX type: dialog
+  📍 UIX Path to Target
+    Path: "$":
+  🎨 CSS Target
+    Tag: ha-dialog-header
+    Suggested CSS selector: ha-dialog-header  <ha-dialog-header>
+  📝 Boilerplate Theme YAML
+    my-awesome-theme:
+      uix-theme: my-awesome-theme
+      uix-dialog-yaml: |
+        "$": |
+          ha-dialog-header {
+            /* your styles for ha-dialog-header */
+          }
+```
+
+Theme-only types (`dialog`, `root`, `view`, `more-info`, `sidebar`, `config`, `panel-custom`, `top-app-bar-fixed`, `developer-tools`) only show theme boilerplate because they cannot be styled via a card-level `uix:` key.
 
 ### `uix_forge_path($0)` — forge helper
 
