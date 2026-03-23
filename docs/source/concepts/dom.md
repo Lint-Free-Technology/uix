@@ -183,3 +183,24 @@ Reports the path from the closest `uix-forge` parent's forged element to the sel
     ```js
     uix_forge_path($0)
     ```
+
+??? example
+    After selecting `ha-tile-icon` in a tile card and running `uix_forge_path($0)`
+
+    ```
+    📦 Closest UIX Forge Parent
+      Element: <uix-forge class=​"type-custom-uix-forge">​…​</uix-forge>​
+    📍 Forge Path to Target
+      Path: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+      Use this path as the value of `for`, `before`, or `after` in a spark config.
+    📝 Boilerplate Spark YAML
+    forge:
+      sparks:
+        - type: tooltip
+          for: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+          content: "..."
+        # for tile-icon / state-badge sparks:
+        # - type: tile-icon
+        #   before: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+        #   icon: mdi:home
+    ```
