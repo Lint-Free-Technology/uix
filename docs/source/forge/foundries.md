@@ -152,7 +152,7 @@ The resolved config merges all three layers: `base_tile` → `light_tile` → el
 
 ## UIX styling from a foundry
 
-A foundry can include a `uix` key under `forge` that applies [UIX styling](../using/index.md) to the forged element. Foundry styles are merged with any `uix` key in the local `forge` config, with the local element taking precedence.
+A foundry can include a `uix` key under `forge` that applies [UIX styling](../using/index.md) to the forge element wrapper. Foundry styles are merged with any `uix` key in the local `forge` config, with the local element taking precedence.
 
 !!! tip "Combining styles"
     If you need to have root styling and shadow root styling, use YAML selectors placing your root styling in the root key `.:`. If you use text only for `style:` on element you will override all yaml styles in foundries.
