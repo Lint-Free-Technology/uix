@@ -13,3 +13,4 @@ Available sparks:
 - :zap: [Event](event.md) — receive DOM events from `fire-dom-event` actions and expose their data as template variables.
 - :star: [Tile Icon](tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.
 - :shield: [State Badge](state-badge.md) — insert a `state-badge` element as a sibling before or after any element within the forged element.
+- :material-grid: [Grid](grid.md) — apply CSS Grid layout to any container element within the forged element.

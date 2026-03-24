@@ -11,6 +11,7 @@ views:
   - !include views/tricks.yaml
   - !include views/answers.yaml
   - !include views/10_performance_test.yaml
+  - !include views/forge_grid.yaml
 
 card_mod:
   style:

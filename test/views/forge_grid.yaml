@@ -1,0 +1,68 @@
+title: Forge Grid Spark
+cards:
+  - type: markdown
+    content: |
+      ## Grid Spark
+      The `grid` spark applies CSS Grid layout to a container element.
+
+  - type: markdown
+    content: |
+      ### `columns: 3` shorthand (repeat(3, 1fr))
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          columns: 3
+          gap: 8
+    element:
+      type: grid
+      cards:
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.ceiling_lights
+        - type: tile
+          entity: light.kitchen_lights
+
+  - type: markdown
+    content: |
+      ### Custom column widths string
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          columns: "1fr 2fr 1fr"
+          gap: 8
+    element:
+      type: grid
+      cards:
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.ceiling_lights
+        - type: tile
+          entity: light.kitchen_lights
+
+  - type: markdown
+    content: |
+      ### Auto-flow dense with auto_rows
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          columns: 3
+          auto_rows: "minmax(80px, auto)"
+          auto_flow: row dense
+          gap: 8
+    element:
+      type: grid
+      cards:
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.ceiling_lights
+        - type: tile
+          entity: light.kitchen_lights
