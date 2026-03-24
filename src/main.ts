@@ -3,6 +3,7 @@ import "./ll-custom-actions";
 import "./console_debug";
 import "./coordinator/coordinator";
 import "./patch/ha-icon";
+import "./patch/ha-entity-picture";
 import "./forge/uix-forge";
 import "./uix";
 
