@@ -1,3 +1,9 @@
+## [6.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.2...v6.0.0-beta.3) (2026-03-24)
+
+### ⚙️ Miscellaneous
+
+* **forge:** Add section support to UIX Forge ([4cdec0d](https://github.com/Lint-Free-Technology/uix/commit/4cdec0dbe2cc019d44f1bb13f229cad6b888a60f))
+
 ## [6.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.1...v6.0.0-beta.2) (2026-03-23)
 
 ### ⚙️ Miscellaneous
