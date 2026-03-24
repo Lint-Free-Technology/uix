@@ -82,6 +82,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     if (!tooltip || tooltip.for !== element.id) {
       tooltip = document.createElement("wa-tooltip");
       tooltip.for = element.id;
+      tooltip.style.setProperty("display", "contents");
       if (element.getAttribute("slot")) {
         tooltip.setAttribute("slot", element.getAttribute("slot")!);
       }
