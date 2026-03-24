@@ -1,3 +1,9 @@
+## [6.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.3...v6.0.0-beta.4) (2026-03-24)
+
+### 🐞 Bug Fixes
+
+* **spark-tooltip:** Set tooltip display=contents to not take up space ([d3611fb](https://github.com/Lint-Free-Technology/uix/commit/d3611fbb2d6890590b14ad642a04f93ba602ca72))
+
 ## [6.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.2...v6.0.0-beta.3) (2026-03-24)
 
 ### ⚙️ Miscellaneous
