@@ -17,6 +17,8 @@ interface GridProps {
   align_content?: string;
   place_items?: string;
   place_content?: string;
+  /** `grid-template-areas` value — defines named grid areas for the layout. */
+  areas?: string;
 }
 
 /** A single media-query override block. */
@@ -58,7 +60,7 @@ function toGapValue(value: number | string | undefined | null): string | undefin
  * Converts a GridProps object to an array of structured CSS declarations.
  * Only properties that are explicitly set (not undefined) are included.
  *
- * @param props     The grid properties to convert.
+ * @param props           The grid properties to convert.
  * @param includeDisplay  When true, prepends `display: grid`.
  */
 function gridPropsToDeclarations(props: GridProps, includeDisplay = false): CssDeclaration[] {
@@ -89,6 +91,7 @@ function gridPropsToDeclarations(props: GridProps, includeDisplay = false): CssD
   if (props.align_content !== undefined) decls.push({ property: "align-content", value: props.align_content });
   if (props.place_items !== undefined) decls.push({ property: "place-items", value: props.place_items });
   if (props.place_content !== undefined) decls.push({ property: "place-content", value: props.place_content });
+  if (props.areas !== undefined) decls.push({ property: "grid-template-areas", value: props.areas });
 
   return decls;
 }
@@ -96,7 +99,7 @@ function gridPropsToDeclarations(props: GridProps, includeDisplay = false): CssD
 /** Unique HTML attribute used to scope injected `<style>` rules. */
 const GRID_ID_ATTR = "data-uix-grid-id";
 
-/** CSS properties written as inline styles (used for cleanup). */
+/** CSS properties written as inline styles (used for cleanup in the inline path). */
 const GRID_INLINE_PROPS = [
   "display",
   "grid-template-columns",
@@ -113,36 +116,47 @@ const GRID_INLINE_PROPS = [
   "align-content",
   "place-items",
   "place-content",
+  "grid-template-areas",
 ] as const;
 
 /**
  * Grid spark — applies CSS Grid layout to a target container element.
  *
- * When no `media_queries` are configured, grid properties are written as
- * inline styles (simplest case, no DOM overhead).
+ * **Inline-styles path** (default when no `media_queries` or `elements` are
+ * configured): grid properties are written directly as inline styles on the
+ * target element — no extra DOM overhead.
  *
- * When `media_queries` are configured, a scoped `<style>` element is injected
- * into the appropriate shadow root or document head so that `@media` rules can
- * override the base styles.  A unique `data-uix-grid-id` attribute is stamped
- * onto the target element to scope the generated CSS selector.
+ * **Style-element path** (used when `media_queries` or `elements` are
+ * configured): a scoped `<style>` element is injected into the nearest shadow
+ * root (or `document.head` for light-DOM elements).  A unique
+ * `data-uix-grid-id` attribute is stamped onto the target element to scope
+ * the generated CSS selector.  The `elements` list generates `:nth-child()`
+ * rules that assign `grid-area` names to child elements in order.
  *
  * All changes are fully restored on disconnect or config change.
  */
 export class UixForgeSparkGrid extends UixForgeSparkBase {
   type = "grid";
 
-  /** Unique ID used to scope injected CSS when media queries are active. */
+  /** Unique ID used to scope injected CSS when the style-element path is used. */
   private readonly _id: string;
 
   // ── Configuration ──────────────────────────────────────────────────────────
   private _for: string = "element";
   private _base: GridProps = {};
   private _mediaQueries: MediaQueryEntry[] = [];
+  /**
+   * Ordered list of `grid-area` names to assign to the direct children of the
+   * target container.  The first name is applied to the first child, the
+   * second to the second, and so on.  Names are assigned via CSS
+   * `:nth-child()` selectors in the injected `<style>` element.
+   */
+  private _elements: string[] = [];
 
   // ── Runtime state ──────────────────────────────────────────────────────────
   private _cancel: (() => void)[] = [];
   private _targetElement: HTMLElement | null = null;
-  /** Injected `<style>` element (only present when media_queries is non-empty). */
+  /** Injected `<style>` element (only present when the style-element path is active). */
   private _styleElement: HTMLStyleElement | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
@@ -159,6 +173,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   private _applyConfig(config: Record<string, any>): void {
     this._for = config.for ?? "element";
     this._mediaQueries = Array.isArray(config.media_queries) ? config.media_queries : [];
+    this._elements = Array.isArray(config.elements) ? config.elements : [];
     this._base = {
       columns: config.columns,
       rows: config.rows,
@@ -174,6 +189,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
       align_content: config.align_content,
       place_items: config.place_items,
       place_content: config.place_content,
+      areas: config.areas,
     };
   }
 
@@ -212,7 +228,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
       for (const prop of GRID_INLINE_PROPS) {
         this._targetElement.style.removeProperty(prop);
       }
-      // Remove scoped attribute (no-op if style-element path was never used)
+      // Remove scoped attribute (no-op if inline path was used)
       this._targetElement.removeAttribute(GRID_ID_ATTR);
       this._targetElement = null;
     }
@@ -223,12 +239,23 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
     }
   }
 
-  /** Returns true when at least one grid property or media query is configured. */
+  /** Returns true when at least one grid property, media query, or element assignment is configured. */
   private _hasGridConfig(): boolean {
     return (
       Object.values(this._base).some((v) => v !== undefined) ||
-      this._mediaQueries.length > 0
+      this._mediaQueries.length > 0 ||
+      this._elements.length > 0
     );
+  }
+
+  /**
+   * Returns true when the style-element path must be used.
+   * This is needed whenever `@media` rules or CSS `:nth-child()` rules for
+   * child-element area assignments are required — both of which cannot be
+   * expressed as inline styles.
+   */
+  private _needsStyleElement(): boolean {
+    return this._mediaQueries.length > 0 || this._elements.length > 0;
   }
 
   private async _apply(): Promise<void> {
@@ -240,14 +267,14 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
 
     this._targetElement = element;
 
-    if (this._mediaQueries.length > 0) {
+    if (this._needsStyleElement()) {
       this._applyWithStyleElement(element);
     } else {
       this._applyInlineStyles(element);
     }
   }
 
-  // ── Inline-styles path (no media queries) ─────────────────────────────────
+  // ── Inline-styles path (no media queries, no elements) ────────────────────
 
   private _applyInlineStyles(element: HTMLElement): void {
     for (const { property, value } of gridPropsToDeclarations(this._base, true)) {
@@ -255,7 +282,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
     }
   }
 
-  // ── Style-element path (media queries present) ────────────────────────────
+  // ── Style-element path (media queries or elements present) ────────────────
 
   private _applyWithStyleElement(element: HTMLElement): void {
     element.setAttribute(GRID_ID_ATTR, this._id);
@@ -264,9 +291,19 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
     const baseDecls = gridPropsToDeclarations(this._base, true);
     let css = `${selector} { ${baseDecls.map((d) => `${d.property}: ${d.value}`).join("; ")} }\n`;
 
+    // Area name assignments for direct children of the target container.
+    // Each name in `elements` is applied to the nth child via :nth-child().
+    for (let i = 0; i < this._elements.length; i++) {
+      const areaName = this._elements[i];
+      if (areaName) {
+        css += `${selector} > :nth-child(${i + 1}) { grid-area: ${areaName}; }\n`;
+      }
+    }
+
+    // @media override blocks
     for (const { query, ...mqProps } of this._mediaQueries) {
       if (!query) {
-        console.warn("UIX Forge grid spark: a media_queries entry is missing its 'query' field and will be skipped.");
+        console.warn("UIX Forge: grid spark: a media_queries entry is missing its 'query' field and will be skipped.");
         continue;
       }
       const decls = gridPropsToDeclarations(mqProps);
