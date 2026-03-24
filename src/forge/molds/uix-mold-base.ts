@@ -10,6 +10,10 @@ export abstract class UixForgeMoldBase {
     this.forge = forge;
   }
 
+  isSection(): boolean {
+    return this.type === "section";
+  }
+
   isCard(): boolean {
       return this.type === "card";
     }

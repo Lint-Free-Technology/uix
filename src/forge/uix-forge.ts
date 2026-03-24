@@ -1,7 +1,7 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
 import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
-import { hass, translate } from "../helpers/hass";
+import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
 import { apply_uix, buildMacros, ModdedElement } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
@@ -41,6 +41,7 @@ export class UixForge extends LitElement {
   @property({attribute: false}) preview: boolean;
   @property({attribute: false}) layout: boolean;
   @property({attribute: false}) connectedWhileHidden: boolean;
+  @property({attribute: false}) lovelace: any;
   @state() config: UixForgeConfig;
   @state() forgedElement: LovelaceElement;
   @state() templatesReady: boolean;
@@ -113,14 +114,17 @@ export class UixForge extends LitElement {
   public setConfig(config: UixForgeConfig) {
     if (!config) throw new Error("No config");
     if (!config.foundry && !config.forge) {
-      throw new Error("forge config or foundry is required");
+      throw new Error("uix-forge: forge config or foundry is required");
     }
     if (!config.foundry && !config.element) {
-      throw new Error("element config is required");
+      throw new Error("uix-forge: element config is required");
+    }
+    if ((config as any).visibility) {
+      throw new Error("uix-forge: 'visibility' config key is not supported, use 'forge.hidden' with a template instead");
     }
     Object.keys(config).forEach((k) => {
       if (!UIX_FORGE_ALLOWED_CONFIG_KEYS.includes(k)) {
-        throw new Error(`unexpected config key ${k}`);
+        throw new Error(`uix-forge: unexpected config key ${k}`);
       }
     });
 
@@ -144,23 +148,23 @@ export class UixForge extends LitElement {
 
   private _applyResolvedConfig(resolvedForge: any, resolvedElement: any) {
     if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
-      throw new Error("forge config is required (not provided locally or via foundry)");
+      throw new Error("uix-forge: forge config is required (not provided locally or via foundry)");
     }
     if (!resolvedElement || Object.keys(resolvedElement).length === 0) {
-      throw new Error("element config is required (not provided locally or via foundry)");
+      throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
-    // Only support card, badge, and row molds at this time
-    if (resolvedForge.mold !== "card" && resolvedForge.mold !== "badge" && resolvedForge.mold !== "row") {
-      throw new Error("only forge mold of card, badge, or row is supported at this time");
+    // Only support card, badge, row, and section molds at this time
+    if (resolvedForge.mold !== "card" && resolvedForge.mold !== "badge" && resolvedForge.mold !== "row" && resolvedForge.mold !== "section") {
+      throw new Error("uix-forge: only forge mold of card, badge, row or section is supported at this time");
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
-      throw new Error("forge macros must be an object");
+      throw new Error("uix-forge: forge macros must be an object");
     }
     if (resolvedForge.template_nesting && typeof resolvedForge.template_nesting !== "string") {
-      throw new Error("forge template_nesting must be a string");
+      throw new Error("uix-forge: forge template_nesting must be a string");
     }
     if (resolvedForge.template_nesting && resolvedForge.template_nesting.length !== 4) {
-      throw new Error("forge template_nesting must be four characters");
+      throw new Error("uix-forge: forge template_nesting must be four characters");
     }
     this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
     this._macros = resolvedForge.macros;
@@ -432,6 +436,17 @@ export class UixForge extends LitElement {
         this.forgedElement = newElement;
       });
     }
+    if (this._mold.isSection()) {
+      getLovelaceRoot(document).then((root) => {
+        if (!root) {
+          return;
+        }
+        const view = root._viewRoot?.querySelector("hui-view");
+        if (view && view._sections) {
+          view._rebuildSection?.(this.forgedElement, this.forgedElementConfig);
+        }
+      });
+    }
     this.refreshForge(["hidden"]);
     if (this._mold.isCard()) {
       this.refreshForge(["grid_options"]);
@@ -463,6 +478,19 @@ export class UixForge extends LitElement {
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
+      });
+      return;
+    }
+    if (this._mold.isSection()) {
+      (this.parentElement as any)._updateVisibility = () => {}
+      getLovelaceRoot(document).then((root) => {
+        if (!root) {
+          return;
+        }
+        const view = root._viewRoot?.querySelector("hui-view");
+        if (view && view._sections) {
+          this.forgedElement = view.createSectionElement?.(this.forgedElementConfig);
+        }
       });
       return;
     }
@@ -498,6 +526,25 @@ export class UixForge extends LitElement {
       this.forgedElement && (this.forgedElement.preview = this.preview);
       if (!this.preview) {
         this.refreshForge(["hidden"]);
+      }
+    }
+    if (_changedProperties.has("lovelace") && this._mold.isSection()) {
+      if (this.forgedElement) {
+        // Force lovelace of forged section to be in non-editable mode
+        // A section in non-editable mode does not need anything else in lovelace
+        const lovelace = { editMode: false };
+        this.forgedElement.lovelace = lovelace;
+        this.forgedElement.updateComplete?.then(() => {
+          if (this.lovelace?.editMode) {
+            this.forgedElement._layoutElement?.style.setProperty("border", "2px dashed #CE3226");
+            this.forgedElement._layoutElement?.style.setProperty("border-radius", "var(--ha-card-border-radius, var(--ha-border-radius-lg))");
+            this.forgedElement._layoutElement?.style.setProperty("padding", "2px");
+          } else {
+            this.forgedElement._layoutElement?.style.removeProperty("border");
+            this.forgedElement._layoutElement?.style.removeProperty("border-radius");
+            this.forgedElement._layoutElement?.style.removeProperty("padding");
+          }
+        });
       }
     }
     if(_changedProperties.has("layout")) {
