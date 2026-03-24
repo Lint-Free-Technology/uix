@@ -1,4 +1,5 @@
 import { Unpromise } from "@watchable/unpromise";
+import { selectTree } from "./selecttree";
 
 export async function hass_base_el() {
   await Unpromise.race([
@@ -24,6 +25,41 @@ export async function hass() {
 export async function provideHass(el) {
   const base: any = await hass_base_el();
   base.provideHass(el);
+}
+
+export async function getLovelaceRoot(document) {
+  let _lovelaceRoot = await _getLovelaceRoot(document);
+  while (_lovelaceRoot === null) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    _lovelaceRoot = await _getLovelaceRoot(document);
+  }
+  return _lovelaceRoot || null;
+  
+  async function _getLovelaceRoot(document)
+  {  let root = await selectTree(
+      document,
+      "home-assistant$home-assistant-main$ha-panel-lovelace$hui-root"
+    );
+    if (!root) {
+      let panel = await selectTree(
+        document,
+        "home-assistant$home-assistant-main$partial-panel-resolver>*"
+      );
+      if (panel?.localName !== "ha-panel-lovelace")
+        return false;
+    }
+    if (!root)
+      root = await selectTree(
+        document,
+        "hc-main $ hc-lovelace $ hui-view"
+      );
+    if (!root)
+      root = await selectTree(
+        document,
+        "hc-main $ hc-lovelace $ hui-panel-view"
+      );
+    return root;
+  }
 }
 
 const LOCALIZE_PATTERN = /__[^_]+__/g;

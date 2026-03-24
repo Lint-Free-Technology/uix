@@ -13,7 +13,16 @@ export const UIX_FORGE_DEFAULT_GRID_OPTIONS = {
   columns: 6,
 };
 
-export const UIX_FORGE_ALLOWED_CONFIG_KEYS = ["type", "foundry", "forge", "element", "disabled"];
+export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
+  "type", 
+  "foundry", 
+  "forge", 
+  "element", 
+  "disabled",
+  "row_span",
+  "column_span",
+  "background"
+];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 
@@ -168,6 +177,8 @@ export interface LovelaceElement extends LitElement {
     layout?: boolean;
     isPanel?: boolean;
     preview?: boolean;
+    lovelace?: any;
+    _layoutElement?: LovelaceElement;
     getCardSize?(): number | Promise<number>;
     getGridOptions?(): Record<string, any>;
     config?: LovelaceCardConfig;

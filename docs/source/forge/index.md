@@ -29,7 +29,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"` or `"badge"`. |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"` or `"section"`. |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
@@ -77,6 +77,30 @@ element:
   type: tile
   entity: light.living_room
 ```
+
+## Sections
+
+When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
+
+When using UIX Forge for sections, the following config keys can be set directly to configure how the section shows, though they **do not support templates**.
+
+```yaml
+type: custom:uix-forge
+forge:
+  hidden: # use hidden to control visibility
+  # ...
+element:
+  # ...
+# section only main configuration keys. Visibility not supported.
+row_span: # row span for section
+column_span: # column span for section
+background: # background for section
+```
+
+When editing the dashboard in UI mode, the section will be surrounded by red dashed border to show that it is configured by UIX Forge in YAML. All cards contained in the section will show in preview mode, but will not be editable. Use YAML for editing the section.
+
+!!! warning
+    Visibility in the main config is not supported. Though the Home Assistant visual editor will let you set visibility you will get an error as soon as you save the section. If you need Frontend visibility options not supported by template (screen) use a stack card as your element and set Frontend visibility on that element, templates supported.
 
 ## Foundries
 
