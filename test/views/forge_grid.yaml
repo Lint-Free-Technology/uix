@@ -66,3 +66,29 @@ cards:
           entity: light.ceiling_lights
         - type: tile
           entity: light.kitchen_lights
+
+  - type: markdown
+    content: |
+      ### Responsive with media_queries (1 → 2 → 3 columns)
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          columns: 1
+          gap: 8
+          media_queries:
+            - query: "(min-width: 600px)"
+              columns: 2
+            - query: "(min-width: 900px)"
+              columns: 3
+              gap: 16
+    element:
+      type: grid
+      cards:
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.ceiling_lights
+        - type: tile
+          entity: light.kitchen_lights
