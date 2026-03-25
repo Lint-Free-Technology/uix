@@ -23,7 +23,7 @@ type: tile
 entity: person.jim
 uix:
   style: |
-    ha-tile-icon {
+    :host {
       --uix-image-for-person_jim: /local/photos/jim.jpg;
     }
 ```
