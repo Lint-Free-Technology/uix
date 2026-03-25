@@ -111,7 +111,12 @@ function buildSelector(el: Element): string {
         (s: Element) => s.localName === tag
       )
     : [el];
-  return `${tag}:nth-of-type(${allSame.indexOf(el) + 1})`;
+  // Include any class as a qualifier alongside :nth-of-type to narrow
+  // querySelectorAll scope and avoid false matches at different nesting
+  // levels when intermediate elements are pruned (e.g. in buildForgeSelectorPath).
+  const sharedClass = Array.from(el.classList).find((c) => c.length > 0);
+  const classQualifier = sharedClass ? `.${sharedClass}` : "";
+  return `${tag}${classQualifier}:nth-of-type(${allSame.indexOf(el) + 1})`;
 }
 
 // ---------------------------------------------------------------------------
