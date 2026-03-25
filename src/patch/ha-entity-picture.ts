@@ -21,13 +21,21 @@ Supported elements:
 */
 
 const getEntityId = (el: any): string | null => {
-  return (
-    el.entityId ||
-    el.stateObj?.entity_id ||
-    el.entity ||
-    el.user?.person_entity_id ||
-    null
-  );
+  const tag = el.tagName.toLowerCase();
+  switch (tag) {
+    case "ha-tile-icon":
+      // Entity ID is on ha-tile-card
+      const parentCard = el.closest("ha-card")?.parentNode?.host;
+      return parentCard?._config?.entity || null;
+    case "state-badge":
+      return el.stateObj?.entity_id || null;
+    case "ha-entity-marker":
+      return el.entityId || null;
+    case "ha-user-badge":
+      return el._personEntityId || null;
+    case "ha-person-badge":
+      return el.person?.id ? `person.${el.person.id}` : null;
+  }
 };
 
 const applyImage = (el: any, imageUrl: string): void => {
@@ -36,18 +44,19 @@ const applyImage = (el: any, imageUrl: string): void => {
     case "ha-tile-icon":
       el.imageUrl = imageUrl;
       break;
-    case "ha-state-badge":
+    case "state-badge":
       el.overrideImage = imageUrl;
       break;
     case "ha-entity-marker":
-      el.picture = imageUrl;
+      el.entityPicture = imageUrl;
       break;
     case "ha-user-badge":
+      el._personPicture = imageUrl;
+      break;
     case "ha-person-badge":
-      if (el.overrideImage !== undefined) {
-        el.overrideImage = imageUrl;
-      } else if (el.picture !== undefined) {
-        el.picture = imageUrl;
+      const pictureEl = el.shadowRoot?.querySelector(".picture");
+      if (pictureEl) {
+        pictureEl.style.backgroundImage = `url(${imageUrl})`;
       }
       break;
   }
@@ -59,7 +68,8 @@ const updateImage = (el: any): void => {
 
   const slug = entityId.replace(/\./g, "_");
   const styles = window.getComputedStyle(el);
-  const imageUrl = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
+  const imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
+  const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
 
   if (imageUrl) {
     applyImage(el, imageUrl);
@@ -108,7 +118,7 @@ class HaTileIconPatch extends ModdedElement {
   }
 }
 
-@patch_element("ha-state-badge")
+@patch_element("state-badge")
 class HaStateBadgePatch extends ModdedElement {
   uix_image_retries = 0;
   updated(_orig, ...args) {
