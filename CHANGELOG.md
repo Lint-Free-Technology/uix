@@ -1,3 +1,10 @@
+## [6.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.5...v6.0.0-beta.6) (2026-03-25)
+
+### ⚙️ Miscellaneous
+
+* **console_debug:** Update uix_forge_pah to include class specificity when required ([#115](https://github.com/Lint-Free-Technology/uix/issues/115)) ([ab5ea6f](https://github.com/Lint-Free-Technology/uix/commit/ab5ea6ff712e47531ff8d3637c485a077bdc8f62))
+* **forge:** Add grid spark for CSS Grid layout on container elements ([#113](https://github.com/Lint-Free-Technology/uix/issues/113)) ([4e28513](https://github.com/Lint-Free-Technology/uix/commit/4e2851347327881f75d08c6f8536148fb4173355))
+
 ## [6.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.4...v6.0.0-beta.5) (2026-03-25)
 
 ### ⭐ New Features
