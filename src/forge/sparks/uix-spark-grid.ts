@@ -287,7 +287,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   private _applyWithStyleElement(element: HTMLElement): void {
     element.setAttribute(GRID_ID_ATTR, this._id);
 
-    const selector = `[${GRID_ID_ATTR}="${this._id}"]`;
+    const selector = element.id ? `#${element.id}[${GRID_ID_ATTR}="${this._id}"]` : `[${GRID_ID_ATTR}="${this._id}"]`;
     const baseDecls = gridPropsToDeclarations(this._base, true);
     let css = `${selector} { ${baseDecls.map((d) => `${d.property}: ${d.value}`).join("; ")} }\n`;
 
