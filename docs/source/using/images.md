@@ -10,7 +10,7 @@ UIX can substitute the background entity image displayed by the following elemen
 
 - `ha-entity-marker` (map card entity markers)
 - `ha-tile-icon` (tile card icons)
-- `ha-state-badge` (state badges)
+- `state-badge` (state badges)
 - `ha-user-badge` (user badges)
 - `ha-person-badge` (person badges)
 
