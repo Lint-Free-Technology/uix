@@ -1,3 +1,9 @@
+## [6.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.4...v6.0.0-beta.5) (2026-03-25)
+
+### ⭐ New Features
+
+* **minor:** override entity images via --uix-image-for-<entityId> CSS variable ([#114](https://github.com/Lint-Free-Technology/uix/issues/114)) ([c70357f](https://github.com/Lint-Free-Technology/uix/commit/c70357fc2028f1070144aeb60e0f7bf85c7fa255))
+
 ## [6.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.3...v6.0.0-beta.4) (2026-03-24)
 
 ### 🐞 Bug Fixes
