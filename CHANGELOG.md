@@ -1,3 +1,9 @@
+## [6.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.6...v6.0.0-beta.7) (2026-03-26)
+
+### 🐞 Bug Fixes
+
+* **dialog:** Apply dialog patch on updated rather than showDialog to suit Home Assistant 2026.4.0 ([d055e07](https://github.com/Lint-Free-Technology/uix/commit/d055e0752ec18f7addce1c364c2b57e12143de56)), closes [#87](https://github.com/Lint-Free-Technology/uix/issues/87)
+
 ## [6.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.5...v6.0.0-beta.6) (2026-03-25)
 
 ### ⚙️ Miscellaneous
