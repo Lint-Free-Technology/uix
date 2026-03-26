@@ -5,6 +5,9 @@ import {
   set_patched,
 } from "../helpers/patch_function";
 
+
+const dialogParams = [];
+
 export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
   if (value == null) return value;
   const t = typeof value;
@@ -45,10 +48,9 @@ export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
 }
 
 class HaDialogPatch extends ModdedElement {
-  async showDialog(_orig, params, ...rest) {
-    await _orig?.(params, ...rest);
+  async updated(_orig, args) {
+    await _orig?.(args);
 
-    this.requestUpdate();
     this.updateComplete.then(async () => {
       let haDialog: HTMLElement | null =
         this.shadowRoot.querySelector("ha-dialog");
@@ -75,9 +77,7 @@ class HaDialogPatch extends ModdedElement {
         haDialog as ModdedElement,
         "dialog",
         undefined,
-        {
-          params: stripHtmlAndFunctions(params),
-        },
+        { params: dialogParams[this.localName] ?? {} },
         false,
         cls
       );
@@ -87,6 +87,13 @@ class HaDialogPatch extends ModdedElement {
 
 function patchDialog(ev: Event) {
   const dialogTag = (ev as CustomEvent).detail?.dialogTag;
+
+  // Home Assistant dialog manager reuses the same dialog element for dialogs of same tag
+  // so we can store params to use when patching
+  const params = (ev as CustomEvent).detail?.dialogParams;
+  if (params) {
+    dialogParams[dialogTag] = stripHtmlAndFunctions(params);
+  }
 
   if (dialogTag && !is_patched(dialogTag)) {
     set_patched(dialogTag);
