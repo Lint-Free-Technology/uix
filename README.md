@@ -1,5 +1,7 @@
 # UI eXtension for Home Assistant
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+
 ![light-logo-icon](/docs/source/assets/images/mixed.png)
 
 ## Introduction
