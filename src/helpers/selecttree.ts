@@ -33,6 +33,26 @@ async function _selectTree(root, path, all = false) {
       continue;
     }
 
+    if (p.startsWith("!")) {
+      // Host/parent filter: !(.class), ![attr=val], !#id, etc.
+      // Unwrap optional grouping parentheses: !(.class) → .class
+      let selector = p.slice(1);
+      if (selector.startsWith("(") && selector.endsWith(")")) {
+        selector = selector.slice(1, -1);
+      }
+      // If current elements are ShadowRoots, match against the host;
+      // otherwise match against the parentNode.
+      el = [...el].filter((e) => {
+        if (!e) return false;
+        const target =
+          e instanceof ShadowRoot ? e.host : (e as Element).parentNode;
+        return target instanceof Element
+          ? target.matches(selector)
+          : false;
+      });
+      continue;
+    }
+
     // Only pick the first one for the next step
     const e = el[0];
     if (!e) return null;

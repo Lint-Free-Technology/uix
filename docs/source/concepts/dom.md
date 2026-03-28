@@ -64,6 +64,27 @@ The selector chain of the queue will look for one element at a time separated by
 
 Chains ending with `$` is a special case for convenience, selecting the shadow roots of all elements.
 
+A step beginning with `!` is a **host/parent filter**. It does not advance the traversal; instead it removes elements from the current set that do not satisfy the given CSS selector:
+
+- **Inside a shadow root** (the current step follows a `$`): the selector is tested against the **host** element (the element that owns the shadow root).
+- **In the regular DOM**: the selector is tested against the **parentNode** of each element.
+
+The CSS selector is written directly after `!`. Class-based selectors may optionally be wrapped in parentheses for readability: `!(.my-class)` is equivalent to `!.my-class`. Attribute selectors use their normal bracket syntax: `![data-id="video"]`.
+
+!!! example "Host/parent filter example"
+    Style the content of a media-browser dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
+    ```yaml
+    uix-dialog-yaml: |
+      $ !(.type-hui-dialog-web-browser-play-media): |
+        ha-dialog-header {
+          color: teal;
+        }
+    ```
+    After the `$` step the current nodes are ShadowRoot objects. The `!(.type-...)` step keeps only those whose **host** element has that class.
+
+!!! tip
+    Because `!` is a filter (not a traversal step), it can appear anywhere in the chain — before or after a `$`.  Placing it after `$` checks the shadow-root host; placing it before `$` tests whether the element's **parentNode** matches the selector.
+
 !!! example "Chaining example"
     The following will select the `div` elements in the first marker on a map card:
     ```yaml
