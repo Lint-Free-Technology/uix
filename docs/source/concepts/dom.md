@@ -66,10 +66,10 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 A path may begin with a `&` **host/parent filter** as its first step. It filters the initial element set before any traversal takes place:
 
-- If the current nodes are **ShadowRoot** objects: the filter is tested against the shadow root's **host** element.
-- If the current nodes are regular **Element** objects: the filter is tested against each element's **parentNode**.
+- If the initial element id a **ShadowRoot** the filter is tested against the shadow root **host** element.
+- If the initial element is a regular **Element** the filter is tested against the element's **parentNode**.
 
-Matching is done by directly inspecting element properties — not via CSS selector engine — so it works reliably against shadow-root hosts and parents that are not reachable from the document root. The following tokens are supported (all present tokens must match):
+Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/parent is being filtered. The following tokens are supported (all present tokens must match):
 
 | Token | Checks |
 |-------|--------|
@@ -89,7 +89,7 @@ Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and
 Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
 
 !!! example "Host/parent filter example"
-    Style the content of a media-browser dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
+    Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
     ```yaml
     uix-dialog-yaml: |
       "&(.type-hui-dialog-web-browser-play-media) $": |
