@@ -64,10 +64,10 @@ The selector chain of the queue will look for one element at a time separated by
 
 Chains ending with `$` is a special case for convenience, selecting the shadow roots of all elements.
 
-A step beginning with `!` is a **host/parent filter**. It does not advance the traversal; instead it removes elements from the current set that do not satisfy the given CSS selector:
+A path may begin with a `!` **host/parent filter** as its first step. It filters the initial element set before any traversal takes place:
 
-- **Inside a shadow root** (the current step follows a `$`): the selector is tested against the **host** element (the element that owns the shadow root).
-- **In the regular DOM**: the selector is tested against the **parentNode** of each element.
+- If the current nodes are **ShadowRoot** objects: the selector is tested against the shadow root's **host** element.
+- If the current nodes are regular **Element** objects: the selector is tested against each element's **parentNode**.
 
 The CSS selector is written directly after `!`. Class-based selectors may optionally be wrapped in parentheses for readability: `!(.my-class)` is equivalent to `!.my-class`. Attribute selectors use their normal bracket syntax: `![data-id="video"]`.
 
@@ -75,15 +75,12 @@ The CSS selector is written directly after `!`. Class-based selectors may option
     Style the content of a media-browser dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
     ```yaml
     uix-dialog-yaml: |
-      $ !(.type-hui-dialog-web-browser-play-media): |
+      "!(.type-hui-dialog-web-browser-play-media) $": |
         ha-dialog-header {
           color: teal;
         }
     ```
-    After the `$` step the current nodes are ShadowRoot objects. The `!(.type-...)` step keeps only those whose **host** element has that class.
-
-!!! tip
-    Because `!` is a filter (not a traversal step), it can appear anywhere in the chain — before or after a `$`.  Placing it after `$` checks the shadow-root host; placing it before `$` tests whether the element's **parentNode** matches the selector.
+    The `!(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
 
 !!! example "Chaining example"
     The following will select the `div` elements in the first marker on a map card:

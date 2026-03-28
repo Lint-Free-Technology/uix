@@ -25,31 +25,28 @@ async function _selectTree(root, path, all = false) {
   }
   while (path[path.length - 1] === "") path.pop();
 
+  // Handle optional leading ! host/parent filter (must be the first step).
+  // If current elements are ShadowRoots, match against the host;
+  // otherwise match against the parentNode.
+  if (path.length > 0 && path[0].startsWith("!")) {
+    let selector = path.shift().slice(1);
+    if (selector.startsWith("(") && selector.endsWith(")")) {
+      selector = selector.slice(1, -1);
+    }
+    el = el.filter((e) => {
+      if (!e) return false;
+      const target =
+        e instanceof ShadowRoot ? e.host : (e as Element).parentNode;
+      return target instanceof Element ? target.matches(selector) : false;
+    });
+    while (path.length > 0 && !path[0].trim().length) path.shift();
+  }
+
   // For each element in the path
   for (const [i, p] of path.entries()) {
     if (p === "$") {
       await Promise.all([...el].map((e) => await_element(e)));
       el = [...el].map((e) => e.shadowRoot);
-      continue;
-    }
-
-    if (p.startsWith("!")) {
-      // Host/parent filter: !(.class), ![attr=val], !#id, etc.
-      // Unwrap optional grouping parentheses: !(.class) → .class
-      let selector = p.slice(1);
-      if (selector.startsWith("(") && selector.endsWith(")")) {
-        selector = selector.slice(1, -1);
-      }
-      // If current elements are ShadowRoots, match against the host;
-      // otherwise match against the parentNode.
-      el = [...el].filter((e) => {
-        if (!e) return false;
-        const target =
-          e instanceof ShadowRoot ? e.host : (e as Element).parentNode;
-        return target instanceof Element
-          ? target.matches(selector)
-          : false;
-      });
       continue;
     }
 
