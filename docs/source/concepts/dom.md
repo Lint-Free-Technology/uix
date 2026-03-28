@@ -66,10 +66,27 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 A path may begin with a `!` **host/parent filter** as its first step. It filters the initial element set before any traversal takes place:
 
-- If the current nodes are **ShadowRoot** objects: the selector is tested against the shadow root's **host** element.
-- If the current nodes are regular **Element** objects: the selector is tested against each element's **parentNode**.
+- If the current nodes are **ShadowRoot** objects: the filter is tested against the shadow root's **host** element.
+- If the current nodes are regular **Element** objects: the filter is tested against each element's **parentNode**.
 
-The CSS selector is written directly after `!`. Class-based selectors may optionally be wrapped in parentheses for readability: `!(.my-class)` is equivalent to `!.my-class`. Attribute selectors use their normal bracket syntax: `![data-id="video"]`.
+Matching is done by directly inspecting element properties — not via CSS selector engine — so it works reliably against shadow-root hosts and parents that are not reachable from the document root. The following tokens are supported (all present tokens must match):
+
+| Token | Checks |
+|-------|--------|
+| `tagname` | `element.localName === 'tagname'` |
+| `.classname` | `element.classList.contains('classname')` |
+| `#id` | `element.id === 'id'` |
+| `[attr]` | `element.hasAttribute('attr')` |
+| `[attr=val]` | exact value match |
+| `[attr^=val]` | value starts with |
+| `[attr$=val]` | value ends with |
+| `[attr*=val]` | value contains |
+| `[attr~=val]` | whitespace-separated word match |
+| `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
+
+Tokens may be combined — e.g. `!ha-dialog.my-class[data-type="video"]` — and all must match. Selectors containing spaces are **not** supported because the path is split on spaces.
+
+Class-based selectors may optionally be wrapped in parentheses for readability: `!(.my-class)` is equivalent to `!.my-class`.
 
 !!! example "Host/parent filter example"
     Style the content of a media-browser dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
