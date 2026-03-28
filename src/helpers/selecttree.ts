@@ -2,6 +2,75 @@ import { Unpromise } from "@watchable/unpromise";
 
 const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
 
+/**
+ * Checks whether an element matches a simple selector by directly inspecting
+ * its properties — without relying on Element.matches() (which uses CSS scope
+ * semantics that may not apply to shadow-root hosts or detached parents).
+ *
+ * Supported tokens (all must match):
+ *   tagname       — element.localName === 'tagname'
+ *   .classname    — element.classList.contains('classname')
+ *   #id           — element.id === 'id'
+ *   [attr]        — element.hasAttribute('attr')
+ *   [attr=val]    — element.getAttribute('attr') === val
+ *   [attr^=val]   — starts-with
+ *   [attr$=val]   — ends-with
+ *   [attr*=val]   — contains
+ *   [attr~=val]   — whitespace-separated word match
+ *   [attr|=val]   — val or val- prefix
+ *
+ * Combinations (e.g. ha-dialog.my-class[data-type="x"]) are supported; all
+ * tokens must match. Spaces within the selector are not supported.
+ */
+function pseudoMatches(element: Element, selector: string): boolean {
+  let s = selector.trim();
+  if (s.startsWith("(") && s.endsWith(")")) {
+    s = s.slice(1, -1).trim();
+  }
+
+  // Tag name — must appear at the very start of the selector
+  const tagMatch = s.match(/^([a-zA-Z][a-zA-Z0-9-]*)/);
+  if (tagMatch) {
+    if (element.localName !== tagMatch[1].toLowerCase()) return false;
+    s = s.slice(tagMatch[1].length);
+  }
+
+  // ID selector: #id
+  for (const m of s.matchAll(/#([a-zA-Z0-9_-]+)/g)) {
+    if (element.id !== m[1]) return false;
+  }
+
+  // Class selectors: .classname
+  for (const m of s.matchAll(/\.([a-zA-Z0-9_-]+)/g)) {
+    if (!element.classList.contains(m[1])) return false;
+  }
+
+  // Attribute selectors: [attr], [attr=val], [attr^=val], etc.
+  for (const m of s.matchAll(/\[([^\]]+)\]/g)) {
+    const inner = m[1];
+    const opMatch = inner.match(
+      /^([a-zA-Z][a-zA-Z0-9_:-]*)\s*([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s\]]*))$/
+    );
+    if (opMatch) {
+      const [, name, op, dqVal, sqVal, rawVal] = opMatch;
+      const val = dqVal ?? sqVal ?? rawVal ?? "";
+      const attrVal = element.getAttribute(name) ?? "";
+      if (op === "=" && attrVal !== val) return false;
+      if (op === "~=" && !attrVal.split(/\s+/).includes(val)) return false;
+      if (op === "^=" && !attrVal.startsWith(val)) return false;
+      if (op === "$=" && !attrVal.endsWith(val)) return false;
+      if (op === "*=" && !attrVal.includes(val)) return false;
+      if (op === "|=" && attrVal !== val && !attrVal.startsWith(`${val}-`))
+        return false;
+    } else {
+      // Bare [attr] — presence check
+      if (!element.hasAttribute(inner.trim())) return false;
+    }
+  }
+
+  return true;
+}
+
 export async function await_element(el, hard = false) {
   if (el.localName?.includes("-"))
     await customElements.whenDefined(el.localName);
@@ -24,6 +93,20 @@ async function _selectTree(root, path, all = false) {
     path = path.split(/(\$| )/);
   }
   while (path[path.length - 1] === "") path.pop();
+
+  // Handle optional leading ! host/parent filter (must be the first step).
+  // If current elements are ShadowRoots, match against the host;
+  // otherwise match against the parentNode.
+  if (path.length > 0 && path[0].startsWith("!")) {
+    const selector = path.shift().slice(1);
+    el = el.filter((e) => {
+      if (!e) return false;
+      const target =
+        e instanceof ShadowRoot ? e.host : (e as Element).parentNode;
+      return target instanceof Element ? pseudoMatches(target, selector) : false;
+    });
+    while (path.length > 0 && !path[0].trim().length) path.shift();
+  }
 
   // For each element in the path
   for (const [i, p] of path.entries()) {
