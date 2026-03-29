@@ -119,7 +119,7 @@ Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and
 
 Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
 
-!!! example "Host/element filter theme example"
+!!! example "Example styling dialog"
     Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
     ```yaml
     uix-dialog-yaml: |
@@ -129,6 +129,21 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
       }
     ```
     The `&(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
+
+!!! example "Example styling badge"
+    Style the energy dashboard power total badge border which has class `.type-power-total`. The border can only be styled in shadow root so using `&` host/element selector we can target only badges which have class `.type-power-total` while still crossing shadow root.
+    ```yaml
+    uix-badge-yaml: |
+      .: |
+        :host(.type-power-total) {
+          --ha-card-border-width: 3px;
+          --ha-card-border-color: red;
+        }
+      "&.type-power-total ha-badge $": |
+        .badge {
+          border-style: double !important;
+        }
+    ```
 
 ## DOM inspection helpers
 
