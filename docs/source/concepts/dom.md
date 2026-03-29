@@ -64,41 +64,6 @@ The selector chain of the queue will look for one element at a time separated by
 
 Chains ending with `$` is a special case for convenience, selecting the shadow roots of all elements.
 
-A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:
-
-- If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.
-- If the initial element where UIX is applied is a regular **Element** the filter is tested against the element.
-
-Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/element itself is being filtered. The following tokens are supported (all present tokens must match):
-
-| Token | Checks |
-|-------|--------|
-| `tagname` | `element.localName === 'tagname'` |
-| `.classname` | `element.classList.contains('classname')` |
-| `#id` | `element.id === 'id'` |
-| `[attr]` | `element.hasAttribute('attr')` |
-| `[attr=val]` | exact value match |
-| `[attr^=val]` | value starts with |
-| `[attr$=val]` | value ends with |
-| `[attr*=val]` | value contains |
-| `[attr~=val]` | whitespace-separated word match |
-| `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
-
-Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Selectors containing spaces are **not** supported because the path is split on spaces.
-
-Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
-
-!!! example "Host/parent filter example"
-    Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
-    ```yaml
-    uix-dialog-yaml: |
-      "&(.type-hui-dialog-web-browser-play-media) $ ha-dialog-header $": |
-      section.header-content {
-        display: none;
-      }
-    ```
-    The `&(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
-
 !!! example "Chaining example"
     The following will select the `div` elements in the first marker on a map card:
     ```yaml
@@ -122,6 +87,48 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
     then UIX will be able to retry looking from the `ha-map $` point at a later time, which may lead to more stable results.
 
     In short, if things seem to be working intermittently, then try splitting up the chain into several steps.
+
+## Host/element path selection
+
+!!! info
+    Host element/path selection available in 6.0.0-beta.8 and later
+
+A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:
+
+- If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.
+- If the initial element where UIX is applied is a regular **Element** the filter is tested against the element.
+
+Generally you would use the host/element path selector in a theme to allow apply a selector path when the host/element has a specific class and/or id/attribute.
+
+Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/element itself is being filtered. The following tokens are supported (all present tokens must match):
+
+| Token | Checks |
+|-------|--------|
+| `tagname` | `element.localName === 'tagname'` |
+| `.classname` | `element.classList.contains('classname')` |
+| `#id` | `element.id === 'id'` |
+| `[attr]` | `element.hasAttribute('attr')` |
+| `[attr=val]` | exact value match |
+| `[attr^=val]` | value starts with |
+| `[attr$=val]` | value ends with |
+| `[attr*=val]` | value contains |
+| `[attr~=val]` | whitespace-separated word match |
+| `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
+
+Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Selectors containing spaces are **not** supported because the path is split on spaces.
+
+Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
+
+!!! example "Host/element filter theme example"
+    Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
+    ```yaml
+    uix-dialog-yaml: |
+      "&(.type-hui-dialog-web-browser-play-media) $ ha-dialog-header $": |
+      section.header-content {
+        display: none;
+      }
+    ```
+    The `&(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
 
 ## DOM inspection helpers
 
