@@ -94,9 +94,9 @@ async function _selectTree(root, path, all = false) {
   }
   while (path[path.length - 1] === "") path.pop();
 
-  // Handle optional leading & host/parent filter (must be the first step).
+  // Handle optional leading & host/element filter (must be the first step).
   // If current elements are ShadowRoots, match against the host;
-  // otherwise match against the parentNode.
+  // otherwise match against the element itself.
   if (path.length > 0 && path[0].startsWith("&")) {
     const selector = path.shift().slice(1);
     el = el.filter((e) => {
