@@ -195,7 +195,7 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **📍 UIX Path to Target** | The exact path string (using `$` for shadow-root crossings) from the UIX parent context to `$0`. Use this as the key in a UIX `style:` config. |
 | **🎨 CSS Target** | Tag name, id, classes and a suggested CSS selector for the element — each followed by a clickable element reference to jump straight to it in the DevTools inspector. |
 | **📝 Boilerplate UIX YAML** | A paste-ready card-level YAML snippet to get you started. Shown only for types that can be styled via a card-level `uix:` key. |
-| **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used. |
+| **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used.
 
 ```js
 uix_style_path($0)
