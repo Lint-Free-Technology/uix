@@ -102,7 +102,7 @@ async function _selectTree(root, path, all = false) {
     el = el.filter((e) => {
       if (!e) return false;
       const target =
-        e instanceof ShadowRoot ? e.host : (e as Element).parentNode;
+        e instanceof ShadowRoot ? e.host : e;
       return target instanceof Element ? pseudoMatches(target, selector) : false;
     });
     while (path.length > 0 && !path[0].trim().length) path.shift();

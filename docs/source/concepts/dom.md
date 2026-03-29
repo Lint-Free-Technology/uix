@@ -64,12 +64,12 @@ The selector chain of the queue will look for one element at a time separated by
 
 Chains ending with `$` is a special case for convenience, selecting the shadow roots of all elements.
 
-A path may begin with a `&` **host/parent filter** as its first step. It filters the initial element set before any traversal takes place:
+A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:
 
-- If the initial element id a **ShadowRoot** the filter is tested against the shadow root **host** element.
-- If the initial element is a regular **Element** the filter is tested against the element's **parentNode**.
+- If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.
+- If the initial element where UIX is applied is a regular **Element** the filter is tested against the element.
 
-Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/parent is being filtered. The following tokens are supported (all present tokens must match):
+Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/element itself is being filtered. The following tokens are supported (all present tokens must match):
 
 | Token | Checks |
 |-------|--------|
@@ -92,10 +92,10 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
     Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
     ```yaml
     uix-dialog-yaml: |
-      "&(.type-hui-dialog-web-browser-play-media) $": |
-        ha-dialog-header {
-          color: teal;
-        }
+      "&(.type-hui-dialog-web-browser-play-media) $ ha-dialog-header $": |
+      section.header-content {
+        display: none;
+      }
     ```
     The `&(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
 
