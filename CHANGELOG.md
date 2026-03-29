@@ -1,3 +1,9 @@
+## [6.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.7...v6.0.0-beta.8) (2026-03-29)
+
+### ⭐ New Features
+
+* **minor:** Add `&` host/element filter to yaml selector path syntax ([#121](https://github.com/Lint-Free-Technology/uix/issues/121)) ([4dfb987](https://github.com/Lint-Free-Technology/uix/commit/4dfb9875c8598a628566d21840198b822429b73d))
+
 ## [6.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.6...v6.0.0-beta.7) (2026-03-26)
 
 ### 🐞 Bug Fixes
