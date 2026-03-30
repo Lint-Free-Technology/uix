@@ -10,6 +10,14 @@ export abstract class UixForgeMoldBase {
     this.forge = forge;
   }
 
+  hasStyle(): boolean {
+    return false;
+  }
+
+  style(): string {
+    return "";
+  }
+
   isSection(): boolean {
     return this.type === "section";
   }
@@ -26,8 +34,8 @@ export abstract class UixForgeMoldBase {
     return this.type === "row";
   }
 
-  isElement(): boolean {
-    return this.type === "element";
+  isPictureElement(): boolean {
+    return this.type === "picture-element";
   }
 
   isRows(): boolean {
@@ -38,16 +46,16 @@ export abstract class UixForgeMoldBase {
     return this.type === "badges";
   }
 
-  isElements(): boolean {
-    return this.type === "elements";
+  isPictureElements(): boolean {
+    return this.type === "picture-elements";
   }
 
   isSingular(): boolean {
-    return this.isRow() || this.isBadge() || this.isElement();
+    return this.isRow() || this.isBadge() || this.isPictureElement();
   }
 
   isPlural(): boolean {
-    return this.isRows() || this.isBadges() || this.isElements();
+    return this.isRows() || this.isBadges() || this.isPictureElements();
   }
 
   isError() : boolean {

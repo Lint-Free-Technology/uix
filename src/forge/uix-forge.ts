@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -153,9 +153,9 @@ export class UixForge extends LitElement {
     if (!resolvedElement || Object.keys(resolvedElement).length === 0) {
       throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
-    // Only support card, badge, row, and section molds at this time
-    if (resolvedForge.mold !== "card" && resolvedForge.mold !== "badge" && resolvedForge.mold !== "row" && resolvedForge.mold !== "section") {
-      throw new Error("uix-forge: only forge mold of card, badge, row or section is supported at this time");
+    // Only support card, badge, row, section, and picture-element molds at this time
+    if (!resolvedForge.mold || !UIX_FORGE_FORGE_MOLDS.includes(resolvedForge.mold)) {
+      throw new Error(`uix-forge: only forge molds of ${UIX_FORGE_FORGE_MOLDS.join(", ")} are supported at this time`);
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
       throw new Error("uix-forge: forge macros must be an object");
@@ -422,10 +422,13 @@ export class UixForge extends LitElement {
     if (this._mold.isCard()) {
       this.forgedElement.config = this.forgedElementConfig;
       (this.forgedElement as HuiCard).load();
+      this.refreshForge(["hidden"]);
+      this.refreshForge(["grid_options"]);
     }
     if (this._mold.isBadge()) {
       this.forgedElement.config = this.forgedElementConfig;
       (this.forgedElement as HuiBadge).load();
+      this.refreshForge(["hidden"]);
     }
     if (this._mold.isRow()) {
       this._mold.cardHelpers().then((helpers) => {
@@ -434,7 +437,9 @@ export class UixForge extends LitElement {
         newElement.preview = this._mold.isPreview();
         this.forgedElement.replaceWith(newElement);
         this.forgedElement = newElement;
+        this.refreshForge(["hidden"]);
       });
+
     }
     if (this._mold.isSection()) {
       getLovelaceRoot(document).then((root) => {
@@ -445,11 +450,31 @@ export class UixForge extends LitElement {
         if (view && view._sections) {
           view._rebuildSection?.(this.forgedElement, this.forgedElementConfig);
         }
+        this.refreshForge(["hidden"]);
       });
     }
-    this.refreshForge(["hidden"]);
-    if (this._mold.isCard()) {
-      this.refreshForge(["grid_options"]);
+    if (this._mold.isPictureElement()) {
+      const config = {
+        type: "conditional",
+        conditions: [
+          {
+            condition: "screen",
+            media_query: `(max-width: ${this.hidden ? 0 : 99999}px)`
+          }
+        ],
+        elements: [
+          {
+            ...this.forgedElementConfig,
+          }
+        ]
+      };
+      this._mold.cardHelpers().then((helpers) => {
+        this.forgedElement = helpers.createHuiElement(config);
+        this.forgedElement.hass = this.hass;
+        this.forgedElement.preview = this._mold.isPreview();
+        this.style.setProperty("position", "static");
+        this.style.setProperty("transform", "none");
+      });
     }
   }
 
@@ -494,6 +519,29 @@ export class UixForge extends LitElement {
       });
       return;
     }
+    if (this._mold.isPictureElement()) {
+      const config = {
+        type: "conditional",
+        conditions: [
+          {
+            condition: "screen",
+            media_query: `(max-width: ${this.hidden ? 0 : 99999}px)`
+          }
+        ],
+        elements: [
+          {
+            ...this.forgedElementConfig,
+          }
+        ]
+      };
+      this._mold.cardHelpers().then((helpers) => {
+        this.forgedElement = helpers.createHuiElement(config);
+        this.forgedElement.hass = this.hass;
+        this.forgedElement.preview = this._mold.isPreview();
+        this.style.setProperty("position", "static");
+        this.style.setProperty("transform", "none");
+      });
+    }
   }
 
   private hiddenByConfig() {
@@ -524,7 +572,7 @@ export class UixForge extends LitElement {
     }
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);
-      if (!this.preview) {
+      if (!this.preview || this._mold.isPictureElement()) {
         this.refreshForge(["hidden"]);
       }
     }
@@ -557,7 +605,12 @@ export class UixForge extends LitElement {
   }
 
   protected render() {
-    return this.forgedElement ? html`${this.forgedElement}` : nothing;
+    return this.forgedElement ? 
+      html`
+      ${this.forgedElement}
+      ${this._mold.hasStyle() ? html`<style>${this._mold.style()}</style>` : nothing}
+      ` 
+      : nothing;
   }
 }
 
