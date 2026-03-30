@@ -1,3 +1,9 @@
+## [6.0.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.10...v6.0.0-beta.11) (2026-03-30)
+
+### 🐞 Bug Fixes
+
+* **toast:** Toast params not captured with fixes for 2026.4.0 ([035ae21](https://github.com/Lint-Free-Technology/uix/commit/035ae21c1e23e1c246f1886e6b423bc74a7c2d70))
+
 ## [6.0.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.9...v6.0.0-beta.10) (2026-03-30)
 
 ### ⭐ New Features
