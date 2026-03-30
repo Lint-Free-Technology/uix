@@ -1,3 +1,14 @@
+## [6.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.8...v6.0.0-beta.9) (2026-03-30)
+
+### 📔 Documentation
+
+* Change card-mod to UIX in cards doc ([#92](https://github.com/Lint-Free-Technology/uix/issues/92)) ([48bc6d1](https://github.com/Lint-Free-Technology/uix/commit/48bc6d13da664bf2c9ee652527640c9c10a8f7dd))
+* Expand theme documentation section ([#93](https://github.com/Lint-Free-Technology/uix/issues/93)) ([73a463b](https://github.com/Lint-Free-Technology/uix/commit/73a463ba617544be90e436979d002e70fbd5088f))
+
+### ⚙️ Miscellaneous
+
+* **forge:** Add picture-element as forge mold option ([d64b1e4](https://github.com/Lint-Free-Technology/uix/commit/d64b1e422f227e549b8600b2ac5f79f2a61318c2))
+
 ## [6.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.7...v6.0.0-beta.8) (2026-03-29)
 
 ### ⭐ New Features
