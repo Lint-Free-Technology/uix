@@ -11,9 +11,10 @@ Patch updated to apply section background settings
 @patch_element("hui-grid-section")
 class HuiGridSectionPatch extends ModdedElement {
   _config;
-  firstUpdated(_orig, ...args) {
+  _uix;
+  async firstUpdated(_orig, ...args) {
     _orig?.(...args);
-    apply_uix(
+    await apply_uix(
       this,
       "grid-section",
       this._config.uix ?? this._config.card_mod,
@@ -21,10 +22,13 @@ class HuiGridSectionPatch extends ModdedElement {
       true,
       "type-grid-section"
     );
-  }
-  updated(_orig, ...args) {
-    _orig?.(...args);
-    apply_section_background(this, this._config);
+    if (this._config.background) {
+      apply_section_background(this, this._config);
+      this._uix?.[0].addEventListener("uix-styles-update", async () => {
+        await this._uix[0].updateComplete;
+        apply_section_background(this, this._config);
+      });
+    }
   }
 }
 
