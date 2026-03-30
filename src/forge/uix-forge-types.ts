@@ -24,6 +24,14 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "background"
 ];
 
+export const UIX_FORGE_FORGE_MOLDS = [
+  "card",
+  "badge",
+  "row",
+  "section",
+  "picture-element"
+];
+
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
