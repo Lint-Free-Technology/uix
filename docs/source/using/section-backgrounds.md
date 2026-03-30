@@ -19,7 +19,7 @@ To apply the background, the section background config must be set. Minimal shor
     cards: []
     background: true
     uix:
-    style: |
+      style: |
         :host {
             --uix-section-background-color: {{ 'red' if is_state('input_boolean.test_boolean', 'on') else 'green' }};
             --uix-section-background-opacity: {{ states('input_number.increment_test') | float / 100 }};
