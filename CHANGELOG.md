@@ -1,3 +1,9 @@
+## [6.0.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.9...v6.0.0-beta.10) (2026-03-30)
+
+### ⭐ New Features
+
+* Section background color and opacity support ([#125](https://github.com/Lint-Free-Technology/uix/issues/125)) ([3f2b8f9](https://github.com/Lint-Free-Technology/uix/commit/3f2b8f91da944ea2867175fd8c89f5ee8fcf8672))
+
 ## [6.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.8...v6.0.0-beta.9) (2026-03-30)
 
 ### 📔 Documentation
