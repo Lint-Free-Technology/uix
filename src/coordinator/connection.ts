@@ -145,7 +145,8 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     async connect() {
-      const conn = (await hass()).connection;
+      const hassObj = await hass();
+      const conn = hassObj.connection;
       this.connection = conn;
 
       const connectUixComponent = () => {
@@ -169,11 +170,14 @@ export const ConnectionMixin = (SuperClass) => {
         }
       }, "component_loaded");
 
-      // Subscribe to foundry update events from the integration
-      conn.subscribeEvents(() => {
-        this.LOG("Foundries updated on server, reloading");
-        this.fetchFoundries();
-      }, "uix_foundries_updated");
+      // Subscribe to foundry update events from the integration (admin-only: non-admin users
+      // cannot subscribe to custom events via WebSocket, which would cause HA to log an error)
+      if (hassObj.user?.is_admin) {
+        conn.subscribeEvents(() => {
+          this.LOG("Foundries updated on server, reloading");
+          this.fetchFoundries();
+        }, "uix_foundries_updated");
+      }
 
       // Keep connection status up to date
       conn.addEventListener("ready", () => {
