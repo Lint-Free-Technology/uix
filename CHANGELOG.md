@@ -1,3 +1,13 @@
+## [6.0.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.14...v6.0.0-beta.15) (2026-03-31)
+
+### 🐞 Bug Fixes
+
+* **toast:** Correctly fix toast notifications reusing template variables ([#135](https://github.com/Lint-Free-Technology/uix/issues/135)) ([6b0d566](https://github.com/Lint-Free-Technology/uix/commit/6b0d5665114bfa45f646d89f5b67256b265bdf9f)), closes [#127](https://github.com/Lint-Free-Technology/uix/issues/127)
+
+### ⚙️ Miscellaneous
+
+* **tooltip:** Correct tooltip spark style to show arrow ([d022dc8](https://github.com/Lint-Free-Technology/uix/commit/d022dc8b3a20e97f273e1554c26385e83291c00a))
+
 ## [6.0.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.13...v6.0.0-beta.14) (2026-03-31)
 
 ### ⚙️ Miscellaneous
