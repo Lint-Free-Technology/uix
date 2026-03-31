@@ -144,7 +144,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
         var(--ha-tooltip-border-radius, var(--ha-border-radius-sm))
       );
       --wa-tooltip-arrow-size: var(--uix-tooltip-arrow-size, var(--ha-tooltip-arrow-size, 8px));
-      --wa-tooltip-border-width: var(--uix-tooltip-border-width);
+      --wa-tooltip-border-width: var(--uix-tooltip-border-width, 0px);
       --wa-tooltip-border-color: var(--uix-tooltip-border-color);
       --wa-tooltip-border-style: var(--uix-tooltip-border-style);
       --max-width: var(--uix-tooltip-max-width, 30ch);
