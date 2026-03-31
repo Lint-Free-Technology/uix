@@ -1,3 +1,14 @@
+## [6.0.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.11...v6.0.0-beta.12) (2026-03-31)
+
+### ⭐ New Features
+
+* **minor:** Apply UIX to calendar panel ([833569c](https://github.com/Lint-Free-Technology/uix/commit/833569ca0e4069d92220ce46b32bf8bfdb811160))
+* **minor:** Apply UIX to calendar panel ([#129](https://github.com/Lint-Free-Technology/uix/issues/129)) ([7adc4c6](https://github.com/Lint-Free-Technology/uix/commit/7adc4c637a2a0bcea321aca48ed462bdde04b440))
+
+### 🐞 Bug Fixes
+
+* **toast:** Fix template variables not update for toast ([b9ea255](https://github.com/Lint-Free-Technology/uix/commit/b9ea25523bd7ce58a73758e404ab42fd0b68f3a8))
+
 ## [6.0.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.10...v6.0.0-beta.11) (2026-03-30)
 
 ### 🐞 Bug Fixes
