@@ -1,3 +1,9 @@
+## [6.0.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.13...v6.0.0-beta.14) (2026-03-31)
+
+### ⚙️ Miscellaneous
+
+* **forge:** eliminate uix_foundries_updated WebSocket event subscription to prevent HA log errors for non-admin users ([#132](https://github.com/Lint-Free-Technology/uix/issues/132)) ([b08defd](https://github.com/Lint-Free-Technology/uix/commit/b08defd025c9f553fa3b3bca9b844a88aaec77f4)), closes [#130](https://github.com/Lint-Free-Technology/uix/issues/130)
+
 ## [6.0.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.12...v6.0.0-beta.13) (2026-03-31)
 
 ### 🐞 Bug Fixes
