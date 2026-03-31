@@ -1,3 +1,9 @@
+## [6.0.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.12...v6.0.0-beta.13) (2026-03-31)
+
+### 🐞 Bug Fixes
+
+* **toast:** Fix template variables not update for toast ([52d0566](https://github.com/Lint-Free-Technology/uix/commit/52d05662276d17c66af0bcea95f77aedd2550110)), closes [#128](https://github.com/Lint-Free-Technology/uix/issues/128) [#131](https://github.com/Lint-Free-Technology/uix/issues/131)
+
 ## [6.0.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.11...v6.0.0-beta.12) (2026-03-31)
 
 ### ⭐ New Features
