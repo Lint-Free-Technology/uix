@@ -38,9 +38,22 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             data['version'] = version
             connection.send_message(event_message(msg["id"], {"result": data}))
 
-        def close_connection():
-            pass
+        @callback
+        def on_foundries_updated(event):
+            """Push foundry updates to this client via the uix/connect subscription."""
+            entries = hass.config_entries.async_entries(DOMAIN)
+            foundries = {}
+            if entries:
+                foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
+            send_update({CONF_FOUNDRIES: foundries})
 
+        remove_listener = hass.bus.async_listen(EVENT_FOUNDRIES_UPDATED, on_foundries_updated)
+
+        @callback
+        def close_connection():
+            remove_listener()
+
+        connection.subscriptions[msg["id"]] = close_connection
         connection.send_result(msg["id"])
 
         send_update({})
