@@ -72,20 +72,15 @@ class HaDialogPatch extends ModdedElement {
       }
       if (!haDialog) return;
 
-      if ((haDialog as any)._uix?.length) {
-        // Already patched, just update variables and refresh
-        (haDialog as any)._uix[0].variables = { params: dialogParams[this.localName] ?? {} };
-      } else {
-        const cls = `type-${this.localName.replace?.("ha-", "")}`;
-        apply_uix(
-          haDialog as ModdedElement,
-          "dialog",
-          undefined,
-          { params: dialogParams[this.localName] ?? {} },
-          false,
-          cls
-        );
-      }
+      const cls = `type-${this.localName.replace?.("ha-", "")}`;
+      apply_uix(
+        haDialog as ModdedElement,
+        "dialog",
+        undefined,
+        { params: dialogParams[this.localName] ?? {} },
+        false,
+        cls
+      );
     });
   }
 }
