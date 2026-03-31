@@ -124,6 +124,15 @@ export const ConnectionMixin = (SuperClass) => {
       if (!this.ready) {
         this.onReady();
       }
+
+      // Handle foundries data pushed from the backend via the uix/connect subscription.
+      // This works for all users (admin and non-admin) without requiring a separate event subscription.
+      if (cfg.foundries !== undefined) {
+        this._foundries = cfg.foundries;
+        this.LOG("Foundries updated via push:", this._foundries);
+        this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
+      }
+
       this.fireBrowserEvent("uix-config-update");
 
       // future update handling can be added here
@@ -145,8 +154,7 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     async connect() {
-      const hassObj = await hass();
-      const conn = hassObj.connection;
+      const conn = (await hass()).connection;
       this.connection = conn;
 
       const connectUixComponent = () => {
@@ -169,15 +177,6 @@ export const ConnectionMixin = (SuperClass) => {
           connectUixComponent();
         }
       }, "component_loaded");
-
-      // Subscribe to foundry update events from the integration (admin-only: non-admin users
-      // cannot subscribe to custom events via WebSocket, which would cause HA to log an error)
-      if (hassObj.user?.is_admin) {
-        conn.subscribeEvents(() => {
-          this.LOG("Foundries updated on server, reloading");
-          this.fetchFoundries();
-        }, "uix_foundries_updated");
-      }
 
       // Keep connection status up to date
       conn.addEventListener("ready", () => {
