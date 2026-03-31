@@ -226,6 +226,7 @@ red-theme:
 - `uix-dialog`
 - `uix-developer-tools`
 - `uix-grid-section`
+- `uix-calendar`
 
 Also `<any variable>-yaml`.
 

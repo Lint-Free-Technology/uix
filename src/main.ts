@@ -31,5 +31,6 @@ import "./patch/hui-dialog-edit-badge";
 import "./patch/ha-panel-config";
 import "./patch/ha-panel-profile";
 import "./patch/ha-panel-developer-tools";
+import "./patch/ha-panel-calendar";
 import "./mod-card";
 import "./theme-watcher";
