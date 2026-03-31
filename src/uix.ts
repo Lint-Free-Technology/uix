@@ -25,7 +25,7 @@ declare global {
 
 export class Uix extends LitElement {
   @property({ attribute: "uix-type", reflect: true }) type: string;
-  variables: any;
+  _variables: any = {};
   dynamicVariablesHaveChanged: boolean = false;
   uix_children: Record<string, Array<Promise<Uix>>> = {};
   uix_parent?: Uix = undefined;
@@ -134,6 +134,28 @@ export class Uix extends LitElement {
   get styles(): UixStyle {
     // Return only styles that apply to this element
     return this._styles;
+  }
+
+  set variables(vars: any) {
+    this.updateVariables(vars);
+  }
+
+  get variables(): any {
+    return this._variables;
+  }
+
+  async updateVariables(vars: any) {
+    if (compare_deep(vars, this._variables)) return;
+    this._debug("updating variables:", vars);
+    this._variables = vars;
+    for (const key in this.uix_children) {
+      if (this.uix_children[key]?.length) {
+        await(this.uix_children[key]?.forEach((childPromise) =>
+          childPromise.then((child) => child._variables = vars).catch(() => {})
+        ));
+      }
+    }
+    document.dispatchEvent(new CustomEvent("uix_update", { detail: { variablesChanged: true } }));
   }
 
   refresh() {
