@@ -7,6 +7,7 @@ import {
 
 
 const dialogParams = [];
+const toastParams = [];
 
 export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
   if (value == null) return value;
@@ -101,16 +102,56 @@ function patchDialog(ev: Event) {
   }
 }
 
+class HaNotificationPatch extends ModdedElement {
+  async updated(_orig, args) {
+    await _orig?.(args);
+
+    this.updateComplete.then(async () => {
+      const haToast: HTMLElement | null =
+        this.shadowRoot.querySelector("ha-toast");
+      if (!haToast) return;
+
+      const toastUix = (haToast as ModdedElement)._uix?.[0];
+
+      if (toastUix) {
+        // If the toast already has a uix instance, it means it's being reused for a new notification
+        // so we need to update child instance variables
+        for (const key in toastUix.uix_children) {
+          (await toastUix.uix_children[key])?.forEach(
+            async (ch) => await ch.then((uix) => {
+              uix.variables = { params: toastParams[this.localName] ?? {} };
+              uix.styles = "";
+            }).catch(() => {})
+          );
+        }
+        toastUix.variables = { params: toastParams[this.localName] ?? {} };
+        toastUix.styles = "";
+        return;
+      }
+
+      const cls = `type-${this.localName.replace?.("ha-", "")}`;
+      apply_uix(
+        haToast as ModdedElement,
+        "dialog",
+        undefined,
+        { params: toastParams[this.localName] ?? {} },
+        false,
+        cls
+      );
+    });
+  }
+}
+
 function patchNotification(ev: Event) {
   const notificationTag = "notification-manager";
   const params = (ev as CustomEvent).detail;
   if (params) {
-    dialogParams[notificationTag] = stripHtmlAndFunctions(params);
+    toastParams[notificationTag] = stripHtmlAndFunctions(params);
   }
 
   if (notificationTag && !is_patched(notificationTag)) {
     set_patched(notificationTag);
-    patch_prototype(notificationTag, HaDialogPatch);
+    patch_prototype(notificationTag, HaNotificationPatch);
   }
 }
 
