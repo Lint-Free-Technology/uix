@@ -183,6 +183,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
 
     if (Array.isArray(this._actions.add_class)) {
       for (const cls of this._actions.add_class) {
+        if (!cls || typeof cls !== "string") continue;
         if (!element.classList.contains(cls)) {
           element.classList.add(cls);
           change.addedClasses.push(cls);
@@ -192,6 +193,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
 
     if (Array.isArray(this._actions.remove_class)) {
       for (const cls of this._actions.remove_class) {
+        if (!cls || typeof cls !== "string") continue;
         if (element.classList.contains(cls)) {
           element.classList.remove(cls);
           change.removedClasses.push(cls);
@@ -201,16 +203,18 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
 
     if (Array.isArray(this._actions.add_attribute)) {
       for (const entry of this._actions.add_attribute) {
+        if (!entry || typeof entry !== "object" || !entry.attribute) continue;
         const prev = element.hasAttribute(entry.attribute)
           ? element.getAttribute(entry.attribute)
           : null;
-        element.setAttribute(entry.attribute, entry.value);
+        element.setAttribute(entry.attribute, entry.value ?? "");
         change.addedAttributes.push({ attribute: entry.attribute, previousValue: prev });
       }
     }
 
     if (Array.isArray(this._actions.remove_attribute)) {
       for (const attr of this._actions.remove_attribute) {
+        if (!attr || typeof attr !== "string") continue;
         const prev = element.hasAttribute(attr) ? element.getAttribute(attr) : null;
         element.removeAttribute(attr);
         change.removedAttributes.push({ attribute: attr, previousValue: prev });
@@ -268,9 +272,22 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
    * (e.g. calendar events after month navigation) are processed automatically.
    * Only childList/subtree changes are observed to avoid feedback loops from
    * the class/attribute mutations this spark makes itself.
+   * Mutations that only involve <uix-node> elements are ignored to prevent
+   * loops when UIX styling is applied to the forged element.
    */
   private _startObserving(container: Element | ShadowRoot): void {
-    this._observer = new MutationObserver(() => {
+    this._observer = new MutationObserver((mutations) => {
+      // Skip if all added/removed nodes are <uix-node> elements (UIX internals)
+      const hasRelevantMutation = mutations.some((record) =>
+        Array.from(record.addedNodes).some(
+          (node) => !(node instanceof Element) || node.localName !== "uix-node"
+        ) ||
+        Array.from(record.removedNodes).some(
+          (node) => !(node instanceof Element) || node.localName !== "uix-node"
+        )
+      );
+      if (!hasRelevantMutation) return;
+
       // Disconnect while making changes to prevent re-entry
       this._observer!.disconnect();
       this._undoAppliedChanges();
