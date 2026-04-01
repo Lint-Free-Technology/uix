@@ -1,3 +1,13 @@
+## [6.0.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.15...v6.0.0-beta.16) (2026-04-01)
+
+### ⚠ BREAKING CHANGES
+
+* **toast:** Use uix-toast theme variable for toast notifications. uix-dialog will no longer apply to toast notifications.
+
+### 🐞 Bug Fixes
+
+* **toast:** Use uix-toast theme variable separate to uix-dialog. Correctly apply fixed styles on toast refresh/update. ([f226948](https://github.com/Lint-Free-Technology/uix/commit/f226948f376cf6e57348fbe4ce2c3189ffed0827))
+
 ## [6.0.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.14...v6.0.0-beta.15) (2026-03-31)
 
 ### 🐞 Bug Fixes
