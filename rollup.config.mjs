@@ -6,6 +6,11 @@ import { getBabelOutputPlugin } from "@rollup/plugin-babel";
 
 const dev = process.env.ROLLUP_WATCH;
 
+const tsPluginOptions = {
+  include: ["**/*.ts", "**/*.tsx"],
+  exclude: ["**/*.d.ts"],
+};
+
 export default {
   input: "src/main.ts",
   output: {
@@ -15,7 +20,7 @@ export default {
   plugins: [
     nodeResolve(),
     json(),
-    typescript(),
+    typescript(tsPluginOptions),
     getBabelOutputPlugin({ presets: ["@babel/preset-env"] }),
     !dev && terser({ format: { comments: false } }),
   ],
