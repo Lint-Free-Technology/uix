@@ -233,7 +233,7 @@ Also `<any variable>-yaml`.
 
 ## Dialogs
 
-`uix-dialog` and `uix-dialog-yaml` apply to styles rooted in the dialog element of dialogs which may be `ha-dialog`, `ha-adaptive-dialog`, `ha-toast` or `ha-drawer` (notification uses a dialog with an element using the drawer type). Dialogs will also have their class set to `type-<dialog-type>` where `<dialog-type>` will be the dialog element name with any `ha-` prefix stripped. e.g. UIX will append `type-dialog-box` to dialog boxes as used by alerts and other dialog boxes. The Home Assistant dialog manager places dialogs in the shadow root of the top `<home-assistant>` element. The active dialog will be the last child of the shadow root. To view what dialog you wish to target, review the last child of this shadow root node.
+`uix-dialog` and `uix-dialog-yaml` apply to styles rooted in the dialog element of dialogs which may be `ha-dialog`, `ha-adaptive-dialog`, or `ha-drawer` (notification uses a dialog with an element using the drawer type). Dialogs will also have their class set to `type-<dialog-type>` where `<dialog-type>` will be the dialog element name with any `ha-` prefix stripped. e.g. UIX will append `type-dialog-box` to dialog boxes as used by alerts and other dialog boxes. The Home Assistant dialog manager places dialogs in the shadow root of the top `<home-assistant>` element. The active dialog will be the last child of the shadow root. To view what dialog you wish to target, review the last child of this shadow root node.
 
 See UIX guide [Styling dialogs with UI eXtension](https://uix-guides.lf.technology/dialogs/2026/02/27/styling-dialogs.html).
 
