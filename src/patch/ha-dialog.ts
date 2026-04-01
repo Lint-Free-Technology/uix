@@ -1,4 +1,5 @@
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
+import { compare_deep } from "../helpers/dict_functions";
 import {
   is_patched,
   patch_prototype,
@@ -113,26 +114,26 @@ class HaNotificationPatch extends ModdedElement {
 
       const toastUix = (haToast as ModdedElement)._uix?.[0];
 
-      if (toastUix) {
+      if (toastUix && !compare_deep(toastUix.variables, { params: toastParams[this.localName] ?? {} })) {
         // If the toast already has a uix instance, it means it's being reused for a new notification
-        // so we need to update child instance variables
+        // so we need to update self and child instance variables
         for (const key in toastUix.uix_children) {
           (await toastUix.uix_children[key])?.forEach(
             async (ch) => await ch.then((uix) => {
               uix.variables = { params: toastParams[this.localName] ?? {} };
-              uix.styles = "";
+              uix.styles = uix._fixed_styles;
             }).catch(() => {})
           );
         }
         toastUix.variables = { params: toastParams[this.localName] ?? {} };
-        toastUix.styles = "";
+        toastUix.styles = toastUix._fixed_styles;
         return;
       }
 
       const cls = `type-${this.localName.replace?.("ha-", "")}`;
       apply_uix(
         haToast as ModdedElement,
-        "dialog",
+        "toast",
         undefined,
         { params: toastParams[this.localName] ?? {} },
         false,
