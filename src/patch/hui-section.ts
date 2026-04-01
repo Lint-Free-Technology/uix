@@ -1,7 +1,35 @@
 import { patch_element, patch_object } from "../helpers/patch_function";
 import { apply_uix } from "../helpers/apply_uix";
 import { ModdedElement } from "../helpers/apply_uix";
+import { query } from "lit/decorators";
 
+/*
+Patch hui-section-background getting config from sibling hui-grid-section 
+Keep current section --uix-section-background-color and --uix-section-background-opacity 
+as well for another option
+*/
+
+@patch_element("hui-section-background")
+class HuiSectionBackgroundPatch extends ModdedElement {
+  updated(_orig, ...args) {
+    _orig?.(...args);
+    const section = this.closest("div.section-container")?.querySelector("hui-section") as LovelaceSection | null;
+    if (section) {
+      const sectionConfig: LovelaceSectionConfig | undefined = (section as LovelaceSection).config;
+      const backgroundConfig = sectionConfig?.background?.uix ?? sectionConfig?.background?.card_mod;
+      if (backgroundConfig) {
+        apply_uix(
+          this,
+          "section-background",
+          backgroundConfig,
+          { config: sectionConfig },
+          true,
+          "type-section-background"
+        );
+      }
+    }
+  }
+}
 /*
 Patch the hui-grid-section element to on first update:
 - config is available in this._config as set by parent hui-section
@@ -100,4 +128,8 @@ interface LovelaceSectionConfig {
   cards?: LovelaceCardConfig[];
   uix?: { [key: string]: any };
   card_mod?: { [key: string]: any };
+  background?: {
+    uix?: { [key: string]: any };
+    card_mod?: { [key: string]: any };
+  };
 }
