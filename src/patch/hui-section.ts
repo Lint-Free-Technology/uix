@@ -1,7 +1,6 @@
 import { patch_element, patch_object } from "../helpers/patch_function";
 import { apply_uix } from "../helpers/apply_uix";
 import { ModdedElement } from "../helpers/apply_uix";
-import { query } from "lit/decorators";
 
 /*
 Patch hui-section-background getting config from sibling hui-grid-section 
