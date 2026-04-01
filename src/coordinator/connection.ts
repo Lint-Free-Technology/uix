@@ -9,6 +9,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _data;
     private _connected = false;
     private _connectionResolve;
+    private _foundries: Record<string, any> = {};
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -29,6 +30,11 @@ export const ConnectionMixin = (SuperClass) => {
          console.log("UIX: Error sending log:", err);
         }
       }
+    }
+
+    // Fire window event
+    private fireWindowEvent(event, detail = undefined) {
+      window.dispatchEvent(new CustomEvent(event, { detail }));
     }
 
     // Propagate internal browser event
@@ -54,6 +60,7 @@ export const ConnectionMixin = (SuperClass) => {
         .catch((err) => {
           console.log(`UIX: ${err}. User Frontend settings have not been applied`);
         });
+      this.fetchFoundries();
     }
 
     // WebSocket has connected
@@ -117,10 +124,33 @@ export const ConnectionMixin = (SuperClass) => {
       if (!this.ready) {
         this.onReady();
       }
+
+      // Handle foundries data pushed from the backend via the uix/connect subscription.
+      // This works for all users (admin and non-admin) without requiring a separate event subscription.
+      if (cfg.foundries !== undefined) {
+        this._foundries = cfg.foundries;
+        this.LOG("Foundries updated via push:", this._foundries);
+        this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
+      }
+
       this.fireBrowserEvent("uix-config-update");
 
       // future update handling can be added here
       // if (update) this.sendUpdate({});
+    }
+
+    public async fetchFoundries() {
+      if (!this.connection) return;
+      try {
+        const result = await this.connection.sendMessagePromise({
+          type: "uix/get_foundries",
+        });
+        this._foundries = (result as any)?.foundries ?? {};
+        this.LOG("Foundries loaded:", this._foundries);
+        this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
+      } catch (err) {
+        console.log("UIX: Error fetching foundries:", err);
+      }
     }
 
     async connect() {
@@ -177,6 +207,10 @@ export const ConnectionMixin = (SuperClass) => {
 
     get version() {
       return this._data?.version;
+    }
+
+    get foundries(): Record<string, any> {
+      return this._foundries;
     }
   }
 

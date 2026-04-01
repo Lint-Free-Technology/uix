@@ -3,6 +3,8 @@ import "./ll-custom-actions";
 import "./console_debug";
 import "./coordinator/coordinator";
 import "./patch/ha-icon";
+import "./patch/ha-entity-picture";
+import "./forge/uix-forge";
 import "./uix";
 
 import "./patch/hui-card";
@@ -29,5 +31,6 @@ import "./patch/hui-dialog-edit-badge";
 import "./patch/ha-panel-config";
 import "./patch/ha-panel-profile";
 import "./patch/ha-panel-developer-tools";
+import "./patch/ha-panel-calendar";
 import "./mod-card";
 import "./theme-watcher";

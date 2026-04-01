@@ -5,14 +5,16 @@ import { ModdedElement } from "../helpers/apply_uix";
 /*
 Patch the hui-grid-section element to on first update:
 - config is available in this._config as set by parent hui-section
+Patch updated to apply section background settings
 */
 
 @patch_element("hui-grid-section")
 class HuiGridSectionPatch extends ModdedElement {
   _config;
-  firstUpdated(_orig, ...args) {
+  _uix;
+  async firstUpdated(_orig, ...args) {
     _orig?.(...args);
-    apply_uix(
+    await apply_uix(
       this,
       "grid-section",
       this._config.uix ?? this._config.card_mod,
@@ -20,6 +22,33 @@ class HuiGridSectionPatch extends ModdedElement {
       true,
       "type-grid-section"
     );
+    if (this._config.background) {
+      apply_section_background(this, this._config);
+      this._uix?.[0].addEventListener("uix-styles-update", async () => {
+        await this._uix[0].updateComplete;
+        apply_section_background(this, this._config);
+      });
+    }
+  }
+}
+
+function apply_section_background(element: HTMLElement, config: any) {
+  if (element && config?.background) {
+    const uixSectionBackgroundColor = getComputedStyle(element).getPropertyValue("--uix-section-background-color");
+    const uixSectionBackgroundOpacity = getComputedStyle(element).getPropertyValue("--uix-section-background-opacity");
+    const elHuiSectionBackground: HTMLElement | null = element?.closest("div.section-container")?.querySelector("hui-section-background");
+    if (elHuiSectionBackground) {
+      if (uixSectionBackgroundColor) {
+        elHuiSectionBackground.style.setProperty(
+          "--section-background-color", uixSectionBackgroundColor
+        );
+      }
+      if (uixSectionBackgroundOpacity) {
+        elHuiSectionBackground.style.setProperty(
+          "--section-background-opacity", uixSectionBackgroundOpacity
+        );
+      }
+    }
   }
 }
 

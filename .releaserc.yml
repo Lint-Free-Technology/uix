@@ -79,3 +79,5 @@ releaseRules:
     release: false
   - breaking: true
     release: major
+  - revert:
+    release: patch

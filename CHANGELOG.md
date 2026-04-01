@@ -1,3 +1,117 @@
+## [6.0.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.15...v6.0.0-beta.16) (2026-04-01)
+
+### ⚠ BREAKING CHANGES
+
+* **toast:** Use uix-toast theme variable for toast notifications. uix-dialog will no longer apply to toast notifications.
+
+### 🐞 Bug Fixes
+
+* **toast:** Use uix-toast theme variable separate to uix-dialog. Correctly apply fixed styles on toast refresh/update. ([f226948](https://github.com/Lint-Free-Technology/uix/commit/f226948f376cf6e57348fbe4ce2c3189ffed0827))
+
+## [6.0.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.14...v6.0.0-beta.15) (2026-03-31)
+
+### 🐞 Bug Fixes
+
+* **toast:** Correctly fix toast notifications reusing template variables ([#135](https://github.com/Lint-Free-Technology/uix/issues/135)) ([6b0d566](https://github.com/Lint-Free-Technology/uix/commit/6b0d5665114bfa45f646d89f5b67256b265bdf9f)), closes [#127](https://github.com/Lint-Free-Technology/uix/issues/127)
+
+### ⚙️ Miscellaneous
+
+* **tooltip:** Correct tooltip spark style to show arrow ([d022dc8](https://github.com/Lint-Free-Technology/uix/commit/d022dc8b3a20e97f273e1554c26385e83291c00a))
+
+## [6.0.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.13...v6.0.0-beta.14) (2026-03-31)
+
+### ⚙️ Miscellaneous
+
+* **forge:** eliminate uix_foundries_updated WebSocket event subscription to prevent HA log errors for non-admin users ([#132](https://github.com/Lint-Free-Technology/uix/issues/132)) ([b08defd](https://github.com/Lint-Free-Technology/uix/commit/b08defd025c9f553fa3b3bca9b844a88aaec77f4)), closes [#130](https://github.com/Lint-Free-Technology/uix/issues/130)
+
+## [6.0.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.12...v6.0.0-beta.13) (2026-03-31)
+
+### 🐞 Bug Fixes
+
+* **toast:** Fix template variables not update for toast ([52d0566](https://github.com/Lint-Free-Technology/uix/commit/52d05662276d17c66af0bcea95f77aedd2550110)), closes [#128](https://github.com/Lint-Free-Technology/uix/issues/128) [#131](https://github.com/Lint-Free-Technology/uix/issues/131)
+
+## [6.0.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.11...v6.0.0-beta.12) (2026-03-31)
+
+### ⭐ New Features
+
+* **minor:** Apply UIX to calendar panel ([833569c](https://github.com/Lint-Free-Technology/uix/commit/833569ca0e4069d92220ce46b32bf8bfdb811160))
+* **minor:** Apply UIX to calendar panel ([#129](https://github.com/Lint-Free-Technology/uix/issues/129)) ([7adc4c6](https://github.com/Lint-Free-Technology/uix/commit/7adc4c637a2a0bcea321aca48ed462bdde04b440))
+
+### 🐞 Bug Fixes
+
+* **toast:** Fix template variables not update for toast ([b9ea255](https://github.com/Lint-Free-Technology/uix/commit/b9ea25523bd7ce58a73758e404ab42fd0b68f3a8))
+
+## [6.0.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.10...v6.0.0-beta.11) (2026-03-30)
+
+### 🐞 Bug Fixes
+
+* **toast:** Toast params not captured with fixes for 2026.4.0 ([035ae21](https://github.com/Lint-Free-Technology/uix/commit/035ae21c1e23e1c246f1886e6b423bc74a7c2d70))
+
+## [6.0.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.9...v6.0.0-beta.10) (2026-03-30)
+
+### ⭐ New Features
+
+* Section background color and opacity support ([#125](https://github.com/Lint-Free-Technology/uix/issues/125)) ([3f2b8f9](https://github.com/Lint-Free-Technology/uix/commit/3f2b8f91da944ea2867175fd8c89f5ee8fcf8672))
+
+## [6.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.8...v6.0.0-beta.9) (2026-03-30)
+
+### 📔 Documentation
+
+* Change card-mod to UIX in cards doc ([#92](https://github.com/Lint-Free-Technology/uix/issues/92)) ([48bc6d1](https://github.com/Lint-Free-Technology/uix/commit/48bc6d13da664bf2c9ee652527640c9c10a8f7dd))
+* Expand theme documentation section ([#93](https://github.com/Lint-Free-Technology/uix/issues/93)) ([73a463b](https://github.com/Lint-Free-Technology/uix/commit/73a463ba617544be90e436979d002e70fbd5088f))
+
+### ⚙️ Miscellaneous
+
+* **forge:** Add picture-element as forge mold option ([d64b1e4](https://github.com/Lint-Free-Technology/uix/commit/d64b1e422f227e549b8600b2ac5f79f2a61318c2))
+
+## [6.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.7...v6.0.0-beta.8) (2026-03-29)
+
+### ⭐ New Features
+
+* **minor:** Add `&` host/element filter to yaml selector path syntax ([#121](https://github.com/Lint-Free-Technology/uix/issues/121)) ([4dfb987](https://github.com/Lint-Free-Technology/uix/commit/4dfb9875c8598a628566d21840198b822429b73d))
+
+## [6.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.6...v6.0.0-beta.7) (2026-03-26)
+
+### 🐞 Bug Fixes
+
+* **dialog:** Apply dialog patch on updated rather than showDialog to suit Home Assistant 2026.4.0 ([d055e07](https://github.com/Lint-Free-Technology/uix/commit/d055e0752ec18f7addce1c364c2b57e12143de56)), closes [#87](https://github.com/Lint-Free-Technology/uix/issues/87)
+
+## [6.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.5...v6.0.0-beta.6) (2026-03-25)
+
+### ⚙️ Miscellaneous
+
+* **console_debug:** Update uix_forge_pah to include class specificity when required ([#115](https://github.com/Lint-Free-Technology/uix/issues/115)) ([ab5ea6f](https://github.com/Lint-Free-Technology/uix/commit/ab5ea6ff712e47531ff8d3637c485a077bdc8f62))
+* **forge:** Add grid spark for CSS Grid layout on container elements ([#113](https://github.com/Lint-Free-Technology/uix/issues/113)) ([4e28513](https://github.com/Lint-Free-Technology/uix/commit/4e2851347327881f75d08c6f8536148fb4173355))
+
+## [6.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.4...v6.0.0-beta.5) (2026-03-25)
+
+### ⭐ New Features
+
+* **minor:** override entity images via --uix-image-for-<entityId> CSS variable ([#114](https://github.com/Lint-Free-Technology/uix/issues/114)) ([c70357f](https://github.com/Lint-Free-Technology/uix/commit/c70357fc2028f1070144aeb60e0f7bf85c7fa255))
+
+## [6.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.3...v6.0.0-beta.4) (2026-03-24)
+
+### 🐞 Bug Fixes
+
+* **spark-tooltip:** Set tooltip display=contents to not take up space ([d3611fb](https://github.com/Lint-Free-Technology/uix/commit/d3611fbb2d6890590b14ad642a04f93ba602ca72))
+
+## [6.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.2...v6.0.0-beta.3) (2026-03-24)
+
+### ⚙️ Miscellaneous
+
+* **forge:** Add section support to UIX Forge ([4cdec0d](https://github.com/Lint-Free-Technology/uix/commit/4cdec0dbe2cc019d44f1bb13f229cad6b888a60f))
+
+## [6.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0-beta.1...v6.0.0-beta.2) (2026-03-23)
+
+### ⚙️ Miscellaneous
+
+* **forge:** Move forge uix config under forge key ([#111](https://github.com/Lint-Free-Technology/uix/issues/111)) ([1969c34](https://github.com/Lint-Free-Technology/uix/commit/1969c34a3d245ff517c679cd17496e7931c60099))
+
+## [6.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1-beta.2...v6.0.0-beta.1) (2026-03-23)
+
+### ⭐ New Features
+
+* **major:** UIX Forge - see https://uix.lf.technology/forge ([#110](https://github.com/Lint-Free-Technology/uix/issues/110)) ([ec48f88](https://github.com/Lint-Free-Technology/uix/commit/ec48f88e62f65dacea496af90b3eafa74968b3f1)), closes [#98](https://github.com/Lint-Free-Technology/uix/issues/98)
 ## [5.3.1](https://github.com/Lint-Free-Technology/uix/compare/v5.3.0...v5.3.1) (2026-03-15)
 
 ### 🐞 Bug Fixes

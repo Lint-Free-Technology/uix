@@ -1,15 +1,21 @@
 /**
  * UIX Console Debug Helpers
  *
- * Two functions are attached to `window` for use in the browser DevTools console:
+ * Three functions are attached to `window` for use in the browser DevTools console:
  *
- *   uix_tree($0)  – General helper: reports the UIX parent, active child paths and
- *                   all element paths available for styling within the UIX parent's
- *                   subtree.
+ *   uix_tree($0)        – General helper: reports the UIX parent, active child paths and
+ *                         all element paths available for styling within the UIX parent's
+ *                         subtree.
  *
- *   uix_path($0)  – Specific helper: reports the UIX path from the UIX parent to the
- *                   selected element, CSS targeting info within its shadow root and a
- *                   boilerplate UIX YAML snippet.
+ *   uix_style_path($0)  – Specific helper: reports the UIX path from the UIX parent to the
+ *                         selected element, CSS targeting info within its shadow root and a
+ *                         boilerplate UIX YAML snippet.
+ *
+ *   uix_path($0)        – Shorthand alias for uix_style_path().
+ *
+ *   uix_forge_path($0)  – Forge helper: reports the path from the closest uix-forge parent's
+ *                         forged element to the selected element, for use as the `for`,
+ *                         `before`, or `after` value in a forge spark config.
  */
 
 interface UixParentInfo {
@@ -105,7 +111,12 @@ function buildSelector(el: Element): string {
         (s: Element) => s.localName === tag
       )
     : [el];
-  return `${tag}:nth-of-type(${allSame.indexOf(el) + 1})`;
+  // Include any class as a qualifier alongside :nth-of-type to narrow
+  // querySelectorAll scope and avoid false matches at different nesting
+  // levels when intermediate elements are pruned (e.g. in buildForgeSelectorPath).
+  const sharedClass = Array.from(el.classList).find((c) => c.length > 0);
+  const classQualifier = sharedClass ? `.${sharedClass}` : "";
+  return `${tag}${classQualifier}:nth-of-type(${allSame.indexOf(el) + 1})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -377,8 +388,89 @@ async function getActiveChildren(
 }
 
 // ---------------------------------------------------------------------------
-// uix_tree($0) – General UIX debug helper
+// Find the closest ancestor (or self) that is a uix-forge element
 // ---------------------------------------------------------------------------
+
+interface UixForgeParentInfo {
+  forgeEl: Element;
+  forgedEl: Element | null;
+}
+
+function findUixForgeParent(element: Element): UixForgeParentInfo | null {
+  for (const node of domAncestorsAndSelf(element)) {
+    if (!(node instanceof Element)) continue;
+    if (node.localName === "uix-forge") {
+      const forgedEl: Element | null = (node as any).forgedElement ?? null;
+      return { forgeEl: node, forgedEl };
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Build a full forge selector path from rootEl (the forgedElement) to targetEl.
+//
+// The path is a space/dollar-separated string suitable for use as the `for`,
+// `before`, or `after` attribute of a forge spark.  It uses the same `$`
+// shadow-root crossing syntax as selectTree / UIX style keys, but unlike
+// buildPathKeyAndCssSelector it returns the complete path starting from
+// rootEl itself (not from rootEl's shadow-root context).
+// ---------------------------------------------------------------------------
+
+function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | null {
+  if (targetEl === rootEl) {
+    // The special "element" keyword in forge refers to the forged element itself.
+    return "element";
+  }
+
+  type Segment = { kind: "element"; sel: string } | { kind: "shadow" };
+  const segments: Segment[] = [];
+  let current: Node = targetEl;
+
+  while (current && current !== rootEl) {
+    if (current instanceof ShadowRoot) {
+      segments.unshift({ kind: "shadow" });
+      current = current.host;
+    } else if (current instanceof Element) {
+      if (current.localName !== "uix-node") {
+        segments.unshift({ kind: "element", sel: buildSelector(current) });
+      }
+      current = current.parentNode ?? null;
+    } else {
+      // Text nodes, Comment nodes, etc. — just step to their parent.
+      current = (current as any).parentNode ?? null;
+    }
+  }
+
+  if (current !== rootEl) return null;
+
+  // Build a concise selectTree path:
+  // – keep only the element directly preceding each "$" (shadow-root crossing)
+  // – drop all intermediate light DOM elements before the target
+  // – always append just the target element as the final step
+  //
+  // Because the walk unshifts from targetEl upward, segments[segments.length - 1]
+  // is always the targetEl's own selector — so we stop the loop one short and
+  // append it explicitly.
+  const parts: string[] = [];
+  for (let i = 0; i < segments.length - 1; i++) {
+    const seg = segments[i];
+    if (seg.kind === "shadow") {
+      parts.push("$");
+    } else if (segments[i + 1].kind === "shadow") {
+      // Element directly before a shadow-root crossing — keep it.
+      parts.push(seg.sel);
+    }
+    // Otherwise: intermediate light DOM element — drop for conciseness.
+  }
+
+  // Append the direct target selector as the final step.
+  parts.push(buildSelector(targetEl));
+
+  return parts.join(" ").trim() || null;
+}
+
+
 
 (window as any).uix_tree = async function uix_tree(element: Element) {
   if (!element) {
@@ -452,13 +544,14 @@ async function getActiveChildren(
 };
 
 // ---------------------------------------------------------------------------
-// uix_path($0) – Specific UIX path helper
+// uix_style_path($0) – Specific UIX style path helper
+// uix_path($0)       – Shorthand alias for uix_style_path()
 // ---------------------------------------------------------------------------
 
-(window as any).uix_path = function uix_path(element: Element) {
+(window as any).uix_style_path = function uix_style_path(element: Element) {
   if (!element) {
     console.error(
-      "UIX Debug: provide a DOM element – e.g. uix_path($0) where $0 is the element selected in the Elements panel."
+      "UIX Debug: provide a DOM element – e.g. uix_style_path($0) where $0 is the element selected in the Elements panel."
     );
     return;
   }
@@ -470,7 +563,7 @@ async function getActiveChildren(
 
   const TITLE_STYLE = "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;";
   const SECTION_STYLE = "color:#888;font-weight:bold;";
-  console.group("%c💡 UIX Path 💡", TITLE_STYLE);
+  console.group("%c💡 UIX Style Path 💡", TITLE_STYLE);
   console.log("Target element:", element);
 
   const parent = findUixParent(element);
@@ -575,3 +668,75 @@ async function getActiveChildren(
 
   console.groupEnd();
 };
+
+// uix_path is a shorthand alias for uix_style_path.
+(window as any).uix_path = (window as any).uix_style_path;
+
+// ---------------------------------------------------------------------------
+// uix_forge_path($0) – UIX Forge path helper
+// ---------------------------------------------------------------------------
+
+(window as any).uix_forge_path = function uix_forge_path(element: Element) {
+  if (!element) {
+    console.error(
+      "UIX Debug: provide a DOM element – e.g. uix_forge_path($0) where $0 is the element selected in the Elements panel."
+    );
+    return;
+  }
+
+  const TITLE_STYLE = "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;";
+  const SECTION_STYLE = "color:#888;font-weight:bold;";
+  console.group("%c💡 UIX Forge Path 💡", TITLE_STYLE);
+  console.log("Target element:", element);
+
+  const info = findUixForgeParent(element);
+  if (!info) {
+    console.warn("No uix-forge parent found for this element.");
+    console.groupEnd();
+    return;
+  }
+
+  const { forgeEl, forgedEl } = info;
+
+  // --- UIX Forge Parent ---
+  console.log("%c📦 Closest UIX Forge Parent", SECTION_STYLE);
+  console.log("  Element:", forgeEl);
+
+  if (!forgedEl) {
+    console.warn("The uix-forge element has no forged element yet (templates may still be loading).");
+    console.groupEnd();
+    return;
+  }
+
+  // --- Forge Path ---
+  const forgePath = buildForgeSelectorPath(forgedEl, element);
+  if (forgePath === null) {
+    console.warn(
+      "Could not build a forge path: the element may not be a descendant of the forged element."
+    );
+    console.groupEnd();
+    return;
+  }
+
+  console.log("%c📍 Forge Path to Target", SECTION_STYLE);
+  console.log("  Path:", `"${forgePath}"`);
+  console.log("  Use this path as the value of `for`, `before`, or `after` in a spark config.");
+
+  // --- Boilerplate Spark YAML ---
+  const yaml =
+    `forge:\n` +
+    `  sparks:\n` +
+    `    - type: tooltip\n` +
+    `      for: "${forgePath}"\n` +
+    `      content: "..."\n` +
+    `    # for tile-icon / state-badge sparks:\n` +
+    `    # - type: tile-icon\n` +
+    `    #   before: "${forgePath}"\n` +
+    `    #   icon: mdi:home`;
+
+  console.log("%c📝 Boilerplate Spark YAML", SECTION_STYLE);
+  console.log(yaml);
+
+  console.groupEnd();
+};
+

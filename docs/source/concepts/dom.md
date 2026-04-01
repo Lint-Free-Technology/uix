@@ -88,9 +88,63 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
     In short, if things seem to be working intermittently, then try splitting up the chain into several steps.
 
+## Host/element path selection
+
+A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:
+
+- If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.
+- If the initial element where UIX is applied is a regular **Element** the filter is tested against the element.
+
+Generally you would use the host/element path selector in a theme to allow apply a selector path when the host/element has a specific class and/or id/attribute.
+
+Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/element itself is being filtered. The following tokens are supported (all present tokens must match):
+
+| Token | Checks |
+|-------|--------|
+| `tagname` | `element.localName === 'tagname'` |
+| `.classname` | `element.classList.contains('classname')` |
+| `#id` | `element.id === 'id'` |
+| `[attr]` | `element.hasAttribute('attr')` |
+| `[attr=val]` | exact value match |
+| `[attr^=val]` | value starts with |
+| `[attr$=val]` | value ends with |
+| `[attr*=val]` | value contains |
+| `[attr~=val]` | whitespace-separated word match |
+| `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
+
+Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Selectors containing spaces are **not** supported because the path is split on spaces.
+
+Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
+
+!!! example "Example styling dialog"
+    Style the content of a dialog only when it is of type `type-hui-dialog-web-browser-play-media`:
+    ```yaml
+    uix-dialog-yaml: |
+      "&(.type-hui-dialog-web-browser-play-media) $ ha-dialog-header $": |
+      section.header-content {
+        display: none;
+      }
+    ```
+    The `&(.type-...)` step filters the initial nodes by checking whether the host element carries that class, then `$` crosses the shadow root.
+
+!!! example "Example styling badge"
+    Style the energy dashboard power total badge border which has class `.type-power-total`. The border can only be styled in shadow root so using `&` host/element selector we can target only badges which have class `.type-power-total` while still crossing shadow root.
+    ```yaml
+    uix-badge-yaml: |
+      .: |
+        :host(.type-power-total) {
+          --ha-card-border-width: 3px;
+          --ha-card-border-color: red;
+        }
+      "&.type-power-total ha-badge $": |
+        .badge {
+          border-style: double !important;
+        }
+    ```
+
 ## DOM inspection helpers
 
-UIX ships two browser console helpers that make it easier to discover valid style paths and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
+UIX ships three browser console helpers that make it easier to discover valid style paths, forge spark paths, and understand the UIX element hierarchy at runtime. Open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), then call one of the functions below.
 
 ### `uix_tree($0)` — general helper
 
@@ -128,7 +182,7 @@ uix_tree($0)
 
     Each group label shows a YAML style key followed by the required `:` syntax. The CSS selectors inside are valid within that key's style string. Each selector is followed by a clickable element reference — click it to jump straight to that element in the DevTools inspector.
 
-### `uix_path($0)` — specific helper
+### `uix_style_path($0)` — specific helper
 
 Reports the exact UIX path to the selected element and generates a ready-to-paste YAML snippet:
 
@@ -140,17 +194,17 @@ Reports the exact UIX path to the selected element and generates a ready-to-past
 | **📝 Boilerplate UIX YAML** | A paste-ready card-level YAML snippet to get you started. Shown only for types that can be styled via a card-level `uix:` key. |
 | **📝 Boilerplate Theme YAML** | A paste-ready theme YAML snippet. Shown for all types — for theme-only types (e.g. `dialog`, `sidebar`, `view`) this is the only boilerplate shown. When shadow-root crossings are needed, the `-yaml` variant of the theme variable is used.
 
-To use `uix_path($0)`, open your browser's DevTools console, select an element in the **Elements** panel (it becomes `$0`), and run the function:
-
 ```js
-uix_path($0)
+uix_style_path($0)
 ```
 
-??? example "Card element (shows both card and theme boilerplate)"
-    After selecting the `<h3>` heading inside a markdown card and running `uix_path($0)`:
+`uix_path($0)` is a shorthand alias for `uix_style_path($0)`.
+
+??? example
+    After selecting the `<h3>` heading inside a markdown card and running `uix_style_path($0)`:
 
     ```
-    💡 UIX Path 💡
+    💡 UIX Style Path 💡
       Target element: <h3>
       📦 Closest UIX Parent
         Element: <hui-markdown-card>
@@ -179,28 +233,40 @@ uix_path($0)
 
     The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
 
-??? example "Dialog element (shows theme boilerplate only)"
-    After selecting an element inside a dialog and running `uix_path($0)`:
+### `uix_forge_path($0)` — forge helper
+
+Reports the path from the closest `uix-forge` forge to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config.
+
+| Section | What it shows |
+| ------- | ------------- |
+| **📦 Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element. |
+| **📍 Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the forged element to `$0`. |
+| **📝 Boilerplate Spark YAML** | A paste-ready spark YAML snippet showing how to use the path. |
+
+```js
+uix_forge_path($0)
+```
+
+!!! warning
+    If you are adding a spark element of the same type, e.g. a tile icon **before** `ha-tile-icon` then pay particular attention to the documentation for that spark which will provide guidance on path specificity so as to not select the spark element itself during updates.
+
+??? example
+    After selecting `ha-tile-icon` in a tile card and running `uix_forge_path($0)`
 
     ```
-    💡 UIX Path 💡
-      Target element: <ha-dialog-header>
-      📦 Closest UIX Parent
-        Element: <ha-more-info-dialog>
-        UIX type: dialog
-      📍 UIX Path to Target
-        Path: "$":
-      🎨 CSS Target
-        Tag: ha-dialog-header
-        Suggested CSS selector: ha-dialog-header  <ha-dialog-header>
-      📝 Boilerplate Theme YAML
-        my-awesome-theme:
-          uix-theme: my-awesome-theme
-          uix-dialog-yaml: |
-            "$": |
-              ha-dialog-header {
-                /* your styles for ha-dialog-header */
-              }
+    📦 Closest UIX Forge Parent
+      Element: <uix-forge class=​"type-custom-uix-forge">​…​</uix-forge>​
+    📍 Forge Path to Target
+      Path: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+      Use this path as the value of `for`, `before`, or `after` in a spark config.
+    📝 Boilerplate Spark YAML
+    forge:
+      sparks:
+        - type: tooltip
+          for: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+          content: "..."
+        # for tile-icon / state-badge sparks:
+        # - type: tile-icon
+        #   before: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
+        #   icon: mdi:home
     ```
-
-    Theme-only types (`dialog`, `root`, `view`, `more-info`, `sidebar`, `config`, `panel-custom`, `top-app-bar-fixed`, `developer-tools`) only show theme boilerplate because they cannot be styled via a card-level `uix:` key. When shadow-root crossings appear in the path, the `-yaml` variant of the theme variable is used.

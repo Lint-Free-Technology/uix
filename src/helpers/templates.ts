@@ -74,7 +74,8 @@ export function hasTemplate(str) {
 export async function bind_template(
   callback: (string) => void,
   template: string,
-  variables: object
+  variables: object,
+  defaultValue = ""
 ): Promise<void> {
   const hs = await hass();
   const panelState = await getPanelState();
@@ -92,7 +93,7 @@ export async function bind_template(
   if (!cache) {
     let debug = false;
     unbind_template(callback);
-    callback("");
+    callback(defaultValue);
 
     if (template.includes("uix.debug") || template.includes("card_mod.debug")) {
       debug = true;
@@ -139,9 +140,9 @@ export async function bind_template(
   }
 }
 
-export async function unbind_template(
+export function unbind_template(
   callback: (string) => void
-): Promise<void> {
+): void {
   for (const [key, cache] of Object.entries(cachedTemplates)) {
     if (cache.callbacks.has(callback)) {
       cache.callbacks.delete(callback);
