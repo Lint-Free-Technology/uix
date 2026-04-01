@@ -1,3 +1,9 @@
+## [6.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0...v6.1.0-beta.1) (2026-04-01)
+
+### ⭐ New Features
+
+* **sections:** Support styling section backgrounds by UIX config. ([#149](https://github.com/Lint-Free-Technology/uix/issues/149)) ([b6b1946](https://github.com/Lint-Free-Technology/uix/commit/b6b19464239f86da453a8b3d5a8b6050954deb20))
+
 ## [6.0.0](https://github.com/Lint-Free-Technology/uix/compare/v5.3.1...v6.0.0) (2026-04-01)
 
 ### ⚠ BREAKING CHANGES
