@@ -3,9 +3,6 @@ description: Learn all about styling section background color and opacity
 ---
 # Styling section backgrounds
 
-!!! info
-    Styling entity images available in 6.0.0-beta.10 and later
-
 UIX can style a section background color and opacity using the CSS variables `--uix-section-background-color` and `--uix-section-background-opacity` as applied to the section or parent. As usual for UIX CSS styling, templates are supported.
 
 !!! info
