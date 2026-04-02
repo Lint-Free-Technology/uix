@@ -85,6 +85,7 @@ nav:
           - forge/sparks/tile-icon.md
           - forge/sparks/state-badge.md
           - forge/sparks/grid.md
+          - forge/sparks/search.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
