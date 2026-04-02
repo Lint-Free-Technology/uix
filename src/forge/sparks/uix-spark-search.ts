@@ -276,7 +276,10 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
    * loops when UIX styling is applied to the forged element.
    */
   private _startObserving(container: Element | ShadowRoot): void {
-    this._observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver((mutations) => {
+      // Bail out if the spark has been disconnected/restored since the callback was queued
+      if (!this._observer) return;
+
       // Skip if all added/removed nodes are <uix-node> elements (UIX internals)
       const hasRelevantMutation = mutations.some((record) =>
         Array.from(record.addedNodes).some(
@@ -289,12 +292,15 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
       if (!hasRelevantMutation) return;
 
       // Disconnect while making changes to prevent re-entry
-      this._observer!.disconnect();
+      observer.disconnect();
       this._undoAppliedChanges();
       this._search(container);
-      // Reconnect after changes are applied
-      this._observer!.observe(container, { childList: true, subtree: true });
+      // Reconnect after changes are applied (only if still active)
+      if (this._observer) {
+        observer.observe(container, { childList: true, subtree: true });
+      }
     });
+    this._observer = observer;
     this._observer.observe(container, { childList: true, subtree: true });
   }
 }
