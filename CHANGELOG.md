@@ -1,3 +1,10 @@
+## [6.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.2...v6.1.0-beta.3) (2026-04-02)
+
+### ⭐ New Features
+
+* **forge:** add Search Spark for shadow DOM element mutation ([#136](https://github.com/Lint-Free-Technology/uix/issues/136)) ([3343b31](https://github.com/Lint-Free-Technology/uix/commit/3343b316b6dc13a56ded00838366f0cad20d4540))
+* **forge:** support multiple sparks of the same type ([#152](https://github.com/Lint-Free-Technology/uix/issues/152)) ([b0b2b37](https://github.com/Lint-Free-Technology/uix/commit/b0b2b37fa8e443067ea90fe63c27ca4a2845d47a))
+
 ## [6.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.1...v6.1.0-beta.2) (2026-04-02)
 
 ### 📦 Dependency Upgrades
