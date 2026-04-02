@@ -14,3 +14,4 @@ Available sparks:
 - :star: [Tile Icon](tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.
 - :shield: [State Badge](state-badge.md) — insert a `state-badge` element as a sibling before or after any element within the forged element.
 - :material-grid: [Grid](grid.md) — apply CSS Grid layout to any container element within the forged element.
+- :magnifying_glass: [Search](search.md) — find elements within a container by CSS selector and optional text filter, then apply class, attribute, or text mutations to all matches.
