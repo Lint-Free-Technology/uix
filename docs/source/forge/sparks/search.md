@@ -5,6 +5,9 @@ icon: material/magnify
 
 # :magnifying_glass: Search spark
 
+!!! info
+    Search spark is available in 6.1.0-beta.3
+
 The `search` spark queries a container element with a CSS selector, optionally filters the results by a text regex, and then applies class, attribute, and/or text mutations to every matching element. It also sets up a `MutationObserver` so that newly added elements (for example, calendar events after month navigation) are automatically processed without any additional configuration.
 
 ## Basic usage
@@ -18,7 +21,7 @@ forge:
   sparks:
     - type: search
       for: hui-calendar-card $ ha-full-calendar $
-      query: .event-container
+      query: .fc-event-title
       text: "Meeting"
       actions:
         add_class:
@@ -58,9 +61,6 @@ The `actions` object may contain any combination of the following keys. All keys
 | `prepend_text` | `string` | Text to prepend to every text node inside the element. |
 | `append_text` | `string` | Text to append to every text node inside the element. |
 
-!!! note
-    All mutations are **reversible**. When the spark is disconnected, or its configuration changes, every class, attribute, and text change is restored to its original value.
-
 ## Examples
 
 ### Add a CSS class to calendar events matching a regex
@@ -72,7 +72,7 @@ forge:
   sparks:
     - type: search
       for: hui-calendar-card $ ha-full-calendar $
-      query: .event-container
+      query: .fc-event-title
       text: "^(Meeting|Standup)"
       actions:
         add_class:
@@ -82,9 +82,16 @@ element:
   entities:
     - calendar.work
   uix:
-    style: |
+    ha-full-calendar $: |
       .work-event {
-        background: teal !important;
+        background: teal;
+        color: white;
+        font-weight: 900;
+      }
+      .fc-daygrid-event:has(.work-event) {
+        background-color: teal !important;
+        border-color: blue !important;
+        border-width: 2px;
       }
 ```
 
@@ -119,17 +126,19 @@ forge:
   mold: card
   sparks:
     - type: search
-      for: hui-entities-card $
-      query: .secondary
-      text: "°F"
+      for: >-
+        hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $ hui-generic-entity-row $
+      query: .info
+      text: mbar
       actions:
         replace_text:
-          find: "°F"
-          replace: "°C"
+          find: mbar
+          replace: hPa
 element:
   type: entities
   entities:
-    - sensor.outdoor_temperature
+    - sensor.station_temperature
+    - sensor.station_pressure
 ```
 
 ### Prepend and append text
@@ -142,8 +151,8 @@ forge:
   mold: card
   sparks:
     - type: search
-      for: hui-entities-card $
-      query: .badge-label
+      for: hui-entities-card $ div:nth-child(1) hui-sensor-entity-row $ hui-generic-entity-row $
+      query: .info
       actions:
         prepend_text: "[ "
         append_text: " ]"
@@ -164,7 +173,7 @@ forge:
   sparks:
     - type: search
       for: hui-calendar-card $ ha-full-calendar $
-      query: .event-container
+      query: .fc-list-event-title
       text: "Holiday"         # matches even if "Holiday" is inside <a>Holiday</a>
       actions:
         add_class:
@@ -178,4 +187,3 @@ element:
 !!! note
     - **All** elements returned by `query` receive the actions. Use `text` to narrow the selection to elements whose text content matches a regex.
     - The spark watches the container with a `MutationObserver` so dynamically added elements (e.g. after navigating a calendar month) are processed automatically.
-    - Mutations are undone when the spark disconnects or its config changes, so no stale changes are left in the DOM.
