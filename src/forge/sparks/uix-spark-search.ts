@@ -28,8 +28,8 @@ interface AppliedElementChange {
  *   for           – selectTree path (supports `$` shadow-root crossings) to
  *                   the container element to search within.
  *   query         – CSS selector passed to querySelectorAll on the container.
- *   text          – regex string; only elements whose text-node content matches
- *                   are processed (optional).
+ *   text          – regex string; only elements whose text content (including
+ *                   child elements) matches are processed (optional).
  *   actions       – object describing what to do with matching elements:
  *     add_class       – string[] of classes to add
  *     remove_class    – string[] of classes to remove
@@ -160,15 +160,9 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
     }
   }
 
-  /** Returns the concatenated text-node content of an element (ignores child elements). */
+  /** Returns the full text content of an element, including text inside child elements. */
   private _getTextNodeContent(element: HTMLElement): string {
-    let text = "";
-    for (const node of Array.from(element.childNodes)) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        text += node.textContent || "";
-      }
-    }
-    return text;
+    return element.textContent || "";
   }
 
   private _applyActions(element: HTMLElement): void {
