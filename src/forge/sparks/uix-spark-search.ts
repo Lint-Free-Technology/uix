@@ -151,7 +151,13 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
       }
     }
 
-    const elements = Array.from(container.querySelectorAll(this._query)) as HTMLElement[];
+    let elements: HTMLElement[];
+    try {
+      elements = Array.from(container.querySelectorAll(this._query)) as HTMLElement[];
+    } catch (e) {
+      console.warn(`UIX Forge: search spark: invalid query selector "${this._query}":`, e);
+      return;
+    }
     for (const element of elements) {
       if (textRegex && !textRegex.test(this._getTextNodeContent(element))) {
         continue;
@@ -246,12 +252,17 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
         }
       }
 
-      if (this._actions.prepend_text !== undefined) {
-        newText = this._actions.prepend_text + newText;
-      }
+      // Only prepend/append to text nodes that contain visible (non-whitespace) content.
+      // Lit and other frameworks insert empty or whitespace-only text nodes around their
+      // dynamic markers; prepending/appending to those produces spurious repeated text.
+      if (originalText.trim() !== "") {
+        if (this._actions.prepend_text !== undefined) {
+          newText = this._actions.prepend_text + newText;
+        }
 
-      if (this._actions.append_text !== undefined) {
-        newText = newText + this._actions.append_text;
+        if (this._actions.append_text !== undefined) {
+          newText = newText + this._actions.append_text;
+        }
       }
 
       if (newText !== originalText) {
