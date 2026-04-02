@@ -1,3 +1,12 @@
+## [6.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.1...v6.1.0-beta.2) (2026-04-02)
+
+### 📦 Dependency Upgrades
+
+* bump @babel/preset-env from 7.23.6 to 7.29.2 ([#145](https://github.com/Lint-Free-Technology/uix/issues/145)) ([ecd93ae](https://github.com/Lint-Free-Technology/uix/commit/ecd93ae9fdde7e31becfecdeb6be1f9f5a7b4432))
+* bump @rollup/plugin-babel from 6.0.4 to 7.0.0 ([#146](https://github.com/Lint-Free-Technology/uix/issues/146)) ([c8d690e](https://github.com/Lint-Free-Technology/uix/commit/c8d690e5abc7d9cc02b28ddc43e2b7e1a90873a4))
+* bump rollup from 2.80.0 to 4.60.1 ([#143](https://github.com/Lint-Free-Technology/uix/issues/143)) ([2400e1b](https://github.com/Lint-Free-Technology/uix/commit/2400e1b5d15f0adbd766cab452148ffe125b6961))
+* bump rollup-plugin-typescript2 from 0.36.0 to 0.37.0 ([#144](https://github.com/Lint-Free-Technology/uix/issues/144)) ([7475217](https://github.com/Lint-Free-Technology/uix/commit/7475217403aef8132f89e1961fcae4e18126b85f))
+
 ## [6.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0...v6.1.0-beta.1) (2026-04-01)
 
 ### ⭐ New Features
