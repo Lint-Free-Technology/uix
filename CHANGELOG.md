@@ -1,3 +1,9 @@
+## [6.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.3...v6.1.0-beta.4) (2026-04-02)
+
+### 🐞 Bug Fixes
+
+* **toast:** Refactor for timing reliability ([1eb319f](https://github.com/Lint-Free-Technology/uix/commit/1eb319fd310050ae914a7fcae63d6222875b507e))
+
 ## [6.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.2...v6.1.0-beta.3) (2026-04-02)
 
 ### ⭐ New Features
