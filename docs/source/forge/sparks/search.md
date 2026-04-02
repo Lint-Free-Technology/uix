@@ -3,7 +3,7 @@ description: Use the search spark to find elements within a shadow-DOM path and 
 icon: material/magnify
 ---
 
-# :magnifying_glass: Search spark
+# :mag: Search spark
 
 !!! info
     Search spark is available in 6.1.0-beta.3
