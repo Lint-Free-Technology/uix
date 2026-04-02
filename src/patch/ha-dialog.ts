@@ -8,7 +8,6 @@ import {
 
 
 const dialogParams = [];
-const toastParams = [];
 
 export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
   if (value == null) return value;
@@ -104,28 +103,29 @@ function patchDialog(ev: Event) {
 }
 
 class HaNotificationPatch extends ModdedElement {
-  async updated(_orig, args) {
-    await _orig?.(args);
 
+  async showDialog(_orig, params, ...rest) {
+    await _orig?.(params, ...rest);
+
+    this.requestUpdate();
     this.updateComplete.then(async () => {
-      const haToast: HTMLElement | null =
-        this.shadowRoot.querySelector("ha-toast");
+      let haToast: HTMLElement | null = this.shadowRoot.querySelector("ha-toast");
       if (!haToast) return;
 
       const toastUix = (haToast as ModdedElement)._uix?.[0];
 
-      if (toastUix && !compare_deep(toastUix.variables, { params: toastParams[this.localName] ?? {} })) {
+      if (toastUix && !compare_deep(toastUix.variables, { params: stripHtmlAndFunctions(params) ?? {} })) {
         // If the toast already has a uix instance, it means it's being reused for a new notification
         // so we need to update self and child instance variables
         for (const key in toastUix.uix_children) {
           (await toastUix.uix_children[key])?.forEach(
             async (ch) => await ch.then((uix) => {
-              uix.variables = { params: toastParams[this.localName] ?? {} };
+              uix.variables = { params: stripHtmlAndFunctions(params) ?? {} };
               uix.styles = uix._fixed_styles;
             }).catch(() => {})
           );
         }
-        toastUix.variables = { params: toastParams[this.localName] ?? {} };
+        toastUix.variables = { params: stripHtmlAndFunctions(params) ?? {} };
         toastUix.styles = toastUix._fixed_styles;
         return;
       }
@@ -135,7 +135,7 @@ class HaNotificationPatch extends ModdedElement {
         haToast as ModdedElement,
         "toast",
         undefined,
-        { params: toastParams[this.localName] ?? {} },
+        { params: stripHtmlAndFunctions(params) ?? {} },
         false,
         cls
       );
@@ -145,10 +145,6 @@ class HaNotificationPatch extends ModdedElement {
 
 function patchNotification(ev: Event) {
   const notificationTag = "notification-manager";
-  const params = (ev as CustomEvent).detail;
-  if (params) {
-    toastParams[notificationTag] = stripHtmlAndFunctions(params);
-  }
 
   if (notificationTag && !is_patched(notificationTag)) {
     set_patched(notificationTag);
