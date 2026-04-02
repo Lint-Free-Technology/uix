@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 21 days stale policy
-        uses: actions/stale@v10.0.0
+        uses: actions/stale@v10.2.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           days-before-stale: 21

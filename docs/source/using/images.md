@@ -3,9 +3,6 @@ description: Learn all about styling entity images.
 ---
 # Styling entity images
 
-!!! info
-    Styling entity images available in 6.0.0-beta.5 and later
-
 UIX can substitute the background entity image displayed by the following elements:
 
 - `ha-entity-marker` (map card entity markers)

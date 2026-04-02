@@ -36,17 +36,23 @@ function pseudoMatches(element: Element, selector: string): boolean {
   }
 
   // ID selector: #id
-  for (const m of s.matchAll(/#([a-zA-Z0-9_-]+)/g)) {
-    if (element.id !== m[1]) return false;
+  const idRe = /#([a-zA-Z0-9_-]+)/g;
+  let idM: RegExpExecArray | null;
+  while ((idM = idRe.exec(s)) !== null) {
+    if (element.id !== idM[1]) return false;
   }
 
   // Class selectors: .classname
-  for (const m of s.matchAll(/\.([a-zA-Z0-9_-]+)/g)) {
-    if (!element.classList.contains(m[1])) return false;
+  const classRe = /\.([a-zA-Z0-9_-]+)/g;
+  let classM: RegExpExecArray | null;
+  while ((classM = classRe.exec(s)) !== null) {
+    if (!element.classList.contains(classM[1])) return false;
   }
 
   // Attribute selectors: [attr], [attr=val], [attr^=val], etc.
-  for (const m of s.matchAll(/\[([^\]]+)\]/g)) {
+  const attrRe = /\[([^\]]+)\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = attrRe.exec(s)) !== null) {
     const inner = m[1];
     const opMatch = inner.match(
       /^([a-zA-Z][a-zA-Z0-9_:-]*)\s*([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s\]]*))$/
