@@ -13,7 +13,7 @@
   "author": "Darryn Capes-Davis",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.23.6",
+    "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
     "@rollup/plugin-babel": "^7.0.0",
     "@rollup/plugin-json": "^6.1.0",
