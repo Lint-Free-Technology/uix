@@ -13,7 +13,8 @@ type ButtonAppearance = typeof BUTTON_APPEARANCES[number];
 export class UixForgeSparkButton extends UixForgeSparkBase {
   type = "button";
 
-  private for: string = "";
+  private after: string = "";
+  private before: string = "";
   private entity: string = "";
   private label: string = "";
   private size: string = "";
@@ -41,7 +42,8 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.for = config.for || "";
+    this.after = config.after || config.for || "";
+    this.before = config.before || "";
     this.entity = config.entity || "";
     this.label = config.label || "";
     this.size = config.size || "";
@@ -83,9 +85,10 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private async _attach() {
-    if (!this.for) return;
+    const selector = this.after || this.before;
+    if (!selector) return;
 
-    const elements = await this.controller.target(this.for, this._cancel);
+    const elements = await this.controller.target(selector, this._cancel);
     const element = elements?.[0];
     if (!element) return;
 
@@ -124,7 +127,18 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
 
       buttonEl = this._createButtonElement();
       wrapperEl.appendChild(buttonEl);
-      parent.appendChild(wrapperEl);
+
+      if (this.before) {
+        parent.insertBefore(wrapperEl, element);
+      } else {
+        // `after` or `for` — insert after the target element
+        const nextSibling = element.nextSibling;
+        if (nextSibling) {
+          parent.insertBefore(wrapperEl, nextSibling);
+        } else {
+          parent.appendChild(wrapperEl);
+        }
+      }
     } else {
       buttonEl = wrapperEl.querySelector("ha-button") as any;
       if (!buttonEl) {

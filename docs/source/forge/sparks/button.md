@@ -5,7 +5,7 @@ icon: material/button-cursor
 
 # :material-button-cursor: Button spark
 
-The `button` spark inserts a Home Assistant [`ha-button`](https://github.com/home-assistant/frontend/tree/dev/src/components/ha-button.ts) element as a DOM sibling immediately **after** a target element inside a forged element.
+The `button` spark inserts a Home Assistant [`ha-button`](https://github.com/home-assistant/frontend/tree/dev/src/components/ha-button.ts) element as a DOM sibling immediately **before** or **after** a target element inside a forged element.
 
 The button can display:
 
@@ -17,9 +17,9 @@ Optionally the button can be made interactive with tap/hold/double-tap [actions]
 
 ## Basic usage
 
-Add a `button` entry to `forge.sparks` with `for` to specify the target element. The button is inserted as a sibling of the matched element, in the same parent node.
+Add a `button` entry to `forge.sparks` with either `after` or `before` to specify the target element and where the button is inserted relative to it.
 
-The `for` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
+The `after`/`before` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
 ```yaml
 type: custom:uix-forge
@@ -27,7 +27,7 @@ forge:
   mold: card
   sparks:
     - type: button
-      for: hui-tile-card $ ha-tile-icon
+      after: hui-tile-card $ ha-tile-icon
       label: Toggle
       entity: light.living_room
       tap_action:
@@ -38,14 +38,15 @@ element:
 ```
 
 !!! tip
-    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.
+    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `after`/`before`.
 
 ## Configuration
 
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `button`. |
-| `for` | `string` | ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **after** the matched element. |
+| `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **after** the matched element. |
+| `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | — | Entity ID passed to action handlers (e.g. `toggle`). Required for entity-based actions. |
 | `label` | `string` | | `""` | Text label displayed inside the button. |
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
@@ -58,7 +59,9 @@ element:
 | `double_tap_action` | action | | — | Action to perform on double tap. |
 
 !!! note
-    The spark targets the **first** element matched by `for`. The inserted `ha-button` element is placed in the same parent as the target element — it is a sibling, not a child.
+    - Exactly one of `after` or `before` must be provided.
+    - The spark targets the **first** element matched by `after`/`before`.
+    - The inserted `ha-button` is placed in the same parent as the target element — it is a sibling, not a child.
 
 ## Actions
 
@@ -70,7 +73,7 @@ forge:
   mold: card
   sparks:
     - type: button
-      for: hui-tile-card $ ha-tile-icon
+      after: hui-tile-card $ ha-tile-icon
       label: Toggle
       entity: light.living_room
       tap_action:
@@ -87,14 +90,14 @@ element:
 
 ## Examples
 
-??? example "Button with a label and toggle action"
+??? example "Button after the tile icon with a toggle action"
     ```yaml
     type: custom:uix-forge
     forge:
       mold: card
       sparks:
         - type: button
-          for: hui-tile-card $ ha-tile-icon
+          after: hui-tile-card $ ha-tile-icon
           label: Toggle
           entity: light.living_room
           tap_action:
@@ -104,14 +107,14 @@ element:
       entity: light.living_room
     ```
 
-??? example "Button with a danger variant and plain appearance"
+??? example "Button before the tile icon with a danger variant"
     ```yaml
     type: custom:uix-forge
     forge:
       mold: card
       sparks:
         - type: button
-          for: hui-tile-card $ ha-tile-icon
+          before: hui-tile-card $ ha-tile-icon
           label: Turn off
           variant: danger
           appearance: plain
@@ -133,7 +136,7 @@ element:
       mold: card
       sparks:
         - type: button
-          for: hui-tile-card $ ha-tile-icon
+          after: hui-tile-card $ ha-tile-icon
           start_icon: mdi:play
           label: Scene
           end_icon: mdi:chevron-right
@@ -152,7 +155,7 @@ element:
       mold: card
       sparks:
         - type: button
-          for: hui-tile-card $ ha-tile-icon
+          after: hui-tile-card $ ha-tile-icon
           start_icon: mdi:information-outline
           entity: light.living_room
           tap_action:
@@ -161,3 +164,4 @@ element:
       type: tile
       entity: light.living_room
     ```
+
