@@ -10,6 +10,7 @@ import { UixForgeSparkTileIcon } from "./uix-spark-tile-icon";
 import { UixForgeSparkStateBadge } from "./uix-spark-state-badge";
 import { UixForgeSparkGrid } from "./uix-spark-grid";
 import { UixForgeSparkSearch } from "./uix-spark-search";
+import { UixForgeSparkButton } from "./uix-spark-button";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -20,6 +21,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "state-badge": UixForgeSparkStateBadge,
     "grid": UixForgeSparkGrid,
     "search": UixForgeSparkSearch,
+    "button": UixForgeSparkButton,
 };
 
 export class UixForgeSparkController {
