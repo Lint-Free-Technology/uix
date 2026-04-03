@@ -16,6 +16,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private after: string = "";
   private before: string = "";
   private entity: string = "";
+  private icon: string = "";
   private label: string = "";
   private size: string = "";
   private variant: ButtonVariant | "" = "";
@@ -45,6 +46,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     this.after = config.after || config.for || "";
     this.before = config.before || "";
     this.entity = config.entity || "";
+    this.icon = config.icon || "";
     this.label = config.label || "";
     this.size = config.size || "";
     this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : "";
@@ -180,15 +182,28 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     }
 
     let labelEl = buttonEl.querySelector(`:scope > .uix-button-label`);
-    if (this.label) {
-      if (!labelEl) {
-        labelEl = document.createElement("span");
-        labelEl.className = "uix-button-label";
-        buttonEl.appendChild(labelEl);
+    let labelIconEl = buttonEl.querySelector(`:scope > ha-icon.uix-button-icon`) as (HTMLElement & { icon: string }) | null;
+    if (this.icon) {
+      if (labelEl) labelEl.remove();
+      if (!labelIconEl) {
+        const newIconEl = document.createElement("ha-icon") as HTMLElement & { icon: string };
+        newIconEl.className = "uix-button-icon";
+        buttonEl.appendChild(newIconEl);
+        labelIconEl = newIconEl;
       }
-      labelEl.innerHTML = this.label;
-    } else if (labelEl) {
-      labelEl.remove();
+      labelIconEl.icon = this.icon;
+    } else {
+      if (labelIconEl) labelIconEl.remove();
+      if (this.label) {
+        if (!labelEl) {
+          labelEl = document.createElement("span");
+          labelEl.className = "uix-button-label";
+          buttonEl.appendChild(labelEl);
+        }
+        labelEl.innerHTML = this.label;
+      } else if (labelEl) {
+        labelEl.remove();
+      }
     }
 
     let startIconEl = buttonEl.querySelector(`:scope > ha-icon[slot="start"]`);
