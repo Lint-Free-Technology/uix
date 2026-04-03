@@ -58,9 +58,9 @@ element:
 | `label` | `string` | | `""` | Text label displayed inside the button. Mutually exclusive with `icon`. |
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
 | `end_icon` | `string` | | — | MDI icon string (e.g. `mdi:chevron-right`) displayed **after** the label. |
-| `variant` | `string` | | — | Button colour variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default HA button style (`primary`) is used. |
-| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. |
-| `size` | `string` | | — | Button size passed directly to `ha-button` (e.g. `small`, `medium`, `large`). |
+| `variant` | `string` | | — | Button color variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used. |
+| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used. |
+| `size` | `string` | | — | Button size which can be `small` or `medium`. |
 | `tap_action` | action | | — | Action to perform on tap. |
 | `hold_action` | action | | — | Action to perform on hold. |
 | `double_tap_action` | action | | — | Action to perform on double tap. |
@@ -164,14 +164,16 @@ element:
       mold: card
       sparks:
         - type: button
-          after: hui-tile-card $ ha-tile-icon
+          before: hui-tile-card $ ha-tile-info
           icon: mdi:lightbulb
           entity: light.living_room
+          appearance: plain
+          variant: neutral
           tap_action:
             action: toggle
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
 
 ??? example "Button with tile card styling for spacing with flex css properties"
@@ -213,3 +215,12 @@ element:
             flex: 1;
           }
     ```
+
+## Variant and appearance
+
+Button `variant` can be one of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used.
+
+Button `appearance` can be one of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used.
+
+!!! info "Button variant and appearance image"
+    ![Button variant and appearance image](../../assets/page-assets/forge/sparks/button-spark-variant-appearance.png)
