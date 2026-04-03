@@ -1,3 +1,14 @@
+## [6.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.5...v6.1.0-beta.6) (2026-04-03)
+
+### ⭐ New Features
+
+* **forge:** Add Button Spark ([#168](https://github.com/Lint-Free-Technology/uix/issues/168)) ([51cfbe8](https://github.com/Lint-Free-Technology/uix/commit/51cfbe8110eedf6046bebc2259ab29702a8dfd8a)), closes [#166](https://github.com/Lint-Free-Technology/uix/issues/166)
+
+### ⚙️ Miscellaneous
+
+* **button-spark:** add `icon` config for icon-only buttons ([#169](https://github.com/Lint-Free-Technology/uix/issues/169)) ([32b52b7](https://github.com/Lint-Free-Technology/uix/commit/32b52b7ef414915a1d1a6f9aebd07c7cf68c85ef))
+* **forge:** Provide action-handler scaffold for for UIX Forge Sparks ([#167](https://github.com/Lint-Free-Technology/uix/issues/167)) ([2d8144e](https://github.com/Lint-Free-Technology/uix/commit/2d8144e077b829f82f22d96a40ad5ef7f056f54d))
+
 ## [6.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.4...v6.1.0-beta.5) (2026-04-03)
 
 ### 📦 Dependency Upgrades
