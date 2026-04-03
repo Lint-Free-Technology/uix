@@ -14,6 +14,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   type = "button";
 
   private for: string = "";
+  private entity: string = "";
   private label: string = "";
   private size: string = "";
   private variant: ButtonVariant | "" = "";
@@ -41,6 +42,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
 
   private _applyConfig(config: Record<string, any>) {
     this.for = config.for || "";
+    this.entity = config.entity || "";
     this.label = config.label || "";
     this.size = config.size || "";
     this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : "";
@@ -107,6 +109,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       wrapperEl = document.createElement("div");
       wrapperEl.setAttribute(WRAPPER_ID_ATTR, this._id);
       wrapperEl.style.display = "contents";
+      wrapperEl.style.pointerEvents = "auto";
 
       // Stop pointer events from bubbling to the parent card's action handler
       const stopProp = (ev: Event) => ev.stopPropagation();
@@ -212,6 +215,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
 
     const actionKey = `${action}_action`;
     const config: Record<string, any> = {};
+    if (this.entity) config.entity = this.entity;
     if (this.tapAction) config.tap_action = this.tapAction;
     if (this.holdAction) config.hold_action = this.holdAction;
     if (this.doubleTapAction) config.double_tap_action = this.doubleTapAction;
