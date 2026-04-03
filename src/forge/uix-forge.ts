@@ -614,7 +614,7 @@ export class UixForge extends LitElement {
   }
 }
 
-window.addEventListener("uix-bootstrap", async (ev: CustomEvent) => {
+window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   if (!customElements.get(UIX_FORGE_TYPE)) {
     customElements.define(UIX_FORGE_TYPE, UixForge);

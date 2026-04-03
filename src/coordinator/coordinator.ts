@@ -12,7 +12,7 @@ class UixCoordinator extends
     }
 }
 
-window.addEventListener("uix-bootstrap", async (ev: CustomEvent) => {
+window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   if (!(window as any).uixCoordinator) {
     (window as any).uixCoordinator = new UixCoordinator();
