@@ -80,6 +80,7 @@ nav:
       - Sparks:
           - forge/sparks/index.md
           - forge/sparks/tooltip.md
+          - forge/sparks/button.md
           - forge/sparks/attribute.md
           - forge/sparks/event.md
           - forge/sparks/tile-icon.md
