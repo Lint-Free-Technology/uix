@@ -1,3 +1,13 @@
+## [6.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.4...v6.1.0-beta.5) (2026-04-03)
+
+### 📦 Dependency Upgrades
+
+* bump lit from 3.1.0 to 3.3.2 ([#161](https://github.com/Lint-Free-Technology/uix/issues/161)) ([97816ce](https://github.com/Lint-Free-Technology/uix/commit/97816ce60844dd3541c5a4642c0c0289c5045dc7))
+
+### ⚙️ Miscellaneous
+
+* TypeScript 6 build errors and VSCode linting alignment ([#165](https://github.com/Lint-Free-Technology/uix/issues/165)) ([c68b011](https://github.com/Lint-Free-Technology/uix/commit/c68b0110119f126ffd2430a8702b8d1cb594ba4f))
+
 ## [6.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.3...v6.1.0-beta.4) (2026-04-02)
 
 ### 🐞 Bug Fixes
