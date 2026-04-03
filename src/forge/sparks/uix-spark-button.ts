@@ -2,7 +2,7 @@ import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { actionHandlerBind } from "./action-handler";
 
-const BUTTON_ID_ATTR = "data-uix-forge-button-id";
+const WRAPPER_ID_ATTR = "data-uix-forge-button-id";
 
 const BUTTON_VARIANTS = ["brand", "neutral", "danger", "warning", "success"] as const;
 const BUTTON_APPEARANCES = ["accent", "filled", "plain"] as const;
@@ -24,6 +24,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private holdAction: Record<string, any> | null = null;
   private doubleTapAction: Record<string, any> | null = null;
   private _cancel: (() => void)[] = [];
+  private _wrapperElement: HTMLElement | null = null;
   private _buttonElement: HTMLElement | null = null;
   private readonly _id: string;
 
@@ -72,10 +73,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private _remove() {
-    if (this._buttonElement) {
-      this._buttonElement.remove();
-      this._buttonElement = null;
+    if (this._wrapperElement) {
+      this._wrapperElement.remove();
+      this._wrapperElement = null;
     }
+    this._buttonElement = null;
   }
 
   private async _attach() {
@@ -88,34 +90,57 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     const parent = element.parentElement || element.parentNode;
     if (!parent) return;
 
-    const existingInParent = (parent as ParentNode).querySelector?.(
-      `ha-button[${BUTTON_ID_ATTR}="${this._id}"]`
+    const existingWrapper = (parent as ParentNode).querySelector?.(
+      `div[${WRAPPER_ID_ATTR}="${this._id}"]`
     ) as HTMLElement | null;
 
-    if (this._buttonElement && !existingInParent) {
-      this._buttonElement.remove();
+    if (this._wrapperElement && !existingWrapper) {
+      this._wrapperElement.remove();
+      this._wrapperElement = null;
       this._buttonElement = null;
     }
 
-    let buttonEl = existingInParent as any;
-    if (!buttonEl) {
-      buttonEl = document.createElement("ha-button") as any;
-      buttonEl.setAttribute(BUTTON_ID_ATTR, this._id);
+    let wrapperEl = existingWrapper;
+    let buttonEl: any;
+
+    if (!wrapperEl) {
+      wrapperEl = document.createElement("div");
+      wrapperEl.setAttribute(WRAPPER_ID_ATTR, this._id);
+      wrapperEl.style.display = "contents";
+
+      // Stop pointer events from bubbling to the parent card's action handler
+      const stopProp = (ev: Event) => ev.stopPropagation();
+      wrapperEl.addEventListener("click", stopProp);
+      wrapperEl.addEventListener("mousedown", stopProp);
+      wrapperEl.addEventListener("touchstart", stopProp);
 
       const slot = element.getAttribute("slot");
       if (slot) {
-        buttonEl.setAttribute("slot", slot);
+        wrapperEl.setAttribute("slot", slot);
       }
 
-      buttonEl.addEventListener("action", (ev: CustomEvent) => {
-        this._handleAction(ev, buttonEl);
-      });
-
-      parent.appendChild(buttonEl);
+      buttonEl = this._createButtonElement();
+      wrapperEl.appendChild(buttonEl);
+      parent.appendChild(wrapperEl);
+    } else {
+      buttonEl = wrapperEl.querySelector("ha-button") as any;
+      if (!buttonEl) {
+        buttonEl = this._createButtonElement();
+        wrapperEl.appendChild(buttonEl);
+      }
     }
 
     this._updateElement(buttonEl);
+    this._wrapperElement = wrapperEl;
     this._buttonElement = buttonEl;
+  }
+
+  private _createButtonElement(): any {
+    const buttonEl = document.createElement("ha-button") as any;
+    buttonEl.addEventListener("action", (ev: CustomEvent) => {
+      this._handleAction(ev, buttonEl);
+    });
+    return buttonEl;
   }
 
   private _updateElement(buttonEl: any) {
