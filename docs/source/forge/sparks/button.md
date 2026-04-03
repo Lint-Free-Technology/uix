@@ -19,6 +19,8 @@ The button can display:
 
 `icon` and `label` are mutually exclusive — when `icon` is set, the icon is placed in `ha-button`'s label slot and `label` is ignored.
 
+When only `icon` is set (no `label`), the button automatically receives `ha-icon-button` styling via the `uix-icon-button` CSS class — giving it the same compact, circular icon-button appearance as Home Assistant's native `ha-icon-button` component — without needing any additional configuration or a separate spark.
+
 Optionally the button can be made interactive with tap/hold/double-tap [actions](#actions).
 
 ## Basic usage
@@ -70,6 +72,7 @@ element:
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
     - `icon` and `label` are mutually exclusive. When `icon` is set, `label` is ignored.
+    - When only `icon` is set, the `uix-icon-button` CSS class is applied automatically, giving the button `ha-icon-button` styling. You can still set `variant` and `appearance` to override the defaults.
 
 ## Actions
 
