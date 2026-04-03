@@ -143,11 +143,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       labelEl.remove();
     }
 
-    let startIconEl = buttonEl.querySelector(`:scope > ha-icon[slot="icon"]`);
+    let startIconEl = buttonEl.querySelector(`:scope > ha-icon[slot="start"]`);
     if (this.startIcon) {
       if (!startIconEl) {
         startIconEl = document.createElement("ha-icon");
-        startIconEl.setAttribute("slot", "icon");
+        startIconEl.setAttribute("slot", "start");
         buttonEl.insertBefore(startIconEl, buttonEl.firstChild);
       }
       (startIconEl as any).icon = this.startIcon;
@@ -155,11 +155,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       startIconEl.remove();
     }
 
-    let endIconEl = buttonEl.querySelector(`:scope > ha-icon[slot="trailingIcon"]`);
+    let endIconEl = buttonEl.querySelector(`:scope > ha-icon[slot="end"]`);
     if (this.endIcon) {
       if (!endIconEl) {
         endIconEl = document.createElement("ha-icon");
-        endIconEl.setAttribute("slot", "trailingIcon");
+        endIconEl.setAttribute("slot", "end");
         buttonEl.appendChild(endIconEl);
       }
       (endIconEl as any).icon = this.endIcon;
