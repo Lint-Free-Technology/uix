@@ -13,8 +13,11 @@ The `button` spark inserts a Home Assistant [`ha-button`](https://github.com/hom
 The button can display:
 
 - a text label (`label`)
+- an icon in the label position (`icon`)
 - a leading icon (`start_icon`)
 - a trailing icon (`end_icon`)
+
+`icon` and `label` are mutually exclusive — when `icon` is set, the icon is placed in `ha-button`'s label slot and `label` is ignored.
 
 Optionally the button can be made interactive with tap/hold/double-tap [actions](#actions).
 
@@ -51,12 +54,13 @@ element:
 | `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **after** the matched element. |
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | — | Entity ID passed to action handlers (e.g. `toggle`). Required for entity-based actions. |
-| `label` | `string` | | `""` | Text label displayed inside the button. |
+| `icon` | `string` | | — | MDI icon string (e.g. `mdi:lightbulb`) placed in the label slot of the button. Mutually exclusive with `label`. |
+| `label` | `string` | | `""` | Text label displayed inside the button. Mutually exclusive with `icon`. |
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
 | `end_icon` | `string` | | — | MDI icon string (e.g. `mdi:chevron-right`) displayed **after** the label. |
-| `variant` | `string` | | — | Button colour variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default HA button style (`primary`) is used. |
-| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. |
-| `size` | `string` | | — | Button size passed directly to `ha-button` (e.g. `small`, `medium`, `large`). |
+| `variant` | `string` | | — | Button color variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used. |
+| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used. |
+| `size` | `string` | | — | Button size which can be `small` or `medium`. |
 | `tap_action` | action | | — | Action to perform on tap. |
 | `hold_action` | action | | — | Action to perform on hold. |
 | `double_tap_action` | action | | — | Action to perform on double tap. |
@@ -65,6 +69,7 @@ element:
     - Exactly one of `after` or `before` must be provided.
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
+    - `icon` and `label` are mutually exclusive. When `icon` is set, `label` is ignored.
 
 ## Actions
 
@@ -152,6 +157,25 @@ element:
       entity: light.bed_light
     ```
 
+??? example "Icon-only button"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: button
+          before: hui-tile-card $ ha-tile-info
+          icon: mdi:lightbulb
+          entity: light.living_room
+          appearance: plain
+          variant: neutral
+          tap_action:
+            action: toggle
+    element:
+      type: tile
+      entity: light.bed_light
+    ```
+
 ??? example "Button with tile card styling for spacing with flex css properties"
     Also included is a [:speech_balloon: Tooltip spark](tooltip.md)
     ```yaml
@@ -191,3 +215,12 @@ element:
             flex: 1;
           }
     ```
+
+## Variant and appearance
+
+Button `variant` can be one of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used.
+
+Button `appearance` can be one of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used.
+
+!!! info "Button variant and appearance image"
+    ![Button variant and appearance image](../../assets/page-assets/forge/sparks/button-spark-variant-appearance.png)
