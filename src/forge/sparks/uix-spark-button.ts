@@ -4,14 +4,20 @@ import { actionHandlerBind } from "./action-handler";
 
 const BUTTON_ID_ATTR = "data-uix-forge-button-id";
 
+const BUTTON_VARIANTS = ["brand", "neutral", "danger", "warning", "success"] as const;
+const BUTTON_APPEARANCES = ["accent", "filled", "plain"] as const;
+
+type ButtonVariant = typeof BUTTON_VARIANTS[number];
+type ButtonAppearance = typeof BUTTON_APPEARANCES[number];
+
 export class UixForgeSparkButton extends UixForgeSparkBase {
   type = "button";
 
   private for: string = "";
   private label: string = "";
   private size: string = "";
-  private variant: string = "";
-  private appearance: string = "";
+  private variant: ButtonVariant | "" = "";
+  private appearance: ButtonAppearance | "" = "";
   private startIcon: string = "";
   private endIcon: string = "";
   private tapAction: Record<string, any> | null = null;
@@ -36,8 +42,8 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     this.for = config.for || "";
     this.label = config.label || "";
     this.size = config.size || "";
-    this.variant = config.variant || "";
-    this.appearance = config.appearance || "";
+    this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : "";
+    this.appearance = BUTTON_APPEARANCES.includes(config.appearance) ? config.appearance as ButtonAppearance : "";
     this.startIcon = config.start_icon || "";
     this.endIcon = config.end_icon || "";
     this.tapAction = config.tap_action || null;
