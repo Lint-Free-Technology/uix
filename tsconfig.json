@@ -5,6 +5,7 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
+    "skipLibCheck": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strictPropertyInitialization": false

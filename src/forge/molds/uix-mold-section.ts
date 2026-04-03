@@ -9,10 +9,11 @@ export class UixForgeMoldSection extends UixForgeMoldBase {
     return this._hidden;
   }
 
-  handleSectionVisibilityChanged = (event: CustomEvent) => {
-    if (event.detail.section == this.forge) return;
-    event.stopPropagation();
-    this.updateSectionVisibility(event);
+  handleSectionVisibilityChanged = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail.section == this.forge) return;
+    customEvent.stopPropagation();
+    this.updateSectionVisibility(customEvent);
   }
 
   updateSectionVisibility(event: CustomEvent = undefined as any) {

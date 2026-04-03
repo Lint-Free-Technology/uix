@@ -185,11 +185,11 @@ export const ConnectionMixin = (SuperClass) => {
       conn.addEventListener("disconnected", () => {
         this.onDisconnected();
       });
-      window.addEventListener("connection-status", (ev: CustomEvent) => {
-        if (ev.detail === "connected") {
+      window.addEventListener("connection-status", (ev: Event) => {
+        if ((ev as CustomEvent).detail === "connected") {
           this.onConnected();
         }
-        if (ev.detail === "disconnected") {
+        if ((ev as CustomEvent).detail === "disconnected") {
           this.onDisconnected();
         }
       });

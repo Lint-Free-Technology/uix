@@ -18,10 +18,11 @@ export class UixForgeSparkDomEvents extends UixForgeSparkBase {
     document.addEventListener("ll-custom", this.llCustomEventListener);
   }
 
-  private llCustomEventListener: EventListener = (event: CustomEvent) => {
+  private llCustomEventListener: EventListener = (event: Event) => {
+    const customEvent = event as CustomEvent;
     let refreshNeeded = false;
-    if (event.detail?.uix_forge && Array.isArray(event.detail?.uix_forge)) {
-      event.detail.uix_forge.forEach((forgeEvent: any) => {
+    if (customEvent.detail?.uix_forge && Array.isArray(customEvent.detail?.uix_forge)) {
+      customEvent.detail.uix_forge.forEach((forgeEvent: any) => {
         const eventForgeId = forgeEvent?.forge_id;
         const eventData = forgeEvent?.data || {};
         if (!eventForgeId) return; // Ignore events without forge_id

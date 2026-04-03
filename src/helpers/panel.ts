@@ -141,7 +141,7 @@ export function getPanelState(): Promise<any> {
   return PanelState as Promise<any>;
 }
 
-window.addEventListener("uix-bootstrap", async (ev: CustomEvent) => {
+window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   ["popstate", "location-changed"].forEach((event) => {
     window.addEventListener(event, async () => {

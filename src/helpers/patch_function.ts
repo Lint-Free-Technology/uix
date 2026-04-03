@@ -10,7 +10,7 @@ const patch_method = function (obj, method, override) {
   if (method === "constructor") return;
   const original = obj[method];
 
-  const fn = function (...args) {
+  const fn = function (this: any, ...args: any[]) {
     try {
       return override.call(this, original?.bind(this), ...args);
     } catch (e) {

@@ -64,11 +64,11 @@ export interface UixForgeConfig {
 export class UixForgeConfigBuilder {
   _config: {};
   _templateBindings: Map<string, { callback: (res: string) => void }>;
-  _resolveReady: (value?: unknown) => void;
+  _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
-  refreshCallback: (key: string) => void;
+  refreshCallback?: (path: UixForgeConfigPath) => void;
 
-  constructor(refreshCallback?: (key: string) => void) {
+  constructor(refreshCallback?: (path: UixForgeConfigPath) => void) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
