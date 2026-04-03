@@ -63,6 +63,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private before: string = "";
   private entity: string = "";
   private icon: string = "";
+  private color: string = "";
   private label: string = "";
   private size: string = "";
   private variant: ButtonVariant | "" = "";
@@ -93,6 +94,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     this.before = config.before || "";
     this.entity = config.entity || "";
     this.icon = config.icon || "";
+    this.color = config.color || "";
     this.label = config.label || "";
     this.size = config.size || "";
     this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : "";
@@ -211,8 +213,14 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private _updateElement(buttonEl: any) {
     if (this.icon && !this.label) {
       buttonEl.classList.add(ICON_BUTTON_CLASS);
+      if (this.color) {
+        buttonEl.style.color = this.color;
+      } else {
+        buttonEl.style.removeProperty("color");
+      }
     } else {
       buttonEl.classList.remove(ICON_BUTTON_CLASS);
+      buttonEl.style.removeProperty("color");
     }
 
     if (this.size) {

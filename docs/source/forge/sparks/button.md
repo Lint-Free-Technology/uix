@@ -19,7 +19,7 @@ The button can display:
 
 `icon` and `label` are mutually exclusive — when `icon` is set, the icon is placed in `ha-button`'s label slot and `label` is ignored.
 
-When only `icon` is set (no `label`), the button automatically receives `ha-icon-button` styling via the `uix-icon-button` CSS class — giving it the same compact, circular icon-button appearance as Home Assistant's native `ha-icon-button` component — without needing any additional configuration or a separate spark.
+When only `icon` is set (no `label`), the button automatically receives styling to match Home Assistant's icon button.
 
 Optionally the button can be made interactive with tap/hold/double-tap [actions](#actions).
 
@@ -57,6 +57,7 @@ element:
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | — | Entity ID passed to action handlers (e.g. `toggle`). Required for entity-based actions. |
 | `icon` | `string` | | — | MDI icon string (e.g. `mdi:lightbulb`) placed in the label slot of the button. Mutually exclusive with `label`. |
+| `color` | `string` | | — | Icon color when in icon-only mode (e.g. `red`, `var(--primary-color)`). Only applied when `icon` is set and `label` is not. |
 | `label` | `string` | | `""` | Text label displayed inside the button. Mutually exclusive with `icon`. |
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
 | `end_icon` | `string` | | — | MDI icon string (e.g. `mdi:chevron-right`) displayed **after** the label. |
@@ -72,7 +73,7 @@ element:
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
     - `icon` and `label` are mutually exclusive. When `icon` is set, `label` is ignored.
-    - When only `icon` is set, the `uix-icon-button` CSS class is applied automatically, giving the button `ha-icon-button` styling. You can still set `variant` and `appearance` to override the defaults.
+    - When only `icon` is set (no `label`), the button automatically receives styling to match Home Assistant's icon button.
 
 ## Actions
 
@@ -169,9 +170,8 @@ element:
         - type: button
           before: hui-tile-card $ ha-tile-info
           icon: mdi:lightbulb
+          color: var(--warning-color)
           entity: light.living_room
-          appearance: plain
-          variant: neutral
           tap_action:
             action: toggle
     element:
