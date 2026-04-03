@@ -61,7 +61,7 @@ element:
 !!! note
     - Exactly one of `after` or `before` must be provided.
     - The spark targets the **first** element matched by `after`/`before`.
-    - The inserted `ha-button` is placed in the same parent as the target element — it is a sibling, not a child.
+    - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
 
 ## Actions
 
@@ -74,7 +74,7 @@ forge:
   sparks:
     - type: button
       after: hui-tile-card $ ha-tile-icon
-      label: Toggle
+      label: Living Room
       entity: light.living_room
       tap_action:
         action: toggle
@@ -82,7 +82,7 @@ forge:
         action: more-info
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
 ```
 
 !!! note
@@ -90,7 +90,7 @@ element:
 
 ## Examples
 
-??? example "Button after the tile icon with a toggle action"
+??? example "Button after the tile icon with a toggle action and light icon"
     ```yaml
     type: custom:uix-forge
     forge:
@@ -98,13 +98,14 @@ element:
       sparks:
         - type: button
           after: hui-tile-card $ ha-tile-icon
-          label: Toggle
+          label: Living Room
+          end_icon: mdi:lightbulb-fluorescent-tube-outline
           entity: light.living_room
           tap_action:
             action: toggle
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
 
 ??? example "Button before the tile icon with a danger variant"
@@ -126,7 +127,7 @@ element:
               entity_id: light.living_room
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
 
 ??? example "Button with start and end icons"
@@ -145,23 +146,45 @@ element:
             navigation_path: /lovelace/scenes
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
 
-??? example "Icon-only button"
+??? example "Button with tile card styling for spacing with flex css properties"
+    Also included is a [:speech_balloon: Tooltip spark](tooltip.md)
     ```yaml
     type: custom:uix-forge
     forge:
       mold: card
+      grid_options:
+        columns: 12
+        rows: 1
       sparks:
+        - type: tooltipa
+          for: hui-tile-card $ ha-button
+          content: Toggle Special Switch
         - type: button
-          after: hui-tile-card $ ha-tile-icon
-          start_icon: mdi:information-outline
-          entity: light.living_room
+          after: hui-tile-card $ ha-tile-info
+          label: Press me
+          variant: neutral
+          appearance: plain
+          end_icon: mdi:test-tube
+          entity: input_boolean.test_boolean
           tap_action:
+            action: toggle
+          hold_action:
             action: more-info
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
+      vertical: false
+      features_position: bottom
+      uix:
+        style: |
+          ha-tile-info {
+            flex: 2;
+          }
+          ha-button {
+            margin-top: -2px;
+            flex: 1;
+          }
     ```
-
