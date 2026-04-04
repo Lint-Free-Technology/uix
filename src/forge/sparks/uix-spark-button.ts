@@ -3,6 +3,49 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 import { actionHandlerBind } from "./action-handler";
 
 const WRAPPER_ID_ATTR = "data-uix-forge-button-id";
+const BUTTON_CLASS = "uix-forge-spark-button";
+const ICON_BUTTON_CLASS = "uix-forge-spark-icon-button";
+
+const BUTTON_CSS = `
+  ha-button.uix-forge-spark-button {
+    margin: var(--uix-button-margin, -6px);
+  }
+  ha-button.uix-forge-spark-icon-button {
+    display: inline-block;
+    outline: none;
+    --ha-button-height: var(--ha-icon-button-size, 48px);
+    position: relative;
+    isolation: isolate;
+    --wa-form-control-padding-inline: var(--ha-icon-button-padding-inline, var(--ha-space-2));
+    --wa-color-on-normal: currentColor;
+    --wa-color-fill-quiet: transparent;
+    --ha-button-label-overflow: visible;
+    margin: var(--uix-icon-button-margin, -6px);
+  }
+  ha-button.uix-forge-spark-icon-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+  }
+  ha-button.uix-forge-spark-icon-button::part(base) {
+    width: var(--wa-form-control-height);
+    aspect-ratio: 1;
+    outline-offset: -4px;
+  }
+  ha-button.uix-forge-spark-icon-button::part(label) {
+    display: flex;
+  }
+  @media (hover: hover) {
+    ha-button.uix-forge-spark-icon-button:hover:not([disabled])::after {
+      opacity: 0.1;
+    }
+  }
+`;
 
 const BUTTON_VARIANTS = ["brand", "neutral", "danger", "warning", "success"] as const;
 const BUTTON_APPEARANCES = ["accent", "filled", "plain"] as const;
@@ -17,6 +60,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private before: string = "";
   private entity: string = "";
   private icon: string = "";
+  private color: string = "";
   private label: string = "";
   private size: string = "";
   private variant: ButtonVariant | "" = "";
@@ -28,7 +72,6 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private doubleTapAction: Record<string, any> | null = null;
   private _cancel: (() => void)[] = [];
   private _wrapperElement: HTMLElement | null = null;
-  private _buttonElement: HTMLElement | null = null;
   private readonly _id: string;
 
   constructor(controller: any, config: Record<string, any>) {
@@ -47,10 +90,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     this.before = config.before || "";
     this.entity = config.entity || "";
     this.icon = config.icon || "";
+    this.color = config.color || "";
     this.label = config.label || "";
     this.size = config.size || "";
-    this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : "";
-    this.appearance = BUTTON_APPEARANCES.includes(config.appearance) ? config.appearance as ButtonAppearance : "";
+    this.variant = BUTTON_VARIANTS.includes(config.variant) ? config.variant as ButtonVariant : this.icon ? "neutral" : "";
+    this.appearance = BUTTON_APPEARANCES.includes(config.appearance) ? config.appearance as ButtonAppearance : this.icon ? "plain" : "";
     this.startIcon = config.start_icon || "";
     this.endIcon = config.end_icon || "";
     this.tapAction = config.tap_action || null;
@@ -83,7 +127,6 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       this._wrapperElement.remove();
       this._wrapperElement = null;
     }
-    this._buttonElement = null;
   }
 
   private async _attach() {
@@ -104,7 +147,6 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     if (this._wrapperElement && !existingWrapper) {
       this._wrapperElement.remove();
       this._wrapperElement = null;
-      this._buttonElement = null;
     }
 
     let wrapperEl = existingWrapper;
@@ -115,6 +157,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       wrapperEl.setAttribute(WRAPPER_ID_ATTR, this._id);
       wrapperEl.style.display = "contents";
       wrapperEl.style.pointerEvents = "auto";
+
+      // Inject icon-button styles into this wrapper so they are scoped to its lifetime
+      const styleEl = document.createElement("style");
+      styleEl.textContent = BUTTON_CSS;
+      wrapperEl.appendChild(styleEl);
 
       // Stop pointer events from bubbling to the parent card's action handler
       const stopProp = (ev: Event) => ev.stopPropagation();
@@ -151,7 +198,6 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
 
     this._updateElement(buttonEl);
     this._wrapperElement = wrapperEl;
-    this._buttonElement = buttonEl;
   }
 
   private _createButtonElement(): any {
@@ -163,6 +209,20 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private _updateElement(buttonEl: any) {
+    if (this.icon && !this.label) {
+      buttonEl.classList.remove(BUTTON_CLASS);
+      buttonEl.classList.add(ICON_BUTTON_CLASS);
+      if (this.color) {
+        buttonEl.style.color = this.color;
+      } else {
+        buttonEl.style.removeProperty("color");
+      }
+    } else {
+      buttonEl.classList.add(BUTTON_CLASS);
+      buttonEl.classList.remove(ICON_BUTTON_CLASS);
+      buttonEl.style.removeProperty("color");
+    }
+
     if (this.size) {
       buttonEl.setAttribute("size", this.size);
     } else {
