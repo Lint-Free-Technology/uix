@@ -14,7 +14,6 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   private showDelay: number = 150;
   private hideDelay: number = 150;
   private _targetElements: Promise<HTMLElement[] | void> | undefined;
-  private _cancel_tooltip: (() => void)[] = [];
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -62,8 +61,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   private cancelTooltip() {
-    this._cancel_tooltip.forEach((cancel) => cancel());
-    this._cancel_tooltip = [];
+    this._cancelPending();
     this._targetElements = undefined;
   }
 
@@ -116,7 +114,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   private async resolveTarget() {
-    this._targetElements = this.controller.target(this.for, this._cancel_tooltip);
+    this._targetElements = this.controller.target(this.for, this._cancel);
     return this._targetElements;
   }
 

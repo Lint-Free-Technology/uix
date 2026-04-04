@@ -13,7 +13,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   private overrideImage: string = "";
   private color: string = "";
   private stateColor: boolean | undefined = undefined;
-  private _cancel: (() => void)[] = [];
   private _badgeElement: HTMLElement | null = null;
   private readonly _id: string;
 
@@ -39,23 +38,18 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this._cancelPending();
-    this._attach();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   connectedCallback(): void {
-    this._cancelPending();
-    this._attach();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   disconnectedCallback(): void {
     this._cancelPending();
     this._remove();
-  }
-
-  private _cancelPending() {
-    this._cancel.forEach((c) => c());
-    this._cancel = [];
   }
 
   private _remove() {
@@ -65,7 +59,7 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     }
   }
 
-  private async _attach() {
+  private async _attach(generation: number) {
     const selector = this.after || this.before;
     if (!selector) return;
     if (!this.entity && !this.overrideIcon && !this.overrideImage) return;
@@ -73,6 +67,7 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     const elements = await this.controller.target(selector, this._cancel);
     const element = elements?.[0];
     if (!element) return;
+    if (generation !== this._callGeneration) return;
 
     const parent = element.parentElement || element.parentNode;
     if (!parent) return;

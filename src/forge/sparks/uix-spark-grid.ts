@@ -154,7 +154,6 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   private _elements: string[] = [];
 
   // ── Runtime state ──────────────────────────────────────────────────────────
-  private _cancel: (() => void)[] = [];
   private _targetElement: HTMLElement | null = null;
   /** Injected `<style>` element (only present when the style-element path is active). */
   private _styleElement: HTMLStyleElement | null = null;
@@ -194,15 +193,15 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this._cancelPending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply();
+    this._apply(gen);
   }
 
   connectedCallback(): void {
-    this._cancelPending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply();
+    this._apply(gen);
   }
 
   disconnectedCallback(): void {
@@ -211,11 +210,6 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────
-
-  private _cancelPending(): void {
-    this._cancel.forEach((c) => c());
-    this._cancel = [];
-  }
 
   /**
    * Remove all changes made by this spark.
@@ -258,12 +252,13 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
     return this._mediaQueries.length > 0 || this._elements.length > 0;
   }
 
-  private async _apply(): Promise<void> {
+  private async _apply(generation: number): Promise<void> {
     if (!this._hasGridConfig()) return;
 
     const elements = await this.controller.target(this._for, this._cancel);
     const element = elements?.[0];
     if (!element) return;
+    if (generation !== this._callGeneration) return;
 
     this._targetElement = element;
 
