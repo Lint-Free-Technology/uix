@@ -49,6 +49,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
   private _cancel: (() => void)[] = [];
   private _appliedChanges: AppliedElementChange[] = [];
   private _observer: MutationObserver | null = null;
+  private _applyGeneration = 0;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -70,13 +71,13 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
   updated(_changedProperties: PropertyValues): void {
     this._cancelPending();
     this._restore();
-    this._apply();
+    this._apply(++this._applyGeneration);
   }
 
   connectedCallback(): void {
     this._cancelPending();
     this._restore();
-    this._apply();
+    this._apply(++this._applyGeneration);
   }
 
   disconnectedCallback(): void {
@@ -126,7 +127,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
     this._undoAppliedChanges();
   }
 
-  private async _apply(): Promise<void> {
+  private async _apply(generation: number): Promise<void> {
     if (!this._query) {
       console.warn("UIX Forge: search spark: no 'query' configured, nothing to search.");
       return;
@@ -135,6 +136,12 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
     const containers = await this.controller.target(this._for, this._cancel);
     const container = containers?.[0] as Element | ShadowRoot | undefined;
     if (!container) return;
+
+    // Bail out if a newer _apply() call was issued while we were awaiting the target.
+    // Without this guard, multiple calls queued before any microtask runs (e.g. when
+    // several Lit properties change at once during an edit-mode toggle) would each
+    // call _search() in turn, causing prepend/append text to accumulate.
+    if (generation !== this._applyGeneration) return;
 
     this._search(container);
     this._startObserving(container);
