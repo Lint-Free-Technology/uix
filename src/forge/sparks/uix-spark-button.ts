@@ -5,50 +5,42 @@ import { actionHandlerBind } from "./action-handler";
 const WRAPPER_ID_ATTR = "data-uix-forge-button-id";
 const ICON_BUTTON_CLASS = "uix-icon-button";
 
-// Inject ha-icon-button styles scoped to the uix-icon-button class once.
-(() => {
-  const STYLE_ID = "uix-icon-button-styles";
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement("style");
-  style.id = STYLE_ID;
-  style.textContent = `
-    ha-button.uix-icon-button {
-      display: inline-block;
-      outline: none;
-      --ha-button-height: var(--ha-icon-button-size, 48px);
-      position: relative;
-      isolation: isolate;
-      --wa-form-control-padding-inline: var(--ha-icon-button-padding-inline, var(--ha-space-2));
-      --wa-color-on-normal: currentColor;
-      --wa-color-fill-quiet: transparent;
-      --ha-button-label-overflow: visible;
+const ICON_BUTTON_CSS = `
+  ha-button.uix-icon-button {
+    display: inline-block;
+    outline: none;
+    --ha-button-height: var(--ha-icon-button-size, 48px);
+    position: relative;
+    isolation: isolate;
+    --wa-form-control-padding-inline: var(--ha-icon-button-padding-inline, var(--ha-space-2));
+    --wa-color-on-normal: currentColor;
+    --wa-color-fill-quiet: transparent;
+    --ha-button-label-overflow: visible;
+  }
+  ha-button.uix-icon-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+  }
+  ha-button.uix-icon-button::part(base) {
+    width: var(--wa-form-control-height);
+    aspect-ratio: 1;
+    outline-offset: -4px;
+  }
+  ha-button.uix-icon-button::part(label) {
+    display: flex;
+  }
+  @media (hover: hover) {
+    ha-button.uix-icon-button:hover:not([disabled])::after {
+      opacity: 0.1;
     }
-    ha-button.uix-icon-button::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      border-radius: 50%;
-      background-color: currentColor;
-      opacity: 0;
-      pointer-events: none;
-    }
-    ha-button.uix-icon-button::part(base) {
-      width: var(--wa-form-control-height);
-      aspect-ratio: 1;
-      outline-offset: -4px;
-    }
-    ha-button.uix-icon-button::part(label) {
-      display: flex;
-    }
-    @media (hover: hover) {
-      ha-button.uix-icon-button:hover:not([disabled])::after {
-        opacity: 0.1;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-})();
+  }
+`;
 
 const BUTTON_VARIANTS = ["brand", "neutral", "danger", "warning", "success"] as const;
 const BUTTON_APPEARANCES = ["accent", "filled", "plain"] as const;
@@ -163,6 +155,11 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
       wrapperEl.setAttribute(WRAPPER_ID_ATTR, this._id);
       wrapperEl.style.display = "contents";
       wrapperEl.style.pointerEvents = "auto";
+
+      // Inject icon-button styles into this wrapper so they are scoped to its lifetime
+      const styleEl = document.createElement("style");
+      styleEl.textContent = ICON_BUTTON_CSS;
+      wrapperEl.appendChild(styleEl);
 
       // Stop pointer events from bubbling to the parent card's action handler
       const stopProp = (ev: Event) => ev.stopPropagation();
