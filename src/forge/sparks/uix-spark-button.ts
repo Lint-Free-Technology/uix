@@ -26,7 +26,6 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   private tapAction: Record<string, any> | null = null;
   private holdAction: Record<string, any> | null = null;
   private doubleTapAction: Record<string, any> | null = null;
-  private _cancel: (() => void)[] = [];
   private _wrapperElement: HTMLElement | null = null;
   private _buttonElement: HTMLElement | null = null;
   private readonly _id: string;
@@ -59,23 +58,18 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this._cancelPending();
-    this._attach();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   connectedCallback(): void {
-    this._cancelPending();
-    this._attach();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   disconnectedCallback(): void {
     this._cancelPending();
     this._remove();
-  }
-
-  private _cancelPending() {
-    this._cancel.forEach((c) => c());
-    this._cancel = [];
   }
 
   private _remove() {
@@ -86,13 +80,14 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     this._buttonElement = null;
   }
 
-  private async _attach() {
+  private async _attach(generation: number) {
     const selector = this.after || this.before;
     if (!selector) return;
 
     const elements = await this.controller.target(selector, this._cancel);
     const element = elements?.[0];
     if (!element) return;
+    if (generation !== this._callGeneration) return;
 
     const parent = element.parentElement || element.parentNode;
     if (!parent) return;

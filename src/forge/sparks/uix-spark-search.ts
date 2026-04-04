@@ -46,10 +46,8 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
   private _query: string = "";
   private _text: string = "";
   private _actions: SearchAction = {};
-  private _cancel: (() => void)[] = [];
   private _appliedChanges: AppliedElementChange[] = [];
   private _observer: MutationObserver | null = null;
-  private _applyGeneration = 0;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -69,25 +67,20 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this._cancelPending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply(++this._applyGeneration);
+    this._apply(gen);
   }
 
   connectedCallback(): void {
-    this._cancelPending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply(++this._applyGeneration);
+    this._apply(gen);
   }
 
   disconnectedCallback(): void {
     this._cancelPending();
     this._restore();
-  }
-
-  private _cancelPending(): void {
-    this._cancel.forEach((c) => c());
-    this._cancel = [];
   }
 
   /** Undo all DOM mutations made by this spark. */
@@ -141,7 +134,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
     // Without this guard, multiple calls queued before any microtask runs (e.g. when
     // several Lit properties change at once during an edit-mode toggle) would each
     // call _search() in turn, causing prepend/append text to accumulate.
-    if (generation !== this._applyGeneration) return;
+    if (generation !== this._callGeneration) return;
 
     this._search(container);
     this._startObserving(container);
