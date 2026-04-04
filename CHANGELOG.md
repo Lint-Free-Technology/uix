@@ -1,3 +1,13 @@
+## [6.1.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.6...v6.1.0-beta.7) (2026-04-04)
+
+### 🐞 Bug Fixes
+
+* **forge sparks:** centralize spark lifecycle guards - stops growing prepend/append in search spark ([#172](https://github.com/Lint-Free-Technology/uix/issues/172)) ([1fc2446](https://github.com/Lint-Free-Technology/uix/commit/1fc244692ac13bde38d3fbbe42a3f214676d7ee8))
+
+### ⚙️ Miscellaneous
+
+* **button-spark:** style matching Home Assistant icon button when using with icon only ([#170](https://github.com/Lint-Free-Technology/uix/issues/170)) ([ae5fdf0](https://github.com/Lint-Free-Technology/uix/commit/ae5fdf0e72770960d42397f9bb38ebadf2c3e2e1))
+
 ## [6.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.5...v6.1.0-beta.6) (2026-04-03)
 
 ### ⭐ New Features
