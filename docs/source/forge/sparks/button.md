@@ -57,12 +57,12 @@ element:
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | — | Entity ID passed to action handlers (e.g. `toggle`). Required for entity-based actions. |
 | `icon` | `string` | | — | MDI icon string (e.g. `mdi:lightbulb`) placed in the label slot of the button. Mutually exclusive with `label`. |
-| `color` | `string` | | — | Icon color when in icon-only mode (e.g. `red`, `var(--primary-color)`). Only applied when `icon` is set and `label` is not. |
+| `color` | `string` | | — | Icon color when in icon-only mode (e.g. `red`, `var(--primary-color)`). Only applied when `icon` is set. |
 | `label` | `string` | | `""` | Text label displayed inside the button. Mutually exclusive with `icon`. |
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
 | `end_icon` | `string` | | — | MDI icon string (e.g. `mdi:chevron-right`) displayed **after** the label. |
-| `variant` | `string` | | — | Button color variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used. |
-| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used. |
+| `variant` | `string` | | — | Button color variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used, except when `icon` is set in which case `neutral` is default. |
+| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used, except when `icon` is set in which case `plain` is default. |
 | `size` | `string` | | — | Button size which can be `small` or `medium`. |
 | `tap_action` | action | | — | Action to perform on tap. |
 | `hold_action` | action | | — | Action to perform on hold. |
@@ -73,6 +73,7 @@ element:
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
     - `icon` and `label` are mutually exclusive. When `icon` is set, `label` is ignored.
+    - Margin styling of `-6px` is applied which allows for button to align nicely in various places in Home Assistant. This margin can be control by the CSS variable `--uix-button-margin`.
     - When only `icon` is set (no `label`), the button automatically receives styling to match Home Assistant's icon button.
 
 ## Actions
