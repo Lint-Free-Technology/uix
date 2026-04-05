@@ -484,18 +484,18 @@ export class UixForge extends LitElement {
     if (this._mold.isCard()) {
       this.forgedElement = document.createElement("hui-card") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      (this.forgedElement as HuiCard).load();
       this.forgedElement.hass = this.hass;
       this.forgedElement.preview = this._mold.isPreview();
       this.forgedElement.layout = this.layout;
+      (this.forgedElement as HuiCard).load();
       return;
     }
     if (this._mold.isBadge()) {
       this.forgedElement = document.createElement("hui-badge") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      (this.forgedElement as HuiBadge).load();
       this.forgedElement.hass = this.hass;
       this.forgedElement.preview = this._mold.isPreview();
+      (this.forgedElement as HuiBadge).load();
       return;
     }
     if (this._mold.isRow()) {
