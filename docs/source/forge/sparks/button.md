@@ -190,7 +190,7 @@ element:
         columns: 12
         rows: 1
       sparks:
-        - type: tooltipa
+        - type: tooltip
           for: hui-tile-card $ ha-button
           content: Toggle Special Switch
         - type: button
