@@ -27,7 +27,7 @@ export class UixForgeSparkDomEvents extends UixForgeSparkBase {
         const eventData = forgeEvent?.data || {};
         if (!eventForgeId) return; // Ignore events without forge_id
         if ( (this.uixForgeMyId && eventForgeId != this.uixForgeMyId) && 
-          (this.uixForgeOthersIds && !this.uixForgeOthersIds.includes(eventForgeId))) {
+          (!this.uixForgeOthersIds || !this.uixForgeOthersIds.includes(eventForgeId))) {
           return;
         }
         this._eventData = this.controller.mergeDeep(this._eventData, { [eventForgeId]: eventData });
