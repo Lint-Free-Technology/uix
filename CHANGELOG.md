@@ -1,3 +1,10 @@
+## [6.1.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.8...v6.1.0-beta.9) (2026-04-05)
+
+### 🐞 Bug Fixes
+
+* **forge sparks:** Template updates not applying to sparks after first update ([1704219](https://github.com/Lint-Free-Technology/uix/commit/1704219cbbc5802d3f97c1702e1f0e657f1d42c0))
+* **forge:** Console errors when editing UIX Forge in UI editor ([afebb46](https://github.com/Lint-Free-Technology/uix/commit/afebb467a24290694ddeb1ae58c706becd80c9f7))
+
 ## [6.1.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.7...v6.1.0-beta.8) (2026-04-05)
 
 ### 🐞 Bug Fixes
