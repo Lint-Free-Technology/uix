@@ -1,3 +1,9 @@
+## [6.1.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.9...v6.1.0-beta.10) (2026-04-05)
+
+### ⚙️ Miscellaneous
+
+* **button-spark:** Adjust icon button height and alignment ([70a22b5](https://github.com/Lint-Free-Technology/uix/commit/70a22b539cebf8870fb6ecc57819ce2e82addcc1))
+
 ## [6.1.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.8...v6.1.0-beta.9) (2026-04-05)
 
 ### 🐞 Bug Fixes
