@@ -1,3 +1,9 @@
+## [6.1.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.10...v6.1.0-beta.11) (2026-04-05)
+
+### 🐞 Bug Fixes
+
+* **event-spark:** event spark events causing all forged elements with event spark to refresh even if forge_id does not match ([54a3202](https://github.com/Lint-Free-Technology/uix/commit/54a3202cb93113715871bc822abc6c58f94bdac5))
+
 ## [6.1.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.9...v6.1.0-beta.10) (2026-04-05)
 
 ### ⚙️ Miscellaneous
