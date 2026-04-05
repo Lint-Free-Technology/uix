@@ -14,13 +14,14 @@ const BUTTON_CSS = `
     display: inline-block;
     outline: none;
     --ha-button-height: var(--ha-icon-button-size, 48px);
+    height: var(--ha-button-height);
     position: relative;
     isolation: isolate;
     --wa-form-control-padding-inline: var(--ha-icon-button-padding-inline, var(--ha-space-2));
     --wa-color-on-normal: currentColor;
     --wa-color-fill-quiet: transparent;
     --ha-button-label-overflow: visible;
-    margin: var(--uix-icon-button-margin, -6px);
+    align-self: center;
   }
   ha-button.uix-forge-spark-icon-button::after {
     content: "";
