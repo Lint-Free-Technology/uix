@@ -400,6 +400,7 @@ export class UixForge extends LitElement {
       this._sparkController.setConfig(this.forgeConfig.sparks);
     } else {
       this._mold.refresh(path);
+      this._sparkController.setConfig(this.forgeConfig.sparks);
     }
     apply_uix(
       (this as any),
