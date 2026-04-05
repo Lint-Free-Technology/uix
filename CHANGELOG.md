@@ -1,3 +1,9 @@
+## [6.1.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.7...v6.1.0-beta.8) (2026-04-05)
+
+### 🐞 Bug Fixes
+
+* **tooltip-spark:** fix flickering of tooltip spark from constant recreation ([#174](https://github.com/Lint-Free-Technology/uix/issues/174)) ([f508bc7](https://github.com/Lint-Free-Technology/uix/commit/f508bc7e73a65ac9bdf2e138ba494cb0f34f20a8))
+
 ## [6.1.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.6...v6.1.0-beta.7) (2026-04-04)
 
 ### 🐞 Bug Fixes
