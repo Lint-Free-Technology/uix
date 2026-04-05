@@ -1,6 +1,5 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
-import { apply_uix } from "../../helpers/apply_uix";
 
 export class UixForgeSparkTooltip extends UixForgeSparkBase {
   type = "tooltip";
@@ -13,22 +12,19 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   private withoutArrow: boolean = false;
   private showDelay: number = 150;
   private hideDelay: number = 150;
-  private _targetElements: Promise<HTMLElement[] | void> | undefined;
+  private _tooltipElement: Element | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
-    this.for = config.for || "";
-    this.content = config.content || "";
-    this.placement = config.placement || "top";
-    this.skidding = config.skidding || 0;
-    this.distance = config.distance || 8;
-    this.showDelay = config.show_delay || 150;
-    this.hideDelay = config.hide_delay || 150;
-    this.withoutArrow = config.without_arrow || false;
+    this._applyConfig(config);
   }
 
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
+    this._applyConfig(config);
+  }
+
+  private _applyConfig(config: Record<string, any>) {
     this.for = config.for || "";
     this.content = config.content || "";
     this.placement = config.placement || "top";
@@ -40,44 +36,49 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this.cancelTooltip();
-    this.attachTooltip();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   connectedCallback(): void {
-    this.cancelTooltip();
-    this.attachTooltip();
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   disconnectedCallback(): void {
-    this.cancelTooltip();
-    if (this._targetElements) {
-      this._targetElements.then((elements) => {
-        if (elements?.[0]) {
-          elements[0].remove();
-        }
-      });
+    this._cancelPending();
+    this._remove();
+  }
+
+  private _remove() {
+    if (this._tooltipElement) {
+      this._tooltipElement.remove();
+      this._tooltipElement = null;
     }
   }
 
-  private cancelTooltip() {
-    this._cancelPending();
-    this._targetElements = undefined;
-  }
-
-  private async attachTooltip() {
-    const elements = this._targetElements
-      ? await this._targetElements
-      : await this.resolveTarget();
+  private async _attach(generation: number) {
+    const elements = await this.controller.target(this.for, this._cancel);
     const element = elements?.[0];
     if (!element) return;
+    if (generation !== this._callGeneration) return;
+
     const parent = element.parentElement || element.parentNode;
     if (!parent) return;
     if (!element.id) {
-      element.id = `for-uix-forge-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+      element.id = `for-uix-forge-tooltip-${Math.random().toString(36).substring(2, 11)}`;
     }
-    let tooltip = parent.querySelector(`wa-tooltip`);
-    if (!tooltip || tooltip.for !== element.id) {
+
+    // If our tracked tooltip is no longer in this parent, remove it and start fresh
+    const existingInParent = ((parent as Element).querySelector?.("wa-tooltip") as any)?.for == element.id;
+    if (this._tooltipElement && !existingInParent) {
+      this._tooltipElement.remove();
+      this._tooltipElement = null;
+    }
+
+    const isNew = !this._tooltipElement;
+    let tooltip = this._tooltipElement as any;
+    if (!tooltip) {
       tooltip = document.createElement("wa-tooltip");
       tooltip.for = element.id;
       tooltip.style.setProperty("display", "contents");
@@ -86,21 +87,24 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
       }
       element.style.setProperty("pointer-events", "auto");
     }
+
+    // Update content in-place
     let content = tooltip.querySelector("div");
-    if (content) {
-      content.innerHTML = this.content;
-    } else {
+    if (!content) {
       content = document.createElement("div");
       tooltip.appendChild(content);
     }
+    content.innerHTML = this.content;
+
+    // Update styles in-place
     let style = tooltip.querySelector("style");
-    if (style) {
-      style.textContent = this.styles();
-    } else {
+    if (!style) {
       style = document.createElement("style");
-      style.textContent = this.styles();
       tooltip.appendChild(style);
     }
+    style.textContent = this.styles();
+
+    // Update properties in-place
     tooltip.placement = this.placement;
     tooltip.skidding = this.skidding;
     tooltip.distance = this.distance;
@@ -108,14 +112,16 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     tooltip.hideDelay = this.hideDelay;
     if (this.withoutArrow) {
       tooltip.setAttribute("without-arrow", "");
+    } else {
+      tooltip.removeAttribute("without-arrow");
     }
-    content.innerHTML = this.content;
-    parent.appendChild(tooltip);
-  }
 
-  private async resolveTarget() {
-    this._targetElements = this.controller.target(this.for, this._cancel);
-    return this._targetElements;
+    // Only insert into the DOM when newly created
+    if (isNew) {
+      parent.appendChild(tooltip);
+    }
+
+    this._tooltipElement = tooltip;
   }
 
   private styles() {
