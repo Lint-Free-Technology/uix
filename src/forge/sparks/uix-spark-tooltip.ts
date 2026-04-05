@@ -70,7 +70,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     }
 
     // If our tracked tooltip is no longer in this parent, remove it and start fresh
-    const existingInParent = (parent as Element).querySelector?.(`wa-tooltip[for="${element.id}"]`) as Element | null;
+    const existingInParent = ((parent as Element).querySelector?.("wa-tooltip") as any)?.for == element.id;
     if (this._tooltipElement && !existingInParent) {
       this._tooltipElement.remove();
       this._tooltipElement = null;
