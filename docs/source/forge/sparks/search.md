@@ -118,7 +118,7 @@ element:
 
 ### Rewrite text inside matched elements
 
-Replace a static unit label in every sensor row:
+Replace a static unit label in 2nd sensor row:
 
 ```yaml
 type: custom:uix-forge
@@ -129,21 +129,29 @@ forge:
       for: >-
         hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $ hui-generic-entity-row $
       query: .info
-      text: mbar
+      text: Max 0
       actions:
         replace_text:
-          find: mbar
-          replace: hPa
+          find: Max 0
+          replace: Max
+    - type: search
+      for: hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $
+      query: hui-generic-entity-row
+      text: °C
+      actions:
+        replace_text:
+          find: °C
+          replace: C
 element:
   type: entities
   entities:
-    - sensor.station_temperature
-    - sensor.station_pressure
+    - sun.sun
+    - sensor.place_temp_max_0
 ```
 
 ### Prepend and append text
 
-Add a prefix and suffix to every matched badge label:
+Add a prefix and suffix to first entities row info:
 
 ```yaml
 type: custom:uix-forge
