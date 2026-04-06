@@ -1,3 +1,9 @@
+## [6.1.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.12...v6.1.0-beta.13) (2026-04-06)
+
+### ⭐ New Features
+
+* **forge:** map spark with memory mode ([#177](https://github.com/Lint-Free-Technology/uix/issues/177)) ([9b60a99](https://github.com/Lint-Free-Technology/uix/commit/9b60a997b98380d11a268482d8bc6722b3cdeb7c)), closes [#176](https://github.com/Lint-Free-Technology/uix/issues/176)
+
 ## [6.1.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.11...v6.1.0-beta.12) (2026-04-06)
 
 ### ⭐ New Features
