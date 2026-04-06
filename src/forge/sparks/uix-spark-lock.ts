@@ -147,7 +147,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("display", "flex");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
-      overlay.style.setProperty("border-radius", "inherit");
+      overlay.style.setProperty("border-radius", "var(--uix-lock-border-radius, inherit)");
       overlay.style.setProperty("cursor", "pointer");
       overlay.style.setProperty("background", "var(--uix-lock-background, transparent)");
 
@@ -163,13 +163,21 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
         }
       });
 
-      // While locked, block all pointer interactions from reaching the underlying element
+      // While locked, block all pointer interactions from reaching the underlying element.
+      // stopPropagation prevents HA action handlers; preventDefault stops native defaults
+      // (e.g. touch scroll, context-menu) — touchstart uses passive:true so no preventDefault there.
       const stopIfLocked = (ev: Event) => {
+        if (!this._isUnlocked) {
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      };
+      const stopIfLockedPassive = (ev: Event) => {
         if (!this._isUnlocked) ev.stopPropagation();
       };
       overlay.addEventListener("click", stopIfLocked);
       overlay.addEventListener("mousedown", stopIfLocked);
-      overlay.addEventListener("touchstart", stopIfLocked, { passive: true });
+      overlay.addEventListener("touchstart", stopIfLockedPassive, { passive: true });
       overlay.addEventListener("pointerdown", stopIfLocked);
 
       element.appendChild(overlay);
@@ -195,6 +203,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     const icon = this._isUnlocked ? this._iconUnlocked : this._iconLocked;
     const customColor = this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor;
     const defaultColor = this._isUnlocked
+      // Material Design green/red used as fallbacks when HA theme variables are unavailable
       ? "var(--success-color, #43a047)"
       : "var(--error-color, #db4437)";
 
