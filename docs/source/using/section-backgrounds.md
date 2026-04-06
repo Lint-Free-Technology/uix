@@ -41,11 +41,11 @@ For background and opacity you are best to set `--ha-section-background-color` a
     type: grid
     cards: []
     background:
-    uix:
+      uix:
       style: |
-        :host {
+          :host {
           --ha-section-background-color: yellow;
           border: 2px solid red;
           box-shadow: 10px 5px 5px red;
-        }
+          }
     ```
