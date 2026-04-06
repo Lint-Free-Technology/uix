@@ -5,7 +5,7 @@ icon: material/map
 
 # :material-map: Map spark
 
-The `map` spark adds **memory mode** to a map card used inside a [UIX Forge](../index.md) forged element. Without it, every Home Assistant state update causes the map to reset to its default zoom level and centre position. With `memory: true`, the spark captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved.
+The `map` spark adds **memory mode** to a map card used inside a [UIX Forge](../index.md) forged element. Without it, every forge template update causes the map to reset to its default zoom level and centre position. With `memory: true`, the spark captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved.
 
 ## Basic usage
 
@@ -31,7 +31,7 @@ element:
 
 ## How it works
 
-Each time the forged element is about to refresh (for example when `hass` data changes), the spark:
+Each time the forged element is about to refresh due to a forge template update, the spark:
 
 1. Reads the current `zoom` and `center` from the Leaflet map instance inside `ha-map`.
 2. Waits for the forged element and then `ha-map` to finish their own update cycle.
