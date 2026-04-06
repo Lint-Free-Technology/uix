@@ -42,10 +42,10 @@ For background and opacity you are best to set `--ha-section-background-color` a
     cards: []
     background:
       uix:
-      style: |
+        style: |
           :host {
-          --ha-section-background-color: yellow;
-          border: 2px solid red;
-          box-shadow: 10px 5px 5px red;
+            --ha-section-background-color: yellow;
+            border: 2px solid red;
+            box-shadow: 10px 5px 5px red;
           }
     ```
