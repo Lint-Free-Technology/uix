@@ -118,7 +118,7 @@ This generates the following Jinja2 block that is prepended to every template:
 
 ### Composing macros
 
-Macros can call other macros defined in the same card. UIX automatically detects these dependencies and includes all required macros in the output, even if only the outermost macro is referenced in the style template.
+Macros can call other macros defined in the same card. UIX automatically detects these dependencies and includes all required macros in the output, even if only the outermost macro is referenced in the main template.
 
 ```yaml
 type: tile
