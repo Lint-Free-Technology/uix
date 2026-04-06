@@ -1,3 +1,9 @@
+## [6.1.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.11...v6.1.0-beta.12) (2026-04-06)
+
+### ⭐ New Features
+
+* **macros:** transitively resolve macro dependencies in buildMacros ([#175](https://github.com/Lint-Free-Technology/uix/issues/175)) ([82c55f8](https://github.com/Lint-Free-Technology/uix/commit/82c55f888d5dba71f02e67d70923dd291cece40e))
+
 ## [6.1.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.10...v6.1.0-beta.11) (2026-04-05)
 
 ### 🐞 Bug Fixes
