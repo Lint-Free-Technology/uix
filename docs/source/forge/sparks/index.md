@@ -16,3 +16,4 @@ Available sparks:
 - :shield: [State Badge](state-badge.md) — insert a `state-badge` element as a sibling before or after any element within the forged element.
 - :material-grid: [Grid](grid.md) — apply CSS Grid layout to any container element within the forged element.
 - :mag: [Search](search.md) — find elements within a container by CSS selector and optional text filter, then apply class, attribute, or text mutations to all matches.
+- :material-map: [Map](map.md) — preserve the zoom level and centre of a map card across Home Assistant state updates.

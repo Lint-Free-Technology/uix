@@ -26,6 +26,8 @@ export abstract class UixForgeSparkBase {
     return {};
   }
 
+  beforeForgedElementRefresh() {}
+
   connectedCallback() {}
 
   disconnectedCallback() {}

@@ -420,6 +420,7 @@ export class UixForge extends LitElement {
   refreshForgedElement(path?: UixForgeConfigPath) {
     if (!this.forgedElement) return;
     if (!this.templatesReady) return;
+    this._sparkController.beforeForgedElementRefresh();
     if (this._mold.isCard()) {
       this.forgedElement.config = this.forgedElementConfig;
       (this.forgedElement as HuiCard).load();
