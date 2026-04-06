@@ -58,17 +58,19 @@ export function buildMacros(macros: Record<string, MacroConfig | string>, usedIn
     // templates, until no new dependencies are found.
     const usedNames = new Set<string>();
     const queue: string[] = [];
-    for (const name of Object.keys(macros)) {
+    const macroNames = Object.keys(macros);
+    for (const name of macroNames) {
       if (new RegExp(`\\b${name}\\b`).test(usedIn)) {
         usedNames.add(name);
         queue.push(name);
       }
     }
-    while (queue.length > 0) {
-      const current = queue.shift()!;
+    let queueIndex = 0;
+    while (queueIndex < queue.length) {
+      const current = queue[queueIndex++];
       const config = macros[current];
       if (typeof config !== "string") {
-        for (const name of Object.keys(macros)) {
+        for (const name of macroNames) {
           if (!usedNames.has(name) && new RegExp(`\\b${name}\\b`).test(config.template)) {
             usedNames.add(name);
             queue.push(name);
