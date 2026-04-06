@@ -30,6 +30,8 @@ export abstract class UixForgeSparkBase {
 
   disconnectedCallback() {}
 
+  willUpdate(_changedProperties: PropertyValues) {}
+
   updated(_changedProperties: PropertyValues) {}
 
   configUpdated(config: Record<string, any>) {

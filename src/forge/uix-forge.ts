@@ -562,6 +562,7 @@ export class UixForge extends LitElement {
   }
 
   protected willUpdate(_changedProperties: PropertyValues): void {
+    this._sparkController.willUpdate(_changedProperties);
     if (!this.forgedElement && this.templatesReady) {
       this.forgeElement();
     }
