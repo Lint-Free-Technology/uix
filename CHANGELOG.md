@@ -1,3 +1,9 @@
+## [6.1.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.13...v6.1.0-beta.14) (2026-04-06)
+
+### 🐞 Bug Fixes
+
+* **forge:** Add `delayed_hass` forge config option to suppress console errors on load for some custom cards. e.g. apexcharts_card ([8592c12](https://github.com/Lint-Free-Technology/uix/commit/8592c126d517f6db11426547bf9521d0bab5534d))
+
 ## [6.1.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.12...v6.1.0-beta.13) (2026-04-06)
 
 ### ⭐ New Features
