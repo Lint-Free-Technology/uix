@@ -223,17 +223,30 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   /**
    * Whether the lock overlay should currently be shown (and blocking) for the
    * logged-in user.  Returns `true` when a matching, active lock is found.
-   * Falls back to `!permissive` when no lock entry matches.
+   *
+   * When no entry matches:
+   *   - `permissive: true`  → no overlay (element is accessible for everyone).
+   *   - `permissive: false` → admins auto-bypass (no overlay); non-admins are
+   *                           permanently blocked (overlay shown, no unlock path).
    */
   private _shouldShowLock(): boolean {
     const lock = this._findMatchingLock();
-    if (lock === null) return !this._permissive;
-    return lock.active !== false;
+    if (lock !== null) return lock.active !== false;
+    // No matching entry
+    if (this._permissive) return false;
+    // permissive:false — admins always bypass when no entry explicitly covers them
+    const user = this.controller.forge.hass?.user;
+    return user?.is_admin !== true;
   }
 
   /**
    * Returns the first LockEntry that applies to the current user, or `null` if
    * none matches.
+   *
+   * `admins` is an *additive* flag — it extends the scope of an entry to also
+   * cover admin users.  By default (admins unset / false) admin users are
+   * excluded from every entry and always bypass the lock (unless matched
+   * explicitly via a `users` list).
    *
    * Matching rules:
    *
@@ -241,11 +254,10 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
    *   • Matches if the current user's name is in the list.
    *   • Also matches if `admins === true` and the current user is an admin.
    *
-   * Case B — no `users` list and `admins === true`:
-   *   • Matches admins only (admin-targeted entry).
-   *
-   * Case C — no `users` list and `admins !== true` (default):
-   *   • Matches all non-admin users whose name is not in the `except` list.
+   * Case B — no `users` list:
+   *   • By default admins are excluded; they skip to the next entry.
+   *   • If `admins === true` the entry applies to EVERYONE (admin + non-admin).
+   *   • Non-admins whose name appears in `except` are also skipped.
    */
   private _findMatchingLock(): LockEntry | null {
     const user = this.controller.forge.hass?.user;
@@ -256,15 +268,14 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       const hasUsersList = Array.isArray(lock.users) && lock.users.length > 0;
 
       if (hasUsersList) {
-        // Case A: user-list-specific entry
+        // Case A: explicit user list
         if (lock.users!.includes(userName)) return lock;
+        // admins: true additionally covers admin users for this entry
         if (isAdmin && lock.admins === true) return lock;
-      } else if (lock.admins === true) {
-        // Case B: admin-only entry
-        if (isAdmin) return lock;
       } else {
-        // Case C: applies to all non-admin users not in the except list
-        if (isAdmin) continue;
+        // Case B: no users list — applies to everyone by default, but admins are
+        // excluded unless admins: true (which makes the entry apply to all users)
+        if (isAdmin && lock.admins !== true) continue;
         const hasExcept = Array.isArray(lock.except) && lock.except.length > 0;
         if (hasExcept && lock.except!.includes(userName)) continue;
         return lock;

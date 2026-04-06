@@ -53,14 +53,16 @@ Like other sparks, `for` accepts the same [DOM navigation syntax](../../concepts
 | Configuration | Who it matches |
 |---|---|
 | `users` list present | Users whose name is in the list. If `admins: true`, also admins. |
-| No `users` list + `admins: true` | Admins only. |
-| No `users` list + `admins` unset/false | All non-admin users not in the `except` list. |
+| No `users` list | All non-admin users not in the `except` list. |
+| No `users` list + `admins: true` | **All users** (admin and non-admin) not in the `except` list. |
+
+`admins` is an **additive** flag. On a no-`users`-list entry it *extends* the default scope (all non-admins) to also include admins, making the entry match everyone. Admins are **excluded by default** from every entry that does not explicitly set `admins: true` or list them in `users`.
 
 When an entry has `active: false`, matched users are **not locked** (the overlay is hidden for them).  
 When no entry matches:
 
-- `permissive: true` → element is accessible (no overlay shown).
-- `permissive: false` (default) → element is permanently blocked with no unlock path.
+- `permissive: true` → element is accessible for everyone (no overlay shown).
+- `permissive: false` (default) → **admins auto-bypass** (no overlay); non-admins are permanently blocked with no unlock path.
 
 ---
 
@@ -101,7 +103,7 @@ When no entry matches:
 | `pin` | string or number | — | Alias for `code`. |
 | `confirmation` | string or boolean | — | Confirmation prompt. Pass `true` for HA's default localised text, or a custom string. |
 | `users` | list of strings | — | Usernames this entry applies to. |
-| `admins` | boolean | `false` | When `true` with no `users` list: admin-only entry. When `true` with a `users` list: entry also applies to admins. |
+| `admins` | boolean | `false` | **Additive flag.** On a no-`users`-list entry, setting `admins: true` extends the entry to cover **all users** (admin and non-admin). On a `users`-list entry, it additionally covers admins. Admins are excluded from every entry where this is `false` or unset. |
 | `except` | list of strings | — | Users exempt from this entry (only used when no `users` list). |
 | `retry_delay` | number | — | Milliseconds to wait between code attempts after a wrong entry. |
 | `max_retries` | number | — | Maximum consecutive wrong attempts before the extended delay kicks in. |
@@ -113,41 +115,58 @@ When no entry matches:
 
 ### Same PIN for everyone (including admins)
 
-Use two entries — one admin-targeted (`admins: true`, no `users` list) and one that covers all non-admin users — with the same code:
+`admins: true` extends the entry to cover everyone — a single entry is sufficient:
 
 ```yaml
 locks:
   - code: 1234
-    admins: true   # matches admins only (no users list + admins: true)
-  - code: 1234     # matches all non-admin users
+    admins: true   # applies to all users (non-admins by default + admins because admins: true)
 ```
 
 ### No lock for admins (default) and a specific user
+
+Admins bypass any entry that does not have `admins: true` or list them in `users`. Here
+user1 is explicitly unlocked, and all other non-admin users must enter a PIN:
 
 ```yaml
 locks:
   - active: false
     users:
       - user1
-  - code: 1234
+  - code: 1234      # non-admins only (admins are excluded by default)
 ```
 
-### Confirmation only for admins, PIN + confirmation for other users
+### Confirmation for everyone including admins
 
 ```yaml
 locks:
   - admins: true
     confirmation: true
-  - code: 1234
-    confirmation: true
 ```
 
-### Different PINs per user group
+### PIN for everyone, no lock for named users
+
+```yaml
+permissive: false
+locks:
+  - active: false
+    users:
+      - trusted_user
+  - code: 1234
+    admins: true   # apply to everyone (including admins)
+```
+
+### Different PINs per user group, admins bypass
+
+Because `admins: true` on a no-`users`-list entry matches *everyone*, you cannot create an
+admin-specific entry using that approach alone. To give admins their own PIN, list them
+explicitly in the `users` key:
 
 ```yaml
 locks:
-  - admins: true
-    pin: 9876
+  - users:
+      - admin_user
+    code: 9876     # admin user gets this PIN
   - users:
       - jim
       - alison
