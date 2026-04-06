@@ -73,16 +73,16 @@ export class UixForgeSparkController {
     }, {} as Record<string, any>);
   }
 
+  beforeForgedElementRefresh() {
+    this.sparks.forEach(spark => spark.beforeForgedElementRefresh());
+  }
+
   connectedCallback() {
     this.sparks.forEach(spark => spark.connectedCallback());
   }
 
   disconnectedCallback() {
     this.sparks.forEach(spark => spark.disconnectedCallback());
-  }
-
-  willUpdate(_changedProperties: PropertyValues) {
-    this.sparks.forEach(spark => spark.willUpdate(_changedProperties));
   }
 
   updated(_changedProperties: PropertyValues) {

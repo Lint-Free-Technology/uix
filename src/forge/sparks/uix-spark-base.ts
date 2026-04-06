@@ -26,11 +26,11 @@ export abstract class UixForgeSparkBase {
     return {};
   }
 
+  beforeForgedElementRefresh() {}
+
   connectedCallback() {}
 
   disconnectedCallback() {}
-
-  willUpdate(_changedProperties: PropertyValues) {}
 
   updated(_changedProperties: PropertyValues) {}
 

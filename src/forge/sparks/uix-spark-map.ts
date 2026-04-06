@@ -35,17 +35,23 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._applyConfig(config);
   }
 
+  beforeForgedElementRefresh(): void {
+    this._saveMapState();
+  }
+
   private _applyConfig(config: Record<string, any>): void {
     this._memory = config.memory === true;
+    this._saveMapState();
   }
 
   /** Returns the `ha-map` element inside the forged element's shadow root, or null. */
   private _getHaMap(): any {
     const forgedElement = this.controller.forgedElement();
-    return forgedElement?.shadowRoot?.querySelector("ha-map") ?? null;
+    const huiMap = forgedElement?.querySelector("hui-map-card");
+    return huiMap?.shadowRoot?.querySelector("ha-map") ?? null;
   }
 
-  willUpdate(_changedProperties: PropertyValues): void {
+  private _saveMapState(): void {
     if (!this._memory) return;
     const haMap = this._getHaMap();
     const leafletMap = haMap?.leafletMap;
