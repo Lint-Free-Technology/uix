@@ -83,7 +83,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       const haMap = this._getHaMap();
       const leafletMap = haMap?.leafletMap;
       if (leafletMap && savedCenter) {
-        leafletMap.setView(savedCenter, savedZoom);
+        leafletMap.setView(savedCenter, savedZoom, { reset: true });
       }
     };
 
