@@ -61,15 +61,15 @@ nav:
           - using/templates.md
           - using/themes.md
           - using/other.md
+      - Concepts:
+          - concepts/index.md
+          - concepts/dom.md
+          - concepts/application.md
       - Debugging:
           - debugging/index.md
           - debugging/cards.md
           - debugging/templates.md
           - debugging/cache.md
-      - Concepts:
-          - concepts/index.md
-          - concepts/dom.md
-          - concepts/application.md
       - Developers:
           - developers/index.md
           - developers/cards.md
