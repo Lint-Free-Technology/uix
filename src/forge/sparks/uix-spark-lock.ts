@@ -248,7 +248,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
    *   • Matches all non-admin users whose name is not in the `except` list.
    */
   private _findMatchingLock(): LockEntry | null {
-    const user = (this.controller.forge as any).hass?.user;
+    const user = this.controller.forge.hass?.user;
     const userName: string = user?.name ?? "";
     const isAdmin: boolean = user?.is_admin === true;
 
@@ -403,7 +403,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
    * by dispatching a `hass-action` event with the forged element's config.
    */
   private _triggerElementAction(actionType: string, source: HTMLElement) {
-    const forgedElementConfig = (this.controller.forge as any).forgedElementConfig;
+    const forgedElementConfig = this.controller.forge.forgedElementConfig;
     source.dispatchEvent(
       new CustomEvent("hass-action", {
         bubbles: true,

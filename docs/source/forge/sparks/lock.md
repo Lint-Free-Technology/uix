@@ -113,11 +113,13 @@ When no entry matches:
 
 ### Same PIN for everyone (including admins)
 
+Use two entries — one admin-targeted (`admins: true`, no `users` list) and one that covers all non-admin users — with the same code:
+
 ```yaml
 locks:
   - code: 1234
-    admins: true   # admin-targeted entry; use a separate entry for non-admins
-  - code: 1234
+    admins: true   # matches admins only (no users list + admins: true)
+  - code: 1234     # matches all non-admin users
 ```
 
 ### No lock for admins (default) and a specific user
