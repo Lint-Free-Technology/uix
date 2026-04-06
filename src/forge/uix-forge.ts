@@ -423,13 +423,17 @@ export class UixForge extends LitElement {
     this._sparkController.beforeForgedElementRefresh();
     if (this._mold.isCard()) {
       this.forgedElement.config = this.forgedElementConfig;
+      this.forgeConfig.delayed_hass && (this.forgedElement.hass = undefined);
       (this.forgedElement as HuiCard).load();
+      this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       this.refreshForge(["hidden"]);
       this.refreshForge(["grid_options"]);
     }
     if (this._mold.isBadge()) {
       this.forgedElement.config = this.forgedElementConfig;
+      !this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       (this.forgedElement as HuiBadge).load();
+      this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isRow()) {
@@ -486,18 +490,20 @@ export class UixForge extends LitElement {
     if (this._mold.isCard()) {
       this.forgedElement = document.createElement("hui-card") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      this.forgedElement.hass = this.hass;
+      !this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       this.forgedElement.layout = this.layout;
       (this.forgedElement as HuiCard).load();
+      this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       return;
     }
     if (this._mold.isBadge()) {
       this.forgedElement = document.createElement("hui-badge") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      this.forgedElement.hass = this.hass;
+      !this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
+      this.forgeConfig.delayed_hass && (this.forgedElement.hass = this.hass); 
       return;
     }
     if (this._mold.isRow()) {

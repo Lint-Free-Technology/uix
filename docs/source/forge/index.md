@@ -36,6 +36,7 @@ element:
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape `{{ }}` in templates. Use when the element config itself contains Jinja2-like syntax. |
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
+| `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
 !!! info "Template nesting"
     When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{{{#uix#}{% endraw %}` and `>>` is replaced with `{% raw %}{#uix#}}}{% endraw %}`.
