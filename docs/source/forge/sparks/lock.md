@@ -113,12 +113,12 @@ When no entry matches:
 
 ### `code_dialog`
 
-Controls the appearance of the PIN / passphrase entry dialog shown when a lock entry requires a code.
+Controls the appearance of the PIN / passphrase entry dialog shown when a lock entry requires a code. For the number dialog, title will be prominent, and submit text will show as a tooltip when the tick is hovered over. For the passphrase dialog all options will show prominently.
 
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `title` | string | HA default | Dialog title. When omitted Home Assistant's built-in default title is used. |
-| `confirm_text` | string | HA default | Label for the confirm/submit button. When omitted Home Assistant's built-in default label is used. |
+| `submit_text` | string | HA default | Label for the confirm/submit button. When omitted Home Assistant's built-in default label is used. |
 | `cancel_text` | string | HA default | Label for the cancel button. When omitted Home Assistant's built-in default label is used. |
 
 ### `unlocked_action`
@@ -277,7 +277,7 @@ forge:
     - type: lock
       code_dialog:
         title: 'Enter Pin:'
-        confirm_text: 'Unlock'
+        submit_text: 'Unlock'
         cancel_text: 'Cancel'
       locks:
         - code: 1234

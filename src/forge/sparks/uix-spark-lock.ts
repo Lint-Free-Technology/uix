@@ -39,8 +39,8 @@ interface IconPosition {
 interface CodeDialogConfig {
   /** Override the dialog title. When omitted the HA default is used. */
   title?: string;
-  /** Override the confirm button label. When omitted the HA default is used. */
-  confirm_text?: string;
+  /** Override the submit button label. When omitted the HA default is used. */
+  submit_text?: string;
   /** Override the cancel button label. When omitted the HA default is used. */
   cancel_text?: string;
 }
@@ -503,7 +503,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       const entered = await helpers.showEnterCodeDialog(overlay, {
         codeFormat: isNumeric ? "number" : "text",
         ...(this._codeDialog.title !== undefined && { title: this._codeDialog.title }),
-        ...(this._codeDialog.confirm_text !== undefined && { confirmText: this._codeDialog.confirm_text }),
+        ...(this._codeDialog.submit_text !== undefined && { submitText: this._codeDialog.submit_text }),
         ...(this._codeDialog.cancel_text !== undefined && { cancelText: this._codeDialog.cancel_text }),
       }) as string | null;
 
