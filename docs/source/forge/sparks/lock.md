@@ -109,6 +109,17 @@ When no entry matches:
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
 | `unlocked_action` | object | — | Action to execute immediately after a successful unlock. |
 | `locks` | list | `[]` | Ordered list of lock entries (see below). |
+| `code_dialog` | object | — | Options forwarded to the code/passphrase dialog (see below). |
+
+### `code_dialog`
+
+Controls the appearance of the PIN / passphrase entry dialog shown when a lock entry requires a code.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `title` | string | HA default | Dialog title. When omitted Home Assistant's built-in default title is used. |
+| `confirm_text` | string | HA default | Label for the confirm/submit button. When omitted Home Assistant's built-in default label is used. |
+| `cancel_text` | string | HA default | Label for the cancel button. When omitted Home Assistant's built-in default label is used. |
 
 ### `unlocked_action`
 
@@ -244,6 +255,30 @@ forge:
       entity: light.bed_light
       unlocked_action:
         action: toggle
+      locks:
+        - code: 1234
+          admins: true
+element:
+  type: tile
+  entity: light.bed_light
+```
+
+---
+
+### Custom code dialog labels
+
+Use `code_dialog` to override the title and button labels shown in the PIN / passphrase entry dialog:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: lock
+      code_dialog:
+        title: 'Enter Pin:'
+        confirm_text: 'Unlock'
+        cancel_text: 'Cancel'
       locks:
         - code: 1234
           admins: true

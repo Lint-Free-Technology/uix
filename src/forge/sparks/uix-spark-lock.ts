@@ -35,6 +35,16 @@ interface IconPosition {
   right?: string;
 }
 
+/** Options forwarded to the HA `showEnterCodeDialog` helper. */
+interface CodeDialogConfig {
+  /** Override the dialog title. When omitted the HA default is used. */
+  title?: string;
+  /** Override the confirm button label. When omitted the HA default is used. */
+  confirm_text?: string;
+  /** Override the cancel button label. When omitted the HA default is used. */
+  cancel_text?: string;
+}
+
 export class UixForgeSparkLock extends UixForgeSparkBase {
   type = "lock";
 
@@ -51,6 +61,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _entity: string = "";
   private _unlockAction: Record<string, any> | null = null;
   private _locks: LockEntry[] = [];
+  private _codeDialog: CodeDialogConfig = {};
 
   private _overlayElement: HTMLElement | null = null;
   private _iconElement: (HTMLElement & { icon?: string }) | null = null;
@@ -94,6 +105,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._entity = config.entity || "";
     this._unlockAction = config.unlocked_action || null;
     this._locks = Array.isArray(config.locks) ? config.locks : [];
+    this._codeDialog = (config.code_dialog && typeof config.code_dialog === "object") ? config.code_dialog : {};
     // Mark visuals as needing refresh so the next _attach call applies the new config.
     this._visualNeedsUpdate = true;
   }
@@ -490,6 +502,9 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       const isNumeric = /^\d+$/.test(String(codeValue));
       const entered = await helpers.showEnterCodeDialog(overlay, {
         codeFormat: isNumeric ? "number" : "text",
+        ...(this._codeDialog.title !== undefined && { title: this._codeDialog.title }),
+        ...(this._codeDialog.confirm_text !== undefined && { confirmText: this._codeDialog.confirm_text }),
+        ...(this._codeDialog.cancel_text !== undefined && { cancelText: this._codeDialog.cancel_text }),
       }) as string | null;
 
       if (entered === null) return; // User cancelled
