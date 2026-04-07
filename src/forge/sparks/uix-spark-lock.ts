@@ -11,8 +11,8 @@ interface LockEntry {
   pin?: string | number;
   /** Text or numeric code – numeric codes use the numpad dialog, text codes use a password-field dialog. */
   code?: string | number;
-  /** Confirmation text or `true` for default HA text. */
-  confirmation?: string | boolean;
+  /** Confirmation: `true` for default HA text, a plain string for custom text, or an object with optional `title` and `text`. */
+  confirmation?: string | boolean | { title?: string; text?: string };
   /** Usernames this lock applies to. If omitted the lock applies to all non-admin users. */
   users?: string[];
   /** When `true` this lock also applies to (or, when no `users` list, exclusively targets) admins. */
@@ -493,8 +493,10 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
     // ── Confirmation check ────────────────────────────────────────────────────
     if (lock.confirmation !== undefined && lock.confirmation !== false) {
+      const conf = lock.confirmation;
       const confirmed = await helpers.showConfirmationDialog(overlay, {
-        text: typeof lock.confirmation === "string" ? lock.confirmation : undefined,
+        title: typeof conf === "object" ? conf.title : undefined,
+        text: typeof conf === "string" ? conf : typeof conf === "object" ? conf.text : undefined,
       }) as boolean;
 
       if (!confirmed) return;
