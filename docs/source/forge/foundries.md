@@ -58,6 +58,9 @@ element:
 
 The same keys are valid here as on a normal `uix-forge` element. See the [UIX Forge](./index.md) for details on `forge` and `element` options.
 
+!!! tip "Secrets"
+    Secrets like `"!secret tile_lock_pin"` will be resolved from `secrets.yaml` in the main Home Assistant config directory. For more information see <https://www.home-assistant.io/docs/configuration/secrets/>
+
 ## Merge behaviour
 
 When a foundry is resolved, keys are merged in this order — later entries win:
