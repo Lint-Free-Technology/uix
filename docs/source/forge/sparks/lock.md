@@ -17,6 +17,8 @@ All dialogs are rendered by Home Assistant's own dialog system (via `cardHelpers
 
 ## Basic usage
 
+Basic examples includes admins in lock config considering that admins will be implementing lock spark. Remove `admins: true` if lock will be bypassed for admins.
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -25,6 +27,7 @@ forge:
     - type: lock
       locks:
         - code: 1234
+          admins: true
 element:
   type: tile
   entity: light.bed_light
@@ -166,7 +169,7 @@ explicitly in the `users` key:
 locks:
   - users:
       - admin_user
-    code: 9876     # admin user gets this PIN
+    code: 9876     # admin_user gets this PIN
   - users:
       - jim
       - alison
