@@ -109,6 +109,7 @@ export class UixForgeConfigBuilder {
   private checkReady() {
     function _checkReady(value) {
       for (const key of Object.keys(value)) {
+        if (key === "uix") return true;
         const val = value[key];
         if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
         if (val === undefined || val === null) continue;
