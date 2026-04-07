@@ -39,12 +39,22 @@ element:
 
 Like other sparks, `for` accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
+Here an entities row is the target for the lock.
+
 ```yaml
-# Lock just the entity-row toggle
-- type: lock
-  for: "$ hui-generic-entity-row $ ha-entity-toggle"
-  locks:
-    - code: 1234
+type: entities
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: row
+      sparks:
+        - type: lock
+          for: $ hui-generic-entity-row
+          locks:
+            - code: 1234
+              admins: true
+    element:
+      entity: light.bed_light
 ```
 
 ---
@@ -81,8 +91,8 @@ When no entry matches:
 | `duration` | number | `3000` | Milliseconds before the overlay re-locks after a successful unlock. |
 | `icon_locked` | string | `mdi:lock` | MDI icon shown when locked. |
 | `icon_unlocked` | string | `mdi:lock-open-variant` | MDI icon shown briefly when unlocked. |
-| `icon_locked_color` | string | `--error-color` | CSS colour for the locked icon. |
-| `icon_unlocked_color` | string | `--success-color` | CSS colour for the unlocked icon. |
+| `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
+| `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlock_action` is a plain HA action. |
 | `unlock_action` | object | — | Action to execute immediately after a successful unlock. |
