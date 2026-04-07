@@ -1,3 +1,9 @@
+## [6.1.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.14...v6.1.0-beta.15) (2026-04-07)
+
+### ⭐ New Features
+
+* **forge:** add lock spark for UIX Forge ([#178](https://github.com/Lint-Free-Technology/uix/issues/178)) ([24e2860](https://github.com/Lint-Free-Technology/uix/commit/24e28607505b1703e28ad9bc9128619010c483e9))
+
 ## [6.1.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.13...v6.1.0-beta.14) (2026-04-06)
 
 ### 🐞 Bug Fixes
