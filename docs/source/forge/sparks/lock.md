@@ -94,7 +94,7 @@ When no entry matches:
 | `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
 | `action` | string | `tap` | Gesture that triggers the unlock flow. One of `tap`, `hold`, `double_tap`. |
 | `duration` | number or string | `3000` | How long before the overlay re-locks after a successful unlock. Numbers are milliseconds; strings use human-readable units (e.g. `"5s"`, `"1m"`, `"500ms"`). |
-| `icon_locked` | string | `mdi:lock` | MDI icon shown when locked. |
+| `icon_locked` | string | `mdi:lock-outline` | MDI icon shown when locked. |
 | `icon_unlocked` | string | — | MDI icon shown when unlocked. When not set, the lock icon fades out instead of being replaced. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
@@ -267,6 +267,10 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
 
+### Styling examples
+
+Using UIX Styling to apply a locked background, unlocked background and reduced opacity. A locked icon is also used in this example.
+
 ---
 
 ## Templates
@@ -278,6 +282,7 @@ Like all spark config, `locks` entries are processed as Jinja2 templates, so you
   locks:
     - active: "{{ is_state('input_boolean.lock_enabled', 'on') }}"
       code: 1234
+      admins: true
 ```
 
 !!! tip

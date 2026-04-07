@@ -41,8 +41,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _for: string = "";
   private _duration: number = 3000;
   private _action: string = "tap";
-  private _iconLocked: string = "mdi:lock";
-  private _iconUnlocked: string = "mdi:lock-open-variant";
+  private _iconLocked: string = "mdi:lock-outline";
+  private _iconUnlocked: string = " mdi:lock-open-variant-outline";
   private _hasUnlockedIcon: boolean = false;
   private _iconLockedColor: string = "";
   private _iconUnlockedColor: string = "";
@@ -75,9 +75,9 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._for = config.for || "";
     this._duration = parseDuration(config.duration) ?? 3000;
     this._action = config.action || "tap";
-    this._iconLocked = config.icon_locked || "mdi:lock";
+    this._iconLocked = config.icon_locked || "mdi:lock-outline";
     this._hasUnlockedIcon = !!config.icon_unlocked;
-    this._iconUnlocked = config.icon_unlocked || "mdi:lock-open-variant";
+    this._iconUnlocked = config.icon_unlocked || "mdi:lock-open-variant-outline";
     this._iconLockedColor = config.icon_locked_color || "";
     this._iconUnlockedColor = config.icon_unlocked_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
