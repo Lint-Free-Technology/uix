@@ -95,11 +95,11 @@ When no entry matches:
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon. |
 | `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
-| `entity` | string | — | Entity ID used when `unlock_action` is a plain HA action. |
-| `unlock_action` | object | — | Action to execute immediately after a successful unlock. |
+| `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
+| `unlocked_action` | object | — | Action to execute immediately after a successful unlock. |
 | `locks` | list | `[]` | Ordered list of lock entries (see below). |
 
-### `unlock_action`
+### `unlocked_action`
 
 | Value | Effect |
 |---|---|
@@ -210,7 +210,7 @@ forge:
   mold: card
   sparks:
     - type: lock
-      unlock_action:
+      unlocked_action:
         action: element_hold
       locks:
         - code: 1234
@@ -230,7 +230,7 @@ forge:
   sparks:
     - type: lock
       entity: light.bed_light
-      unlock_action:
+      unlocked_action:
         action: toggle
       locks:
         - code: 1234

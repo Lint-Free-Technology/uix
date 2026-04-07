@@ -80,7 +80,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._iconPosition = this._parseIconPosition(config.icon_position);
     this._permissive = config.permissive === true;
     this._entity = config.entity || "";
-    this._unlockAction = config.unlock_action || null;
+    this._unlockAction = config.unlocked_action || null;
     this._locks = Array.isArray(config.locks) ? config.locks : [];
   }
 
@@ -197,26 +197,25 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
         }
       });
 
-      // While locked, block all pointer interactions from reaching the underlying element.
-      // stopPropagation prevents HA action handlers; preventDefault stops native defaults
-      // (e.g. touch scroll, context-menu) — touchstart uses passive:true so no preventDefault there.
-      const stopIfLocked = (ev: Event) => {
+      // Stop click events from bubbling to parent HA action handlers (e.g. card
+      // navigation) while the overlay is locked.  We do NOT stop pointerdown /
+      // mousedown / touchstart because the HA action-handler singleton listens at
+      // the document level — stopping those events prevents the hold timer from
+      // ever starting.  The overlay sits on top of the target (position: absolute,
+      // inset: 0, pointer-events: all) so pointer events naturally hit the overlay
+      // and never reach the element below; no extra stopPropagation is needed for
+      // start events.
+      const stopClickIfLocked = (ev: Event) => {
         if (!this._isUnlocked) {
           ev.stopPropagation();
           ev.preventDefault();
         }
       };
-      const stopIfLockedPassive = (ev: Event) => {
-        if (!this._isUnlocked) ev.stopPropagation();
-      };
-      overlay.addEventListener("click", stopIfLocked);
-      overlay.addEventListener("mousedown", stopIfLocked);
-      overlay.addEventListener("touchstart", stopIfLockedPassive, { passive: true });
-      overlay.addEventListener("pointerdown", stopIfLocked);
+      overlay.addEventListener("click", stopClickIfLocked);
       // Prevent the browser's native context-menu (triggered by long-press on
       // iOS / Android) from appearing and cancelling the touch sequence before
       // the hold timer fires.
-      overlay.addEventListener("contextmenu", stopIfLocked);
+      overlay.addEventListener("contextmenu", stopClickIfLocked);
 
       element.appendChild(overlay);
     } else {
@@ -553,7 +552,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
   /**
    * Dispatch a `hass-action` event for a plain HA action (toggle, navigate,
-   * call-service, …) configured via `unlock_action`.
+   * call-service, …) configured via `unlocked_action`.
    */
   private _triggerHassAction(action: Record<string, any>, source: HTMLElement) {
     const config: Record<string, any> = {};
