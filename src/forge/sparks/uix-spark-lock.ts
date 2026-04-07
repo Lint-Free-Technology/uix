@@ -1,6 +1,7 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { actionHandlerBind } from "./action-handler";
+import { parseDuration } from "../../helpers/common/parse-duration";
 
 const LOCK_OVERLAY_ID_ATTR = "data-uix-forge-lock-id";
 
@@ -18,12 +19,12 @@ interface LockEntry {
   admins?: boolean;
   /** Usernames exempt from this lock when no `users` list is set. */
   except?: string[];
-  /** Milliseconds to wait before another code attempt after a wrong entry. */
-  retry_delay?: number;
+  /** Milliseconds (or human-readable duration string, e.g. "30s") to wait before another code attempt after a wrong entry. */
+  retry_delay?: string | number;
   /** Maximum consecutive wrong attempts before the extended delay kicks in. */
   max_retries?: number;
-  /** Milliseconds to wait after `max_retries` wrong attempts. */
-  max_retries_delay?: number;
+  /** Milliseconds (or human-readable duration string, e.g. "30s") to wait after `max_retries` wrong attempts. */
+  max_retries_delay?: string | number;
 }
 
 /** Pixel offsets for the lock icon within the overlay. */
@@ -72,7 +73,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
   private _applyConfig(config: Record<string, any>) {
     this._for = config.for || "";
-    this._duration = typeof config.duration === "number" ? config.duration : 3000;
+    this._duration = parseDuration(config.duration) ?? 3000;
     this._action = config.action || "tap";
     this._iconLocked = config.icon_locked || "mdi:lock";
     this._hasUnlockedIcon = !!config.icon_unlocked;
@@ -472,10 +473,10 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
         // Apply per-attempt or max-retries cooldown
         if (lock.max_retries !== undefined && this._retryCount >= lock.max_retries) {
-          this._retryUntil = Date.now() + (lock.max_retries_delay ?? 30000);
+          this._retryUntil = Date.now() + (parseDuration(lock.max_retries_delay) ?? 30000);
           this._retryCount = 0;
         } else if (lock.retry_delay) {
-          this._retryUntil = Date.now() + lock.retry_delay;
+          this._retryUntil = Date.now() + (parseDuration(lock.retry_delay) ?? 0);
         }
 
         await helpers.showAlertDialog(overlay, {

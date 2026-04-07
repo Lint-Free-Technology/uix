@@ -88,7 +88,7 @@ When no entry matches:
 | `type` | string | — | Must be `lock`. |
 | `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
 | `action` | string | `tap` | Gesture that triggers the unlock flow. One of `tap`, `hold`, `double_tap`. |
-| `duration` | number | `3000` | Milliseconds before the overlay re-locks after a successful unlock. |
+| `duration` | number or string | `3000` | How long before the overlay re-locks after a successful unlock. Numbers are milliseconds; strings use human-readable units (e.g. `"5s"`, `"1m"`, `"500ms"`). |
 | `icon_locked` | string | `mdi:lock` | MDI icon shown when locked. |
 | `icon_unlocked` | string | — | MDI icon shown when unlocked. When not set, the lock icon fades out instead of being replaced. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
@@ -119,9 +119,9 @@ When no entry matches:
 | `users` | list of strings | — | Usernames this entry applies to. |
 | `admins` | boolean | `false` | **Additive flag.** On a no-`users`-list entry, setting `admins: true` extends the entry to cover **all users** (admin and non-admin). On a `users`-list entry, it additionally covers admins. Admins are excluded from every entry where this is `false` or unset. |
 | `except` | list of strings | — | Users exempt from this entry (only used when no `users` list). |
-| `retry_delay` | number | — | Milliseconds to wait between code attempts after a wrong entry. |
+| `retry_delay` | number or string | — | How long to wait between code attempts after a wrong entry. Numbers are milliseconds; strings use human-readable units (e.g. `"10s"`). |
 | `max_retries` | number | — | Maximum consecutive wrong attempts before the extended delay kicks in. |
-| `max_retries_delay` | number | `30000` | Milliseconds to lock out after `max_retries` wrong attempts. |
+| `max_retries_delay` | number or string | `30000` | How long to lock out after `max_retries` wrong attempts. Numbers are milliseconds; strings use human-readable units (e.g. `"30s"`, `"5m"`). |
 
 ---
 
