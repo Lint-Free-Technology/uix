@@ -60,6 +60,15 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _retryUntil: number = 0;
   private readonly _id: string;
 
+  /**
+   * Set to `true` when the overlay visuals need to be refreshed — either
+   * because this is a fresh creation or because the config has changed.
+   * Prevents `_updateOverlay` and `actionHandlerBind` from running on every
+   * hass state update (which fires multiple times per second and caused the
+   * overlay to flash).
+   */
+  private _visualNeedsUpdate: boolean = true;
+
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
     this._id = `uix-forge-lock-${Math.random().toString(36).slice(2, 11)}`;
@@ -85,6 +94,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._entity = config.entity || "";
     this._unlockAction = config.unlocked_action || null;
     this._locks = Array.isArray(config.locks) ? config.locks : [];
+    // Mark visuals as needing refresh so the next _attach call applies the new config.
+    this._visualNeedsUpdate = true;
   }
 
   /**
@@ -162,14 +173,17 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement = null;
     }
 
-    // Ensure the target element creates a positioning context for the overlay
-    const currentPos = window.getComputedStyle(element).position;
-    if (currentPos === "static") {
-      element.style.setProperty("position", "relative");
-    }
+    const isNew = !existingOverlay;
 
     let overlay = existingOverlay;
     if (!overlay) {
+      // Ensure the target element creates a positioning context for the overlay.
+      // Only needed when the overlay is first created.
+      const currentPos = window.getComputedStyle(element).position;
+      if (currentPos === "static") {
+        element.style.setProperty("position", "relative");
+      }
+
       overlay = document.createElement("div");
       overlay.setAttribute(LOCK_OVERLAY_ID_ATTR, this._id);
 
@@ -221,14 +235,22 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement = overlay.querySelector("ha-icon") as (HTMLElement & { icon?: string }) | null;
     }
 
-    // Always refresh the action-handler binding so that hasHold / hasDoubleClick
-    // stay current if the config is updated after the overlay was first created.
-    actionHandlerBind(overlay, {
-      hasHold: this._action === "hold",
-      hasDoubleClick: this._action === "double_tap",
-    });
+    // Only refresh the action-handler binding and visual state when the overlay
+    // is newly created or when the config has changed (_visualNeedsUpdate).
+    // This avoids unnecessary DOM style writes on every hass state update,
+    // which can fire multiple times per second and caused the overlay to flash.
+    if (isNew || this._visualNeedsUpdate) {
+      // Refresh the action-handler binding so that hasHold / hasDoubleClick
+      // stay current if the config is updated after the overlay was first created.
+      actionHandlerBind(overlay, {
+        hasHold: this._action === "hold",
+        hasDoubleClick: this._action === "double_tap",
+      });
 
-    this._updateOverlay(overlay);
+      this._updateOverlay(overlay);
+      this._visualNeedsUpdate = false;
+    }
+
     this._overlayElement = overlay;
   }
 
@@ -241,7 +263,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       return;
     }
 
-    overlay.style.removeProperty("display");
+    overlay.style.setProperty("display", "flex");
 
     const isRow = this.controller.forge.mold?.isRow() === true;
     const isBlocked = this._isBlocked();
