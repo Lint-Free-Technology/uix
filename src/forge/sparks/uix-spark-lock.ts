@@ -212,10 +212,6 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
         }
       };
       overlay.addEventListener("click", stopClickIfLocked);
-      // Prevent the browser's native context-menu (triggered by long-press on
-      // iOS / Android) from appearing and cancelling the touch sequence before
-      // the hold timer fires.
-      overlay.addEventListener("contextmenu", stopClickIfLocked);
 
       element.appendChild(overlay);
     } else {
@@ -248,12 +244,26 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     const isBlocked = this._isBlocked();
 
     // ── Overlay background ───────────────────────────────────────────────────
-    // Row mold uses its own CSS var; blocked state uses a separate var.
-    if (isRow) {
+    // When unlocked the overlay falls back to --uix-lock-background-unlocked
+    // (default: none) so that --uix-lock-background only applies while locked.
+    if (this._isUnlocked) {
+      overlay.style.setProperty("background", "var(--uix-lock-background-unlocked, none)");
+    } else if (isRow) {
       overlay.style.setProperty(
         "background",
         "var(--uix-lock-row-background, var(--uix-lock-background, transparent))"
       );
+    } else {
+      overlay.style.setProperty(
+        "background",
+        isBlocked
+          ? "var(--uix-lock-background-blocked, var(--uix-lock-background, transparent))"
+          : "var(--uix-lock-background, transparent)"
+      );
+    }
+
+    // ── Border-radius / outline ──────────────────────────────────────────────
+    if (isRow) {
       overlay.style.setProperty(
         "border-radius",
         "var(--uix-lock-row-border-radius, var(--uix-lock-border-radius, inherit))"
@@ -263,12 +273,6 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
         isBlocked ? "var(--uix-lock-row-outlined-blocked, none)" : "none"
       );
     } else {
-      overlay.style.setProperty(
-        "background",
-        isBlocked
-          ? "var(--uix-lock-background-blocked, var(--uix-lock-background, transparent))"
-          : "var(--uix-lock-background, transparent)"
-      );
       overlay.style.setProperty(
         "border-radius",
         "var(--uix-lock-border-radius, inherit)"
