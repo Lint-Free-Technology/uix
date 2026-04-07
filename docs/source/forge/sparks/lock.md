@@ -6,16 +6,14 @@ icon: material/lock
 
 The `lock` spark overlays a lock icon on any element inside a [UIX Forge](../index.md) forged element. While locked, all pointer interactions with the underlying element are blocked. The user unlocks it via a tap, hold, or double-tap, which can require a PIN code, a text passphrase, or a simple confirmation. After a configurable `duration` the overlay automatically re-locks.
 
-All dialogs are rendered by Home Assistant's own dialog system (via `cardHelpers`), so they integrate natively with the HA frontend:
-
-- Numeric codes → HA numpad dialog (`showEnterCodeDialog`).
-- Text passphrases → HA password-field dialog (`showEnterCodeDialog`).
-- Confirmation prompts → HA confirmation dialog (`showConfirmationDialog`).
-- Wrong-code feedback → HA alert dialog (`showAlertDialog`).
+All dialogs for code/passphrase input, confirmation and feedback use native Home Assistant dialogs.
 
 ---
 
 ## Basic usage
+
+!!! example inline end "Basic usage"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-1.gif)
 
 Basic examples includes admins in lock config considering that admins will be implementing lock spark. Remove `admins: true` if lock will be bypassed for admins.
 
@@ -37,9 +35,12 @@ element:
 
 ## Targeting specific elements with `for`
 
+!!! example inline end "Targeting example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-2.gif)
+
 Like other sparks, `for` accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
-Here an entities row is the target for the lock.
+Here an entities row is the target for the lock. `action` is hold.
 
 ```yaml
 type: entities
@@ -50,12 +51,16 @@ entities:
       sparks:
         - type: lock
           for: $ hui-generic-entity-row
+          action: hold
           locks:
             - code: 1234
               admins: true
     element:
       entity: light.bed_light
 ```
+
+!!! warning
+    As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements which are displayed inline. This means that lock spark can only apply to an entire entity row.
 
 ---
 
@@ -214,6 +219,7 @@ forge:
         action: element_hold
       locks:
         - code: 1234
+          admins: true
 element:
   type: tile
   entity: light.bed_light
@@ -234,30 +240,15 @@ forge:
         action: toggle
       locks:
         - code: 1234
+          admins: true
 element:
   type: tile
   entity: light.bed_light
 ```
 
-### Lock the row toggle in an entities card
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: row
-  sparks:
-    - type: lock
-      for: "$ hui-generic-entity-row $ ha-entity-toggle"
-      locks:
-        - code: 1234
-element:
-  type: toggle
-  entity: switch.my_switch
-```
-
 ---
 
-## Customising the overlay appearance
+## Customizing the overlay appearance
 
 The lock overlay respects a set of CSS custom properties. Set these on the forged element's `uix.style` (or in a theme) to customise the look:
 
