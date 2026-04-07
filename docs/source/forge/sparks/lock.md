@@ -13,6 +13,9 @@ All dialogs for code/passphrase input, confirmation and feedback use native Home
 
 ---
 
+!!! tip
+    All the full examples add `admins: true` to the lock config being used, as you will be an admin when testing. Otherwise it will look like the lock is not working.
+
 ## Basic usage
 
 !!! example inline end "Basic usage"
