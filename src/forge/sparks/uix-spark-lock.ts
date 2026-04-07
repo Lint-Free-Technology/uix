@@ -42,6 +42,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _action: string = "tap";
   private _iconLocked: string = "mdi:lock";
   private _iconUnlocked: string = "mdi:lock-open-variant";
+  private _hasUnlockedIcon: boolean = false;
   private _iconLockedColor: string = "";
   private _iconUnlockedColor: string = "";
   private _iconPosition: IconPosition | null = null;
@@ -74,6 +75,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._duration = typeof config.duration === "number" ? config.duration : 3000;
     this._action = config.action || "tap";
     this._iconLocked = config.icon_locked || "mdi:lock";
+    this._hasUnlockedIcon = !!config.icon_unlocked;
     this._iconUnlocked = config.icon_unlocked || "mdi:lock-open-variant";
     this._iconLockedColor = config.icon_locked_color || "";
     this._iconUnlockedColor = config.icon_unlocked_color || "";
@@ -284,7 +286,11 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     overlay.style.setProperty("opacity", "var(--uix-lock-opacity, 0.5)");
 
     // ── Icon ─────────────────────────────────────────────────────────────────
-    const icon = this._isUnlocked ? this._iconUnlocked : this._iconLocked;
+    // When unlocked and no explicit icon_unlocked is configured, keep the lock
+    // icon but fade it to opacity 0. When an unlocked icon is configured, swap
+    // to it at full opacity.
+    const fadeOut = this._isUnlocked && !this._hasUnlockedIcon;
+    const icon = (this._isUnlocked && this._hasUnlockedIcon) ? this._iconUnlocked : this._iconLocked;
     const customColor = this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor;
     const defaultColor = this._isUnlocked
       // Material Design green/red used as fallbacks when HA theme variables are unavailable
@@ -296,7 +302,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("pointer-events", "none");
       this._iconElement.style.setProperty("--mdc-icon-size", "var(--uix-lock-icon-size, 24px)");
       this._iconElement.style.setProperty("color", customColor || defaultColor);
-      this._iconElement.style.setProperty("transition", "color 0.25s ease");
+      this._iconElement.style.setProperty("transition", "color 0.25s ease, opacity 0.25s ease");
+      this._iconElement.style.setProperty("opacity", fadeOut ? "0" : "1");
       // Allow CSS-var-based positional override independent of config-based offset.
       this._iconElement.style.setProperty("translate", "var(--uix-lock-icon-position, none)");
 

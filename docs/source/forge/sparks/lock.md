@@ -90,9 +90,9 @@ When no entry matches:
 | `action` | string | `tap` | Gesture that triggers the unlock flow. One of `tap`, `hold`, `double_tap`. |
 | `duration` | number | `3000` | Milliseconds before the overlay re-locks after a successful unlock. |
 | `icon_locked` | string | `mdi:lock` | MDI icon shown when locked. |
-| `icon_unlocked` | string | `mdi:lock-open-variant` | MDI icon shown briefly when unlocked. |
+| `icon_unlocked` | string | — | MDI icon shown when unlocked. When not set, the lock icon fades out instead of being replaced. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
-| `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon. |
+| `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
 | `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
