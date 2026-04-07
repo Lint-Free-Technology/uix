@@ -88,6 +88,7 @@ nav:
           - forge/sparks/grid.md
           - forge/sparks/search.md
           - forge/sparks/map.md
+          - forge/sparks/lock.md
   - Contributing: 'contributing.md'
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
