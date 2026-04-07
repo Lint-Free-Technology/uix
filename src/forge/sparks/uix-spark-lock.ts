@@ -26,6 +26,14 @@ interface LockEntry {
   max_retries_delay?: number;
 }
 
+/** Pixel offsets for the lock icon within the overlay. */
+interface IconPosition {
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+}
+
 export class UixForgeSparkLock extends UixForgeSparkBase {
   type = "lock";
 
@@ -36,6 +44,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _iconUnlocked: string = "mdi:lock-open-variant";
   private _iconLockedColor: string = "";
   private _iconUnlockedColor: string = "";
+  private _iconPosition: IconPosition | null = null;
   private _permissive: boolean = false;
   private _entity: string = "";
   private _unlockAction: Record<string, any> | null = null;
@@ -68,10 +77,36 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._iconUnlocked = config.icon_unlocked || "mdi:lock-open-variant";
     this._iconLockedColor = config.icon_locked_color || "";
     this._iconUnlockedColor = config.icon_unlocked_color || "";
+    this._iconPosition = this._parseIconPosition(config.icon_position);
     this._permissive = config.permissive === true;
     this._entity = config.entity || "";
     this._unlockAction = config.unlock_action || null;
     this._locks = Array.isArray(config.locks) ? config.locks : [];
+  }
+
+  /**
+   * Parse the `icon_position` config value into a normalised `IconPosition`
+   * object with string values (numbers are treated as pixels).
+   */
+  private _parseIconPosition(raw: any): IconPosition | null {
+    if (!raw || typeof raw !== "object") return null;
+    const pos: IconPosition = {};
+    const toPx = (v: any) => (typeof v === "number" ? `${v}px` : String(v));
+    if (raw.top !== undefined) pos.top = toPx(raw.top);
+    if (raw.bottom !== undefined) pos.bottom = toPx(raw.bottom);
+    if (raw.left !== undefined) pos.left = toPx(raw.left);
+    if (raw.right !== undefined) pos.right = toPx(raw.right);
+    return Object.keys(pos).length > 0 ? pos : null;
+  }
+
+  /**
+   * Return the effective icon position, considering the explicit config and
+   * the row-mold default (`top: 6px, left: 30px`).
+   */
+  private _getEffectiveIconPosition(): IconPosition | null {
+    if (this._iconPosition !== null) return this._iconPosition;
+    if (this.controller.forge.mold?.isRow()) return { top: "6px", left: "30px" };
+    return null;
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -147,9 +182,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("display", "flex");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
-      overlay.style.setProperty("border-radius", "var(--uix-lock-border-radius, inherit)");
       overlay.style.setProperty("cursor", "pointer");
-      overlay.style.setProperty("background", "var(--uix-lock-background, transparent)");
       // Prevent the browser from initiating scroll, zoom, or long-press callouts
       // on this element. This is required for hold detection to work reliably on
       // touch devices — without it the browser fires pointercancel before the
@@ -212,6 +245,42 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
     overlay.style.removeProperty("display");
 
+    const isRow = this.controller.forge.mold?.isRow() === true;
+    const isBlocked = this._isBlocked();
+
+    // ── Overlay background ───────────────────────────────────────────────────
+    // Row mold uses its own CSS var; blocked state uses a separate var.
+    if (isRow) {
+      overlay.style.setProperty(
+        "background",
+        "var(--uix-lock-row-background, var(--uix-lock-background, transparent))"
+      );
+      overlay.style.setProperty(
+        "border-radius",
+        "var(--uix-lock-row-border-radius, var(--uix-lock-border-radius, inherit))"
+      );
+      overlay.style.setProperty(
+        "outline",
+        isBlocked ? "var(--uix-lock-row-outlined-blocked, none)" : "none"
+      );
+    } else {
+      overlay.style.setProperty(
+        "background",
+        isBlocked
+          ? "var(--uix-lock-background-blocked, var(--uix-lock-background, transparent))"
+          : "var(--uix-lock-background, transparent)"
+      );
+      overlay.style.setProperty(
+        "border-radius",
+        "var(--uix-lock-border-radius, inherit)"
+      );
+      overlay.style.removeProperty("outline");
+    }
+
+    // ── Overlay opacity ──────────────────────────────────────────────────────
+    overlay.style.setProperty("opacity", "var(--uix-lock-opacity, 0.5)");
+
+    // ── Icon ─────────────────────────────────────────────────────────────────
     const icon = this._isUnlocked ? this._iconUnlocked : this._iconLocked;
     const customColor = this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor;
     const defaultColor = this._isUnlocked
@@ -225,6 +294,40 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("--mdc-icon-size", "var(--uix-lock-icon-size, 24px)");
       this._iconElement.style.setProperty("color", customColor || defaultColor);
       this._iconElement.style.setProperty("transition", "color 0.25s ease");
+      // Allow CSS-var-based positional override independent of config-based offset.
+      this._iconElement.style.setProperty("translate", "var(--uix-lock-icon-position, none)");
+
+      // ── Icon position ─────────────────────────────────────────────────────
+      const iconPos = this._getEffectiveIconPosition();
+      if (iconPos) {
+        this._iconElement.style.setProperty("position", "relative");
+        if (iconPos.top !== undefined) {
+          this._iconElement.style.setProperty("top", iconPos.top);
+        } else {
+          this._iconElement.style.removeProperty("top");
+        }
+        if (iconPos.bottom !== undefined) {
+          this._iconElement.style.setProperty("bottom", iconPos.bottom);
+        } else {
+          this._iconElement.style.removeProperty("bottom");
+        }
+        if (iconPos.left !== undefined) {
+          this._iconElement.style.setProperty("left", iconPos.left);
+        } else {
+          this._iconElement.style.removeProperty("left");
+        }
+        if (iconPos.right !== undefined) {
+          this._iconElement.style.setProperty("right", iconPos.right);
+        } else {
+          this._iconElement.style.removeProperty("right");
+        }
+      } else {
+        this._iconElement.style.removeProperty("position");
+        this._iconElement.style.removeProperty("top");
+        this._iconElement.style.removeProperty("bottom");
+        this._iconElement.style.removeProperty("left");
+        this._iconElement.style.removeProperty("right");
+      }
     }
 
     // When unlocked the overlay should not block interaction with the underlying element
@@ -247,6 +350,18 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // No matching entry
     if (this._permissive) return false;
     // permissive:false — admins always bypass when no entry explicitly covers them
+    const user = this.controller.forge.hass?.user;
+    return user?.is_admin !== true;
+  }
+
+  /**
+   * Whether the current user is permanently blocked (overlay shown, no unlock
+   * path).  This is the case when no lock entry matches, `permissive` is
+   * `false`, and the user is not an admin.
+   */
+  private _isBlocked(): boolean {
+    if (this._permissive) return false;
+    if (this._findMatchingLock() !== null) return false;
     const user = this.controller.forge.hass?.user;
     return user?.is_admin !== true;
   }

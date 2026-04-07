@@ -93,6 +93,7 @@ When no entry matches:
 | `icon_unlocked` | string | `mdi:lock-open-variant` | MDI icon shown briefly when unlocked. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon. |
+| `icon_position` | object | row: `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlock_action` is a plain HA action. |
 | `unlock_action` | object | — | Action to execute immediately after a successful unlock. |
@@ -263,9 +264,15 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | CSS variable | Default | Description |
 |---|---|---|
 | `--uix-lock-z-index` | `10` | Stack order of the overlay. |
+| `--uix-lock-opacity` | `0.5` | Opacity of the overlay (icon and background combined). |
 | `--uix-lock-background` | `transparent` | Background colour of the overlay. |
+| `--uix-lock-background-blocked` | `--uix-lock-background` | Background colour when the lock is permanently blocked (no unlock path, non-row molds). |
 | `--uix-lock-border-radius` | `inherit` | Border radius of the overlay (inherits the target's). |
 | `--uix-lock-icon-size` | `24px` | Size of the lock icon. |
+| `--uix-lock-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Useful for CSS-only positioning when `icon_position` is not set in config. |
+| `--uix-lock-row-background` | `--uix-lock-background` | Background colour of the overlay when the forge mold is `row`. |
+| `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
+| `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
 
 ---
 

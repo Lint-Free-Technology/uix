@@ -226,6 +226,10 @@ export class UixForge extends LitElement {
     return this.hiddenByConfig() || this._mold.hidden();
   }
 
+  get mold() {
+    return this._mold;
+  }
+
   public getGridOptions() {
     return this._mold.getGridOptions();
   }
