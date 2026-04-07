@@ -261,6 +261,7 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | CSS variable | Default | Description |
 |---|---|---|
 | `--uix-lock-z-index` | `10` | Stack order of the overlay. |
+| `--uix-lock-display` | `block` | CSS display of the lock overlay. Adjust for any positioning workarounds required with target element scenarios. |
 | `--uix-lock-opacity` | `0.5` | Opacity of the overlay (icon and background combined). |
 | `--uix-lock-background` | `transparent` | Background colour of the overlay when locked. |
 | `--uix-lock-background-unlocked` | `none` | Background colour of the overlay when unlocked. Defaults to no background so `--uix-lock-background` does not bleed into the unlocked state. |

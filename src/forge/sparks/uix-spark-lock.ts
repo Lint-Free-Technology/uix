@@ -196,7 +196,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("position", "absolute");
       overlay.style.setProperty("inset", "0");
       overlay.style.setProperty("z-index", "var(--uix-lock-z-index, 10)");
-      overlay.style.setProperty("display", "flex");
+      overlay.style.setProperty("display", "var(--uix-lock-display, block)");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
       overlay.style.setProperty("cursor", "pointer");
@@ -263,7 +263,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       return;
     }
 
-    overlay.style.setProperty("display", "flex");
+    overlay.style.setProperty("display", "var(--uix-lock-display, block)");
 
     const isRow = this.controller.forge.mold?.isRow() === true;
     const isBlocked = this._isBlocked();
