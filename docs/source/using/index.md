@@ -2,7 +2,7 @@
 title: Using
 description: Learn all about using UI eXtension to style elements in your Home Assistant UI.
 ---
-# Using UI eXtension for Home Assistant
+# Using UI eXtension Styling for Home Assistant
 
 - :bar_chart: [Styling cards](./cards.md)
 - :bulb: [Styling entities, badges and elements](entities.md)

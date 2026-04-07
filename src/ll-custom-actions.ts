@@ -1,8 +1,8 @@
 // Add a listener to allow to clear Frontend cache via Home Assistant action
-window.addEventListener("uix-bootstrap", async (ev: CustomEvent) => {
+window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
-  document.addEventListener("ll-custom", (event: CustomEvent) => {
-    const detail = event.detail;
+  document.addEventListener("ll-custom", (event: Event) => {
+    const detail = (event as CustomEvent).detail;
     if (!detail || typeof detail !== "object") {
       return;
     }

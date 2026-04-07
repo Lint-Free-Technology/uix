@@ -8,7 +8,6 @@ export class UixForgeSparkAttribute extends UixForgeSparkBase {
   private attribute: string = "";
   private action: "replace" | "remove" = "replace";
   private value: string = "";
-  private _cancel: (() => void)[] = [];
   private _targetElement: HTMLElement | null = null;
   private _originalAttribute: string = "";
   private _originalValue: string | null | undefined = undefined;
@@ -32,25 +31,20 @@ export class UixForgeSparkAttribute extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    this._cancel_pending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply();
+    this._apply(gen);
   }
 
   connectedCallback(): void {
-    this._cancel_pending();
+    const gen = this._beginUpdate();
     this._restore();
-    this._apply();
+    this._apply(gen);
   }
 
   disconnectedCallback(): void {
-    this._cancel_pending();
+    this._cancelPending();
     this._restore();
-  }
-
-  private _cancel_pending() {
-    this._cancel.forEach((c) => c());
-    this._cancel = [];
   }
 
   private _restore() {
@@ -67,11 +61,12 @@ export class UixForgeSparkAttribute extends UixForgeSparkBase {
     this._hasOriginal = false;
   }
 
-  private async _apply() {
+  private async _apply(generation: number) {
     if (!this.attribute) return;
     const elements = await this.controller.target(this.selector, this._cancel);
     const element = elements?.[0];
     if (!element) return;
+    if (generation !== this._callGeneration) return;
 
     this._targetElement = element;
     this._originalAttribute = this.attribute;

@@ -1,0 +1,12 @@
+{
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "python.analysis.extraPaths": [
+    "../ha-core"
+  ],
+  "cSpell.words": [
+    "actionhandler",
+    "culori",
+    "endmacro",
+    "endraw"
+  ]
+}

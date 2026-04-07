@@ -116,6 +116,40 @@ This generates the following Jinja2 block that is prepended to every template:
 {% set is_on = macro_is_on | as_function %}
 ```
 
+### Composing macros
+
+Macros can call other macros defined in the same card. UIX automatically detects these dependencies and includes all required macros in the output, even if only the outermost macro is referenced in the main template.
+
+```yaml
+type: tile
+entity: light.living_room
+uix:
+  macros:
+    color_for_state:
+      params:
+        - entity_id
+      template: "{{ 'green' if is_state(entity_id, 'on') else 'red' }}"
+    border_style:
+      params:
+        - entity_id
+      template: "2px solid {{ color_for_state(entity_id) }}"
+  style: |
+    ha-card {
+      border: {{ border_style(config.entity) }};
+    }
+```
+
+Even though only `border_style` is used in the style template, `color_for_state` is also included because `border_style` references it. This generates the following Jinja2 block prepended to every template:
+
+```jinja
+{% macro color_for_state(entity_id) %}
+{{ 'green' if is_state(entity_id, 'on') else 'red' }}
+{% endmacro %}
+{% macro border_style(entity_id) %}
+2px solid {{ color_for_state(entity_id) }}
+{% endmacro %}
+```
+
 ### Importing macros from custom template files
 
 In addition to defining macros inline, you can import macros from [Home Assistant reusable templates](https://www.home-assistant.io/docs/configuration/templating/#reusing-templates) stored in `/config/custom_templates/*.jinja`. To do this, set the macro entry's value to the filename (a plain string) instead of a macro definition object:

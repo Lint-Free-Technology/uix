@@ -36,6 +36,7 @@ element:
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape `{{ }}` in templates. Use when the element config itself contains Jinja2-like syntax. |
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
+| `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
 !!! info "Template nesting"
     When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{{{#uix#}{% endraw %}` and `>>` is replaced with `{% raw %}{#uix#}}}{% endraw %}`.
@@ -114,7 +115,13 @@ Sparks are optional behaviours that you add to the `forge.sparks` list. Each spa
 
 Available sparks:
 
-- :speech_balloon: [Tooltip spark](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.
+- :speech_balloon: [Tooltip](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.
+- :material-button-cursor: [Button](./sparks/button.md) - attach a styled button (`ha-button`) with actions as a sibling before or after any element within the forged element.
 - :label: [Attribute](./sparks/attribute.md) — add, replace or remove an attribute of any element within the forged element.
 - :zap: [Event](./sparks/event.md) — receive DOM events from `fire-dom-event` actions and expose their data as template variables.
 - :star: [Tile Icon](tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.
+- :shield: [State badge](./sparks/state-badge.md) - insert a `state-badge` element as a sibling before or after any element within the forged element.
+- :material-grid: [Grid](./sparks/grid.md) - apply **CSS Grid** layout to any container element inside a forged element
+- :mag: [Search](./sparks/search.md) - queries a container within a forged element with a CSS selector and optional inner text to find, then apply mutations to the found element(s).
+- :material-map: [Map](./sparks/map.md) — preserve the zoom level and centre of a map card across Home Assistant state updates.
+- :material-lock: [Lock](./sparks/lock.md) — overlay a lock icon on any element to block interaction until the user passes a PIN, passphrase, or confirmation challenge.

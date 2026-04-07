@@ -9,6 +9,10 @@ import { UixForgeSparkAttribute } from "./uix-spark-attribute";
 import { UixForgeSparkTileIcon } from "./uix-spark-tile-icon";
 import { UixForgeSparkStateBadge } from "./uix-spark-state-badge";
 import { UixForgeSparkGrid } from "./uix-spark-grid";
+import { UixForgeSparkSearch } from "./uix-spark-search";
+import { UixForgeSparkButton } from "./uix-spark-button";
+import { UixForgeSparkMap } from "./uix-spark-map";
+import { UixForgeSparkLock } from "./uix-spark-lock";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -18,6 +22,10 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "tile-icon": UixForgeSparkTileIcon,
     "state-badge": UixForgeSparkStateBadge,
     "grid": UixForgeSparkGrid,
+    "search": UixForgeSparkSearch,
+    "button": UixForgeSparkButton,
+    "map": UixForgeSparkMap,
+    "lock": UixForgeSparkLock,
 };
 
 export class UixForgeSparkController {
@@ -29,35 +37,46 @@ export class UixForgeSparkController {
   }
 
   setConfig(sparkConfigs?: Record<string, any>[]) {
-    sparkConfigs?.forEach(config => {
-      if (!config?.type) {
-        return;
-      }
-      const existingSpark = this.sparks.find(spark => spark.type === config.type);
+    const configs = (sparkConfigs ?? []).filter(config => config?.type);
+    configs.forEach((config, index) => {
+      const existingSpark = this.sparks[index];
       if (existingSpark) {
-        existingSpark.configUpdated(config);
+        if (existingSpark.type === config.type) {
+          existingSpark.configUpdated(config);
+        } else {
+          existingSpark.disconnectedCallback();
+          const SparkClass = UIX_FORGE_SPARK_CLASSES[config.type];
+          if (SparkClass) {
+            this.sparks[index] = new SparkClass(this, config);
+          }
+        }
       } else {
         const SparkClass = UIX_FORGE_SPARK_CLASSES[config.type];
         if (SparkClass) {
-          const newSpark = new SparkClass(this, config);
-          this.sparks.push(newSpark);
+          this.sparks.push(new SparkClass(this, config));
         }
       }
     });
+    if (this.sparks.length > configs.length) {
+      this.sparks.splice(configs.length).forEach(spark => spark.disconnectedCallback());
+    }
   }
 
   templateVariables() {
     return Object.keys(UIX_FORGE_SPARK_CLASSES).reduce((acc, SparkType) => {
-      const spark = this.sparks.find(s => s.type === SparkType);
       acc[SparkType] = {};
-      if (spark) {
+      this.sparks.filter(s => s.type === SparkType).forEach(spark => {
         const vars = spark.templateVariables();
         if (vars && Object.keys(vars).length > 0) {
-          acc[SparkType] = vars;
+          acc[SparkType] = this.mergeDeep(acc[SparkType], vars);
         }
-      }
+      });
       return acc;
     }, {} as Record<string, any>);
+  }
+
+  beforeForgedElementRefresh() {
+    this.sparks.forEach(spark => spark.beforeForgedElementRefresh());
   }
 
   connectedCallback() {
