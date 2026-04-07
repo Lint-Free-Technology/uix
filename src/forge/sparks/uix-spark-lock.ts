@@ -315,7 +315,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("transition", `color 0.25s ease, opacity ${opacityDuration} ease`);
       this._iconElement.style.setProperty("opacity", fadeOut ? "0" : "1");
       // Allow CSS-var-based positional override independent of config-based offset.
-      this._iconElement.style.setProperty("translate", "var(--uix-lock-icon-position, none)");
+      this._iconElement.style.setProperty("display", "inline-block");
+      this._iconElement.style.setProperty("translate", `var(--uix-lock-icon-position, none)`);
 
       // ── Icon position ─────────────────────────────────────────────────────
       const iconPos = this._getEffectiveIconPosition();
