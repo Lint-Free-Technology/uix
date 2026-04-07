@@ -150,12 +150,13 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("border-radius", "var(--uix-lock-border-radius, inherit)");
       overlay.style.setProperty("cursor", "pointer");
       overlay.style.setProperty("background", "var(--uix-lock-background, transparent)");
-
-      // Bind the action handler for the configured unlock gesture
-      actionHandlerBind(overlay, {
-        hasHold: this._action === "hold",
-        hasDoubleClick: this._action === "double_tap",
-      });
+      // Prevent the browser from initiating scroll, zoom, or long-press callouts
+      // on this element. This is required for hold detection to work reliably on
+      // touch devices — without it the browser fires pointercancel before the
+      // hold timer can complete.
+      overlay.style.setProperty("touch-action", "none");
+      overlay.style.setProperty("user-select", "none");
+      overlay.style.setProperty("-webkit-user-select", "none");
 
       overlay.addEventListener("action", (ev: Event) => {
         if ((ev as CustomEvent).detail?.action === this._action) {
@@ -179,11 +180,22 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.addEventListener("mousedown", stopIfLocked);
       overlay.addEventListener("touchstart", stopIfLockedPassive, { passive: true });
       overlay.addEventListener("pointerdown", stopIfLocked);
+      // Prevent the browser's native context-menu (triggered by long-press on
+      // iOS / Android) from appearing and cancelling the touch sequence before
+      // the hold timer fires.
+      overlay.addEventListener("contextmenu", stopIfLocked);
 
       element.appendChild(overlay);
     } else {
       this._iconElement = overlay.querySelector("ha-icon") as (HTMLElement & { icon?: string }) | null;
     }
+
+    // Always refresh the action-handler binding so that hasHold / hasDoubleClick
+    // stay current if the config is updated after the overlay was first created.
+    actionHandlerBind(overlay, {
+      hasHold: this._action === "hold",
+      hasDoubleClick: this._action === "double_tap",
+    });
 
     this._updateOverlay(overlay);
     this._overlayElement = overlay;
