@@ -1,3 +1,9 @@
+## [6.1.0-beta.17](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.16...v6.1.0-beta.17) (2026-04-07)
+
+### ⭐ New Features
+
+* **lock-spark:** Support confirmation object with title and text in lock spark ([#182](https://github.com/Lint-Free-Technology/uix/issues/182)) ([40b2551](https://github.com/Lint-Free-Technology/uix/commit/40b2551adf87732f5a1181e082b1bd1020974526))
+
 ## [6.1.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.15...v6.1.0-beta.16) (2026-04-07)
 
 ### 🐞 Bug Fixes
