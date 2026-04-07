@@ -1,3 +1,11 @@
+## [6.1.0-beta.18](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.17...v6.1.0-beta.18) (2026-04-07)
+
+### 🐞 Bug Fixes
+
+* **lock-spark:** prevent overlay continuous updates ([#183](https://github.com/Lint-Free-Technology/uix/issues/183)) ([9073462](https://github.com/Lint-Free-Technology/uix/commit/907346251c5daf36bb610bc5ef9ff924db63448f))
+* **lock-spark:** Set lock spark display to block by default and allow override by CSS ([3879182](https://github.com/Lint-Free-Technology/uix/commit/3879182a924924f9aca8d6c8705eff828903f375))
+* **lock-spark:** Update icon display to inline-block so --uix-icon-position applies ([37e3175](https://github.com/Lint-Free-Technology/uix/commit/37e3175e6c64d698ebe5dc7e4bc6ed39c967dbf2))
+
 ## [6.1.0-beta.17](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.16...v6.1.0-beta.17) (2026-04-07)
 
 ### ⭐ New Features
