@@ -292,8 +292,11 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // to it at full opacity.
     const fadeOut = this._isUnlocked && !this._hasUnlockedIcon;
     const icon = (this._isUnlocked && this._hasUnlockedIcon) ? this._iconUnlocked : this._iconLocked;
-    const customColor = this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor;
-    const defaultColor = this._isUnlocked
+    // When fading out (no unlocked icon), keep the locked colour — changing it
+    // would be visible during the fade. Only apply the unlocked colour when
+    // actually swapping to a new icon.
+    const customColor = fadeOut ? this._iconLockedColor : (this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor);
+    const defaultColor = (this._isUnlocked && !fadeOut)
       // Material Design green/red used as fallbacks when HA theme variables are unavailable
       ? "var(--success-color, #43a047)"
       : "var(--error-color, #db4437)";
