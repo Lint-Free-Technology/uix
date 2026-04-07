@@ -302,7 +302,13 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("pointer-events", "none");
       this._iconElement.style.setProperty("--mdc-icon-size", "var(--uix-lock-icon-size, 24px)");
       this._iconElement.style.setProperty("color", customColor || defaultColor);
-      this._iconElement.style.setProperty("transition", "color 0.25s ease, opacity 0.25s ease");
+      // When fading the lock icon out (no icon_unlocked configured) use the
+      // CSS-var-controlled duration (default 2s). When swapping to an explicit
+      // unlocked icon, keep the fast 0.25s swap transition.
+      const opacityDuration = fadeOut
+        ? "var(--uix-lock-icon-fade-duration, 2s)"
+        : "0.25s";
+      this._iconElement.style.setProperty("transition", `color 0.25s ease, opacity ${opacityDuration} ease`);
       this._iconElement.style.setProperty("opacity", fadeOut ? "0" : "1");
       // Allow CSS-var-based positional override independent of config-based offset.
       this._iconElement.style.setProperty("translate", "var(--uix-lock-icon-position, none)");

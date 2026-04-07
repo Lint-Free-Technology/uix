@@ -271,6 +271,7 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-border-radius` | `inherit` | Border radius of the overlay (inherits the target's). |
 | `--uix-lock-icon-size` | `24px` | Size of the lock icon. |
 | `--uix-lock-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Useful for CSS-only positioning when `icon_position` is not set in config. |
+| `--uix-lock-icon-fade-duration` | `2s` | Duration of the opacity fade when the lock icon fades away on unlock (only used when `icon_unlocked` is not set). |
 | `--uix-lock-row-background` | `--uix-lock-background` | Background colour of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
