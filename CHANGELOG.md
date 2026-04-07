@@ -1,3 +1,9 @@
+## [6.1.0-beta.20](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.19...v6.1.0-beta.20) (2026-04-07)
+
+### 🐞 Bug Fixes
+
+* **forge:** Templates in uix in element config cause element not to show due to unfulfilled ready promise ([12e4ac7](https://github.com/Lint-Free-Technology/uix/commit/12e4ac737deb6c6ca212a7c0962c4ea5e2be749e))
+
 ## [6.1.0-beta.19](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.18...v6.1.0-beta.19) (2026-04-07)
 
 ### ⭐ New Features
