@@ -1,3 +1,9 @@
+## [6.1.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.15...v6.1.0-beta.16) (2026-04-07)
+
+### 🐞 Bug Fixes
+
+* **forge:** allow and pass state_color through to forged element in row mold ([#180](https://github.com/Lint-Free-Technology/uix/issues/180)) ([e78a87e](https://github.com/Lint-Free-Technology/uix/commit/e78a87e79e92fc88a00ad73b4b7d5267de76b19e))
+
 ## [6.1.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.14...v6.1.0-beta.15) (2026-04-07)
 
 ### ⭐ New Features
