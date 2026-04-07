@@ -1,3 +1,10 @@
+## [6.1.0-beta.19](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.18...v6.1.0-beta.19) (2026-04-07)
+
+### ⭐ New Features
+
+* **forge:** Resolve `!secret` references in foundry configs ([#184](https://github.com/Lint-Free-Technology/uix/issues/184)) ([13cde4f](https://github.com/Lint-Free-Technology/uix/commit/13cde4f67a91bae718cc613d406e178c825d4998))
+* **lock-spark:** add `code_dialog` config to lock spark for customising the PIN/passphrase dialog title, submit_text and cancel_text ([#185](https://github.com/Lint-Free-Technology/uix/issues/185)) ([53c4f90](https://github.com/Lint-Free-Technology/uix/commit/53c4f90c3cb3ffdc1cf367137419d47cb25ef612))
+
 ## [6.1.0-beta.18](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.17...v6.1.0-beta.18) (2026-04-07)
 
 ### 🐞 Bug Fixes
