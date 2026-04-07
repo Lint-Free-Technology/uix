@@ -267,9 +267,39 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
 
-### Styling examples
+### Styling example
 
 Using UIX Styling to apply a locked background, unlocked background and reduced opacity. A locked icon is also used in this example.
+
+!!! example inline end "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example.gif)
+
+```yaml
+type: entities
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: row
+      sparks:
+        - type: lock
+          for: $ hui-generic-entity-row
+          duration: 5s
+          icon_unlocked: mdi:lock-open-variant-outline
+          permissive: true
+          locks:
+            - code: 1234
+              admins: true
+      uix:
+        style: |
+          :host {
+            --uix-lock-background: repeating-linear-gradient( 45deg, transparent 0 10px,var(--user-restriction-card-mask,rgba(255,0,0,0.15)) 10px 20px);
+            --uix-lock-background-unlocked: repeating-linear-gradient( 45deg, transparent 0 10px,var(--user-restriction-card-mask,rgba(0,255,0,0.07)) 10px 20px);
+            --uix-lock-opacity: 1;
+            --uix-lock-border-radius: 8px;
+          }
+    element:
+      entity: light.bed_light
+```
 
 ---
 
