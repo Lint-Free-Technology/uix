@@ -39,20 +39,21 @@ export function getLockTargetAdapter(element: HTMLElement): LockTargetAdapter | 
  *  - Preserves the CSS classes on `div.container` (including the `background`
  *    class that provides the colored circle) via a `MutationObserver` that
  *    re-applies the snapshotted classes after each Lit re-render.
- *  - Adds a capture-phase listener on `ha-tile-icon`'s shadow root to
- *    intercept `action` events before they reach `div.container`'s own handler.
- *    The shadow root is a true ancestor of `div.container` in the composed
- *    event path, so our listener fires during the real capture phase — before
- *    `div.container` is reached — rather than in target-phase registration
- *    order (which would let HA's earlier-registered handler fire first).
- *    The listener inspects `ev.composedPath()[0]` (the non-retargeted dispatch
- *    target) to distinguish events originating inside the shadow root (from
- *    `div.container` — blocked) from events originating on the overlay, which is
- *    a light-DOM child of `ha-tile-icon` that may be slotted into the shadow
- *    root's event path; those are allowed through so the lock dialog can open.
+ *  - Adds a capture-phase listener on `ha-tile-icon` (the host element, in the
+ *    light-DOM context) to intercept `action` events before they reach
+ *    `div.container`'s already-registered handler, or before `ha-tile-icon`
+ *    itself processes them after a Lit re-render.
+ *
+ *    In the light-DOM context, shadow-DOM elements are filtered from
+ *    `composedPath()`.  For events originating inside the shadow (from
+ *    `div.container` or dispatched on the host itself), `composedPath()[0]`
+ *    equals `ha-tile-icon` → the event is stopped.  For events originating on
+ *    the overlay (a light-DOM child of `ha-tile-icon`), `composedPath()[0]` is
+ *    the overlay element → the event is allowed through so the lock dialog can
+ *    open.
  *
  * When unlocked / cleaned up:
- *  - Removes the shadow-root capture listener.
+ *  - Removes the host-level capture listener.
  *  - Disconnects the `MutationObserver`.
  *  - Restores the `interactive` attribute; HA's Lit re-render then manages
  *    the container classes correctly again.
@@ -103,23 +104,25 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
       element.removeAttribute("interactive");
     }
 
-    // Capture `action` events at the shadow-root level so they are stopped
-    // before reaching div.container's already-registered handler.
+    // Capture `action` events at the ha-tile-icon host element (light-DOM
+    // context) so they are stopped before reaching div.container's handler.
     //
-    // We must not block action events that originate from the overlay (which is
-    // a light-DOM child of ha-tile-icon that may be slotted into the shadow
-    // root's event path). ev.composedPath()[0] gives the actual dispatch target
-    // before any shadow-boundary retargeting; we only stop events that come
-    // from inside the shadow root itself (i.e. div.container).
-    if (shadowRoot) {
-      this._captureListener = (ev: Event) => {
-        const originalTarget = ev.composedPath()[0] as Node | null;
-        if (originalTarget && shadowRoot.contains(originalTarget)) {
-          ev.stopImmediatePropagation();
-        }
-      };
-      shadowRoot.addEventListener("action", this._captureListener, true);
-    }
+    // Listening on the host rather than on the shadow root ensures we catch
+    // action events regardless of whether HA dispatches them on div.container
+    // (inside shadow) or on ha-tile-icon itself after a Lit re-render.
+    //
+    // In the light-DOM context, shadow-DOM elements are filtered from
+    // composedPath(), so for events originating inside the shadow (e.g.
+    // div.container) composedPath()[0] is the host element itself.  For events
+    // originating from the overlay (a light-DOM child), composedPath()[0] is the
+    // overlay — allowing those through so the lock dialog can open.
+    this._captureListener = (ev: Event) => {
+      const originalTarget = ev.composedPath()[0] as Node | null;
+      if (originalTarget === element) {
+        ev.stopImmediatePropagation();
+      }
+    };
+    element.addEventListener("action", this._captureListener, true);
   }
 
   unlock(element: HTMLElement): void {
@@ -147,10 +150,7 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
 
   private _removeCapture(element: HTMLElement): void {
     if (!this._captureListener) return;
-    const shadowRoot = (element as any).shadowRoot as ShadowRoot | null;
-    if (shadowRoot) {
-      shadowRoot.removeEventListener("action", this._captureListener, true);
-    }
+    element.removeEventListener("action", this._captureListener, true);
     this._captureListener = null;
   }
 }
