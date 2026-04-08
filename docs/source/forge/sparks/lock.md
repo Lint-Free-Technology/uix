@@ -102,7 +102,7 @@ When no entry matches:
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
 | `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
-| `icon_size` | number or string | `18px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set in a theme. |
+| `icon_size` | number or string | `18px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set via UIX Styling or in a theme. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
 | `unlocked_action` | object | — | Action to execute immediately after a successful unlock. |
