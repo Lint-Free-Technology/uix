@@ -121,16 +121,18 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
     // without looping back through this capture handler.
     if (shadowRoot) {
       this._captureListener = (ev: Event) => {
-        ev.stopImmediatePropagation();
-        const origin = ev.composedPath()[0] as Node | null;
-        if (origin === this._overlayElement) {
-          this._overlayElement.dispatchEvent(
-            new CustomEvent("action", {
-              detail: (ev as CustomEvent).detail,
-              bubbles: false,
-              composed: false,
-            })
-          );
+        if (ev.composedPath()[0] === this._overlayElement) {
+          const origin = ev.composedPath()[0] as Node | null;
+          if (origin === this._overlayElement && ev.bubbles === true && ev.composed === true) {
+            ev.stopImmediatePropagation();
+            this._overlayElement.dispatchEvent(
+              new CustomEvent("action", {
+                detail: (ev as CustomEvent).detail,
+                bubbles: false,
+                composed: false,
+              })
+            );
+          }
         }
       };
       shadowRoot.addEventListener("action", this._captureListener, true);
