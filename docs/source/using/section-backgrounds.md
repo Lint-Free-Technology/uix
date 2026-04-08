@@ -29,9 +29,6 @@ To apply the background, the section background config must be set. Minimal shor
 
 ## Options 2: add UIX styling to section background config
 
-!!! info
-    UIX styling to section background via UIX config is available in 6.1.0-beta.1
-
 You can add UIX styling options to the background config and it will target the background element. The whole section config is available in templates.
 
 For background and opacity you are best to set `--ha-section-background-color` and `--ha-section-background-opacity`. You can style the background and opacity directly but you would need to use `!important`.

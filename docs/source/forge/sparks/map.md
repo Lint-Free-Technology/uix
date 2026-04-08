@@ -5,9 +5,6 @@ icon: material/map
 
 # :material-map: Map spark
 
-!!! info
-    Map spark is available in 6.1.0-beta.13
-
 The `map` spark adds **memory mode** to a map card used inside a [UIX Forge](../index.md) forged element. Without it, every forge template update causes the map to reset to its default zoom level and centre position. With `memory: true`, the spark captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved.
 
 ## Basic usage

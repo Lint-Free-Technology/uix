@@ -5,9 +5,6 @@ icon: material/magnify
 
 # :mag: Search spark
 
-!!! info
-    Search spark is available in 6.1.0-beta.3
-
 The `search` spark queries a container element with a CSS selector, optionally filters the results by a text regex, and then applies class, attribute, and/or text mutations to every matching element. It also sets up a `MutationObserver` so that newly added elements (for example, calendar events after month navigation) are automatically processed without any additional configuration.
 
 ## Basic usage

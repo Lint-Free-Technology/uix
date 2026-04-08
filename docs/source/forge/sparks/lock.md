@@ -4,9 +4,6 @@ icon: material/lock
 ---
 # :material-lock: Lock spark
 
-!!! info
-    Lock spark is available in 6.1.0-beta.14
-
 The `lock` spark overlays a lock icon on any element inside a [UIX Forge](../index.md) forged element. While locked, all pointer interactions with the underlying element are blocked. The user unlocks it via a tap, hold, or double-tap, which can require a PIN code, a text passphrase, or a simple confirmation. After a configurable `duration` the overlay automatically re-locks.
 
 All dialogs for code/passphrase input, confirmation and feedback use native Home Assistant dialogs.

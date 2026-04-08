@@ -5,9 +5,6 @@ icon: material/button-cursor
 
 # :material-button-cursor: Button spark
 
-!!! info
-    Button spark is available in 6.1.0-beta.6
-
 The `button` spark inserts a Home Assistant [`ha-button`](https://github.com/home-assistant/frontend/tree/dev/src/components/ha-button.ts) element as a DOM sibling immediately **before** or **after** a target element inside a forged element.
 
 The button can display:
