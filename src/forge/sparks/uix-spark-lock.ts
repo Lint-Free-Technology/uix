@@ -379,6 +379,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.icon = icon;
       this._iconElement.style.setProperty("pointer-events", "none");
       this._iconElement.style.setProperty("--mdc-icon-size", `var(--uix-lock-icon-size, ${this._getEffectiveIconSize()})`);
+      this._iconElement.style.setProperty("background", "var(--uix-lock-icon-background, none)");
+      this._iconElement.style.setProperty("border-radius", "var(--uix-lock-icon-border-radius, none)");
       this._iconElement.style.setProperty("color", customColor || defaultColor);
       // When fading the lock icon out (no icon_unlocked configured) use the
       // CSS-var-controlled duration (default 2s). When swapping to an explicit
