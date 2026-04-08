@@ -131,18 +131,16 @@ forge:
 element:
   type: tile
   entity: light.bed_light
+  name: "{{ entity_name(config.element.entity) }} - {{ state_translated(config.element.entity) }}"
   uix:
     style: |
       span.primary {
         color: {{ state_color(config.entity) }};
       }
-      span.primary::after {
-        content: ' - {{ state_translated(config.entity) }}';
-      }
 ```
 
 !!! tip
-    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function.
+    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function. The `name` template for the element uses `config.element.entity` as this run in teh context of the forge.
 
 If you wish to have a standard macro to access the entity across forge macros, forge UIX styling and forged element UIX Styling you can use an `entity()` macro as shown in the following example.
 
@@ -152,7 +150,7 @@ If you wish to have a standard macro to access the entity across forge macros, f
 {{ config.element.entity | default('') if 'element' in config else config.entity | default('') }}
 ```
 
-The full example below provides for the same output as the previous example, but uses the `entity()` macro including a template for `name:` in the forged element, which will run in the context of the forge processing templates.
+The full example below provides for the same output as the previous example, but uses the `entity()` macro.
 
 !!! example inline end "Macro example using entity()"
     ![Example output](../assets/page-assets/forge/forge-macro-example.gif)
