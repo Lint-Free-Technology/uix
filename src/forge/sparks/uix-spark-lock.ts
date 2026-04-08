@@ -58,6 +58,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _iconLockedColor: string = "";
   private _iconUnlockedColor: string = "";
   private _iconPosition: IconPosition | null = null;
+  private _iconSize: string | null = null;
   private _permissive: boolean = false;
   private _entity: string = "";
   private _unlockAction: Record<string, any> | null = null;
@@ -104,6 +105,9 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._iconLockedColor = config.icon_locked_color || "";
     this._iconUnlockedColor = config.icon_unlocked_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
+    this._iconSize = config.icon_size !== undefined
+      ? (typeof config.icon_size === "number" ? `${config.icon_size}px` : String(config.icon_size))
+      : null;
     this._permissive = config.permissive === true;
     this._entity = config.entity || "";
     this._unlockAction = config.unlocked_action || null;
@@ -136,6 +140,18 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     if (this._iconPosition !== null) return this._iconPosition;
     if (this.controller.forge.mold?.isRow()) return { top: "6px", left: "30px" };
     return null;
+  }
+
+  /**
+   * Return the effective icon size, considering the explicit `icon_size` config
+   * and per-target-type defaults:
+   *  - `ha-tile-icon` target → 18px
+   *  - all others → 24px (matching the HA icon default)
+   */
+  private _getEffectiveIconSize(): string {
+    if (this._iconSize !== null) return this._iconSize;
+    if (this._targetElement?.tagName.toLowerCase() === "ha-tile-icon") return "18px";
+    return "24px";
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -363,7 +379,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     if (this._iconElement) {
       this._iconElement.icon = icon;
       this._iconElement.style.setProperty("pointer-events", "none");
-      this._iconElement.style.setProperty("--mdc-icon-size", "var(--uix-lock-icon-size, 24px)");
+      this._iconElement.style.setProperty("--mdc-icon-size", `var(--uix-lock-icon-size, ${this._getEffectiveIconSize()})`);
       this._iconElement.style.setProperty("color", customColor || defaultColor);
       // When fading the lock icon out (no icon_unlocked configured) use the
       // CSS-var-controlled duration (default 2s). When swapping to an explicit
