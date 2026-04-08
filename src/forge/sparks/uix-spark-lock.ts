@@ -144,13 +144,12 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
   /**
    * Return the effective icon size, considering the explicit `icon_size` config
-   * and per-target-type defaults:
-   *  - `ha-tile-icon` target → 18px
-   *  - all others → 24px (matching the HA icon default)
+   * and per-target-type defaults. The target adapter provides the default for
+   * its element type; the general fallback is 24px (matching the HA icon default).
    */
   private _getEffectiveIconSize(): string {
     if (this._iconSize !== null) return this._iconSize;
-    if (this._targetElement?.tagName.toLowerCase() === "ha-tile-icon") return "18px";
+    if (this._targetAdapter) return this._targetAdapter.defaultIconSize();
     return "24px";
   }
 

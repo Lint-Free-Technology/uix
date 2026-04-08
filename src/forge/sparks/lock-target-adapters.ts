@@ -14,6 +14,8 @@ export interface LockTargetAdapter {
   unlock(element: HTMLElement): void;
   /** Called when the lock spark is removed from the DOM entirely. */
   cleanup(element: HTMLElement): void;
+  /** Returns the default lock-icon size for this target element type. */
+  defaultIconSize(): string;
 }
 
 /**
@@ -161,6 +163,10 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
 
   cleanup(element: HTMLElement): void {
     this.unlock(element);
+  }
+
+  defaultIconSize(): string {
+    return "18px";
   }
 
   private _removeCapture(element: HTMLElement): void {
