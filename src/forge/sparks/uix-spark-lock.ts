@@ -289,7 +289,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     if (this._targetAdapter && this._targetElement) {
       const isLocked = shouldShow && !this._isUnlocked;
       if (isLocked) {
-        this._targetAdapter.lock(this._targetElement);
+        this._targetAdapter.lock(this._targetElement, overlay);
       } else {
         this._targetAdapter.unlock(this._targetElement);
       }
