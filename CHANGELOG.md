@@ -1,3 +1,9 @@
+## [6.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0...v6.2.0-beta.1) (2026-04-08)
+
+### ⭐ New Features
+
+* **lock-spark:** Allow for target to be ha-tile-icon to lock tile icon only ([26dfa91](https://github.com/Lint-Free-Technology/uix/commit/26dfa91e298914dd4ed3003619d7896ddf75612d))
+
 ## [6.1.0](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0...v6.1.0) (2026-04-08)
 
 ### ⭐ New Features
