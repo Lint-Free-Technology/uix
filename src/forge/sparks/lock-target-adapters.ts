@@ -45,8 +45,11 @@ export function getLockTargetAdapter(element: HTMLElement): LockTargetAdapter | 
  *    event path, so our listener fires during the real capture phase — before
  *    `div.container` is reached — rather than in target-phase registration
  *    order (which would let HA's earlier-registered handler fire first).
- *    The overlay's own `action` events travel through the light DOM and never
- *    cross the shadow root, so the lock mechanism is unaffected.
+ *    The listener inspects `ev.composedPath()[0]` (the non-retargeted dispatch
+ *    target) to distinguish events originating inside the shadow root (from
+ *    `div.container` — blocked) from events originating on the overlay, which is
+ *    a light-DOM child of `ha-tile-icon` that may be slotted into the shadow
+ *    root's event path; those are allowed through so the lock dialog can open.
  *
  * When unlocked / cleaned up:
  *  - Removes the shadow-root capture listener.
@@ -102,9 +105,18 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
 
     // Capture `action` events at the shadow-root level so they are stopped
     // before reaching div.container's already-registered handler.
+    //
+    // We must not block action events that originate from the overlay (which is
+    // a light-DOM child of ha-tile-icon that may be slotted into the shadow
+    // root's event path). ev.composedPath()[0] gives the actual dispatch target
+    // before any shadow-boundary retargeting; we only stop events that come
+    // from inside the shadow root itself (i.e. div.container).
     if (shadowRoot) {
       this._captureListener = (ev: Event) => {
-        ev.stopImmediatePropagation();
+        const originalTarget = ev.composedPath()[0] as Node | null;
+        if (originalTarget && shadowRoot.contains(originalTarget)) {
+          ev.stopImmediatePropagation();
+        }
       };
       shadowRoot.addEventListener("action", this._captureListener, true);
     }
