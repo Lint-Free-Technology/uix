@@ -10,7 +10,7 @@ hide:
 
 - Uninstall card-mod.
 - If you use extra_module_url for card-mod resource, remove and restart Home Assistant.
-- Process to follow the [UI eXtension quick start guide](./quick-start.md).
+- Proceed to follow the [UI eXtension quick start guide](./quick-start.md).
 
 ## Is UI eXtension a drop in replacement for Card-mod?
 

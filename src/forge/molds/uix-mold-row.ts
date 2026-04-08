@@ -9,10 +9,11 @@ export class UixForgeMoldRow extends UixForgeMoldBase {
     return this._hidden;
   }
 
-  handleRowVisibilityChanged = (event: CustomEvent) => {
-    if (event.detail.row !== this.forge.forgedElement) return;
-    event.stopPropagation();
-    this.updateRowVisibility(event);
+  handleRowVisibilityChanged = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail.row !== this.forge.forgedElement) return;
+    customEvent.stopPropagation();
+    this.updateRowVisibility(customEvent);
   }
 
   updateRowVisibility(event: CustomEvent = undefined as any) {

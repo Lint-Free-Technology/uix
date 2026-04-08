@@ -49,11 +49,37 @@ export function buildMacros(macros: Record<string, MacroConfig | string>, usedIn
   if (!macros || Object.keys(macros).length === 0) return "";
   const renderParam = (p: MacroParam): string =>
     typeof p === "string" ? p : `${p.name} = ${p.default}`;
-  const entries = Object.entries(macros).filter(([name]) => {
-    // When a template is provided, only include macros actually referenced in it.
-    if (!usedIn) return true;
-    return new RegExp(`\\b${name}\\b`).test(usedIn);
-  });
+  let entries: [string, MacroConfig | string][];
+  if (!usedIn) {
+    entries = Object.entries(macros);
+  } else {
+    // Transitively collect all macro names needed: start with those referenced
+    // in usedIn, then recursively add any macros referenced within those macro
+    // templates, until no new dependencies are found.
+    const usedNames = new Set<string>();
+    const queue: string[] = [];
+    const macroNames = Object.keys(macros);
+    for (const name of macroNames) {
+      if (new RegExp(`\\b${name}\\b`).test(usedIn)) {
+        usedNames.add(name);
+        queue.push(name);
+      }
+    }
+    let queueIndex = 0;
+    while (queueIndex < queue.length) {
+      const current = queue[queueIndex++];
+      const config = macros[current];
+      if (typeof config !== "string") {
+        for (const name of macroNames) {
+          if (!usedNames.has(name) && new RegExp(`\\b${name}\\b`).test(config.template)) {
+            usedNames.add(name);
+            queue.push(name);
+          }
+        }
+      }
+    }
+    entries = Object.entries(macros).filter(([name]) => usedNames.has(name));
+  }
   if (entries.length === 0) return "";
   return (
     entries

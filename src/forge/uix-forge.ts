@@ -3,7 +3,7 @@ import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { apply_uix, buildMacros, ModdedElement } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, ModdedElement, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -56,12 +56,14 @@ export class UixForge extends LitElement {
   private _disconnectTimeout?: number;
   private _foundryUpdateListener?: EventListener;
   private _resolvedUix?: any;
+  private _delayedHass?: boolean;
 
   constructor() {
       super();
       this.connectedWhileHidden = true;
       this.templatesReady = false;
       this._showError = false;
+      this._delayedHass = false;
       this._forgeConfig = new UixForgeConfigBuilder(this.refreshForge.bind(this));
       this._forgedElementConfig = new UixForgeConfigBuilder(this.refreshForgedElement.bind(this));
       this._sparkController = new UixForgeSparkController(this);
@@ -169,6 +171,8 @@ export class UixForge extends LitElement {
     this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
     this._macros = resolvedForge.macros;
     this._showError = resolvedForge.show_error || false;
+    this._delayedHass = resolvedForge.delayed_hass || false;
+
     this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : "<<";
     this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : ">>";
     const forgeConfig = { ...resolvedForge };
@@ -176,10 +180,15 @@ export class UixForge extends LitElement {
     delete forgeConfig.mold;
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
+    delete forgeConfig.delayed_hass;
     delete forgeConfig.template_nesting;
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
-    this.forgedElementConfig = { ...resolvedElement };
+    const elementConfig = { ...resolvedElement };
+    if (this.config?.state_color !== undefined) {
+      elementConfig.state_color = this.config.state_color;
+    }
+    this.forgedElementConfig = elementConfig;
     Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
@@ -195,8 +204,21 @@ export class UixForge extends LitElement {
     });
   }
 
+  private _mergeForgeMacros(uixConfig?: UixConfig): UixConfig | undefined {
+    if (!this._macros || Object.keys(this._macros).length === 0) return uixConfig;
+    if (!uixConfig) return uixConfig;
+    return {
+      ...uixConfig,
+      macros: { ...this._macros, ...(uixConfig.macros ?? {}) },
+    };
+  }
+
   get forgedElementConfig() {
-    return this._forgedElementConfig.config;
+    const config = this._forgedElementConfig.config;
+    if (!config?.uix) return config;
+    const mergedUix = this._mergeForgeMacros(config.uix);
+    if (mergedUix === config.uix) return config;
+    return { ...config, uix: mergedUix };
   }
 
   set forgedElementConfig(config: any) {
@@ -219,6 +241,10 @@ export class UixForge extends LitElement {
     error = this._mold.isError();
     if (error) return !this._showError;
     return this.hiddenByConfig() || this._mold.hidden();
+  }
+
+  get mold() {
+    return this._mold;
   }
 
   public getGridOptions() {
@@ -257,6 +283,7 @@ export class UixForge extends LitElement {
       delete forgeConfig.mold;
       delete forgeConfig.macros;
       delete forgeConfig.show_error;
+      delete forgeConfig.delayed_hass;
       delete forgeConfig.template_nesting;
       delete forgeConfig.uix;
       this.forgeConfig = forgeConfig;
@@ -380,6 +407,7 @@ export class UixForge extends LitElement {
     delete forgeConfig.mold;
     delete forgeConfig.macros;
     delete forgeConfig.show_error;
+    delete forgeConfig.delayed_hass;
     delete forgeConfig.template_nesting;
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
@@ -400,11 +428,12 @@ export class UixForge extends LitElement {
       this._sparkController.setConfig(this.forgeConfig.sparks);
     } else {
       this._mold.refresh(path);
+      this._sparkController.setConfig(this.forgeConfig.sparks);
     }
     apply_uix(
       (this as any),
       "card",
-      this._resolvedUix,
+      this._mergeForgeMacros(this._resolvedUix),
       { config: 
         { forge: this.forgeConfig, 
           element: this.forgedElementConfig 
@@ -419,15 +448,20 @@ export class UixForge extends LitElement {
   refreshForgedElement(path?: UixForgeConfigPath) {
     if (!this.forgedElement) return;
     if (!this.templatesReady) return;
+    this._sparkController.beforeForgedElementRefresh();
     if (this._mold.isCard()) {
       this.forgedElement.config = this.forgedElementConfig;
+      this._delayedHass && (this.forgedElement.hass = undefined);
       (this.forgedElement as HuiCard).load();
+      this._delayedHass && (this.forgedElement.hass = this.hass);
       this.refreshForge(["hidden"]);
       this.refreshForge(["grid_options"]);
     }
     if (this._mold.isBadge()) {
       this.forgedElement.config = this.forgedElementConfig;
+      !this._delayedHass && (this.forgedElement.hass = this.hass);
       (this.forgedElement as HuiBadge).load();
+      this._delayedHass && (this.forgedElement.hass = this.hass);
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isRow()) {
@@ -484,18 +518,20 @@ export class UixForge extends LitElement {
     if (this._mold.isCard()) {
       this.forgedElement = document.createElement("hui-card") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      (this.forgedElement as HuiCard).load();
-      this.forgedElement.hass = this.hass;
+      !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       this.forgedElement.layout = this.layout;
+      (this.forgedElement as HuiCard).load();
+      this._delayedHass && (this.forgedElement.hass = this.hass);
       return;
     }
     if (this._mold.isBadge()) {
       this.forgedElement = document.createElement("hui-badge") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
-      (this.forgedElement as HuiBadge).load();
-      this.forgedElement.hass = this.hass;
+      !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
+      (this.forgedElement as HuiBadge).load();
+      this._delayedHass && (this.forgedElement.hass = this.hass); 
       return;
     }
     if (this._mold.isRow()) {
@@ -614,7 +650,7 @@ export class UixForge extends LitElement {
   }
 }
 
-window.addEventListener("uix-bootstrap", async (ev: CustomEvent) => {
+window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   if (!customElements.get(UIX_FORGE_TYPE)) {
     customElements.define(UIX_FORGE_TYPE, UixForge);

@@ -1,7 +1,6 @@
 node_modules/
 dist/
 __pycache__/
-.vscode/settings.json
 .venv/
 docs/site/
 docs/.cache/

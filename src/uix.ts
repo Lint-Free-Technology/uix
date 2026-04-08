@@ -81,9 +81,9 @@ export class Uix extends LitElement {
     super();
 
     // uix_update is issued when themes are reloaded
-    document.addEventListener("uix_update", (ev: CustomEvent) => {
+    document.addEventListener("uix_update", (ev: Event) => {
       // Don't process disconnected elements
-      this.dynamicVariablesHaveChanged = ev.detail?.variablesChanged || false;
+      this.dynamicVariablesHaveChanged = (ev as CustomEvent).detail?.variablesChanged || false;
       if (!this.isConnected) {
         this._processStylesOnConnect = true;
         return;

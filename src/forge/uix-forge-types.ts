@@ -21,7 +21,8 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "disabled",
   "row_span",
   "column_span",
-  "background"
+  "background",
+  "state_color"
 ];
 
 export const UIX_FORGE_FORGE_MOLDS = [
@@ -46,6 +47,7 @@ export interface UixForgeForge {
     template_nesting?: string;
     sparks?: Record<string, any>[];
     uix?: UixConfig;
+    delayed_hass?: boolean;
 }
 
 export interface UixForgeElement {
@@ -59,16 +61,17 @@ export interface UixForgeConfig {
   forge?: UixForgeForge;
   element?: UixForgeElement;
   disabled?: boolean;
+  state_color?: boolean;
 }
 
 export class UixForgeConfigBuilder {
   _config: {};
   _templateBindings: Map<string, { callback: (res: string) => void }>;
-  _resolveReady: (value?: unknown) => void;
+  _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
-  refreshCallback: (key: string) => void;
+  refreshCallback?: (path: UixForgeConfigPath) => void;
 
-  constructor(refreshCallback?: (key: string) => void) {
+  constructor(refreshCallback?: (path: UixForgeConfigPath) => void) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
@@ -106,6 +109,7 @@ export class UixForgeConfigBuilder {
   private checkReady() {
     function _checkReady(value) {
       for (const key of Object.keys(value)) {
+        if (key === "uix") return true;
         const val = value[key];
         if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
         if (val === undefined || val === null) continue;

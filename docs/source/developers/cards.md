@@ -9,15 +9,15 @@ Generally UIX should work with all custom cards.
     - Custom card loaded by Home Assistant and not child of another custom card. In this case UIX patches via `<hui-card>`.
     - Custom card includes `<ha-card>` and stores card config in either `config` or `_config` property. In this case UIX patches via `<ha-card>`.
 
-!!! warning "Where UIX will not work without further code or styling from parent card"
-    - Custom card loaded by another custom card that does not use modern `<hui-card>` method AND
-      - Custom card does not use `<ha-card>` OR
-      - Custom card uses `<ha-card>` but does not use `config` or `_config` property to store config. In this case UIX cannot find the `uix:` config for styling and does not apply.
+!!! warning "Where UIX will NOT work without further code or styling from parent card"
+    - Custom card loaded by another custom card that does NOT use modern `<hui-card>` method AND
+      - Custom card does NOT use `<ha-card>` OR
+      - Custom card uses `<ha-card>` but does NOT use `config` or `_config` property to store config. In this case UIX cannot find the `uix:` config for styling and does not apply.
 
 If your custom card's use falls into the case where it is not working with other custom cards, you can apply UIX directly using `uix.applyToElement()`.
 
 ```js
-customElements.whenDefined("uix").then((uix) => {
+customElements.whenDefined("uix-node").then((uix) => {
   uix.applyToElement(
     el, // The root element
     "type", // Determines which theme variables should apply (uix-<type>, uix-<type>-yaml)

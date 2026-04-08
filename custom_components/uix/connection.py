@@ -7,7 +7,7 @@ from homeassistant.components.websocket_api import (
 from homeassistant.components import websocket_api
 import voluptuous as vol
 
-from .helpers import get_version
+from .helpers import get_version, load_secrets, resolve_secrets_in_config
 from .const import (
     DOMAIN,
     WS_CONNECT,
@@ -41,11 +41,17 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         @callback
         def on_foundries_updated(event):
             """Push foundry updates to this client via the uix/connect subscription."""
-            entries = hass.config_entries.async_entries(DOMAIN)
-            foundries = {}
-            if entries:
-                foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-            send_update({CONF_FOUNDRIES: foundries})
+            async def _push():
+                try:
+                    entries = hass.config_entries.async_entries(DOMAIN)
+                    foundries = {}
+                    if entries:
+                        foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
+                    secrets = await hass.async_add_executor_job(load_secrets, hass)
+                    send_update({CONF_FOUNDRIES: resolve_secrets_in_config(foundries, secrets)})
+                except Exception:
+                    _LOGGER.exception("Error pushing foundry update to client")
+            hass.async_create_task(_push())
 
         remove_listener = hass.bus.async_listen(EVENT_FOUNDRIES_UPDATED, on_foundries_updated)
 
@@ -80,7 +86,8 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         foundries = {}
         if entries:
             foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-        connection.send_result(msg["id"], {CONF_FOUNDRIES: foundries})
+        secrets = await hass.async_add_executor_job(load_secrets, hass)
+        connection.send_result(msg["id"], {CONF_FOUNDRIES: resolve_secrets_in_config(foundries, secrets)})
 
     @websocket_api.websocket_command(
         {
