@@ -30,7 +30,7 @@ element:
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"` or `"section"`. |
-| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. |
+| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
@@ -79,16 +79,133 @@ element:
   entity: light.living_room
 ```
 
-## Sections
+### Element styling
 
-When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
+UIX Styling can be applied to the element in the usual way. Only the usual `config` variable is available which is the standard variable resolved by UIX Styling for elements.
 
-When using UIX Forge for sections, the following config keys can be set directly to configure how the section shows, though they **do not support templates**.
+!!! warning
+    Element UIX Styling will **NOT** contain the forge and spark variables available in forge UIX Styling. If you wish to use these then use UIX Styling on the forge rather than the forged element.
 
 ```yaml
 type: custom:uix-forge
 forge:
-  hidden: # use hidden to control visibility
+  mold: card
+  uix:
+    style: |
+      :host {
+        --ha-card-border-radius: 20px;
+      }
+element:
+  type: tile
+  entity: light.living_room
+  uix:
+    style: |
+      span.primary::after {
+        content: ' - {{ state_translated(config.entity) }}';
+      }
+```
+
+### Variables and macros
+
+Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element. This is shown in the example below.
+
+!!! example inline end "Macro example"
+    ![Example output](../assets/page-assets/forge/forge-macro-example.gif)
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  macros:
+    state_color:
+      params:
+        - entity_id
+      template: "{{ 'red' if is_state(entity_id, 'on') else 'green' }}"
+  uix:
+    style: |
+      :host {
+        --ha-card-border-radius: 20px;
+        --ha-card-border-color: {{ state_color(config.element.entity) }};
+        --ha-card-border-width: 3px;
+      }
+element:
+  type: tile
+  entity: light.bed_light
+  uix:
+    style: |
+      span.primary {
+        color: {{ state_color(config.entity) }};
+      }
+      span.primary::after {
+        content: ' - {{ state_translated(config.entity) }}';
+      }
+```
+
+!!! tip
+    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function.
+
+If you wish to have a standard macro to access the entity across forge macros, forge UIX styling and forged element UIX Styling you can use an `entity()` macro as shown in the following example.
+
+`entity()` macro template for easy copying
+
+```jinja
+{{ config.element.entity | default('') if 'element' in config else config.entity | default('') }}
+```
+
+The full example below provides for the same output as the previous example, but uses the `entity()` macro including a template for `name:` in the forged element, which will run in the context of the forge processing templates.
+
+!!! example inline end "Macro example using entity()"
+    ![Example output](../assets/page-assets/forge/forge-macro-example.gif)
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  macros:
+    entity:
+      template: >-
+        {{ config.element.entity | default('') if 'element' in config else
+        config.entity | default('') }}
+    state_color:
+      params:
+        - entity_id
+      template: "{{ 'red' if is_state(entity_id, 'on') else 'green' }}"
+  uix:
+    style: |
+      :host {
+        --ha-card-border-radius: 20px;
+        --ha-card-border-color: {{ state_color(entity()) }};
+        --ha-card-border-width: 3px;
+      }
+element:
+  type: tile
+  entity: light.bed_light
+  name: "{{ entity_name(entity()) }} - {{ state_translated(entity()) }}"
+  uix:
+    style: |
+      span.primary {
+        color: {{ state_color(entity()) }};
+      }
+```
+
+!!! note "For forged element config"
+    - the template for `name` is running in context of forge so the `entity()` macro will resolve to provide `config.element.entity`.
+    - the template used for CSS `color` in `uix` config is running in context of UIX Styling for the forged element so the `entity()` macro will resolve to provide `config.entity`.
+
+## Sections
+
+When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
+
+When using UIX Forge for sections, the following config keys can be set directly to configure how the section shows, though they **do not support templates**:
+
+- `row_span`
+- `column_span`
+- `background`
+
+```yaml
+type: custom:uix-forge
+forge:
+  hidden: # use hidden to control visibility, templates supported
   # ...
 element:
   # ...

@@ -3,7 +3,7 @@ import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { apply_uix, buildMacros, ModdedElement } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, ModdedElement, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -204,8 +204,21 @@ export class UixForge extends LitElement {
     });
   }
 
+  private _mergeForgeMacros(uixConfig?: UixConfig): UixConfig | undefined {
+    if (!this._macros || Object.keys(this._macros).length === 0) return uixConfig;
+    if (!uixConfig) return uixConfig;
+    return {
+      ...uixConfig,
+      macros: { ...this._macros, ...(uixConfig.macros ?? {}) },
+    };
+  }
+
   get forgedElementConfig() {
-    return this._forgedElementConfig.config;
+    const config = this._forgedElementConfig.config;
+    if (!config?.uix) return config;
+    const mergedUix = this._mergeForgeMacros(config.uix);
+    if (mergedUix === config.uix) return config;
+    return { ...config, uix: mergedUix };
   }
 
   set forgedElementConfig(config: any) {
@@ -420,7 +433,7 @@ export class UixForge extends LitElement {
     apply_uix(
       (this as any),
       "card",
-      this._resolvedUix,
+      this._mergeForgeMacros(this._resolvedUix),
       { config: 
         { forge: this.forgeConfig, 
           element: this.forgedElementConfig 
