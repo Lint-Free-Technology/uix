@@ -2,6 +2,7 @@ import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { actionHandlerBind } from "./action-handler";
 import { parseDuration } from "../../helpers/common/parse-duration";
+import { LockTargetAdapter, getLockTargetAdapter } from "./lock-target-adapters";
 
 const LOCK_OVERLAY_ID_ATTR = "data-uix-forge-lock-id";
 
@@ -70,6 +71,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _retryCount: number = 0;
   private _retryUntil: number = 0;
   private readonly _id: string;
+  private _targetElement: HTMLElement | null = null;
+  private _targetAdapter: LockTargetAdapter | null = null;
 
   /**
    * Set to `true` when the overlay visuals need to be refreshed — either
@@ -159,6 +162,11 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   }
 
   private _remove() {
+    if (this._targetAdapter && this._targetElement) {
+      this._targetAdapter.cleanup(this._targetElement);
+      this._targetAdapter = null;
+    }
+    this._targetElement = null;
     if (this._overlayElement) {
       this._overlayElement.remove();
       this._overlayElement = null;
@@ -251,6 +259,13 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // is newly created or when the config has changed (_visualNeedsUpdate).
     // This avoids unnecessary DOM style writes on every hass state update,
     // which can fire multiple times per second and caused the overlay to flash.
+
+    // Store the resolved target element and ensure an adapter exists for it.
+    this._targetElement = element;
+    if (!this._targetAdapter) {
+      this._targetAdapter = getLockTargetAdapter(element);
+    }
+
     if (isNew || this._visualNeedsUpdate) {
       // Refresh the action-handler binding so that hasHold / hasDoubleClick
       // stay current if the config is updated after the overlay was first created.
@@ -269,6 +284,16 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   /** Refresh the overlay's visual state to match the current lock/unlock state. */
   private _updateOverlay(overlay: HTMLElement) {
     const shouldShow = this._shouldShowLock();
+
+    // Drive target-element-specific workarounds (e.g. ha-tile-icon interactive).
+    if (this._targetAdapter && this._targetElement) {
+      const isLocked = shouldShow && !this._isUnlocked;
+      if (isLocked) {
+        this._targetAdapter.lock(this._targetElement);
+      } else {
+        this._targetAdapter.unlock(this._targetElement);
+      }
+    }
 
     if (!shouldShow) {
       overlay.style.setProperty("display", "none");
