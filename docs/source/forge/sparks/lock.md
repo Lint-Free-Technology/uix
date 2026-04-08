@@ -102,6 +102,7 @@ When no entry matches:
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
 | `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_size` | number or string | `18px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set via UIX Styling or in a theme. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
 | `unlocked_action` | object | — | Action to execute immediately after a successful unlock. |
@@ -262,6 +263,29 @@ element:
 
 ---
 
+### Tile card: lock the tile icon only
+
+Use `for` to target `ha-tile-icon` directly — only the icon area is locked, leaving the rest of the tile interactive. The lock icon defaults to `18px` in this context to match the tile icon's proportions.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: lock
+      for: hui-tile-card $ ha-tile-icon
+      locks:
+        - code: 1234
+          admins: true
+element:
+  type: tile
+  entity: light.bed_light
+  tap_action:
+    action: toggle
+```
+
+---
+
 ### Custom code dialog labels
 
 Use `code_dialog` to override the title and button labels shown in the PIN / passphrase entry dialog:
@@ -299,7 +323,7 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-background-unlocked` | `none` | Background colour of the overlay when unlocked. Defaults to no background so `--uix-lock-background` does not bleed into the unlocked state. |
 | `--uix-lock-background-blocked` | `--uix-lock-background` | Background colour when the lock is permanently blocked (no unlock path, non-row molds). |
 | `--uix-lock-border-radius` | `inherit` | Border radius of the overlay (inherits the target's). |
-| `--uix-lock-icon-size` | `24px` | Size of the lock icon. |
+| `--uix-lock-icon-size` | `24px` | Size of the lock icon. Overrides any `icon_size` set in spark config. |
 | `--uix-lock-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Useful for CSS-only positioning when `icon_position` is not set in config. |
 | `--uix-lock-icon-fade-duration` | `2s` | Duration of the opacity fade when the lock icon fades away on unlock (only used when `icon_unlocked` is not set). |
 | `--uix-lock-row-background` | `--uix-lock-background` | Background colour of the overlay when the forge mold is `row`. |
