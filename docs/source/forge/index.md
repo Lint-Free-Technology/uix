@@ -196,12 +196,16 @@ element:
 
 When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
 
-When using UIX Forge for sections, the following config keys can be set directly to configure how the section shows, though they **do not support templates**.
+When using UIX Forge for sections, the following config keys can be set directly to configure how the section shows, though they **do not support templates**:
+
+- `row_span`
+- `column_span`
+- `background`
 
 ```yaml
 type: custom:uix-forge
 forge:
-  hidden: # use hidden to control visibility
+  hidden: # use hidden to control visibility, templates supported
   # ...
 element:
   # ...
