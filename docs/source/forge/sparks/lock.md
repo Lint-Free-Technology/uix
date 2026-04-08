@@ -326,6 +326,7 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-icon-size` | `24px` | Size of the lock icon. Overrides any `icon_size` set in spark config. |
 | `--uix-lock-icon-background` | `none` | Background of the lock icon element. Useful for adding a coloured pill or circle behind the icon. |
 | `--uix-lock-icon-border-radius` | `none` | Border radius of the lock icon element. Use `50%` for a circle or a large value (e.g. `50px`) for a pill shape. |
+| `--uix-lock-icon-padding` | `0` | Padding around the lock icon, creating space between the icon and its background. |
 | `--uix-lock-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Useful for CSS-only positioning when `icon_position` is not set in config. |
 | `--uix-lock-icon-fade-duration` | `2s` | Duration of the opacity fade when the lock icon fades away on unlock (only used when `icon_unlocked` is not set). |
 | `--uix-lock-row-background` | `--uix-lock-background` | Background colour of the overlay when the forge mold is `row`. |
