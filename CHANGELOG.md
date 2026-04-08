@@ -1,3 +1,9 @@
+## [6.1.0-beta.21](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.20...v6.1.0-beta.21) (2026-04-08)
+
+### ⭐ New Features
+
+* **forge:** merge forge.macros into uix.macros for forge and forgedElement ([#187](https://github.com/Lint-Free-Technology/uix/issues/187)) ([82c3d0e](https://github.com/Lint-Free-Technology/uix/commit/82c3d0ed62a410104a7b0c7ac08fafa52162ca93))
+
 ## [6.1.0-beta.20](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.19...v6.1.0-beta.20) (2026-04-07)
 
 ### 🐞 Bug Fixes
