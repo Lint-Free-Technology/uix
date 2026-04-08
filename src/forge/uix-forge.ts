@@ -215,15 +215,10 @@ export class UixForge extends LitElement {
 
   get forgedElementConfig() {
     const config = this._forgedElementConfig.config;
-    if (!this._macros || Object.keys(this._macros).length === 0) return config;
     if (!config?.uix) return config;
-    return {
-      ...config,
-      uix: {
-        ...config.uix,
-        macros: { ...this._macros, ...(config.uix.macros ?? {}) },
-      },
-    };
+    const mergedUix = this._mergeForgeMacros(config.uix);
+    if (mergedUix === config.uix) return config;
+    return { ...config, uix: mergedUix };
   }
 
   set forgedElementConfig(config: any) {
