@@ -1,3 +1,50 @@
+## [6.1.0](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0...v6.1.0) (2026-04-08)
+
+### ⭐ New Features
+
+* **forge:** Add Button Spark ([#168](https://github.com/Lint-Free-Technology/uix/issues/168)) ([51cfbe8](https://github.com/Lint-Free-Technology/uix/commit/51cfbe8110eedf6046bebc2259ab29702a8dfd8a)), closes [#166](https://github.com/Lint-Free-Technology/uix/issues/166)
+* **forge:** add lock spark for UIX Forge ([#178](https://github.com/Lint-Free-Technology/uix/issues/178)) ([24e2860](https://github.com/Lint-Free-Technology/uix/commit/24e28607505b1703e28ad9bc9128619010c483e9))
+* **forge:** add Search Spark for shadow DOM element mutation ([#136](https://github.com/Lint-Free-Technology/uix/issues/136)) ([3343b31](https://github.com/Lint-Free-Technology/uix/commit/3343b316b6dc13a56ded00838366f0cad20d4540))
+* **forge:** map spark with memory mode ([#177](https://github.com/Lint-Free-Technology/uix/issues/177)) ([9b60a99](https://github.com/Lint-Free-Technology/uix/commit/9b60a997b98380d11a268482d8bc6722b3cdeb7c)), closes [#176](https://github.com/Lint-Free-Technology/uix/issues/176)
+* **forge:** merge forge.macros into uix.macros for forge and forgedElement ([#187](https://github.com/Lint-Free-Technology/uix/issues/187)) ([82c3d0e](https://github.com/Lint-Free-Technology/uix/commit/82c3d0ed62a410104a7b0c7ac08fafa52162ca93))
+* **forge:** Resolve `!secret` references in foundry configs ([#184](https://github.com/Lint-Free-Technology/uix/issues/184)) ([13cde4f](https://github.com/Lint-Free-Technology/uix/commit/13cde4f67a91bae718cc613d406e178c825d4998))
+* **forge:** support multiple sparks of the same type ([#152](https://github.com/Lint-Free-Technology/uix/issues/152)) ([b0b2b37](https://github.com/Lint-Free-Technology/uix/commit/b0b2b37fa8e443067ea90fe63c27ca4a2845d47a))
+* **lock-spark:** add `code_dialog` config to lock spark for customising the PIN/passphrase dialog title, submit_text and cancel_text ([#185](https://github.com/Lint-Free-Technology/uix/issues/185)) ([53c4f90](https://github.com/Lint-Free-Technology/uix/commit/53c4f90c3cb3ffdc1cf367137419d47cb25ef612))
+* **lock-spark:** Support confirmation object with title and text in lock spark ([#182](https://github.com/Lint-Free-Technology/uix/issues/182)) ([40b2551](https://github.com/Lint-Free-Technology/uix/commit/40b2551adf87732f5a1181e082b1bd1020974526))
+* **macros:** transitively resolve macro dependencies in buildMacros ([#175](https://github.com/Lint-Free-Technology/uix/issues/175)) ([82c55f8](https://github.com/Lint-Free-Technology/uix/commit/82c55f888d5dba71f02e67d70923dd291cece40e))
+* **sections:** Support styling section backgrounds by UIX config. ([#149](https://github.com/Lint-Free-Technology/uix/issues/149)) ([b6b1946](https://github.com/Lint-Free-Technology/uix/commit/b6b19464239f86da453a8b3d5a8b6050954deb20))
+
+### 🐞 Bug Fixes
+
+* **event-spark:** event spark events causing all forged elements with event spark to refresh even if forge_id does not match ([54a3202](https://github.com/Lint-Free-Technology/uix/commit/54a3202cb93113715871bc822abc6c58f94bdac5))
+* **forge sparks:** centralize spark lifecycle guards - stops growing prepend/append in search spark ([#172](https://github.com/Lint-Free-Technology/uix/issues/172)) ([1fc2446](https://github.com/Lint-Free-Technology/uix/commit/1fc244692ac13bde38d3fbbe42a3f214676d7ee8))
+* **forge sparks:** Template updates not applying to sparks after first update ([1704219](https://github.com/Lint-Free-Technology/uix/commit/1704219cbbc5802d3f97c1702e1f0e657f1d42c0))
+* **forge:** Add `delayed_hass` forge config option to suppress console errors on load for some custom cards. e.g. apexcharts_card ([8592c12](https://github.com/Lint-Free-Technology/uix/commit/8592c126d517f6db11426547bf9521d0bab5534d))
+* **forge:** allow and pass state_color through to forged element in row mold ([#180](https://github.com/Lint-Free-Technology/uix/issues/180)) ([e78a87e](https://github.com/Lint-Free-Technology/uix/commit/e78a87e79e92fc88a00ad73b4b7d5267de76b19e))
+* **forge:** Console errors when editing UIX Forge in UI editor ([afebb46](https://github.com/Lint-Free-Technology/uix/commit/afebb467a24290694ddeb1ae58c706becd80c9f7))
+* **forge:** Templates in uix in element config cause element not to show due to unfulfilled ready promise ([12e4ac7](https://github.com/Lint-Free-Technology/uix/commit/12e4ac737deb6c6ca212a7c0962c4ea5e2be749e))
+* **lock-spark:** prevent overlay continuous updates ([#183](https://github.com/Lint-Free-Technology/uix/issues/183)) ([9073462](https://github.com/Lint-Free-Technology/uix/commit/907346251c5daf36bb610bc5ef9ff924db63448f))
+* **lock-spark:** Set lock spark display to block by default and allow override by CSS ([3879182](https://github.com/Lint-Free-Technology/uix/commit/3879182a924924f9aca8d6c8705eff828903f375))
+* **lock-spark:** Update icon display to inline-block so --uix-icon-position applies ([37e3175](https://github.com/Lint-Free-Technology/uix/commit/37e3175e6c64d698ebe5dc7e4bc6ed39c967dbf2))
+* **toast:** Refactor for timing reliability ([1eb319f](https://github.com/Lint-Free-Technology/uix/commit/1eb319fd310050ae914a7fcae63d6222875b507e))
+* **tooltip-spark:** fix flickering of tooltip spark from constant recreation ([#174](https://github.com/Lint-Free-Technology/uix/issues/174)) ([f508bc7](https://github.com/Lint-Free-Technology/uix/commit/f508bc7e73a65ac9bdf2e138ba494cb0f34f20a8))
+
+### 📦 Dependency Upgrades
+
+* bump @babel/preset-env from 7.23.6 to 7.29.2 ([#145](https://github.com/Lint-Free-Technology/uix/issues/145)) ([ecd93ae](https://github.com/Lint-Free-Technology/uix/commit/ecd93ae9fdde7e31becfecdeb6be1f9f5a7b4432))
+* bump @rollup/plugin-babel from 6.0.4 to 7.0.0 ([#146](https://github.com/Lint-Free-Technology/uix/issues/146)) ([c8d690e](https://github.com/Lint-Free-Technology/uix/commit/c8d690e5abc7d9cc02b28ddc43e2b7e1a90873a4))
+* bump lit from 3.1.0 to 3.3.2 ([#161](https://github.com/Lint-Free-Technology/uix/issues/161)) ([97816ce](https://github.com/Lint-Free-Technology/uix/commit/97816ce60844dd3541c5a4642c0c0289c5045dc7))
+* bump rollup from 2.80.0 to 4.60.1 ([#143](https://github.com/Lint-Free-Technology/uix/issues/143)) ([2400e1b](https://github.com/Lint-Free-Technology/uix/commit/2400e1b5d15f0adbd766cab452148ffe125b6961))
+* bump rollup-plugin-typescript2 from 0.36.0 to 0.37.0 ([#144](https://github.com/Lint-Free-Technology/uix/issues/144)) ([7475217](https://github.com/Lint-Free-Technology/uix/commit/7475217403aef8132f89e1961fcae4e18126b85f))
+
+### ⚙️ Miscellaneous
+
+* **button-spark:** add `icon` config for icon-only buttons ([#169](https://github.com/Lint-Free-Technology/uix/issues/169)) ([32b52b7](https://github.com/Lint-Free-Technology/uix/commit/32b52b7ef414915a1d1a6f9aebd07c7cf68c85ef))
+* **button-spark:** Adjust icon button height and alignment ([70a22b5](https://github.com/Lint-Free-Technology/uix/commit/70a22b539cebf8870fb6ecc57819ce2e82addcc1))
+* **button-spark:** style matching Home Assistant icon button when using with icon only ([#170](https://github.com/Lint-Free-Technology/uix/issues/170)) ([ae5fdf0](https://github.com/Lint-Free-Technology/uix/commit/ae5fdf0e72770960d42397f9bb38ebadf2c3e2e1))
+* **forge:** Provide action-handler scaffold for for UIX Forge Sparks ([#167](https://github.com/Lint-Free-Technology/uix/issues/167)) ([2d8144e](https://github.com/Lint-Free-Technology/uix/commit/2d8144e077b829f82f22d96a40ad5ef7f056f54d))
+* TypeScript 6 build errors and VSCode linting alignment ([#165](https://github.com/Lint-Free-Technology/uix/issues/165)) ([c68b011](https://github.com/Lint-Free-Technology/uix/commit/c68b0110119f126ffd2430a8702b8d1cb594ba4f))
+
 ## [6.1.0-beta.21](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0-beta.20...v6.1.0-beta.21) (2026-04-08)
 
 ### ⭐ New Features
