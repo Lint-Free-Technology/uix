@@ -1,3 +1,10 @@
+## [6.2.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.3...v6.2.0-beta.4) (2026-04-09)
+
+### 🐞 Bug Fixes
+
+* **beta:** Don't delete entities from config in case locked ([8edf7bd](https://github.com/Lint-Free-Technology/uix/commit/8edf7bdc80dddfdad49b4bdec539918d53b109cc))
+* **beta:** Regression with state_color causing configuration error ([598e2cb](https://github.com/Lint-Free-Technology/uix/commit/598e2cbe651ae5f656c862971a09544b33121ff1))
+
 ## [6.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.2...v6.2.0-beta.3) (2026-04-09)
 
 ### ⭐ New Features
