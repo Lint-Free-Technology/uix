@@ -178,6 +178,7 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
   }
 
   defaultIconSize(): string {
+    // ha-tile-icon is a compact element; 12px fits neatly in its corner.
     return "12px";
   }
 
@@ -186,6 +187,7 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
   }
 
   defaultIconPosition(): AdapterIconPosition | null {
+    // Position the icon at the top-left corner of ha-tile-icon.
     return { top: "3px", left: "3px" };
   }
 
