@@ -43,8 +43,13 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
+    const wasFitMap = this._fitMap;
     this._memory = config.memory === true;
     this._fitMap = config.fit_map === true;
+
+    if (!this._fitMap || (!wasFitMap && this._fitMap)) {
+      this._fitMapRunOnce = false;
+    }
     this._saveMapState();
   }
 
