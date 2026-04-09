@@ -123,9 +123,9 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 
 | Value | Effect |
 |---|---|
-| `action: element_tap` | Fires the forged element's `tap_action`. |
-| `action: element_hold` | Fires the forged element's `hold_action`. |
-| `action: element_double_tap` | Fires the forged element's `double_tap_action`. |
+| `action: element_tap` | Fires the target element's `tap_action`. |
+| `action: element_hold` | Fires the target element's `hold_action`. |
+| `action: element_double_tap` | Fires the target element's `double_tap_action`. |
 | Any HA action object | Dispatches that action against `entity` (e.g. `action: toggle`). |
 
 ### Lock entry keys
