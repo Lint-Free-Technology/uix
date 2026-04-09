@@ -10,7 +10,7 @@ The `map` spark adds advanced map state management to a map card used inside a [
 
 - **Memory mode** (`memory: true`): Captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved. Without it, every forge template update causes the map to reset to its default zoom level and centre position.
 - **Fit map mode** (`fit_map: true`): Fits the map view when map card does not auto fit on load when used in custom cards which may hide the map initially. e.g. `custom: auto-entities`.
-- **Tour mode** (`tour: true | object`): Automatically flies the map between a list of points of interest. A pause/play button is injected into the map. When `tour: true` all defaults are used; pass an object to customise behaviour.
+- **Tour mode** (`tour: true | object`): Automatically moves the map between a list of points of interest. A pause/play button is injected into the map. When `tour: true` all defaults are used; pass an object to customise behaviour.
 
 
 ## Basic usage
@@ -42,7 +42,7 @@ element:
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `period` | string or number | `10s` | Time to spend at each point of interest. Accepts a human-readable duration (e.g. `"30s"`, `"2m"`) or a number in milliseconds. |
-| `zoom` | number | *(unset)* | Default zoom level used when flying to a POI. Omit to keep the map's current zoom. |
+| `zoom` | number | `14` | Default zoom level used when moving to a POI. |
 | `icon_pause` | string | `mdi:pause` | Icon shown on the overlay button while the tour is playing. |
 | `icon_play` | string | `mdi:play` | Icon shown on the overlay button while the tour is paused. |
 | `icon_position` | object | `{bottom: 10px, right: 10px}` | CSS position of the pause/play button. Accepts `top`, `bottom`, `left`, and `right` keys (numbers are treated as pixels). |
@@ -63,12 +63,12 @@ The pause/play button can be styled using CSS variables placed on the `ha-card` 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `--uix-map-tour-color` | `var(--primary-color)` | Icon colour. |
-| `--uix-map-tour-background` | `rgba(255,255,255,0.8)` | Button background. |
-| `--uix-map-tour-width` | `auto` | Button width. |
-| `--uix-map-tour-height` | `auto` | Button height. |
-| `--uix-map-tour-border-radius` | `4px` | Button border radius. |
-| `--uix-map-tour-z-index` | `1000` | Button z-index (Leaflet controls use 1000). |
+| `--uix-map-tour-icon-color` | `var(--primary-color)` | Icon colour. |
+| `--uix-map-tour-icon-background` | `rgba(255,255,255,0.8)` | Button background. |
+| `--uix-map-tour-icon-width` | `auto` | Button width. |
+| `--uix-map-tour-icon-height` | `auto` | Button height. |
+| `--uix-map-tour-icon-border-radius` | `9999px` | Button border radius (pill by default). |
+| `--uix-map-tour-icon-z-index` | `1000` | Button z-index (Leaflet controls use 1000). |
 
 ## How it works
 
@@ -92,7 +92,7 @@ After the map is ready (and after `fit_map` completes if both are configured), t
 
 1. Resolves the POI list (from `poi` config, or by reading `latitude`/`longitude` from hass state attributes of the ha-map entities).
 2. Injects a `ha-icon-button` overlay into the Leaflet container.
-3. Starts a repeating timer that calls `leafletMap.flyTo()` to animate the map to the next POI every `period` seconds.
+3. Starts a repeating timer that calls `leafletMap.setView()` to move the map to the next POI every `period` seconds. On first start the map moves to the first POI immediately without waiting for the first period to elapse.
 4. When the user clicks the pause/play button, the timer is stopped or restarted.
 
 When `memory: true` and `tour` are both active, hass-update memory restores are suppressed while the tour is playing so that the tour animation is not interrupted.
@@ -185,6 +185,8 @@ element:
 
 ### Styling the tour button
 
+Override the default pill shape with rounded corners and a dark background:
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -199,9 +201,9 @@ element:
   uix:
     style: |
       ha-card {
-        --uix-map-tour-color: white;
-        --uix-map-tour-background: rgba(0,0,0,0.5);
-        --uix-map-tour-border-radius: 50%;
+        --uix-map-tour-icon-color: white;
+        --uix-map-tour-icon-background: rgba(0,0,0,0.5);
+        --uix-map-tour-icon-border-radius: 4px;
       }
 ```
 

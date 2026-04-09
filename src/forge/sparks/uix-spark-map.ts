@@ -32,13 +32,13 @@ interface TourIconPosition {
  * **Fit map mode** (`fit_map: true`): Fits the map view when the map card
  * does not auto-fit on load (e.g. when used inside `custom:auto-entities`).
  *
- * **Tour mode** (`tour: true | object`): Automatically flies between a list
+ * **Tour mode** (`tour: true | object`): Automatically moves between a list
  * of points of interest (POI). A pause/play button is injected into the map.
  * When `tour: true` all defaults are used. Pass an object to customise:
  *
  *   tour:
  *     period: 10s             # time at each POI (default 10 s)
- *     zoom: 14                # default zoom (omit to keep current)
+ *     zoom: 14                # default zoom (default 14)
  *     icon_pause: mdi:pause   # icon shown while playing
  *     icon_play: mdi:play     # icon shown while paused
  *     icon_position:          # CSS position of the button (default: bottom-right)
@@ -122,7 +122,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (this._tour) {
       const t: Record<string, any> = (tourRaw === true) ? {} : (tourRaw as Record<string, any>);
       this._tourPeriod = parseDuration(t.period) ?? 10000;
-      this._tourZoom = t.zoom !== undefined ? Number(t.zoom) : undefined;
+      this._tourZoom = t.zoom !== undefined ? Number(t.zoom) : 14;
       this._tourIconPause = String(t.icon_pause || "mdi:pause");
       this._tourIconPlay = String(t.icon_play || "mdi:play");
       this._tourIconPosition = this._parseTourIconPosition(t.icon_position);
@@ -314,6 +314,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (!this._tourStarted) {
       this._tourStarted = true;
       if (this._tourPlaying) {
+        this._advanceTour(); // navigate to first POI immediately
         this._scheduleTourTick();
       }
     }
@@ -343,17 +344,17 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const container = document.createElement("div");
     container.classList.add("uix-tour-control");
     container.style.setProperty("position", "absolute");
-    container.style.setProperty("z-index", "var(--uix-map-tour-z-index, 1000)");
+    container.style.setProperty("z-index", "var(--uix-map-tour-icon-z-index, 1000)");
     this._applyTourButtonPosition(container);
 
     // ── ha-icon-button ──────────────────────────────────────────────────────
     const btnEl = document.createElement("ha-icon-button") as HTMLElement;
     (btnEl as any).label = this._tourPlaying ? "Pause tour" : "Play tour";
-    btnEl.style.setProperty("color", "var(--uix-map-tour-color, var(--primary-color, #03a9f4))");
-    btnEl.style.setProperty("background", "var(--uix-map-tour-background, rgba(255,255,255,0.8))");
-    btnEl.style.setProperty("width", "var(--uix-map-tour-width, auto)");
-    btnEl.style.setProperty("height", "var(--uix-map-tour-height, auto)");
-    btnEl.style.setProperty("border-radius", "var(--uix-map-tour-border-radius, 4px)");
+    btnEl.style.setProperty("color", "var(--uix-map-tour-icon-color, var(--primary-color, #03a9f4))");
+    btnEl.style.setProperty("background", "var(--uix-map-tour-icon-background, rgba(255,255,255,0.8))");
+    btnEl.style.setProperty("width", "var(--uix-map-tour-icon-width, auto)");
+    btnEl.style.setProperty("height", "var(--uix-map-tour-icon-height, auto)");
+    btnEl.style.setProperty("border-radius", "var(--uix-map-tour-icon-border-radius, 9999px)");
 
     // Inner ha-icon carries the mdi icon string.
     const iconEl = document.createElement("ha-icon") as HTMLElement & { icon?: string };
@@ -426,12 +427,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const haMap = this._getHaMap();
     const leafletMap = haMap?.leafletMap;
     if (!leafletMap) return;
-    const zoom = poi.zoom ?? this._tourZoom;
-    if (zoom !== undefined) {
-      leafletMap.flyTo([poi.lat, poi.lng], zoom);
-    } else {
-      leafletMap.flyTo([poi.lat, poi.lng]);
-    }
+    const zoom = poi.zoom ?? this._tourZoom ?? leafletMap.getZoom();
+    leafletMap.setView([poi.lat, poi.lng], zoom);
   }
 
   /**
