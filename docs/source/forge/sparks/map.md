@@ -30,10 +30,10 @@ element:
 ## Configuration
 
 | Key | Type | Default | Description |
-|-----|------|----- ---|-------------|
-| `type`   | string | — | Must be `map`. |
+| --- | --- | --- | --- |
+| `type` | string | — | Must be `map`. |
 | `memory` | boolean | false | Save/restore zoom and centre before/after each update. |
-| `fit_map`| boolean | false | Fit map view to all entities once map is visible (useful for cards hidden on load). |
+| `fit_map` | boolean | false | Fit map view to all entities once map is visible (useful for cards hidden on load). |
 
 ## How it works
 
