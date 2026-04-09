@@ -49,10 +49,10 @@ If Leaflet has not yet initialised when the refresh fires (e.g. on initial rende
 
 **Fit map mode:**
 
-After the forged element and `ha-map` finish updating and once client width is non-zero, the spark will call `fitMap()` on `ha-map`.
+After the forged element and `ha-map` finish updating and once `hap-map` client width is non-zero and leaflet is ready, the spark will call `fitMap()` on `ha-map`.
 
 !!! note
-  The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), neither mode has any effect.
+    The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), neither mode has any effect.
 
 ## Examples
 
