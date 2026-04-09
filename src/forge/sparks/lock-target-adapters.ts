@@ -26,6 +26,8 @@ export interface LockTargetAdapter {
   defaultIconSize(): string;
   /** Returns the default lock-icon padding for this target element type, or `null` for no override. */
   defaultIconPadding(): string | null;
+  /** Returns the default lock-icon border-radius for this target element type, or `null` for no override. */
+  defaultIconBorderRadius(): string | null;
   /** Returns the default lock-icon position for this target element type, or `null` for no override. */
   defaultIconPosition(): AdapterIconPosition | null;
 }
@@ -184,6 +186,10 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
 
   defaultIconPadding(): string | null {
     return "2px";
+  }
+
+  defaultIconBorderRadius(): string | null {
+    return "50%";
   }
 
   defaultIconPosition(): AdapterIconPosition | null {

@@ -382,7 +382,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
           ? "var(--uix-lock-icon-background-blocked, var(--uix-lock-icon-background, none))"
           : "var(--uix-lock-icon-background, none)";
       this._iconElement.style.setProperty("background", iconBg);
-      this._iconElement.style.setProperty("border-radius", "var(--uix-lock-icon-border-radius, none)");
+      const defaultBorderRadius = this._targetAdapter?.defaultIconBorderRadius() ?? "none";
+      this._iconElement.style.setProperty("border-radius", `var(--uix-lock-icon-border-radius, ${defaultBorderRadius})`);
       const defaultPadding = this._targetAdapter?.defaultIconPadding() ?? "0";
       this._iconElement.style.setProperty("padding", `var(--uix-lock-icon-padding, ${defaultPadding})`);
       this._iconElement.style.setProperty("line-height", "normal");
