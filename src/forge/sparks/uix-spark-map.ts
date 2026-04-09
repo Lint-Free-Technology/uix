@@ -22,6 +22,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   type = "map";
 
   private _memory: boolean = false;
+  private _fitMap: boolean = false;
+  private _fitMapAbort?: { cancelled: boolean };
+  private _fitMapRunOnce: boolean = false;
   private _savedZoom: number | null = null;
   private _savedCenter: { lat: number; lng: number } | null = null;
 
@@ -40,7 +43,13 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
+    const wasFitMap = this._fitMap;
     this._memory = config.memory === true;
+    this._fitMap = config.fit_map === true;
+
+    if (!this._fitMap || (!wasFitMap && this._fitMap)) {
+      this._fitMapRunOnce = false;
+    }
     this._saveMapState();
   }
 
@@ -66,7 +75,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    if (!this._memory || this._savedCenter === null) return;
+    if ((!this._memory || this._savedCenter === null) && !this._fitMap) return;
 
     const gen = this._beginUpdate();
 
@@ -87,13 +96,42 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       }
     };
 
+    let fitMapAbort = this._fitMapAbort;
+    this._fitMapAbort = { cancelled: false };
+    fitMapAbort && (fitMapAbort.cancelled = true);
+
+    const doFitMap = async () => {
+      if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
+      const haMap = this._getHaMap();
+      if (haMap) {
+        let tries = 0;
+        while ((haMap.clientWidth === 0 || !haMap.leafletMap || !haMap.Leaflet) && tries < 20) {
+          if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
+          await new Promise(res => setTimeout(res, 50));
+          tries++;
+        }
+        if (!this._fitMapAbort?.cancelled) {
+          haMap.fitMap();
+          this._fitMapRunOnce = true;
+        }
+      }
+    }
+
     const afterForgedElement = () => {
       if (gen !== this._callGeneration) return;
       const haMap = this._getHaMap();
       if (haMap?.updateComplete) {
-        (haMap.updateComplete as Promise<boolean>).then(doRestore);
+        (haMap.updateComplete as Promise<boolean>).then(() => {
+          doRestore();
+          if (this._fitMap && !this._fitMapRunOnce) {
+            doFitMap();
+          }
+        });
       } else {
         doRestore();
+        if (this._fitMap && !this._fitMapRunOnce) {
+          doFitMap();
+        }
       }
     };
 
@@ -108,5 +146,6 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._cancelPending();
     this._savedCenter = null;
     this._savedZoom = null;
+    this._fitMapAbort = undefined;
   }
 }

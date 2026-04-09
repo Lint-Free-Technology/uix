@@ -537,15 +537,16 @@ export class UixForge extends LitElement {
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
-      this._delayedHass && (this.forgedElement.hass = this.hass); 
+      this._delayedHass && (this.forgedElement.hass = this.hass);
       return;
     }
     if (this._mold.isRow()) {
       this._mold.cardHelpers().then((helpers) => {
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
-        this.forgedElement.preview = this._mold.isPreview();
+        this.forgedElement.preview = this._mold.isPreview();  
       });
+
       return;
     }
     if (this._mold.isSection()) {
@@ -583,6 +584,7 @@ export class UixForge extends LitElement {
         this.style.setProperty("position", "static");
         this.style.setProperty("transform", "none");
       });
+      return;
     }
   }
 

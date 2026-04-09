@@ -5,7 +5,12 @@ icon: material/map
 
 # :material-map: Map spark
 
-The `map` spark adds **memory mode** to a map card used inside a [UIX Forge](../index.md) forged element. Without it, every forge template update causes the map to reset to its default zoom level and centre position. With `memory: true`, the spark captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved.
+
+The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports two modes:
+
+- **Memory mode** (`memory: true`): Captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved. Without it, every forge template update causes the map to reset to its default zoom level and centre position.
+- **Fit map mode** (`fit_map: true`): Fits the map view when map card does not auto fit on load when used in custom cards which may hide the map initially. e.g. `custom: auto-entities`.
+
 
 ## Basic usage
 
@@ -24,12 +29,15 @@ element:
 
 ## Configuration
 
-| Key | Type | Required | Default | Description |
-| --- | ---- | -------- | ------- | ----------- |
-| `type` | `string` | ✅ | — | Must be `map`. |
-| `memory` | `boolean` | | `false` | When `true`, the current Leaflet zoom level and map centre are saved before each update and restored afterwards. |
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `type` | string | — | Must be `map`. |
+| `memory` | boolean | false | Save/restore zoom and centre before/after each update. |
+| `fit_map` | boolean | false | Fit map view to all entities once map is visible (useful for cards hidden on load). |
 
 ## How it works
+
+**Memory mode:**
 
 Each time the forged element is about to refresh due to a forge template update, the spark:
 
@@ -39,5 +47,42 @@ Each time the forged element is about to refresh due to a forge template update,
 
 If Leaflet has not yet initialised when the refresh fires (e.g. on initial render) the save step is skipped and no restore is attempted, so the map displays its default view on first load.
 
+**Fit map mode:**
+
+After the forged element and `ha-map` finish updating and once client width is non-zero, the spark will call `fitMap()` on `ha-map`.
+
 !!! note
-    The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), memory mode has no effect.
+  The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), neither mode has any effect.
+
+## Examples
+
+### Using fit map mode with auto-entities
+
+When using a map card with `custom:auto-entities` the way auto-entities hides the map card will mean it does not fit on load. Fit map mode can be used in this case to make sure the map fits on first load.
+
+No include filters have been used for brevity of the example.
+
+```yaml
+type: custom:auto-entities
+entities:
+  - zone.home
+filter:
+  include: []
+  exclude: []
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        fit_map: true
+  element:
+    type: map
+    fit_zones: true
+    uix:
+      style: |
+        :host {
+          display: block;
+          height: 400px;
+        }
+```
