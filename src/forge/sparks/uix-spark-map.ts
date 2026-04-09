@@ -101,17 +101,16 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     fitMapAbort && (fitMapAbort.cancelled = true);
 
     const doFitMap = async () => {
-      const localAbort = this._fitMapAbort;
-      if (gen !== this._callGeneration || localAbort.cancelled) return;
+      if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
       const haMap = this._getHaMap();
       if (haMap) {
         let tries = 0;
-        while (haMap.clientWidth === 0 && tries < 20) {
-          if (gen !== this._callGeneration || localAbort.cancelled) return;
+        while ((haMap.clientWidth === 0 || !haMap.leafletMap || !haMap.Leaflet) && tries < 20) {
+          if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
           await new Promise(res => setTimeout(res, 50));
           tries++;
         }
-        if (haMap.clientWidth > 0 && !localAbort.cancelled) {
+        if (!this._fitMapAbort?.cancelled) {
           haMap.fitMap();
           this._fitMapRunOnce = true;
         }
