@@ -1,3 +1,10 @@
+## [6.2.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.4...v6.2.0-beta.5) (2026-04-09)
+
+### ⭐ New Features
+
+* **lock-spark:** add color CSS vars for lock icon and set defaults when target is ha-tile-icon ([#197](https://github.com/Lint-Free-Technology/uix/issues/197)) ([701227b](https://github.com/Lint-Free-Technology/uix/commit/701227b7ca012c42e157aa620d67dd6e051fdd81))
+* **map-spark:** Add map spark tour mode ([#196](https://github.com/Lint-Free-Technology/uix/issues/196)) ([5a6db26](https://github.com/Lint-Free-Technology/uix/commit/5a6db26d21c7c0f881486d6b9ff5f60af6fe6a41))
+
 ## [6.2.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.3...v6.2.0-beta.4) (2026-04-09)
 
 ### 🐞 Bug Fixes
