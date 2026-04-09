@@ -101,8 +101,8 @@ When no entry matches:
 | `icon_unlocked` | string | — | MDI icon shown when unlocked. When not set, the lock icon fades out instead of being replaced. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
-| `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
-| `icon_size` | number or string | `18px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set via UIX Styling or in a theme. |
+| `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}`; when target is ha-tile-icon `{top: 3, left: 3}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_size` | number or string | `12px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set via UIX Styling or in a theme. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |
 | `unlocked_action` | object | — | Action to execute immediately after a successful unlock. |
@@ -319,19 +319,19 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-z-index` | `10` | Stack order of the overlay. |
 | `--uix-lock-display` | `block` | CSS display of the lock overlay. Adjust for any positioning workarounds required with target element scenarios. |
 | `--uix-lock-opacity` | `0.5` | Opacity of the overlay (icon and background combined). |
-| `--uix-lock-background` | `transparent` | Background colour of the overlay when locked. |
-| `--uix-lock-background-unlocked` | `none` | Background colour of the overlay when unlocked. Defaults to no background so `--uix-lock-background` does not bleed into the unlocked state. |
-| `--uix-lock-background-blocked` | `--uix-lock-background` | Background colour when the lock is permanently blocked (no unlock path, non-row molds). |
+| `--uix-lock-background` | `transparent` | Background color of the overlay when locked. |
+| `--uix-lock-background-unlocked` | `none` | Background color of the overlay when unlocked. Defaults to no background so `--uix-lock-background` does not bleed into the unlocked state. |
+| `--uix-lock-background-blocked` | `--uix-lock-background` | Background color when the lock is permanently blocked (no unlock path, non-row molds). |
 | `--uix-lock-border-radius` | `inherit` | Border radius of the overlay (inherits the target's). |
-| `--uix-lock-icon-size` | `24px` | Size of the lock icon. Overrides any `icon_size` set in spark config. |
-| `--uix-lock-icon-background` | `none` | Background of the lock icon element. Useful for adding a coloured pill or circle behind the icon. |
+| `--uix-lock-icon-size` | `24px`; `12px` when target is ha-tile-icon | Size of the lock icon. Overrides any `icon_size` set in spark config. |
+| `--uix-lock-icon-background` | `none` | Background of the lock icon element. Useful for adding a colored pill or circle behind the icon. |
 | `--uix-lock-icon-background-unlocked` | `--uix-lock-icon-background` | Icon background when the lock is unlocked. Falls back to `--uix-lock-icon-background`. |
 | `--uix-lock-icon-background-blocked` | `--uix-lock-icon-background` | Icon background when the lock is permanently blocked. Falls back to `--uix-lock-icon-background`. |
-| `--uix-lock-icon-border-radius` | `none` | Border radius of the lock icon element. Use `50%` for a circle or a large value (e.g. `50px`) for a pill shape. |
-| `--uix-lock-icon-padding` | `0` | Padding around the lock icon, creating space between the icon and its background. |
+| `--uix-lock-icon-border-radius` | `none`; `50%` when target is ha-tile-icon | Border radius of the lock icon element. Use `50%` for a circle or a large value (e.g. `50px`) for a pill shape. |
+| `--uix-lock-icon-padding` | `0`; `2px` when the target is ha-tile-info | Padding around the lock icon, creating space between the icon and its background. |
 | `--uix-lock-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Useful for CSS-only positioning when `icon_position` is not set in config. |
 | `--uix-lock-icon-fade-duration` | `2s` | Duration of the opacity fade when the lock icon fades away on unlock (only used when `icon_unlocked` is not set). |
-| `--uix-lock-row-background` | `--uix-lock-background` | Background colour of the overlay when the forge mold is `row`. |
+| `--uix-lock-row-background` | `--uix-lock-background` | Background color of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
 
