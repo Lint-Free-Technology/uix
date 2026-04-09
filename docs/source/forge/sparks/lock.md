@@ -394,6 +394,7 @@ forge:
   uix:
     style: |
       :host {
+        --uix-lock-opacity: 1;
         --uix-lock-icon-background: red;
         --uix-lock-icon-background-unlocked: green;
         --uix-lock-icon-border-radius: 50%;
