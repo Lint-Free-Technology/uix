@@ -75,10 +75,6 @@ export class UixForgeSparkController {
     }, {} as Record<string, any>);
   }
 
-  afterForgedElementForged() {
-    this.sparks.forEach(spark => spark.afterForgedElementForged());
-  }
-
   beforeForgedElementRefresh() {
     this.sparks.forEach(spark => spark.beforeForgedElementRefresh());
   }
