@@ -335,7 +335,9 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
 
-### Styling example
+### Styling examples
+
+#### Overlay backgrounds
 
 Using UIX Styling to apply a locked background, unlocked background and reduced opacity. A locked icon is also used in this example.
 
@@ -367,6 +369,39 @@ entities:
           }
     element:
       entity: light.bed_light
+```
+
+#### Locked icon
+
+Using UIX Styling to apply lock icon background. Here the lock is applied to a tile icon and UIX Styling used to make lock appear like a tile badge.
+
+!!! example inline end "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example-2.gif)
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: lock
+      for: hui-tile-card $ ha-tile-icon
+      icon_locked_color: white
+      icon_unlocked_color: white
+      icon_unlocked: mdi:lock-open-outline
+      locks:
+        - code: 1234
+          admins: true
+  uix:
+    style: |
+      :host {
+        --uix-lock-icon-background: red;
+        --uix-lock-icon-background-unlocked: green;
+        --uix-lock-icon-border-radius: 50%;
+        --uix-lock-icon-padding: 1px;
+      }
+element:
+  type: tile
+  entity: light.bed_light
 ```
 
 ---
