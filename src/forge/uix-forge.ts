@@ -529,6 +529,7 @@ export class UixForge extends LitElement {
       this.forgedElement.layout = this.layout;
       (this.forgedElement as HuiCard).load();
       this._delayedHass && (this.forgedElement.hass = this.hass);
+      this._sparkController.afterForgedElementForged();
       return;
     }
     if (this._mold.isBadge()) {
@@ -537,7 +538,8 @@ export class UixForge extends LitElement {
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
-      this._delayedHass && (this.forgedElement.hass = this.hass); 
+      this._delayedHass && (this.forgedElement.hass = this.hass);
+      this._sparkController.afterForgedElementForged();
       return;
     }
     if (this._mold.isRow()) {
@@ -545,7 +547,9 @@ export class UixForge extends LitElement {
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
+        this._sparkController.afterForgedElementForged();
       });
+
       return;
     }
     if (this._mold.isSection()) {
@@ -559,6 +563,7 @@ export class UixForge extends LitElement {
           this.forgedElement = view.createSectionElement?.(this.forgedElementConfig);
         }
       });
+      this._sparkController.afterForgedElementForged();
       return;
     }
     if (this._mold.isPictureElement()) {
@@ -582,7 +587,9 @@ export class UixForge extends LitElement {
         this.forgedElement.preview = this._mold.isPreview();
         this.style.setProperty("position", "static");
         this.style.setProperty("transform", "none");
+        this._sparkController.afterForgedElementForged();
       });
+      return;
     }
   }
 
