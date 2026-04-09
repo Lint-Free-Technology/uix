@@ -1,3 +1,10 @@
+## [6.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.2...v6.2.0-beta.3) (2026-04-09)
+
+### ⭐ New Features
+
+* **forge:** Support UIX Forge to be card for auto-entities allowing and passing entities to forged element ([daf383a](https://github.com/Lint-Free-Technology/uix/commit/daf383a8dda6e71b9f7eaaf81051e077d18466dd))
+* **map-spark:** Add fit_map option to map spark allowing to work around maps in custom cards which may initially hide map (e.g. auto-entities). ([#195](https://github.com/Lint-Free-Technology/uix/issues/195)) ([1a47b91](https://github.com/Lint-Free-Technology/uix/commit/1a47b9145216571ce00d66e423d61cf4c3fa1843))
+
 ## [6.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.1...v6.2.0-beta.2) (2026-04-09)
 
 ### ⭐ New Features
