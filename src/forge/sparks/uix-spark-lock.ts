@@ -139,6 +139,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _getEffectiveIconPosition(): IconPosition | null {
     if (this._iconPosition !== null) return this._iconPosition;
     if (this.controller.forge.mold?.isRow()) return { top: "6px", left: "30px" };
+    if (this._targetAdapter) return this._targetAdapter.defaultIconPosition();
     return null;
   }
 
@@ -370,10 +371,6 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // would be visible during the fade. Only apply the unlocked colour when
     // actually swapping to a new icon.
     const customColor = fadeOut ? this._iconLockedColor : (this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor);
-    const defaultColor = (this._isUnlocked && !fadeOut)
-      // Material Design green/red used as fallbacks when HA theme variables are unavailable
-      ? "var(--success-color, #43a047)"
-      : "var(--error-color, #db4437)";
 
     if (this._iconElement) {
       this._iconElement.icon = icon;
@@ -385,10 +382,24 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
           ? "var(--uix-lock-icon-background-blocked, var(--uix-lock-icon-background, none))"
           : "var(--uix-lock-icon-background, none)";
       this._iconElement.style.setProperty("background", iconBg);
-      this._iconElement.style.setProperty("border-radius", "var(--uix-lock-icon-border-radius, none)");
-      this._iconElement.style.setProperty("padding", "var(--uix-lock-icon-padding, 0)");
+      const defaultBorderRadius = this._targetAdapter?.defaultIconBorderRadius() ?? "none";
+      this._iconElement.style.setProperty("border-radius", `var(--uix-lock-icon-border-radius, ${defaultBorderRadius})`);
+      const defaultPadding = this._targetAdapter?.defaultIconPadding() ?? "0";
+      this._iconElement.style.setProperty("padding", `var(--uix-lock-icon-padding, ${defaultPadding})`);
       this._iconElement.style.setProperty("line-height", "normal");
-      this._iconElement.style.setProperty("color", customColor || defaultColor);
+      // Resolve icon colour: config-supplied value takes highest precedence, then
+      // state-specific CSS vars, then a general override var, then HA theme defaults.
+      let colorValue: string;
+      if (customColor) {
+        colorValue = customColor;
+      } else if (this._isUnlocked && !fadeOut) {
+        colorValue = "var(--uix-lock-icon-unlocked-color, var(--uix-lock-icon-color, var(--success-color, #43a047)))";
+      } else if (isBlocked) {
+        colorValue = "var(--uix-lock-icon-blocked-color, var(--uix-lock-icon-color, var(--error-color, #db4437)))";
+      } else {
+        colorValue = "var(--uix-lock-icon-locked-color, var(--uix-lock-icon-color, var(--error-color, #db4437)))";
+      }
+      this._iconElement.style.setProperty("color", colorValue);
       // When fading the lock icon out (no icon_unlocked configured) use the
       // CSS-var-controlled duration (default 2s). When swapping to an explicit
       // unlocked icon, keep the fast 0.25s swap transition.
@@ -398,7 +409,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("transition", `color 0.25s ease, opacity ${opacityDuration} ease`);
       this._iconElement.style.setProperty("opacity", fadeOut ? "0" : "1");
       // Allow CSS-var-based positional override independent of config-based offset.
-      this._iconElement.style.setProperty("display", "inline-block");
+      this._iconElement.style.setProperty("display", "inline-flex");
       this._iconElement.style.setProperty("translate", `var(--uix-lock-icon-position, none)`);
 
       // ── Icon position ─────────────────────────────────────────────────────
