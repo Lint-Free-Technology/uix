@@ -190,7 +190,6 @@ export class UixForge extends LitElement {
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
-      delete this.config.entities;
     }
 
     this.forgedElementConfig = elementConfig;
