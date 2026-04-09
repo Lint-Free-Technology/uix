@@ -22,7 +22,8 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "row_span",
   "column_span",
   "background",
-  "state_color"
+  "state_color",
+  "entities",
 ];
 
 export const UIX_FORGE_FORGE_MOLDS = [
@@ -62,6 +63,7 @@ export interface UixForgeConfig {
   element?: UixForgeElement;
   disabled?: boolean;
   state_color?: boolean;
+  entities?: string[];
 }
 
 export class UixForgeConfigBuilder {

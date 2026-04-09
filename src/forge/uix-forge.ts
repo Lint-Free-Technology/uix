@@ -187,7 +187,13 @@ export class UixForge extends LitElement {
     const elementConfig = { ...resolvedElement };
     if (this.config?.state_color !== undefined) {
       elementConfig.state_color = this.config.state_color;
+      delete this.config.state_color;
     }
+    if (this.config?.entities !== undefined) {
+      elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+      delete this.config.entities;
+    }
+
     this.forgedElementConfig = elementConfig;
     Promise.all([
       this.bindTemplates(this._forgeConfig),
