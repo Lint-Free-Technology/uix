@@ -265,7 +265,7 @@ element:
 
 ### Tile card: lock the tile icon only
 
-Use `for` to target `ha-tile-icon` directly — only the icon area is locked, leaving the rest of the tile interactive. The lock icon defaults to `18px` in this context to match the tile icon's proportions.
+Use `for` to target `ha-tile-icon` directly — only the icon area is locked, leaving the rest of the tile interactive. The lock icon defaults to `12px`, position `top: 3px`, `left: 3px` and `--uix-lock-icon-padding: 2px` in this context to mimic a tile icon badge on the left of the tile icon.
 
 ```yaml
 type: custom:uix-forge
@@ -371,7 +371,7 @@ entities:
       entity: light.bed_light
 ```
 
-#### Locked icon
+#### Locked icon when target is a tile icon
 
 Using UIX Styling to apply lock icon background. Here the lock is applied to a tile icon and UIX Styling used to make lock appear like a tile badge.
 
