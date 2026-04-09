@@ -85,6 +85,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   private _tourTimer: ReturnType<typeof setTimeout> | null = null;
   private _tourContainerEl: HTMLElement | null = null;
   private _tourIconEl: (HTMLElement & { icon?: string }) | null = null;
+  private _tourRingSvgEl: SVGSVGElement | null = null;
+  private _tourRingEl: SVGCircleElement | null = null;
+  private _tourRingAnimation: Animation | null = null;
+
+  /** Radius of the SVG countdown ring in viewBox units (viewBox is 48×48, centre 24,24). */
+  private static readonly TOUR_RING_RADIUS = 21;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -255,12 +261,15 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   /** Tear down the tour overlay and timer, resetting all runtime state. */
   private _stopTour(): void {
     this._clearTourTimer();
+    this._cancelRingAnimation();
     ++this._tourSetupGen; // cancel any pending _setupTour retries
     if (this._tourContainerEl) {
       this._tourContainerEl.remove();
       this._tourContainerEl = null;
       this._tourIconEl = null;
     }
+    this._tourRingSvgEl = null;
+    this._tourRingEl = null;
     this._tourPoiIndex = -1;
     this._tourStarted = false;
     this._tourPlaying = true; // reset to playing for next activation
@@ -307,6 +316,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (gen !== this._tourSetupGen || !haMap?.leafletMap) return;
 
     // Create or reconnect the pause/play button overlay.
+    const buttonWasDisconnected = !this._tourContainerEl?.isConnected;
     this._ensureTourButton(haMap);
 
     // Start the timer on first setup only; resume after pause is handled by
@@ -315,8 +325,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._tourStarted = true;
       if (this._tourPlaying) {
         this._advanceTour(); // navigate to first POI immediately
+        this._startRingAnimation();
         this._scheduleTourTick();
       }
+    } else if (buttonWasDisconnected && this._tourPlaying) {
+      // Button was recreated — restart ring animation to match playing state.
+      this._startRingAnimation();
     }
   }
 
@@ -335,6 +349,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._tourContainerEl = null;
       this._tourIconEl = null;
     }
+    this._cancelRingAnimation();
+    this._tourRingSvgEl = null;
+    this._tourRingEl = null;
 
     // Inject into the Leaflet container inside ha-map's open shadow root.
     const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
@@ -346,6 +363,42 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.style.setProperty("position", "absolute");
     container.style.setProperty("z-index", "var(--uix-map-tour-icon-z-index, 1000)");
     this._applyTourButtonPosition(container);
+
+    // ── Wrapper (relative positioning context for SVG ring overlay) ──────────
+    const wrapperEl = document.createElement("div");
+    wrapperEl.style.setProperty("position", "relative");
+    wrapperEl.style.setProperty("display", "inline-flex");
+
+    // ── Countdown ring (SVG) ─────────────────────────────────────────────────
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svgEl = document.createElementNS(svgNS, "svg") as SVGSVGElement;
+    svgEl.setAttribute("viewBox", "0 0 48 48");
+    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svgEl.style.setProperty("position", "absolute");
+    svgEl.style.setProperty("top", "0");
+    svgEl.style.setProperty("left", "0");
+    svgEl.style.setProperty("width", "100%");
+    svgEl.style.setProperty("height", "100%");
+    svgEl.style.setProperty("pointer-events", "none");
+    svgEl.style.setProperty("overflow", "visible");
+    svgEl.style.setProperty("display", "none"); // hidden until tour starts playing
+
+    const circumference = 2 * Math.PI * UixForgeSparkMap.TOUR_RING_RADIUS;
+    const circleEl = document.createElementNS(svgNS, "circle") as SVGCircleElement;
+    circleEl.setAttribute("cx", "24");
+    circleEl.setAttribute("cy", "24");
+    circleEl.setAttribute("r", String(UixForgeSparkMap.TOUR_RING_RADIUS));
+    circleEl.setAttribute("fill", "none");
+    circleEl.setAttribute("stroke-width", "3");
+    circleEl.setAttribute("stroke-dasharray", `${circumference} ${circumference}`);
+    circleEl.setAttribute("stroke-dashoffset", "0");
+    circleEl.setAttribute("transform", "rotate(-90 24 24)");
+    circleEl.style.setProperty("stroke", "var(--uix-map-tour-icon-ring-color, var(--uix-map-tour-icon-color, var(--primary-color, #03a9f4)))");
+    circleEl.style.setProperty("stroke-linecap", "round");
+    svgEl.appendChild(circleEl);
+    wrapperEl.appendChild(svgEl);
+    this._tourRingSvgEl = svgEl;
+    this._tourRingEl = circleEl;
 
     // ── ha-icon-button ──────────────────────────────────────────────────────
     const btnEl = document.createElement("ha-icon-button") as HTMLElement;
@@ -366,7 +419,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._toggleTourPlay();
     });
 
-    container.appendChild(btnEl);
+    wrapperEl.appendChild(btnEl);
+    container.appendChild(wrapperEl);
     leafletContainer.appendChild(container);
 
     this._tourContainerEl = container;
@@ -391,16 +445,42 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     }
   }
 
+  /** Start (or restart) the circular countdown ring animation for the current period. */
+  private _startRingAnimation(): void {
+    if (!this._tourRingEl || !this._tourRingSvgEl) return;
+    if (this._tourRingAnimation) {
+      this._tourRingAnimation.cancel();
+      this._tourRingAnimation = null;
+    }
+    this._tourRingSvgEl.style.removeProperty("display");
+    const circumference = 2 * Math.PI * UixForgeSparkMap.TOUR_RING_RADIUS;
+    this._tourRingAnimation = this._tourRingEl.animate(
+      [{ strokeDashoffset: "0" }, { strokeDashoffset: String(circumference) }],
+      { duration: this._tourPeriod, easing: "linear", fill: "forwards" }
+    );
+  }
+
+  /** Cancel the countdown ring animation and hide the ring. */
+  private _cancelRingAnimation(): void {
+    if (this._tourRingAnimation) {
+      this._tourRingAnimation.cancel();
+      this._tourRingAnimation = null;
+    }
+    if (this._tourRingSvgEl) this._tourRingSvgEl.style.setProperty("display", "none");
+  }
+
   /** Toggle between playing and paused states. */
   private _toggleTourPlay(): void {
     this._tourPlaying = !this._tourPlaying;
     this._updateTourButtonIcon();
     if (this._tourPlaying) {
-      // Resume: schedule the next tick.
+      // Resume: restart the countdown ring and schedule the next tick.
+      this._startRingAnimation();
       this._scheduleTourTick();
     } else {
-      // Pause: stop the timer.
+      // Pause: stop the timer and hide the countdown ring.
       this._clearTourTimer();
+      this._cancelRingAnimation();
     }
   }
 
@@ -411,6 +491,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._tourTimer = null;
       if (!this._tour || !this._tourPlaying) return;
       this._advanceTour();
+      this._startRingAnimation();
       this._scheduleTourTick();
     }, this._tourPeriod);
   }

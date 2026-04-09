@@ -64,6 +64,7 @@ The pause/play button can be styled using CSS variables placed on the `ha-card` 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `--uix-map-tour-icon-color` | `var(--primary-color)` | Icon colour. |
+| `--uix-map-tour-icon-ring-color` | `var(--uix-map-tour-icon-color)` | Countdown ring colour (defaults to icon colour). |
 | `--uix-map-tour-icon-background` | `rgba(255,255,255,0.8)` | Button background. |
 | `--uix-map-tour-icon-width` | `auto` | Button width. |
 | `--uix-map-tour-icon-height` | `auto` | Button height. |
@@ -91,9 +92,10 @@ After the forged element and `ha-map` finish updating and once `ha-map` client w
 After the map is ready (and after `fit_map` completes if both are configured), the spark:
 
 1. Resolves the POI list (from `poi` config, or by reading `latitude`/`longitude` from hass state attributes of the ha-map entities).
-2. Injects a `ha-icon-button` overlay into the Leaflet container.
-3. Starts a repeating timer that calls `leafletMap.setView()` to move the map to the next POI every `period` seconds. On first start the map moves to the first POI immediately without waiting for the first period to elapse.
-4. When the user clicks the pause/play button, the timer is stopped or restarted.
+2. Injects a `ha-icon-button` overlay into the Leaflet container with a circular SVG countdown ring around it.
+3. Moves the map to the first POI immediately, then starts a repeating timer that calls `leafletMap.setView()` to advance to the next POI every `period` seconds.
+4. The countdown ring animates from full to empty over each `period`, giving a visual indication of time remaining at the current POI.
+5. When the user clicks the pause/play button, the timer is stopped or restarted and the countdown ring is hidden or restarted.
 
 When `memory: true` and `tour` are both active, hass-update memory restores are suppressed while the tour is playing so that the tour animation is not interrupted.
 
