@@ -7,6 +7,14 @@
  *  2. Add a `case` for the element's tag name in `getLockTargetAdapter`.
  */
 
+/** Pixel offsets used as the default icon position for a target element type. */
+export interface AdapterIconPosition {
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+}
+
 export interface LockTargetAdapter {
   /** Called when the lock becomes active (element should be blocked). */
   lock(element: HTMLElement, overlay: HTMLElement): void;
@@ -16,6 +24,10 @@ export interface LockTargetAdapter {
   cleanup(element: HTMLElement): void;
   /** Returns the default lock-icon size for this target element type. */
   defaultIconSize(): string;
+  /** Returns the default lock-icon padding for this target element type, or `null` for no override. */
+  defaultIconPadding(): string | null;
+  /** Returns the default lock-icon position for this target element type, or `null` for no override. */
+  defaultIconPosition(): AdapterIconPosition | null;
 }
 
 /**
@@ -166,7 +178,15 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
   }
 
   defaultIconSize(): string {
-    return "18px";
+    return "12px";
+  }
+
+  defaultIconPadding(): string | null {
+    return "2px";
+  }
+
+  defaultIconPosition(): AdapterIconPosition | null {
+    return { top: "3px", left: "3px" };
   }
 
   private _removeCapture(element: HTMLElement): void {
