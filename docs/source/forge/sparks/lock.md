@@ -385,9 +385,8 @@ forge:
   sparks:
     - type: lock
       for: hui-tile-card $ ha-tile-icon
-      icon_locked_color: white
-      icon_unlocked_color: white
       icon_unlocked: mdi:lock-open-outline
+      duration: 5s
       locks:
         - code: 1234
           admins: true
@@ -395,10 +394,9 @@ forge:
     style: |
       :host {
         --uix-lock-opacity: 1;
+        --uix-lock-icon-color: white;
         --uix-lock-icon-background: red;
         --uix-lock-icon-background-unlocked: green;
-        --uix-lock-icon-border-radius: 50%;
-        --uix-lock-icon-padding: 1px;
       }
 element:
   type: tile
