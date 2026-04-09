@@ -1,3 +1,9 @@
+## [6.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.1...v6.2.0-beta.2) (2026-04-09)
+
+### ⭐ New Features
+
+* **lock-spark:** Add --uix-lock-icon-background, --uix-lock-icon-border-radius, --uix-lock-icon-padding, and state-variant icon background CSS variables ([#194](https://github.com/Lint-Free-Technology/uix/issues/194)) ([3e2770c](https://github.com/Lint-Free-Technology/uix/commit/3e2770c9e2e9d8fcd84288e3c63cbae45bb83e7a))
+
 ## [6.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0...v6.2.0-beta.1) (2026-04-08)
 
 ### ⭐ New Features
