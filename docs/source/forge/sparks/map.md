@@ -53,3 +53,36 @@ After the forged element and `ha-map` finish updating and once client width is n
 
 !!! note
   The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), neither mode has any effect.
+
+## Examples
+
+### Using fit map mode with auto-entities
+
+When using a map card with `custom:auto-entities` the way auto-entities hides the map card will mean it does not fit on load. Fit map mode can be used in this case to make sure the map fits on first load.
+
+No include filters have been used for brevity of the example.
+
+```yaml
+type: custom:auto-entities
+entities:
+  - zone.home
+filter:
+  include: []
+  exclude: []
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        fit_map: true
+  element:
+    type: map
+    fit_zones: true
+    uix:
+      style: |
+        :host {
+          display: block;
+          height: 400px;
+        }
+```
