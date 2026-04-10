@@ -1,3 +1,13 @@
+## [6.2.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.5...v6.2.0-beta.6) (2026-04-10)
+
+### 🐞 Bug Fixes
+
+* **forge:** Fix template nesting not resolving correctly ([db6ebce](https://github.com/Lint-Free-Technology/uix/commit/db6ebce26cb01df42b5c9fdb18f523e0d95cd489))
+
+### ⚙️ Miscellaneous
+
+* Add entity card support for auto-entities ([9087bfc](https://github.com/Lint-Free-Technology/uix/commit/9087bfc46a65e1c2c8104419cff66709403c3980))
+
 ## [6.2.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.4...v6.2.0-beta.5) (2026-04-09)
 
 ### ⭐ New Features
