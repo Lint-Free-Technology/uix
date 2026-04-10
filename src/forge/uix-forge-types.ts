@@ -36,7 +36,11 @@ export const UIX_FORGE_FORGE_MOLDS = [
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN = "<<";
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
 
 export interface UixForgeForge {
     type?: string;
@@ -72,12 +76,14 @@ export class UixForgeConfigBuilder {
   _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
   refreshCallback?: (path: UixForgeConfigPath) => void;
+  _nestedTemplateOpen: string;
 
-  constructor(refreshCallback?: (path: UixForgeConfigPath) => void) {
+  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
     this.refreshCallback = refreshCallback;
+    this._nestedTemplateOpen = nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN;
   }
 
   get config() {
@@ -92,6 +98,10 @@ export class UixForgeConfigBuilder {
 
   public configIsReady(config: any = this._config): Promise<boolean> {
     return this.ready;
+  }
+
+  public set nestedTemplateOpen(value: string) {
+    this._nestedTemplateOpen = value;
   }
 
   private set ready(value: boolean) {
@@ -109,20 +119,22 @@ export class UixForgeConfigBuilder {
   }
 
   private checkReady() {
-    function _checkReady(value) {
+    const _checkReady = (value, nestingOpen) => {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
-        if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
+        // If we have nested template marker but not the raw open marker, this means the template is ready.
+        if (String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
+        if (hasTemplate(val) || String(val).includes(nestingOpen)) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
-          if (!_checkReady(val)) return false;
+          if (!_checkReady(val, nestingOpen)) return false;
         }
         if (val === UIX_FORGE_DEFAULT_TEMPLATE_VALUE) return false;
       }
       return true;
     }
-    if (_checkReady(this._config)) {
+    if (_checkReady(this._config, this._nestedTemplateOpen)) {
       this.ready = true;
     }
   }

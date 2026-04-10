@@ -1,9 +1,9 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { apply_uix, buildMacros, ModdedElement, UixConfig } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -73,6 +73,12 @@ export class UixForge extends LitElement {
     return {
       type: `custom:${UIX_FORGE_TYPE}`,
     };
+  }
+
+  private hasTemplateOrNestedTemplate(value: any): boolean {
+    if (hasTemplate(value)) return true;
+    if (typeof value === "string" && value.includes(this._templateNestingOpen)) return true;
+    return false;
   }
 
   private _resolveFoundry(
@@ -173,8 +179,9 @@ export class UixForge extends LitElement {
     this._showError = resolvedForge.show_error || false;
     this._delayedHass = resolvedForge.delayed_hass || false;
 
-    this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : "<<";
-    this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : ">>";
+    this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
+    this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;
+    this._forgeConfig.nestedTemplateOpen = this._templateNestingOpen;
     const forgeConfig = { ...resolvedForge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
@@ -362,7 +369,7 @@ export class UixForge extends LitElement {
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
       }
-      if (hasTemplate(current[k])) {
+      if (this.hasTemplateOrNestedTemplate(current[k])) {
         // If already bound, unbind first
         const bindingPath = currentPath.join("|");
         if (base.hasBinding(bindingPath)) {
@@ -373,8 +380,8 @@ export class UixForge extends LitElement {
           }
         }
         const template = current[k]
-          .replaceAll(this._templateNestingOpen, `{% raw %}{{${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`)
-          .replaceAll(this._templateNestingClose, `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}}}{% endraw %}`);
+          .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
+          .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
         const macroStr = buildMacros(this._macros, template);
         const callback = (res: any) => {
           if (typeof res === "string") {
