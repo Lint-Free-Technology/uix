@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -79,6 +79,14 @@ export class UixForge extends LitElement {
     if (hasTemplate(value)) return true;
     if (typeof value === "string" && value.includes(this._templateNestingOpen)) return true;
     return false;
+  }
+
+  private get _doubleNestingOpen(): string {
+    return this._templateNestingOpen.charAt(0) + this._templateNestingOpen;
+  }
+
+  private get _doubleNestingClose(): string {
+    return this._templateNestingClose + this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
   }
 
   private _resolveFoundry(
@@ -375,7 +383,13 @@ export class UixForge extends LitElement {
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
       }
-      if (this.hasTemplateOrNestedTemplate(current[k])) {
+      if (typeof current[k] === "string" && current[k].includes(this._doubleNestingOpen) && current[k].includes(this._doubleNestingClose)) {
+        // Double-nested template: strip one nesting level and pass through to the inner forge
+        const passthrough = current[k]
+          .split(this._doubleNestingOpen).join(this._templateNestingOpen)
+          .split(this._doubleNestingClose).join(this._templateNestingClose);
+        base.nested = { keys: currentPath, value: UIX_FORGE_PASSTHROUGH_MARKER + passthrough };
+      } else if (this.hasTemplateOrNestedTemplate(current[k])) {
         // If already bound, unbind first
         const bindingPath = currentPath.join("|");
         if (base.hasBinding(bindingPath)) {

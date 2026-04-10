@@ -36,6 +36,7 @@ export const UIX_FORGE_FORGE_MOLDS = [
 ];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
+export const UIX_FORGE_PASSTHROUGH_MARKER = "##UIX_FORGE_PASSTHROUGH##";
 
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN = "<<";
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
@@ -89,7 +90,24 @@ export class UixForgeConfigBuilder {
   }
 
   get config() {
-    return this._config;
+    return this._stripPassthrough(this._config);
+  }
+
+  private _stripPassthrough(value: any): any {
+    if (typeof value === "string" && value.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) {
+      return value.slice(UIX_FORGE_PASSTHROUGH_MARKER.length);
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => this._stripPassthrough(item));
+    }
+    if (value !== null && typeof value === "object") {
+      const result: any = {};
+      for (const key of Object.keys(value)) {
+        result[key] = this._stripPassthrough(value[key]);
+      }
+      return result;
+    }
+    return value;
   }
 
   set config(config: any) {
@@ -125,6 +143,8 @@ export class UixForgeConfigBuilder {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
+        // Passthrough values (double-nested templates stripped to single-nested) are considered ready.
+        if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
         // If we have nested template marker but not the raw open marker, this means the template is ready.
         if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
         if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
