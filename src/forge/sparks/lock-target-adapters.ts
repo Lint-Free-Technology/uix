@@ -194,7 +194,7 @@ class HaTileIconLockAdapter implements LockTargetAdapter {
 
   defaultIconPosition(): AdapterIconPosition | null {
     // Position the icon at the top-left corner of ha-tile-icon.
-    return { top: "3px", left: "3px" };
+    return { top: "2px", left: "2px" };
   }
 
   private _removeCapture(element: HTMLElement): void {
