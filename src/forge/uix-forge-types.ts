@@ -124,8 +124,8 @@ export class UixForgeConfigBuilder {
         if (key === "uix") return true;
         const val = value[key];
         // If we have nested template marker but not the raw open marker, this means the template is ready.
-        if (String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
-        if (hasTemplate(val) || String(val).includes(nestingOpen)) return false;
+        if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
+        if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
           if (!_checkReady(val, nestingOpen)) return false;
