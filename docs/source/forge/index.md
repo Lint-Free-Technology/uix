@@ -61,6 +61,39 @@ element:
       }
 ```
 
+### Using with auto-entities
+
+UIX Forge supports `custom:auto-entities` in two ways:
+
+1. When UIX Forge is used as the main card for auto-entities, UIX Forge accepts and passes through `entities` to the element config.
+2. When using UIX Forge as an entity card via auto-entities include filter `options`, UIX Forge accepts `entity` that auto-entities passes through, but does not pass through to element config. If you wish to access `entity` in a template via `config.element.entity` you need to include `entity: this.entity_id` under `element` in your include options for auto auto-entities as per the example below which uses auto-entities for a tile card to give use a templated content for a tooltip spark.
+
+```yaml
+type: custom:auto-entities
+filter:
+  include:
+    - options:
+        type: custom:uix-forge
+        forge:
+          mold: card
+          sparks:
+            - type: tooltip
+              for: hui-tile-card $ ha-card
+              content: >-
+                {{ state_attr(config.element.entity,
+                'friendly_name') }} is {{ states(config.element.entity) }}
+        element:
+          entity: this.entity_id
+          type: tile
+      area: kitchen
+  exclude: []
+card:
+  square: false
+  type: grid
+show_empty: true
+card_param: cards
+```
+
 ## UIX styling
 
 Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables.
