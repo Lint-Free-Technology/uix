@@ -65,8 +65,10 @@ element:
 
 UIX Forge supports `custom:auto-entities` in two ways:
 
-1. When UIX Forge is used as the main card for auto-entities, UIX Forge accepts and passes through `entities` to the element config.
-2. When using UIX Forge as an entity card via auto-entities include filter `options`, UIX Forge accepts `entity` that auto-entities passes through, but does not pass through to element config. If you wish to access `entity` in a template via `config.element.entity` you need to include `entity: this.entity_id` under `element` in your include options for auto auto-entities as per the example below which uses auto-entities for a tile card to give use a templated content for a tooltip spark.
+1. When UIX Forge is used as the main card for auto-entities, UIX Forge accepts and passes through `entities` to the element config, though will not be available on `config.element.entities`
+2. When using UIX Forge as an entity card via auto-entities include filter `options`, UIX Forge accepts `entity` that auto-entities passes through, but does not pass through to element config and won't be available on `config.element.entity`. 
+
+For both scenarios, if you wish to access `entity` in a template via `config.element.entity` you need to include `entity: this.entity_id` under `element` in your include options for auto auto-entities as per the example below which uses auto-entities for a tile card to give use a templated content for a tooltip spark.
 
 ```yaml
 type: custom:auto-entities
