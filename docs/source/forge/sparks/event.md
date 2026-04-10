@@ -88,7 +88,7 @@ element:
 Use `other_forge_ids` to receive events intended for a different forged element. The data is then available under `uixForge.event.<forge_id>`:
 
 !!! tip
-    While `uixForge.event` will always exist as a template variable, `uixForge.event.<forge_id>` will not so you need to check for it's existence in the dict prior to accessing, otherwise your template will error. If you are unsure of why a template is not working as expected, you can always you [template debugging](../../debugging/templates.md) with `{# uix.debug #}`.
+    While `uixForge.event` will always exist as a template variable, `uixForge.event.<forge_id>` will not so you need to check for its existence in the dict prior to accessing, otherwise your template will error. If you are unsure of why a template is not working as expected, you can always use [template debugging](../../debugging/templates.md) with `{# uix.debug #}`.
 
 ```yaml
 type: custom:uix-forge
@@ -131,7 +131,7 @@ element:
 ```
 
 !!! note
-    - The attribute spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.
+    - The event spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.
     - All string values in the `element` config are processed as templates, so `uixForge.event` is available throughout the element config.
     - If no matching event has been received yet, `uixForge.event` will be empty (or absent) — use `| default(...)` in your templates to handle this gracefully.
     - Data from successive events is **deep-merged**, not replaced. Sending a second event with `{ forge_id: "my_card", data: { count: 2 } }` after a first one with `{ score: 10 }` results in `uixForge.event` containing both `count` and `score`.

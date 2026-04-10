@@ -3,9 +3,9 @@ description: Learn how to review the Home Assistant DOM to become a UI eXtension
 ---
 # DOM navigation
 
-Home Assistant makes extensive use of concept called [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). This allows for easy reuse of components (such as `<ha-card>` or `<ha-icon>`) but requires some advanced techniques when applying CSS styles to elements.
+Home Assistant makes extensive use of a concept called [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). This allows for easy reuse of components (such as `<ha-card>` or `<ha-icon>`) but requires some advanced techniques when applying CSS styles to elements.
 
-When exploring cards in your browsers element inspector, you may have come across a line that says something like `#shadow-root (open)` (exactly what it says depends on your browser) and have noticed that elements inside that does not inherit the styles from outside.
+When exploring cards in your browser's element inspector, you may have come across a line that says something like `#shadow-root (open)` (exactly what it says depends on your browser) and have noticed that elements inside that do not inherit the styles from outside.
 
 In order to style elements inside a `#shadow-root`, you will need to make your `style:` a dictionary rather than a string.
 
@@ -95,7 +95,7 @@ A path may begin with a `&` **host/element** as its first step. It filters the i
 - If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.
 - If the initial element where UIX is applied is a regular **Element** the filter is tested against the element.
 
-Generally you would use the host/element path selector in a theme to allow apply a selector path when the host/element has a specific class and/or id/attribute.
+Generally you would use the host/element path selector in a theme to allow applying a selector path when the host/element has a specific class and/or id/attribute.
 
 Matching is done by directly inspecting the parent/host properties — not via CSS selector engine — as required since the host/element itself is being filtered. The following tokens are supported (all present tokens must match):
 

@@ -6,7 +6,7 @@ To help you, you can use your browsers Element inspector to see which steps UIX 
 
 - Open up the element inspector and find the base element (e.g. `#shadow-root` or card contained by `<hui-card>` or `<ha-card>` contained by a custom card or other element. See [Concepts - application](../concepts/application.md) for more details. This should contain a `<uix-node>` element whether you specified a style or not.
 - Make sure the `<uix-node>` element is selected.
-- Open up the browsers console (in chrome you can press Esc to open the console and inspector at the same time).
+- Open up the browser's console (in chrome you can press Esc to open the console and inspector at the same time).
 - Type in `$0.uix_input` and press enter. \
   This is the style information that step of the chain was given. If this is a string, you're at the end of the chain. If it's an object, you can move on to the next step.
 - Type in `$0.uix_children` and press enter. \

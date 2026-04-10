@@ -18,10 +18,10 @@ The integrations main purpose is to handle updates to Frontend resource. However
 
 ## Frontend
 
-The Frontend javascript resource is the where all the UIX magic happens. If you have thoughts on a new UIX to add, or UI element that needs patching by UIX, please submit a PR. If you are not sure then start a [discussion](https://github.com/Lint-Free-Technology/uix/discussions/categories/ideas) to see where it may lead.
+The Frontend javascript resource is where all the UIX magic happens. If you have thoughts on a new UIX to add, or UI element that needs patching by UIX, please submit a PR. If you are not sure then start a [discussion](https://github.com/Lint-Free-Technology/uix/discussions/categories/ideas) to see where it may lead.
 
 !!! tip "Developing Frontend"
-    If you have a Home Assistant dev container, following the tips in [integration](#integration). Otherwise follow these tips when testing:
+    If you have a Home Assistant dev container, follow the tips in [integration](#integration). Otherwise follow these tips when testing:
 
     - update version in `package.json` development tag e.g. 5.0.1-mydev.1
     - run `npm run build` which will update the version in the integration `manifest.json` and compile `uix.js`
@@ -36,7 +36,7 @@ The Frontend javascript resource is the where all the UIX magic happens. If you 
 Documentation is where every UIX user can contribute. As long as you have python installed in your environment you can modify the document source and see results in real time.
 
 !!! tip "Documentation updating"
-    UIX documentation is built from markdown source files using [Zensical](https://zensical.org/doc). Follow these tips to server teh documentation website in your local environment:
+    UIX documentation is built from markdown source files using [Zensical](https://zensical.org/doc). Follow these tips to serve the documentation website in your local environment:
 
     - Clone [repo](https://github.com/Lint-Free-Technology/uix)
     - Make a python virtual environment and install zensical (not required if you have zensical installed globally)

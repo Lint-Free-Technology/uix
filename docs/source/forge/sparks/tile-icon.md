@@ -59,7 +59,7 @@ element:
     Exactly one of `after` or `before` must be provided, and exactly one icon source (`icon`, `icon_path`, `image_url`, or `entity`) must be provided.
 
 !!! tip
-    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper)DOM helper to take the guesswork out of finding the right path for `before/after`.
+    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `before/after`.
 
 ## Actions
 

@@ -3,7 +3,7 @@ description: Learn all about using templates.
 ---
 # Templates
 
-All styles may contain [jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/) that will be processed by the Home Assistant backend.
+All styles may contain [Jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/) that will be processed by the Home Assistant backend.
 
 UI eXtension also makes the following variables available for templates:
 
@@ -18,13 +18,12 @@ UI eXtension also makes the following variables available for templates:
   - `panel.panelNarrow`: true
   - `panel.panelRequireAdmin`: false
   - `panel.panelTitle`: "UIX"
-  - `panel.panelUrlPath`: uix"
-  - `panel.panelTitle`: "UIX - Test View"
+  - `panel.panelUrlPath`: "uix"
   - `panel.viewNarrow`: true
   - `panel.viewTitle`: "Test View"
   - `panel.viewUrlPath`: "another-test-view"
 
-  You can debug UIX jinja2 templates by placing the comment `{# uix.debug #}` anywhere in your template. You will see debug messages on template binding, value updated, reuse, unbinding and final unsubscribing. Any template is kept subscribed in cache for a 20s cooldown period to assist with template application, which can bring a slight speed improvements when switching back and forth to views, or using the same template on cards on different views.
+  You can debug UIX Jinja2 templates by placing the comment `{# uix.debug #}` anywhere in your template. You will see debug messages on template binding, value updated, reuse, unbinding and final unsubscribing. Any template is kept subscribed in cache for a 20s cooldown period to assist with template application, which can bring a slight speed improvement when switching back and forth to views, or using the same template on cards on different views.
 
 ## Macros
 
