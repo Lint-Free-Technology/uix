@@ -81,11 +81,11 @@ export class UixForge extends LitElement {
     return false;
   }
 
-  private get _doubleNestingOpen(): string {
+  private get _passthroughNestingOpen(): string {
     return this._templateNestingOpen.charAt(0) + this._templateNestingOpen;
   }
 
-  private get _doubleNestingClose(): string {
+  private get _passthroughNestingClose(): string {
     return this._templateNestingClose + this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
   }
 
@@ -383,11 +383,11 @@ export class UixForge extends LitElement {
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
       }
-      if (typeof current[k] === "string" && current[k].includes(this._doubleNestingOpen) && current[k].includes(this._doubleNestingClose)) {
-        // Double-nested template: strip one nesting level and pass through to the inner forge
+      if (typeof current[k] === "string" && current[k].includes(this._passthroughNestingOpen) && current[k].includes(this._passthroughNestingClose)) {
+        // Passthrough template: strip one nesting level and pass through to the inner forge
         const passthrough = current[k]
-          .split(this._doubleNestingOpen).join(this._templateNestingOpen)
-          .split(this._doubleNestingClose).join(this._templateNestingClose);
+          .split(this._passthroughNestingOpen).join(this._templateNestingOpen)
+          .split(this._passthroughNestingClose).join(this._templateNestingClose);
         base.nested = { keys: currentPath, value: UIX_FORGE_PASSTHROUGH_MARKER + passthrough };
       } else if (this.hasTemplateOrNestedTemplate(current[k])) {
         // If already bound, unbind first
