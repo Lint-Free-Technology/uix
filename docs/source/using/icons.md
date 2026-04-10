@@ -3,11 +3,11 @@ description: Learn all about styling icons including change icons and their colo
 ---
 # Styling icons
 
-With UI eXtension installed, the `<ha-icon>` element - used e.g. by `entities`, `glance` and many more cards - will set it's icon to the value found in the CSS variable `--uix-icon` (if present).
+With UI eXtension installed, the `<ha-icon>` element - used e.g. by `entities`, `glance` and many more cards - will set its icon to the value found in the CSS variable `--uix-icon` (if present).
 
 It will also set the icon color to the value found in the CSS variable `--uix-icon-color` if present. This ignores entity state, but will still dim unless you also set `--uix-icon-dim` to `none`.
 
-Templates are support for all CSS variables.
+Templates are supported for all CSS variables.
 
 ```yaml
 - entity: light.bed_light

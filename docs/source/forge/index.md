@@ -7,8 +7,8 @@ description: Learn about UIX Forge, a powerful custom element that combines temp
 UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines template-driven configuration with additional behaviours called **sparks**. Use it to:
 
 - **Forge** any standard Home Assistant element from templates, allowing the entire element config to react to entity states, user, browser and other template variables.
-- **Add sparks** — self-contained behaviours such that augment the forged element.
-- **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables and made available in `uixForge` template variable.
+- **Add sparks** — self-contained behaviours that augment the forged element.
+- **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
 ## Basic structure
 
@@ -175,7 +175,7 @@ element:
 ```
 
 !!! tip
-    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function. The `name` template for the element uses `config.element.entity` as this run in teh context of the forge.
+    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function. The `name` template for the element uses `config.element.entity` as this runs in the context of the forge.
 
 If you wish to have a standard macro to access the entity across forge macros, forge UIX styling and forged element UIX Styling you can use an `entity()` macro as shown in the following example.
 
