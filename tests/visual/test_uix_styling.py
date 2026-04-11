@@ -40,7 +40,7 @@ COMPONENT_DISPLAY_NAME = "UI eXtension"
 # Shadow-piercing querySelector helper (injected into every evaluate call)
 # ---------------------------------------------------------------------------
 
-_QUERY_DEEP_INNER = """
+_QUERY_DEEP_JS = """
     function querySelectorDeep(selector, root) {
         root = root || document.documentElement;
         var direct = root.querySelector(selector);
@@ -144,7 +144,7 @@ class TestCardBasicStyle:
         """A <uix-node> element must be present in the card's shadow root."""
         _goto_lovelace(ha_page, ha_url, "/home/style-test")
         has_uix_node = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_INNER + """
+            "() => {" + _QUERY_DEEP_JS + """
                 var card = querySelectorDeep('hui-entities-card');
                 if (!card || !card.shadowRoot) return false;
                 return card.shadowRoot.querySelector('uix-node') !== null;
@@ -156,7 +156,7 @@ class TestCardBasicStyle:
         """The computed background-color of ha-card must match the UIX style."""
         _goto_lovelace(ha_page, ha_url, "/home/style-test")
         bg_color = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_INNER + """
+            "() => {" + _QUERY_DEEP_JS + """
                 var card = querySelectorDeep('hui-entities-card');
                 if (!card || !card.shadowRoot) return null;
                 var haCard = card.shadowRoot.querySelector('ha-card');
@@ -211,7 +211,7 @@ class TestCardCSSVariable:
         """The --tile-color CSS variable must be set by UIX on ha-card."""
         _goto_lovelace(ha_page, ha_url, "/home/cssvar-test")
         tile_color = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_INNER + """
+            "() => {" + _QUERY_DEEP_JS + """
                 var card = querySelectorDeep('hui-tile-card');
                 if (!card || !card.shadowRoot) return null;
                 var haCard = card.shadowRoot.querySelector('ha-card');
