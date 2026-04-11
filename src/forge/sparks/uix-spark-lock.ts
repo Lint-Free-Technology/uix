@@ -235,7 +235,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("display", "var(--uix-lock-display, block)");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
-      overlay.style.setProperty("cursor", "pointer");
+      overlay.style.setProperty("cursor", "var(--uix-lock-cursor, pointer)");
       // Prevent the browser from initiating scroll, zoom, or long-press callouts
       // on this element. This is required for hold detection to work reliably on
       // touch devices — without it the browser fires pointercancel before the
@@ -447,7 +447,12 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
     // When unlocked the overlay should not block interaction with the underlying element
     overlay.style.setProperty("pointer-events", this._isUnlocked ? "none" : "all");
-    overlay.style.setProperty("cursor", this._isUnlocked ? "default" : "pointer");
+    const cursorValue = this._isUnlocked
+      ? "var(--uix-lock-cursor-unlocked, var(--uix-lock-cursor, pointer))"
+      : isBlocked
+        ? "var(--uix-lock-cursor-blocked, var(--uix-lock-cursor, pointer))"
+        : "var(--uix-lock-cursor-locked, var(--uix-lock-cursor, pointer))";
+    overlay.style.setProperty("cursor", cursorValue);
   }
 
   /**
