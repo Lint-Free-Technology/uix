@@ -1,3 +1,11 @@
+homeassistant:
+  country: US
+  unit_system: metric
+  time_zone: UTC
+
 default_config:
 
 demo:
+
+lovelace:
+  mode: storage

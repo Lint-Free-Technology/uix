@@ -1,7 +1,7 @@
 """Basic UIX styling visual tests.
 
 These tests verify that UIX correctly injects CSS into Home Assistant's
-shadow DOM by pushing Lovelace configurations via the REST API and then
+shadow DOM by pushing Lovelace configurations via the WebSocket API and then
 inspecting the rendered page with Playwright.
 
 Test classes
@@ -18,6 +18,12 @@ TestCardBasicStyle
 TestCardCSSVariable
     Push a tile card with a UIX CSS custom-property style (``--tile-color``)
     and verify the property value is reflected in the computed style.
+
+Shadow DOM helpers
+------------------
+HA's Lovelace cards live inside nested shadow roots.  The helper JS function
+``querySelectorDeep`` pierces all shadow roots to find an element by CSS
+selector across the entire HA component tree.
 """
 
 from __future__ import annotations
@@ -26,9 +32,30 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS, assert_snapshot
+from conftest import push_lovelace_config
 
 COMPONENT_DOMAIN = "uix"
 COMPONENT_DISPLAY_NAME = "UI eXtension"
+
+# ---------------------------------------------------------------------------
+# Shadow-piercing querySelector helper (injected into every evaluate call)
+# ---------------------------------------------------------------------------
+
+_QUERY_DEEP_INNER = """
+    function querySelectorDeep(selector, root) {
+        root = root || document.documentElement;
+        var direct = root.querySelector(selector);
+        if (direct) return direct;
+        var all = root.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+            if (all[i].shadowRoot) {
+                var found = querySelectorDeep(selector, all[i].shadowRoot);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+"""
 
 
 def _goto_lovelace(page: Page, ha_url: str, path: str = "/lovelace/0") -> None:
@@ -110,17 +137,17 @@ class TestCardBasicStyle:
                 }
             ],
         }
-        ha.api("POST", "lovelace/config?force=true", json=config)
+        push_lovelace_config(ha, config)
         yield
-        ha.api("POST", "lovelace/config?force=true", json={"title": "Home", "views": []})
+        push_lovelace_config(ha, {"title": "Home", "views": []})
 
     def test_uix_node_injected(self, ha_page: Page, ha_url: str) -> None:
         """A <uix-node> element must be present in the card's shadow root."""
-        _goto_lovelace(ha_page, ha_url, "/lovelace/style-test")
+        _goto_lovelace(ha_page, ha_url, "/home/style-test")
         has_uix_node = ha_page.evaluate(
-            """() => {
-                const card = document.querySelector('hui-entities-card');
-                if (!card?.shadowRoot) return false;
+            "() => {" + _QUERY_DEEP_INNER + """
+                var card = querySelectorDeep('hui-entities-card');
+                if (!card || !card.shadowRoot) return false;
                 return card.shadowRoot.querySelector('uix-node') !== null;
             }"""
         )
@@ -128,12 +155,12 @@ class TestCardBasicStyle:
 
     def test_card_background_color(self, ha_page: Page, ha_url: str) -> None:
         """The computed background-color of ha-card must match the UIX style."""
-        _goto_lovelace(ha_page, ha_url, "/lovelace/style-test")
+        _goto_lovelace(ha_page, ha_url, "/home/style-test")
         bg_color = ha_page.evaluate(
-            """() => {
-                const card = document.querySelector('hui-entities-card');
-                if (!card?.shadowRoot) return null;
-                const haCard = card.shadowRoot.querySelector('ha-card');
+            "() => {" + _QUERY_DEEP_INNER + """
+                var card = querySelectorDeep('hui-entities-card');
+                if (!card || !card.shadowRoot) return null;
+                var haCard = card.shadowRoot.querySelector('ha-card');
                 if (!haCard) return null;
                 return getComputedStyle(haCard).backgroundColor;
             }"""
@@ -144,7 +171,7 @@ class TestCardBasicStyle:
 
     def test_card_style_snapshot(self, ha_page: Page, ha_url: str) -> None:
         """Snapshot of a card with a UIX background-color style."""
-        _goto_lovelace(ha_page, ha_url, "/lovelace/style-test")
+        _goto_lovelace(ha_page, ha_url, "/home/style-test")
         assert_snapshot(ha_page, "01_card_basic_style")
 
 
@@ -177,18 +204,18 @@ class TestCardCSSVariable:
                 }
             ],
         }
-        ha.api("POST", "lovelace/config?force=true", json=config)
+        push_lovelace_config(ha, config)
         yield
-        ha.api("POST", "lovelace/config?force=true", json={"title": "Home", "views": []})
+        push_lovelace_config(ha, {"title": "Home", "views": []})
 
     def test_css_variable_applied(self, ha_page: Page, ha_url: str) -> None:
         """The --tile-color CSS variable must be set by UIX on ha-card."""
-        _goto_lovelace(ha_page, ha_url, "/lovelace/cssvar-test")
+        _goto_lovelace(ha_page, ha_url, "/home/cssvar-test")
         tile_color = ha_page.evaluate(
-            """() => {
-                const card = document.querySelector('hui-tile-card');
-                if (!card?.shadowRoot) return null;
-                const haCard = card.shadowRoot.querySelector('ha-card');
+            "() => {" + _QUERY_DEEP_INNER + """
+                var card = querySelectorDeep('hui-tile-card');
+                if (!card || !card.shadowRoot) return null;
+                var haCard = card.shadowRoot.querySelector('ha-card');
                 if (!haCard) return null;
                 return getComputedStyle(haCard).getPropertyValue('--tile-color').trim();
             }"""
@@ -199,5 +226,5 @@ class TestCardCSSVariable:
 
     def test_css_variable_snapshot(self, ha_page: Page, ha_url: str) -> None:
         """Snapshot of a tile card with a UIX CSS custom-property style."""
-        _goto_lovelace(ha_page, ha_url, "/lovelace/cssvar-test")
+        _goto_lovelace(ha_page, ha_url, "/home/cssvar-test")
         assert_snapshot(ha_page, "02_card_css_variable")
