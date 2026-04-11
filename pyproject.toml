@@ -10,7 +10,6 @@ requires-python = ">=3.11"
 [project.optional-dependencies]
 test = [
     "ha-testcontainer[test] @ git+https://github.com/Lint-Free-Technology/ha-testcontainer.git",
-    "websockets>=13",
 ]
 
 [tool.pytest.ini_options]

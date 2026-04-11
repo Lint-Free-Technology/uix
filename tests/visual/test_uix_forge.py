@@ -34,7 +34,6 @@ import pytest
 from playwright.sync_api import Page
 
 from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS, assert_snapshot
-from conftest import push_lovelace_config
 
 # Entity from the HA demo integration — always available.
 _DEMO_LIGHT = "light.bed_light"
@@ -43,7 +42,7 @@ _DEMO_LIGHT = "light.bed_light"
 # Shadow-piercing querySelector helper (injected into every evaluate call)
 # ---------------------------------------------------------------------------
 
-_QUERY_DEEP_INNER = """
+_QUERY_DEEP_JS = """
     function querySelectorDeep(selector, root) {
         root = root || document.documentElement;
         var direct = root.querySelector(selector);
@@ -95,9 +94,9 @@ class TestForgeRenders:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_forge_element_present(self, ha_page: Page, ha_url: str) -> None:
         """The <uix-forge> custom element must be present in the DOM."""
@@ -163,9 +162,9 @@ class TestForgeTooltipSpark:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_tooltip_element_present(self, ha_page: Page, ha_url: str) -> None:
         """A <wa-tooltip> must be added to the forge shadow root by the tooltip spark."""
@@ -240,9 +239,9 @@ class TestForgeButtonSpark:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_button_element_present(self, ha_page: Page, ha_url: str) -> None:
         """An <ha-button> must be added inside the tile card by the button spark."""
@@ -313,9 +312,9 @@ class TestForgeUIXStyle:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_forge_uix_node_injected(self, ha_page: Page, ha_url: str) -> None:
         """A <uix-node> must be injected into the forge's shadow root."""

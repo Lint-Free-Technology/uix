@@ -32,7 +32,6 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS, assert_snapshot
-from conftest import push_lovelace_config
 
 COMPONENT_DOMAIN = "uix"
 COMPONENT_DISPLAY_NAME = "UI eXtension"
@@ -137,9 +136,9 @@ class TestCardBasicStyle:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_uix_node_injected(self, ha_page: Page, ha_url: str) -> None:
         """A <uix-node> element must be present in the card's shadow root."""
@@ -204,9 +203,9 @@ class TestCardCSSVariable:
                 }
             ],
         }
-        push_lovelace_config(ha, config)
+        ha.push_lovelace_config(config)
         yield
-        push_lovelace_config(ha, {"title": "Home", "views": []})
+        ha.push_lovelace_config({"title": "Home", "views": []})
 
     def test_css_variable_applied(self, ha_page: Page, ha_url: str) -> None:
         """The --tile-color CSS variable must be set by UIX on ha-card."""
