@@ -58,9 +58,14 @@ _QUERY_DEEP_JS = """
 
 
 def _goto_lovelace(page: Page, ha_url: str, path: str = "/lovelace/0") -> None:
-    """Navigate to a Lovelace path and wait for the page to settle."""
+    """Navigate to a Lovelace path and wait for the page to settle.
+
+    Waits for network idle plus 2×HA_SETTLE_MS.  UIX processes card configs
+    asynchronously (template render round-trip to HA backend) *after* network
+    idle, so the double settle ensures injection is complete before assertions.
+    """
     page.goto(f"{ha_url}{path}", wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT)
-    page.wait_for_timeout(HA_SETTLE_MS)
+    page.wait_for_timeout(HA_SETTLE_MS * 2)
 
 
 # ---------------------------------------------------------------------------

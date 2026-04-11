@@ -60,9 +60,14 @@ _QUERY_DEEP_JS = """
 
 
 def _goto_lovelace(page: Page, ha_url: str, path: str = "/lovelace/0") -> None:
-    """Navigate to a Lovelace path and wait for the page to settle."""
+    """Navigate to a Lovelace path and wait for the page to settle.
+
+    Waits for network idle plus 2×HA_SETTLE_MS.  UIX processes card configs
+    asynchronously (template render round-trip to HA backend) *after* network
+    idle, so the double settle ensures injection is complete before assertions.
+    """
     page.goto(f"{ha_url}{path}", wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT)
-    page.wait_for_timeout(HA_SETTLE_MS)
+    page.wait_for_timeout(HA_SETTLE_MS * 2)
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +107,7 @@ class TestForgeRenders:
         """The <uix-forge> custom element must be present in the DOM."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-renders")
         forge_present = ha_page.evaluate(
-            _QUERY_DEEP_JS + "() => querySelectorDeep('uix-forge') !== null"
+            "() => {" + _QUERY_DEEP_JS + "return querySelectorDeep('uix-forge') !== null; }"
         )
         assert forge_present, "<uix-forge> element not found in the DOM"
 
@@ -110,7 +115,7 @@ class TestForgeRenders:
         """The forge's shadow root must contain the forged hui-tile-card."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-renders")
         tile_present = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return false;
                 return forge.shadowRoot.querySelector('hui-tile-card') !== null;
@@ -170,7 +175,7 @@ class TestForgeTooltipSpark:
         """A <wa-tooltip> must be added to the forge shadow root by the tooltip spark."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-tooltip")
         has_tooltip = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return false;
                 return forge.shadowRoot.querySelector('wa-tooltip') !== null;
@@ -182,7 +187,7 @@ class TestForgeTooltipSpark:
         """The wa-tooltip content attribute must match the configured content."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-tooltip")
         content = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return null;
                 const tooltip = forge.shadowRoot.querySelector('wa-tooltip');
@@ -247,7 +252,7 @@ class TestForgeButtonSpark:
         """An <ha-button> must be added inside the tile card by the button spark."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-button")
         has_button = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return false;
                 const tileCard = forge.shadowRoot.querySelector('hui-tile-card');
@@ -261,7 +266,7 @@ class TestForgeButtonSpark:
         """The ha-button must display the configured label text."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-button")
         label = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return null;
                 const tileCard = forge.shadowRoot.querySelector('hui-tile-card');
@@ -320,7 +325,7 @@ class TestForgeUIXStyle:
         """A <uix-node> must be injected into the forge's shadow root."""
         _goto_lovelace(ha_page, ha_url, "/home/forge-style")
         has_uix_node = ha_page.evaluate(
-            _QUERY_DEEP_JS + """() => {
+            "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
                 if (!forge?.shadowRoot) return false;
                 return forge.shadowRoot.querySelector('uix-node') !== null;
