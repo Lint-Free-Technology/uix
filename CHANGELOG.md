@@ -1,3 +1,13 @@
+## [6.2.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.6...v6.2.0-beta.7) (2026-04-11)
+
+### ⭐ New Features
+
+* **forge:** extend nested template syntax to multiple layers for nested forges (e.g. 3 layers `<<<`/`>>>`)  ([#202](https://github.com/Lint-Free-Technology/uix/issues/202)) ([b1a6b62](https://github.com/Lint-Free-Technology/uix/commit/b1a6b629abfd6cdffd4652a8b11700d8d477b208)), closes [#201](https://github.com/Lint-Free-Technology/uix/issues/201)
+
+### ⚙️ Miscellaneous
+
+* **lock-spark:** Adjust top/left lock icon when target is ha-tile-icon ([f9d377f](https://github.com/Lint-Free-Technology/uix/commit/f9d377f86729708c280c9e843ad05b692129e7fc))
+
 ## [6.2.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.5...v6.2.0-beta.6) (2026-04-10)
 
 ### 🐞 Bug Fixes
