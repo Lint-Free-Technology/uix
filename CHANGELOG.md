@@ -22,65 +22,6 @@
 * Add entity card support for auto-entities ([9087bfc](https://github.com/Lint-Free-Technology/uix/commit/9087bfc46a65e1c2c8104419cff66709403c3980))
 * **lock-spark:** Adjust top/left lock icon when target is ha-tile-icon ([f9d377f](https://github.com/Lint-Free-Technology/uix/commit/f9d377f86729708c280c9e843ad05b692129e7fc))
 
-## [6.2.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.7...v6.2.0-beta.8) (2026-04-11)
-
-### ⭐ New Features
-
-* **lock:** add CSS variable cursor control to lock spark overlay ([#204](https://github.com/Lint-Free-Technology/uix/issues/204)) ([0325409](https://github.com/Lint-Free-Technology/uix/commit/0325409d200626b8dd785692ce127c9100ec607b)), closes [#192](https://github.com/Lint-Free-Technology/uix/issues/192)
-
-## [6.2.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.6...v6.2.0-beta.7) (2026-04-11)
-
-### ⭐ New Features
-
-* **forge:** extend nested template syntax to multiple layers for nested forges (e.g. 3 layers `<<<`/`>>>`)  ([#202](https://github.com/Lint-Free-Technology/uix/issues/202)) ([b1a6b62](https://github.com/Lint-Free-Technology/uix/commit/b1a6b629abfd6cdffd4652a8b11700d8d477b208)), closes [#201](https://github.com/Lint-Free-Technology/uix/issues/201)
-
-### ⚙️ Miscellaneous
-
-* **lock-spark:** Adjust top/left lock icon when target is ha-tile-icon ([f9d377f](https://github.com/Lint-Free-Technology/uix/commit/f9d377f86729708c280c9e843ad05b692129e7fc))
-
-## [6.2.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.5...v6.2.0-beta.6) (2026-04-10)
-
-### 🐞 Bug Fixes
-
-* **forge:** Fix template nesting not resolving correctly ([db6ebce](https://github.com/Lint-Free-Technology/uix/commit/db6ebce26cb01df42b5c9fdb18f523e0d95cd489))
-
-### ⚙️ Miscellaneous
-
-* Add entity card support for auto-entities ([9087bfc](https://github.com/Lint-Free-Technology/uix/commit/9087bfc46a65e1c2c8104419cff66709403c3980))
-
-## [6.2.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.4...v6.2.0-beta.5) (2026-04-09)
-
-### ⭐ New Features
-
-* **lock-spark:** add color CSS vars for lock icon and set defaults when target is ha-tile-icon ([#197](https://github.com/Lint-Free-Technology/uix/issues/197)) ([701227b](https://github.com/Lint-Free-Technology/uix/commit/701227b7ca012c42e157aa620d67dd6e051fdd81))
-* **map-spark:** Add map spark tour mode ([#196](https://github.com/Lint-Free-Technology/uix/issues/196)) ([5a6db26](https://github.com/Lint-Free-Technology/uix/commit/5a6db26d21c7c0f881486d6b9ff5f60af6fe6a41))
-
-## [6.2.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.3...v6.2.0-beta.4) (2026-04-09)
-
-### 🐞 Bug Fixes
-
-* **beta:** Don't delete entities from config in case locked ([8edf7bd](https://github.com/Lint-Free-Technology/uix/commit/8edf7bdc80dddfdad49b4bdec539918d53b109cc))
-* **beta:** Regression with state_color causing configuration error ([598e2cb](https://github.com/Lint-Free-Technology/uix/commit/598e2cbe651ae5f656c862971a09544b33121ff1))
-
-## [6.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.2...v6.2.0-beta.3) (2026-04-09)
-
-### ⭐ New Features
-
-* **forge:** Support UIX Forge to be card for auto-entities allowing and passing entities to forged element ([daf383a](https://github.com/Lint-Free-Technology/uix/commit/daf383a8dda6e71b9f7eaaf81051e077d18466dd))
-* **map-spark:** Add fit_map option to map spark allowing to work around maps in custom cards which may initially hide map (e.g. auto-entities). ([#195](https://github.com/Lint-Free-Technology/uix/issues/195)) ([1a47b91](https://github.com/Lint-Free-Technology/uix/commit/1a47b9145216571ce00d66e423d61cf4c3fa1843))
-
-## [6.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.1...v6.2.0-beta.2) (2026-04-09)
-
-### ⭐ New Features
-
-* **lock-spark:** Add --uix-lock-icon-background, --uix-lock-icon-border-radius, --uix-lock-icon-padding, and state-variant icon background CSS variables ([#194](https://github.com/Lint-Free-Technology/uix/issues/194)) ([3e2770c](https://github.com/Lint-Free-Technology/uix/commit/3e2770c9e2e9d8fcd84288e3c63cbae45bb83e7a))
-
-## [6.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0...v6.2.0-beta.1) (2026-04-08)
-
-### ⭐ New Features
-
-* **lock-spark:** Allow for target to be ha-tile-icon to lock tile icon only ([26dfa91](https://github.com/Lint-Free-Technology/uix/commit/26dfa91e298914dd4ed3003619d7896ddf75612d))
-
 ## [6.1.0](https://github.com/Lint-Free-Technology/uix/compare/v6.0.0...v6.1.0) (2026-04-08)
 
 ### ⭐ New Features
