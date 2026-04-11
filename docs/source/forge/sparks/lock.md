@@ -334,6 +334,10 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 | `--uix-lock-row-background` | `--uix-lock-background` | Background color of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-border-radius` | `--uix-lock-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-lock-row-outlined-blocked` | `none` | CSS `outline` value applied to the overlay in row mold when the lock is permanently blocked. |
+| `--uix-lock-cursor` | `pointer` | Cursor shown on the overlay in all states. Overridden by the state-specific variables below. |
+| `--uix-lock-cursor-locked` | `--uix-lock-cursor` | Cursor shown when the overlay is locked. |
+| `--uix-lock-cursor-unlocked` | `--uix-lock-cursor` | Cursor shown when the overlay is unlocked. |
+| `--uix-lock-cursor-blocked` | `--uix-lock-cursor` | Cursor shown when the lock is permanently blocked (no unlock path). |
 
 ### Styling examples
 
