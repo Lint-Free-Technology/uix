@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: uix
+Version: 6.2.0
+Requires-Python: >=3.11
+License-File: LICENSE.txt
+Provides-Extra: test
+Requires-Dist: ha-testcontainer[test] @ git+https://github.com/Lint-Free-Technology/ha-testcontainer.git ; extra == "test"
+Dynamic: license-file

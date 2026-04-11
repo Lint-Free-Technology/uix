@@ -1,0 +1,3 @@
+
+[test]
+ha-testcontainer[test] @ git+https://github.com/Lint-Free-Technology/ha-testcontainer.git
