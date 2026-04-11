@@ -1,3 +1,9 @@
+## [6.2.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.7...v6.2.0-beta.8) (2026-04-11)
+
+### ⭐ New Features
+
+* **lock:** add CSS variable cursor control to lock spark overlay ([#204](https://github.com/Lint-Free-Technology/uix/issues/204)) ([0325409](https://github.com/Lint-Free-Technology/uix/commit/0325409d200626b8dd785692ce127c9100ec607b)), closes [#192](https://github.com/Lint-Free-Technology/uix/issues/192)
+
 ## [6.2.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0-beta.6...v6.2.0-beta.7) (2026-04-11)
 
 ### ⭐ New Features
