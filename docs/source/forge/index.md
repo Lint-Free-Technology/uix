@@ -38,11 +38,6 @@ element:
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
-!!! info "Template nesting"
-    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
-
-    At the first nesting level, `<<` / `>>` wraps a template expression so it passes through the outer forge's Jinja2 render unchanged and is evaluated by the inner forge. When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
-
 ## Element config
 
 Any valid Lovelace element configuration. Every string value in `element` is processed as a template, giving access to the same variables as [UIX templates](../using/templates.md) (`config`, `user`, `browser`, `hash`, `panel`).
@@ -63,6 +58,54 @@ element:
       }
 ```
 
+### Template nesting
+
+When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
+
+When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
+
+??? example "Multiple nesting levels example"
+    The `entity_id` which is in the nested custom feature, which is within a forge, which itself is in a forge with the grid spark, has three levels of nesting applied: `<<< config.entity >>>` will in the end resolve to the template `{#uix#}{{ config.entity }}{#uix#}` in the custom feature.
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          for: "hui-grid-card $ #root"
+          columns: 40% auto
+          column_gap: 0px
+    element:
+      type: grid
+      square: false
+      cards:
+        - type: custom:uix-forge
+          forge:
+            mold: card
+          element:
+            type: tile
+            entity: media_player.dcd_browser
+            name: Kitchen
+        - type: custom:uix-forge
+          forge:
+            mold: card
+          element:
+            type: custom:custom-features-card
+            features:
+              - type: custom:service-call
+                entries:
+                  - type: button
+                    entity_id: input_boolean.test_boolean
+                    icon: mdi:volume-high
+                    haptics: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: input_boolean.toggle
+                      target:
+                        entity_id: |
+                          <<< config.entity >>>
+    ```
+
 ### Using with auto-entities
 
 UIX Forge supports `custom:auto-entities` in two ways:
@@ -72,31 +115,32 @@ UIX Forge supports `custom:auto-entities` in two ways:
 
 For both scenarios, if you wish to access `entity` in a template via `config.element.entity` you need to include `entity: this.entity_id` under `element` in your include options for auto auto-entities as per the example below which uses auto-entities for a tile card to give use a templated content for a tooltip spark.
 
-```yaml
-type: custom:auto-entities
-filter:
-  include:
-    - options:
-        type: custom:uix-forge
-        forge:
-          mold: card
-          sparks:
-            - type: tooltip
-              for: hui-tile-card $ ha-card
-              content: >-
-                {{ state_attr(config.element.entity,
-                'friendly_name') }} is {{ states(config.element.entity) }}
-        element:
-          entity: this.entity_id
-          type: tile
-      area: kitchen
-  exclude: []
-card:
-  square: false
-  type: grid
-show_empty: true
-card_param: cards
-```
+??? example "auto-entities example"
+    ```yaml
+    type: custom:auto-entities
+    filter:
+      include:
+        - options:
+            type: custom:uix-forge
+            forge:
+              mold: card
+              sparks:
+                - type: tooltip
+                  for: hui-tile-card $ ha-card
+                  content: >-
+                    {{ state_attr(config.element.entity,
+                    'friendly_name') }} is {{ states(config.element.entity) }}
+            element:
+              entity: this.entity_id
+              type: tile
+          area: kitchen
+      exclude: []
+    card:
+      square: false
+      type: grid
+    show_empty: true
+    card_param: cards
+    ```
 
 ## UIX styling
 
