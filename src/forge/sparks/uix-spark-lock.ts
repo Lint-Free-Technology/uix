@@ -2,6 +2,7 @@ import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { actionHandlerBind } from "./action-handler";
 import { parseDuration } from "../../helpers/common/parse-duration";
+import { LockTargetAdapter, getLockTargetAdapter } from "./lock-target-adapters";
 
 const LOCK_OVERLAY_ID_ATTR = "data-uix-forge-lock-id";
 
@@ -57,6 +58,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _iconLockedColor: string = "";
   private _iconUnlockedColor: string = "";
   private _iconPosition: IconPosition | null = null;
+  private _iconSize: string | null = null;
   private _permissive: boolean = false;
   private _entity: string = "";
   private _unlockAction: Record<string, any> | null = null;
@@ -70,6 +72,8 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _retryCount: number = 0;
   private _retryUntil: number = 0;
   private readonly _id: string;
+  private _targetElement: HTMLElement | null = null;
+  private _targetAdapter: LockTargetAdapter | null = null;
 
   /**
    * Set to `true` when the overlay visuals need to be refreshed — either
@@ -101,6 +105,9 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     this._iconLockedColor = config.icon_locked_color || "";
     this._iconUnlockedColor = config.icon_unlocked_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
+    this._iconSize = config.icon_size !== undefined
+      ? (typeof config.icon_size === "number" ? `${config.icon_size}px` : String(config.icon_size))
+      : null;
     this._permissive = config.permissive === true;
     this._entity = config.entity || "";
     this._unlockAction = config.unlocked_action || null;
@@ -132,7 +139,19 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   private _getEffectiveIconPosition(): IconPosition | null {
     if (this._iconPosition !== null) return this._iconPosition;
     if (this.controller.forge.mold?.isRow()) return { top: "6px", left: "30px" };
+    if (this._targetAdapter) return this._targetAdapter.defaultIconPosition();
     return null;
+  }
+
+  /**
+   * Return the effective icon size, considering the explicit `icon_size` config
+   * and per-target-type defaults. The target adapter provides the default for
+   * its element type; the general fallback is 24px (matching the HA icon default).
+   */
+  private _getEffectiveIconSize(): string {
+    if (this._iconSize !== null) return this._iconSize;
+    if (this._targetAdapter) return this._targetAdapter.defaultIconSize();
+    return "24px";
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -159,6 +178,11 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   }
 
   private _remove() {
+    if (this._targetAdapter && this._targetElement) {
+      this._targetAdapter.cleanup(this._targetElement);
+      this._targetAdapter = null;
+    }
+    this._targetElement = null;
     if (this._overlayElement) {
       this._overlayElement.remove();
       this._overlayElement = null;
@@ -211,7 +235,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       overlay.style.setProperty("display", "var(--uix-lock-display, block)");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
-      overlay.style.setProperty("cursor", "pointer");
+      overlay.style.setProperty("cursor", "var(--uix-lock-cursor, pointer)");
       // Prevent the browser from initiating scroll, zoom, or long-press callouts
       // on this element. This is required for hold detection to work reliably on
       // touch devices — without it the browser fires pointercancel before the
@@ -251,6 +275,13 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // is newly created or when the config has changed (_visualNeedsUpdate).
     // This avoids unnecessary DOM style writes on every hass state update,
     // which can fire multiple times per second and caused the overlay to flash.
+
+    // Store the resolved target element and ensure an adapter exists for it.
+    this._targetElement = element;
+    if (!this._targetAdapter) {
+      this._targetAdapter = getLockTargetAdapter(element);
+    }
+
     if (isNew || this._visualNeedsUpdate) {
       // Refresh the action-handler binding so that hasHold / hasDoubleClick
       // stay current if the config is updated after the overlay was first created.
@@ -269,6 +300,16 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   /** Refresh the overlay's visual state to match the current lock/unlock state. */
   private _updateOverlay(overlay: HTMLElement) {
     const shouldShow = this._shouldShowLock();
+
+    // Drive target-element-specific workarounds (e.g. ha-tile-icon interactive).
+    if (this._targetAdapter && this._targetElement) {
+      const isLocked = shouldShow && !this._isUnlocked;
+      if (isLocked) {
+        this._targetAdapter.lock(this._targetElement, overlay);
+      } else {
+        this._targetAdapter.unlock(this._targetElement);
+      }
+    }
 
     if (!shouldShow) {
       overlay.style.setProperty("display", "none");
@@ -330,16 +371,35 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     // would be visible during the fade. Only apply the unlocked colour when
     // actually swapping to a new icon.
     const customColor = fadeOut ? this._iconLockedColor : (this._isUnlocked ? this._iconUnlockedColor : this._iconLockedColor);
-    const defaultColor = (this._isUnlocked && !fadeOut)
-      // Material Design green/red used as fallbacks when HA theme variables are unavailable
-      ? "var(--success-color, #43a047)"
-      : "var(--error-color, #db4437)";
 
     if (this._iconElement) {
       this._iconElement.icon = icon;
       this._iconElement.style.setProperty("pointer-events", "none");
-      this._iconElement.style.setProperty("--mdc-icon-size", "var(--uix-lock-icon-size, 24px)");
-      this._iconElement.style.setProperty("color", customColor || defaultColor);
+      this._iconElement.style.setProperty("--mdc-icon-size", `var(--uix-lock-icon-size, ${this._getEffectiveIconSize()})`);
+      const iconBg = this._isUnlocked
+        ? "var(--uix-lock-icon-background-unlocked, var(--uix-lock-icon-background, none))"
+        : isBlocked
+          ? "var(--uix-lock-icon-background-blocked, var(--uix-lock-icon-background, none))"
+          : "var(--uix-lock-icon-background, none)";
+      this._iconElement.style.setProperty("background", iconBg);
+      const defaultBorderRadius = this._targetAdapter?.defaultIconBorderRadius() ?? "none";
+      this._iconElement.style.setProperty("border-radius", `var(--uix-lock-icon-border-radius, ${defaultBorderRadius})`);
+      const defaultPadding = this._targetAdapter?.defaultIconPadding() ?? "0";
+      this._iconElement.style.setProperty("padding", `var(--uix-lock-icon-padding, ${defaultPadding})`);
+      this._iconElement.style.setProperty("line-height", "normal");
+      // Resolve icon colour: config-supplied value takes highest precedence, then
+      // state-specific CSS vars, then a general override var, then HA theme defaults.
+      let colorValue: string;
+      if (customColor) {
+        colorValue = customColor;
+      } else if (this._isUnlocked && !fadeOut) {
+        colorValue = "var(--uix-lock-icon-unlocked-color, var(--uix-lock-icon-color, var(--success-color, #43a047)))";
+      } else if (isBlocked) {
+        colorValue = "var(--uix-lock-icon-blocked-color, var(--uix-lock-icon-color, var(--error-color, #db4437)))";
+      } else {
+        colorValue = "var(--uix-lock-icon-locked-color, var(--uix-lock-icon-color, var(--error-color, #db4437)))";
+      }
+      this._iconElement.style.setProperty("color", colorValue);
       // When fading the lock icon out (no icon_unlocked configured) use the
       // CSS-var-controlled duration (default 2s). When swapping to an explicit
       // unlocked icon, keep the fast 0.25s swap transition.
@@ -349,7 +409,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       this._iconElement.style.setProperty("transition", `color 0.25s ease, opacity ${opacityDuration} ease`);
       this._iconElement.style.setProperty("opacity", fadeOut ? "0" : "1");
       // Allow CSS-var-based positional override independent of config-based offset.
-      this._iconElement.style.setProperty("display", "inline-block");
+      this._iconElement.style.setProperty("display", "inline-flex");
       this._iconElement.style.setProperty("translate", `var(--uix-lock-icon-position, none)`);
 
       // ── Icon position ─────────────────────────────────────────────────────
@@ -387,7 +447,12 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
     // When unlocked the overlay should not block interaction with the underlying element
     overlay.style.setProperty("pointer-events", this._isUnlocked ? "none" : "all");
-    overlay.style.setProperty("cursor", this._isUnlocked ? "default" : "pointer");
+    const cursorValue = this._isUnlocked
+      ? "var(--uix-lock-cursor-unlocked, var(--uix-lock-cursor, pointer))"
+      : isBlocked
+        ? "var(--uix-lock-cursor-blocked, var(--uix-lock-cursor, pointer))"
+        : "var(--uix-lock-cursor-locked, var(--uix-lock-cursor, pointer))";
+    overlay.style.setProperty("cursor", cursorValue);
   }
 
   /**

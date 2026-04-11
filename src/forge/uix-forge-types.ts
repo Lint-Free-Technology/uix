@@ -22,7 +22,9 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "row_span",
   "column_span",
   "background",
-  "state_color"
+  "state_color",
+  "entity",
+  "entities",
 ];
 
 export const UIX_FORGE_FORGE_MOLDS = [
@@ -34,8 +36,13 @@ export const UIX_FORGE_FORGE_MOLDS = [
 ];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
+export const UIX_FORGE_PASSTHROUGH_MARKER = "##UIX_FORGE_PASSTHROUGH##";
 
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN = "<<";
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
 
 export interface UixForgeForge {
     type?: string;
@@ -62,6 +69,8 @@ export interface UixForgeConfig {
   element?: UixForgeElement;
   disabled?: boolean;
   state_color?: boolean;
+  entity?: string;
+  entities?: string[];
 }
 
 export class UixForgeConfigBuilder {
@@ -70,16 +79,35 @@ export class UixForgeConfigBuilder {
   _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
   refreshCallback?: (path: UixForgeConfigPath) => void;
+  _nestedTemplateOpen: string;
 
-  constructor(refreshCallback?: (path: UixForgeConfigPath) => void) {
+  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
     this.refreshCallback = refreshCallback;
+    this._nestedTemplateOpen = nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN;
   }
 
   get config() {
-    return this._config;
+    return this._stripPassthrough(this._config);
+  }
+
+  private _stripPassthrough(value: any): any {
+    if (typeof value === "string" && value.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) {
+      return value.slice(UIX_FORGE_PASSTHROUGH_MARKER.length);
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => this._stripPassthrough(item));
+    }
+    if (value !== null && typeof value === "object") {
+      const result: any = {};
+      for (const key of Object.keys(value)) {
+        result[key] = this._stripPassthrough(value[key]);
+      }
+      return result;
+    }
+    return value;
   }
 
   set config(config: any) {
@@ -90,6 +118,10 @@ export class UixForgeConfigBuilder {
 
   public configIsReady(config: any = this._config): Promise<boolean> {
     return this.ready;
+  }
+
+  public set nestedTemplateOpen(value: string) {
+    this._nestedTemplateOpen = value;
   }
 
   private set ready(value: boolean) {
@@ -107,20 +139,24 @@ export class UixForgeConfigBuilder {
   }
 
   private checkReady() {
-    function _checkReady(value) {
+    const _checkReady = (value, nestingOpen) => {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
-        if (hasTemplate(val) && !String(val).includes(UIX_FORGE_NESTED_TEMPLATE_MARKER)) return false;
+        // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
+        if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
+        // If we have nested template marker but not the raw open marker, this means the template is ready.
+        if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
+        if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
-          if (!_checkReady(val)) return false;
+          if (!_checkReady(val, nestingOpen)) return false;
         }
         if (val === UIX_FORGE_DEFAULT_TEMPLATE_VALUE) return false;
       }
       return true;
     }
-    if (_checkReady(this._config)) {
+    if (_checkReady(this._config, this._nestedTemplateOpen)) {
       this.ready = true;
     }
   }

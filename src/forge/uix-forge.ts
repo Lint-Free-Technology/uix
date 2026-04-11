@@ -1,9 +1,9 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { apply_uix, buildMacros, ModdedElement, UixConfig } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -73,6 +73,20 @@ export class UixForge extends LitElement {
     return {
       type: `custom:${UIX_FORGE_TYPE}`,
     };
+  }
+
+  private hasTemplateOrNestedTemplate(value: any): boolean {
+    if (hasTemplate(value)) return true;
+    if (typeof value === "string" && value.includes(this._templateNestingOpen)) return true;
+    return false;
+  }
+
+  private get _passthroughNestingOpen(): string {
+    return this._templateNestingOpen.charAt(0) + this._templateNestingOpen;
+  }
+
+  private get _passthroughNestingClose(): string {
+    return this._templateNestingClose + this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
   }
 
   private _resolveFoundry(
@@ -173,8 +187,9 @@ export class UixForge extends LitElement {
     this._showError = resolvedForge.show_error || false;
     this._delayedHass = resolvedForge.delayed_hass || false;
 
-    this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : "<<";
-    this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : ">>";
+    this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
+    this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;
+    this._forgeConfig.nestedTemplateOpen = this._templateNestingOpen;
     const forgeConfig = { ...resolvedForge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
@@ -188,6 +203,10 @@ export class UixForge extends LitElement {
     if (this.config?.state_color !== undefined) {
       elementConfig.state_color = this.config.state_color;
     }
+    if (this.config?.entities !== undefined) {
+      elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+
     this.forgedElementConfig = elementConfig;
     Promise.all([
       this.bindTemplates(this._forgeConfig),
@@ -286,6 +305,12 @@ export class UixForge extends LitElement {
       delete forgeConfig.delayed_hass;
       delete forgeConfig.template_nesting;
       delete forgeConfig.uix;
+      if (this.config?.state_color !== undefined && !resolved.element.state_color) {
+        resolved.element.state_color = this.config.state_color;
+      }
+      if (this.config?.entities !== undefined) {
+        resolved.element.entities = [...this.config.entities, ...(resolved.element.entities ?? [])];
+      }
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...resolved.element };
       Promise.all([
@@ -358,7 +383,13 @@ export class UixForge extends LitElement {
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
       }
-      if (hasTemplate(current[k])) {
+      if (typeof current[k] === "string" && current[k].includes(this._passthroughNestingOpen) && current[k].includes(this._passthroughNestingClose)) {
+        // Passthrough template: strip one nesting level and pass through to the inner forge
+        const passthrough = current[k]
+          .split(this._passthroughNestingOpen).join(this._templateNestingOpen)
+          .split(this._passthroughNestingClose).join(this._templateNestingClose);
+        base.nested = { keys: currentPath, value: UIX_FORGE_PASSTHROUGH_MARKER + passthrough };
+      } else if (this.hasTemplateOrNestedTemplate(current[k])) {
         // If already bound, unbind first
         const bindingPath = currentPath.join("|");
         if (base.hasBinding(bindingPath)) {
@@ -369,8 +400,8 @@ export class UixForge extends LitElement {
           }
         }
         const template = current[k]
-          .replaceAll(this._templateNestingOpen, `{% raw %}{{${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`)
-          .replaceAll(this._templateNestingClose, `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}}}{% endraw %}`);
+          .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
+          .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
         const macroStr = buildMacros(this._macros, template);
         const callback = (res: any) => {
           if (typeof res === "string") {
@@ -531,15 +562,16 @@ export class UixForge extends LitElement {
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
-      this._delayedHass && (this.forgedElement.hass = this.hass); 
+      this._delayedHass && (this.forgedElement.hass = this.hass);
       return;
     }
     if (this._mold.isRow()) {
       this._mold.cardHelpers().then((helpers) => {
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
-        this.forgedElement.preview = this._mold.isPreview();
+        this.forgedElement.preview = this._mold.isPreview();  
       });
+
       return;
     }
     if (this._mold.isSection()) {
@@ -577,6 +609,7 @@ export class UixForge extends LitElement {
         this.style.setProperty("position", "static");
         this.style.setProperty("transform", "none");
       });
+      return;
     }
   }
 

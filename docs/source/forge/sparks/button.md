@@ -70,7 +70,7 @@ element:
     - The spark targets the **first** element matched by `after`/`before`.
     - The inserted `ha-button` is placed in a containing `<div>` inside the same parent as the target element — it is a sibling, not a child.
     - `icon` and `label` are mutually exclusive. When `icon` is set, `label` is ignored.
-    - Margin styling of `-6px` is applied which allows for button to align nicely in various places in Home Assistant. This margin can be control by the CSS variable `--uix-button-margin`.
+    - Margin styling of `-6px` is applied which allows the button to align nicely in various places in Home Assistant. This margin can be controlled by the CSS variable `--uix-button-margin`.
     - When only `icon` is set (no `label`), the button automatically receives styling to match Home Assistant's icon button.
 
 ## Actions

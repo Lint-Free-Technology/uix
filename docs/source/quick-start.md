@@ -5,7 +5,7 @@ description: Get started using UI eXtension for Home Assistant.
 # Quick Start
 
 !!! note inline end "Card-mod users"
-    If you are migrating from Card-mod check out the [FAQ](./faq.md) where most of your questions will be answered. If you need to ask anything further, use the [GitHb discussions](https://github.com/Lint-Free-Technology/uix/discussions).
+    If you are migrating from Card-mod check out the [FAQ](./faq.md) where most of your questions will be answered. If you need to ask anything further, use the [GitHub discussions](https://github.com/Lint-Free-Technology/uix/discussions).
 
 ## Download
 
@@ -13,14 +13,14 @@ description: Get started using UI eXtension for Home Assistant.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Lint-Free-Technology&repository=uix&category=integration)
 
-Install UI eXtension as via [HACS](https://hacs.xyz/). You can do this easily in a few steps by clicking the button above.
+Install UI eXtension via [HACS](https://hacs.xyz/). You can do this easily in a few steps by clicking the button above.
 
 !!! hint "Download when viewing UI eXtension via HACS"
     If you are new to using HACS you may miss the step to actually Download the integration. Look for the Download button or choose from the `...` menu.
 
 ### Manual
 
-Use your favorite method of access Home Assistant configuration files. Add `uix` folder to `custom_components`. Copy all files in [custom_components/uix](https://github.com/Lint-Free-Technology/uix/tree/master/custom_components/uix) to the `uix` folder.
+Use your favorite method of accessing Home Assistant configuration files. Add `uix` folder to `custom_components`. Copy all files in [custom_components/uix](https://github.com/Lint-Free-Technology/uix/tree/master/custom_components/uix) to the `uix` folder.
 
 ## Add UI eXtension service
 
