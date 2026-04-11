@@ -143,7 +143,7 @@ export class UixForgeConfigBuilder {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
-        // Passthrough values (double-nested templates stripped to single-nested) are considered ready.
+        // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
         if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
         // If we have nested template marker but not the raw open marker, this means the template is ready.
         if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
