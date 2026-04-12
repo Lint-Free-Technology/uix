@@ -38,10 +38,10 @@ const getEntityId = (el: any): string | null => {
   }
 };
 
-const applyImage = (el: any, imageUrl: string): void => {
+const applyImage = (el: any, imageUrl: string | null): void => {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
-    case "ha-tile-icon":
+    case "ha-tile-icon": {
       const haStateIcon = el.querySelector<HTMLElement>("ha-state-icon");
       if (imageUrl) {
         el._uix_replaced_image = el._uix_replaced_image ?? el.imageUrl ?? false;
@@ -61,6 +61,7 @@ const applyImage = (el: any, imageUrl: string): void => {
         }
       }
       break;
+    }
     case "state-badge":
       if (imageUrl) {
         el._uix_replaced_image = el._uix_replaced_image ?? el.overrideImage ?? false;
@@ -88,18 +89,19 @@ const applyImage = (el: any, imageUrl: string): void => {
         delete el._uix_replaced_image;
       }
       break;
-    case "ha-person-badge":
+    case "ha-person-badge": {
       const pictureEl = el.shadowRoot?.querySelector(".picture");
       if (pictureEl) {
         if (imageUrl) {
           el._uix_replaced_image = el._uix_replaced_image ?? pictureEl.style.backgroundImage ?? false;
-           pictureEl.style.backgroundImage = `url(${imageUrl})`;
+          pictureEl.style.backgroundImage = `url(${imageUrl})`;
         } else if (el._uix_replaced_image !== undefined) {
-           pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
+          pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
           delete el._uix_replaced_image;
         }
       }
       break;
+    }
   }
 };
 
@@ -193,9 +195,13 @@ function joinSet(dst: Set<any>, src: Set<any>) {
   for (const s of src) dst.add(s);
 }
 
+// Shadow-root crossings count as steps, so 20 is needed to reliably traverse
+// deeply nested shadow trees (e.g. map markers inside dialogs inside cards).
+const MAX_PARENT_STEPS = 20;
+
 async function findParentUix(node: any, step = 0): Promise<Set<Uix>> {
   let uixElements: Set<Uix> = new Set();
-  if (step === 20) return uixElements;
+  if (step === MAX_PARENT_STEPS) return uixElements;
   if (!node) return uixElements;
 
   if (node.updateComplete) await node.updateComplete;
