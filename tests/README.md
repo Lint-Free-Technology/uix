@@ -11,9 +11,11 @@ and exercise UIX with a real browser (via [Playwright](https://playwright.dev/py
 
 - **Docker** — required to run the HA container.
 - **Python ≥ 3.11**
-- Install test dependencies and Playwright browsers:
+- Create and activate a virtual environment, then install test dependencies and Playwright browsers:
 
   ```bash
+  python -m venv .venv
+  source .venv/bin/activate   # Windows: .venv\Scripts\activate
   pip install -e ".[test]"
   playwright install chromium
   ```
