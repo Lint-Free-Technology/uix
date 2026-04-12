@@ -35,7 +35,7 @@ uix:
 
 Define a generic CSS variable `--uix-image` in the context of the image you wish to override which would be an element containing one of `ha-entity-marker` (e.g. map), `ha-tile-icon` (e.g. tile card), `state-badge` (e.g. entities row).
 
-hen an element is rendered for the matching entity, the background image is replaced with the supplied URL.
+When an element is rendered for the matching entity, the background image is replaced with the supplied URL.
 
 Templates are supported.
 
