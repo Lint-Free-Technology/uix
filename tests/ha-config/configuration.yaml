@@ -9,3 +9,6 @@ demo:
 
 lovelace:
   mode: storage
+
+frontend:
+  themes: !include themes.yaml

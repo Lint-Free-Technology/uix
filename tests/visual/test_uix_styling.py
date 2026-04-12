@@ -1,77 +1,27 @@
-"""Basic UIX styling visual tests.
+"""UIX smoke tests — verify HA starts correctly with UIX installed.
 
-These tests verify that UIX correctly injects CSS into Home Assistant's
-shadow DOM by pushing Lovelace configurations via the WebSocket API and then
-inspecting the rendered page with Playwright.
+These tests do **not** push any Lovelace configuration; they simply check that
+the HA instance boots, the UIX integration is registered, and no UIX-related
+JavaScript errors appear on the default page.
 
-Test classes
-------------
-TestUIXLoads
-    Smoke tests — HA loads correctly with UIX installed and the UIX
-    integration appears in the Integrations settings page.
-
-TestCardBasicStyle
-    Push an entities card with a UIX background-color style and verify that:
-    - a ``<uix-node>`` element is present in the card's shadow root (UIX ran), and
-    - the computed ``background-color`` of ``ha-card`` matches the chosen colour.
-
-TestCardCSSVariable
-    Push a tile card with a UIX CSS custom-property style (``--tile-color``)
-    and verify the property value is reflected in the computed style.
-
-Shadow DOM helpers
-------------------
-HA's Lovelace cards live inside nested shadow roots.  The helper JS function
-``querySelectorDeep`` pierces all shadow roots to find an element by CSS
-selector across the entire HA component tree.
+Card styling and forge tests live in ``tests/visual/scenarios/`` as YAML files
+and are run by ``test_scenarios.py``.
 """
 
 from __future__ import annotations
 
-import pytest
 from playwright.sync_api import Page, expect
 
-from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS, assert_snapshot
-from conftest import push_lovelace_config_to
+from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS
 
 COMPONENT_DOMAIN = "uix"
 COMPONENT_DISPLAY_NAME = "UI eXtension"
 
-# ---------------------------------------------------------------------------
-# Shadow-piercing querySelector helper (injected into every evaluate call)
-# ---------------------------------------------------------------------------
 
-_QUERY_DEEP_JS = """
-    function querySelectorDeep(selector, root) {
-        root = root || document.documentElement;
-        var direct = root.querySelector(selector);
-        if (direct) return direct;
-        var all = root.querySelectorAll('*');
-        for (var i = 0; i < all.length; i++) {
-            if (all[i].shadowRoot) {
-                var found = querySelectorDeep(selector, all[i].shadowRoot);
-                if (found) return found;
-            }
-        }
-        return null;
-    }
-"""
-
-
-def _goto_lovelace(page: Page, ha_url: str, path: str = "/home/overview") -> None:
-    """Navigate to a Lovelace path and wait for the page to settle.
-
-    Waits for network idle plus 2×HA_SETTLE_MS.  UIX processes card configs
-    asynchronously (template render round-trip to HA backend) *after* network
-    idle, so the double settle ensures injection is complete before assertions.
-    """
-    page.goto(f"{ha_url}{path}", wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT)
+def _goto_home(page: Page, ha_url: str) -> None:
+    """Navigate to the HA home overview and wait for the page to settle."""
+    page.goto(f"{ha_url}/home/overview", wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT)
     page.wait_for_timeout(HA_SETTLE_MS * 2)
-
-
-# ---------------------------------------------------------------------------
-# Smoke tests
-# ---------------------------------------------------------------------------
 
 
 class TestUIXLoads:
@@ -79,12 +29,12 @@ class TestUIXLoads:
 
     def test_ha_shell_present(self, ha_page: Page, ha_url: str) -> None:
         """The <home-assistant> custom element must be present in the DOM."""
-        _goto_lovelace(ha_page, ha_url)
+        _goto_home(ha_page, ha_url)
         expect(ha_page.locator("home-assistant")).to_be_visible(timeout=PAGE_LOAD_TIMEOUT)
 
     def test_sidebar_renders(self, ha_page: Page, ha_url: str) -> None:
         """The HA sidebar must be visible (confirms full frontend boot)."""
-        _goto_lovelace(ha_page, ha_url)
+        _goto_home(ha_page, ha_url)
         expect(ha_page.locator("ha-sidebar")).to_be_visible(timeout=PAGE_LOAD_TIMEOUT)
 
     def test_uix_integration_in_settings(self, ha_page: Page, ha_url: str) -> None:
@@ -104,143 +54,6 @@ class TestUIXLoads:
             "console",
             lambda msg: errors.append(msg.text) if msg.type == "error" else None,
         )
-        _goto_lovelace(ha_page, ha_url)
+        _goto_home(ha_page, ha_url)
         uix_errors = [e for e in errors if COMPONENT_DOMAIN.lower() in e.lower()]
         assert not uix_errors, f"UIX produced console errors: {uix_errors}"
-
-
-# ---------------------------------------------------------------------------
-# Basic card background-colour style
-# ---------------------------------------------------------------------------
-
-
-class TestCardBasicStyle:
-    """Push a card with a UIX background-colour style and verify it renders."""
-
-    # Pure red — distinctive and easy to verify.
-    _BG_COLOR = "rgb(255, 0, 0)"
-
-    @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
-        """Push a minimal Lovelace config with a UIX-styled entities card."""
-        config = {
-            "title": "UIX Style Test",
-            "views": [
-                {
-                    "title": "Style Test",
-                    "path": "style-test",
-                    "cards": [
-                        {
-                            "type": "entities",
-                            "title": "UIX Red Background",
-                            "entities": ["light.bed_light"],
-                            "uix": {
-                                "style": f"ha-card {{ background: {self._BG_COLOR}; }}"
-                            },
-                        },
-                    ],
-                }
-            ],
-        }
-        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
-        yield
-        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
-
-    def test_uix_node_injected(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """A <uix-node> element must be present in the card's shadow root."""
-        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/style-test")
-        has_uix_node = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_JS + """
-                var card = querySelectorDeep('hui-entities-card');
-                if (!card || !card.shadowRoot) return false;
-                return card.shadowRoot.querySelector('uix-node') !== null;
-            }"""
-        )
-        assert has_uix_node, "UIX did not inject a <uix-node> into the entities card's shadow root"
-
-    def test_card_background_color(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """The computed background-color of ha-card must match the UIX style."""
-        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/style-test")
-        bg_color = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_JS + """
-                var card = querySelectorDeep('hui-entities-card');
-                if (!card || !card.shadowRoot) return null;
-                var haCard = card.shadowRoot.querySelector('ha-card');
-                if (!haCard) return null;
-                return getComputedStyle(haCard).backgroundColor;
-            }"""
-        )
-        assert bg_color == self._BG_COLOR, (
-            f"Expected background-color {self._BG_COLOR!r}, got {bg_color!r}"
-        )
-
-    def test_card_style_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """Snapshot of a card with a UIX background-color style."""
-        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/style-test")
-        assert_snapshot(ha_page, "01_card_basic_style")
-
-
-# ---------------------------------------------------------------------------
-# CSS custom property style
-# ---------------------------------------------------------------------------
-
-
-class TestCardCSSVariable:
-    """Push a tile card with a UIX CSS custom-property style and verify it.
-
-    HA's tile card sets ``--tile-color`` as an **inline style** on ``ha-card``
-    based on the entity state (e.g. ``#9e9e9e`` for an off light).  A plain
-    CSS rule cannot override an inline style, so the UIX style must use
-    ``!important`` to win.  This test therefore verifies both that UIX injects
-    its node *and* that the ``!important`` flag successfully overrides HA's
-    inline colour.
-    """
-
-    _TILE_COLOR = "rgb(0, 128, 128)"
-
-    @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
-        """Push a tile card where UIX overrides --tile-color with !important."""
-        config = {
-            "title": "UIX CSS Variable Test",
-            "views": [
-                {
-                    "title": "CSS Var Test",
-                    "path": "cssvar-test",
-                    "cards": [
-                        {
-                            "type": "tile",
-                            "entity": "light.bed_light",
-                            "uix": {
-                                "style": f"ha-card {{ --tile-color: {self._TILE_COLOR} !important; }}"
-                            },
-                        },
-                    ],
-                }
-            ],
-        }
-        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
-        yield
-        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
-
-    def test_css_variable_applied(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """UIX must override HA's inline --tile-color with the !important value."""
-        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/cssvar-test")
-        tile_color = ha_page.evaluate(
-            "() => {" + _QUERY_DEEP_JS + """
-                var card = querySelectorDeep('hui-tile-card');
-                if (!card || !card.shadowRoot) return null;
-                var haCard = card.shadowRoot.querySelector('ha-card');
-                if (!haCard) return null;
-                return getComputedStyle(haCard).getPropertyValue('--tile-color').trim();
-            }"""
-        )
-        assert tile_color == self._TILE_COLOR, (
-            f"UIX !important style did not override HA's inline --tile-color: "
-            f"expected {self._TILE_COLOR!r}, got {tile_color!r}"
-        )
-
-    def test_css_variable_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """Snapshot of a tile card with a UIX CSS custom-property style."""
-        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/cssvar-test")
-        assert_snapshot(ha_page, "02_card_css_variable")

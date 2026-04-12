@@ -1,0 +1,30 @@
+id: forge_tooltip
+description: "Tooltip spark attaches a wa-tooltip containing the configured text"
+view_path: forge-tooltip
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: tooltip
+        for: hui-tile-card
+        content: "This is a UIX tooltip"
+  element:
+    type: tile
+    entity: "light.bed_light"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "wa-tooltip"
+
+  # wa-tooltip.textContent includes UIX-injected scoped CSS after the user
+  # text, so we check it starts with the configured content.
+  - type: text_startswith
+    root: "uix-forge"
+    selector: "wa-tooltip"
+    expected: "This is a UIX tooltip"
+
+  - type: snapshot
+    name: "04_forge_tooltip_spark"

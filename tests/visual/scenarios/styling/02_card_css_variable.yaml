@@ -1,0 +1,25 @@
+id: card_css_variable
+description: "UIX !important overrides HA's inline --tile-color on a tile card"
+view_path: card-css-variable
+
+card:
+  type: tile
+  entity: "light.bed_light"
+  uix:
+    style: "ha-card { --tile-color: rgb(0, 128, 128) !important; }"
+
+assertions:
+  - type: element_present
+    root: "hui-tile-card"
+    selector: "uix-node"
+
+  # HA sets --tile-color as an inline style based on entity state.
+  # !important in the UIX rule must win over that inline style.
+  - type: css_variable
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "--tile-color"
+    expected: "rgb(0, 128, 128)"
+
+  - type: snapshot
+    name: "02_card_css_variable"

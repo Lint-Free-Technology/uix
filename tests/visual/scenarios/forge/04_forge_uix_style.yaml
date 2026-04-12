@@ -1,0 +1,21 @@
+id: forge_uix_style
+description: "UIX style on the forge element injects a uix-node into the forge shadow root"
+view_path: forge-uix-style
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    uix:
+      style: ":host { --ha-card-border-radius: 20px; }"
+  element:
+    type: tile
+    entity: "light.bed_light"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "uix-node"
+
+  - type: snapshot
+    name: "06_forge_uix_style"

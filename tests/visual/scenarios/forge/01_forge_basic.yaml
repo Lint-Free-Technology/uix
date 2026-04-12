@@ -1,0 +1,20 @@
+id: forge_basic
+description: "UIX Forge wrapping a tile card renders a uix-forge element containing a hui-tile-card"
+view_path: forge-basic
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+  element:
+    type: tile
+    entity: "light.bed_light"
+
+assertions:
+  # uix-forge must be in the DOM
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: snapshot
+    name: "03_forge_basic"
