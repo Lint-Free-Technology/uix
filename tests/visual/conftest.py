@@ -57,6 +57,8 @@ def push_lovelace_config_to(ha: HATestContainer, url_path: str, config: dict[str
     t = threading.Thread(target=_run, daemon=True)
     t.start()
     t.join(timeout=30)
+    if t.is_alive():
+        raise TimeoutError("lovelace/config/save timed out after 30 seconds")
     if exc_holder:
         raise exc_holder[0]
     if not result.get("success"):

@@ -1,8 +1,0 @@
-LICENSE.txt
-README.md
-pyproject.toml
-src/uix.egg-info/PKG-INFO
-src/uix.egg-info/SOURCES.txt
-src/uix.egg-info/dependency_links.txt
-src/uix.egg-info/requires.txt
-src/uix.egg-info/top_level.txt

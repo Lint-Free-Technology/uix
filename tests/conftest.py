@@ -133,6 +133,8 @@ def _create_dashboard(ha: HATestContainer, url_path: str, title: str) -> None:
     t = threading.Thread(target=_run, daemon=True)
     t.start()
     t.join(timeout=30)
+    if t.is_alive():
+        raise TimeoutError("lovelace/dashboards/create timed out after 30 seconds")
     if exc_holder:
         raise exc_holder[0]
     # "success": false with code "url_path_already_in_use" means it exists — OK.
