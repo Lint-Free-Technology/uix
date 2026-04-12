@@ -186,11 +186,21 @@ class TestCardBasicStyle:
 
 
 class TestCardCSSVariable:
-    """Push a tile card with a UIX CSS custom-property style and verify it."""
+    """Push a tile card with a UIX CSS custom-property style and verify it.
+
+    HA's tile card sets ``--tile-color`` as an **inline style** on ``ha-card``
+    based on the entity state (e.g. ``#9e9e9e`` for an off light).  A plain
+    CSS rule cannot override an inline style, so the UIX style must use
+    ``!important`` to win.  This test therefore verifies both that UIX injects
+    its node *and* that the ``!important`` flag successfully overrides HA's
+    inline colour.
+    """
+
+    _TILE_COLOR = "rgb(0, 128, 128)"
 
     @pytest.fixture(autouse=True)
     def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
-        """Push a tile card where UIX sets --tile-color to teal."""
+        """Push a tile card where UIX overrides --tile-color with !important."""
         config = {
             "title": "UIX CSS Variable Test",
             "views": [
@@ -202,7 +212,7 @@ class TestCardCSSVariable:
                             "type": "tile",
                             "entity": "light.bed_light",
                             "uix": {
-                                "style": "ha-card { --tile-color: rgb(0, 128, 128); }"
+                                "style": f"ha-card {{ --tile-color: {self._TILE_COLOR} !important; }}"
                             },
                         },
                     ],
@@ -214,26 +224,20 @@ class TestCardCSSVariable:
         push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
 
     def test_css_variable_applied(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
-        """The UIX style must inject a <uix-node> and the --tile-color CSS variable
-        must be set on ha-card (HA may later override this with entity state colour,
-        so we assert UIX injection is present and that a uix-node exists)."""
+        """UIX must override HA's inline --tile-color with the !important value."""
         _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/cssvar-test")
-        result = ha_page.evaluate(
+        tile_color = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 var card = querySelectorDeep('hui-tile-card');
-                if (!card || !card.shadowRoot) return {found: false};
+                if (!card || !card.shadowRoot) return null;
                 var haCard = card.shadowRoot.querySelector('ha-card');
-                var uixNode = card.shadowRoot.querySelector('uix-node');
-                return {
-                    found: !!haCard,
-                    uixNodePresent: !!uixNode,
-                    tileColor: haCard ? getComputedStyle(haCard).getPropertyValue('--tile-color').trim() : null,
-                };
+                if (!haCard) return null;
+                return getComputedStyle(haCard).getPropertyValue('--tile-color').trim();
             }"""
         )
-        assert result["found"], "hui-tile-card or its ha-card was not found"
-        assert result["uixNodePresent"], (
-            "UIX did not inject a <uix-node> into the tile card's shadow root"
+        assert tile_color == self._TILE_COLOR, (
+            f"UIX !important style did not override HA's inline --tile-color: "
+            f"expected {self._TILE_COLOR!r}, got {tile_color!r}"
         )
 
     def test_css_variable_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
