@@ -5,7 +5,8 @@ view_path: card-basic-style
 card:
   type: entities
   title: "UIX Red Background"
-  entities: ["light.bed_light"]
+  entities:
+    - light.bed_light
   uix:
     style: "ha-card { background: rgb(255, 0, 0); }"
 

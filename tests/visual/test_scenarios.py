@@ -34,6 +34,7 @@ from scenario_runner import (
     push_scenario,
     reset_theme,
     run_assertions,
+    run_interactions,
     set_theme,
 )
 
@@ -75,6 +76,7 @@ def test_scenario(
 
     try:
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
+        run_interactions(ha_page, scenario, ha=ha)
         run_assertions(ha_page, scenario)
     finally:
         if theme:

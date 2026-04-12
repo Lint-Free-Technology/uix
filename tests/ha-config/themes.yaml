@@ -8,4 +8,5 @@ uix-test-theme:
   uix-card: |
     ha-card {
       background: rgb(0, 0, 128) !important;
+      color: white !important;
     }

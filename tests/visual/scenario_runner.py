@@ -5,6 +5,72 @@ scenario.  This module provides helpers to load those files, push their
 Lovelace configuration to the running HA instance, navigate to the resulting
 view, and evaluate the assertions declared in the file.
 
+Interaction types
+-----------------
+Interactions are declared under the top-level ``interactions:`` key and are
+executed (in order) after navigation but before assertions.  They are useful
+for triggering hover effects, tooltips, clicks that change entity state, or
+any other action that must happen before assertions and snapshots.
+
+hover
+    Hover over an element using one of two forms:
+
+    *Simple* — hover an element reachable by a plain CSS selector in the
+    main page (no shadow-root crossing):
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: hover
+            selector: uix-forge
+            settle_ms: 800   # optional, default 500
+
+    *Shadow-root* — hover an element inside a shadow-root chain (uses JS to
+    obtain the bounding rect then moves the mouse to the element centre):
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: hover
+            root: hui-tile-card      # or a list for deeper chains
+            selector: ha-tile-icon
+            settle_ms: 800
+
+click
+    Click an element.  Supports the same simple / shadow-root forms as
+    ``hover``.  Use ``settle_ms`` to wait for state changes or animations
+    after the click (e.g. entity state update + UIX template re-render):
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: click
+            root: hui-tile-card
+            selector: ha-tile-icon
+            settle_ms: 3000
+
+ha_service
+    Call a Home Assistant service via the REST API.  Useful for putting an
+    entity into a known state before navigation or interaction.  Requires the
+    ``ha`` container to be passed to :func:`run_interactions`.
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: ha_service
+            domain: light
+            service: turn_off
+            entity_id: light.bed_light   # shorthand for data.entity_id
+
+wait
+    Wait for a fixed number of milliseconds (default 500):
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: wait
+            ms: 1000
+
 Assertion types
 ---------------
 element_present
@@ -35,18 +101,18 @@ snapshot
 
 Shadow-root traversal
 ---------------------
-The *root* field in an assertion may be a **string** (a single CSS selector
-located anywhere in the page via a shadow-piercing search) or a **list of
-strings** (a chain of selectors, each resolved inside the previous element's
-``shadowRoot``).  The final element in the chain supplies the shadow root that
-*selector* is then searched in.
+The *root* field in an assertion (or interaction) may be a **string** (a
+single CSS selector located anywhere in the page via a shadow-piercing search)
+or a **list of strings** (a chain of selectors, each resolved inside the
+previous element's ``shadowRoot``).  The final element in the chain supplies
+the shadow root that *selector* is then searched in.
 
 Example — ``ha-button`` inside ``hui-tile-card`` inside ``uix-forge``::
 
     root:
-      - "uix-forge"
-      - "hui-tile-card"
-    selector: "ha-button"
+      - uix-forge
+      - hui-tile-card
+    selector: ha-button
 """
 
 from __future__ import annotations
@@ -161,6 +227,110 @@ def goto_scenario(page: Page, ha_url: str, url_path: str, view_path: str) -> Non
         timeout=PAGE_LOAD_TIMEOUT,
     )
     page.wait_for_timeout(HA_SETTLE_MS * 2)
+
+
+# ---------------------------------------------------------------------------
+# Interaction engine
+# ---------------------------------------------------------------------------
+
+
+def run_interactions(
+    page: Page,
+    scenario: dict[str, Any],
+    ha: HATestContainer | None = None,
+) -> None:
+    """Execute any interactions declared in *scenario* before assertions.
+
+    Interactions let tests put the page into a specific UI state (e.g. a
+    hover that reveals a tooltip, a click that changes entity state) before
+    running assertions and snapshots.
+
+    Pass the HA container as *ha* when any ``ha_service`` interactions are
+    present in the scenario.
+    """
+    for interaction in scenario.get("interactions", []):
+        itype = interaction["type"]
+        if itype == "hover":
+            _perform_hover(page, interaction)
+        elif itype == "click":
+            _perform_click(page, interaction)
+        elif itype == "ha_service":
+            if ha is None:
+                raise ValueError(
+                    "ha_service interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _call_ha_service(ha, interaction)
+        elif itype == "wait":
+            page.wait_for_timeout(interaction.get("ms", 500))
+        else:
+            raise ValueError(f"Unknown interaction type: {itype!r}")
+
+
+def _perform_hover(page: Page, interaction: dict[str, Any]) -> None:
+    """Hover over an element and wait for hover effects to settle.
+
+    If *root* is present the element is resolved inside a shadow-root chain
+    using JS (``getBoundingClientRect`` + ``page.mouse.move``).  Otherwise
+    a simple page-level Playwright locator hover is used.
+    """
+    settle_ms: int = interaction.get("settle_ms", 500)
+
+    if "root" in interaction:
+        rect = _get_element_rect(page, interaction)
+        page.mouse.move(rect["x"] + rect["w"] / 2, rect["y"] + rect["h"] / 2)
+    else:
+        page.locator(interaction["selector"]).hover()
+
+    page.wait_for_timeout(settle_ms)
+
+
+def _perform_click(page: Page, interaction: dict[str, Any]) -> None:
+    """Click an element and wait for effects to settle.
+
+    If *root* is present the element is resolved inside a shadow-root chain
+    using JS (``getBoundingClientRect`` + ``page.mouse.click``).  Otherwise
+    a simple page-level Playwright locator click is used.
+
+    Use ``settle_ms`` to allow enough time for entity state changes and UIX
+    template re-renders to propagate back to the browser after the click.
+    """
+    settle_ms: int = interaction.get("settle_ms", 500)
+
+    if "root" in interaction:
+        rect = _get_element_rect(page, interaction)
+        page.mouse.click(rect["x"] + rect["w"] / 2, rect["y"] + rect["h"] / 2)
+    else:
+        page.locator(interaction["selector"]).click()
+
+    page.wait_for_timeout(settle_ms)
+
+
+def _get_element_rect(page: Page, interaction: dict[str, Any]) -> dict[str, float]:
+    """Return the ``{x, y, w, h}`` bounding rect for an element inside a shadow root."""
+    raw_root = interaction["root"]
+    roots = [raw_root] if isinstance(raw_root, str) else list(raw_root)
+    selector: str = interaction.get("selector", "")
+    root_js = _build_root_js(roots)
+    rect = page.evaluate(
+        f"() => {{ {root_js} if (_err) return {{error: _err}};"
+        f" var el = currentRoot.querySelector({selector!r});"
+        f" if (!el) return {{error: 'selector {selector} not found'}};"
+        f" var r = el.getBoundingClientRect();"
+        f" return {{x: r.x, y: r.y, w: r.width, h: r.height}}; }}"
+    )
+    _check_traversal(rect, interaction)
+    return rect
+
+
+def _call_ha_service(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Call a Home Assistant service via the REST API."""
+    domain = interaction["domain"]
+    service = interaction["service"]
+    data: dict[str, Any] = dict(interaction.get("data", {}))
+    if "entity_id" in interaction:
+        data["entity_id"] = interaction["entity_id"]
+    ha.api("POST", f"services/{domain}/{service}", json=data).raise_for_status()
 
 
 # ---------------------------------------------------------------------------

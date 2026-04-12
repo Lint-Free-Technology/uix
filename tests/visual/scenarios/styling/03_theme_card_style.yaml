@@ -13,7 +13,8 @@ view_path: theme-card-style
 card:
   type: entities
   title: "Theme Styled Card"
-  entities: ["light.bed_light"]
+  entities:
+    - light.bed_light
 
 assertions:
   - type: css_property
