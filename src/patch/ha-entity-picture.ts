@@ -42,7 +42,7 @@ const applyImage = (el: any, imageUrl: string | null): void => {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
     case "ha-tile-icon": {
-      const haStateIcon = el.querySelector<HTMLElement>("ha-state-icon");
+      const haStateIcon = el.querySelector("ha-state-icon");
       if (imageUrl) {
         el._uix_replaced_image = el._uix_replaced_image ?? el.imageUrl ?? false;
         el.imageUrl = imageUrl;
