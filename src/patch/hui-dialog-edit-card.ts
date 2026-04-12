@@ -38,12 +38,14 @@ class HuiDialogEditCardPatch extends LitElement {
       this._uixIcon = createUixIconElement();
     }
 
-    const button = this.shadowRoot.querySelector(
+    const button: HTMLElement = this.shadowRoot.querySelector(
       "ha-button[slot=secondaryAction]"
     );
     if (!button) return;
     if (button.nextElementSibling !== this._uixIcon) {
       button.insertAdjacentElement("afterend", this._uixIcon);
+      button.style.marginRight = "unset";
+      button.style.marginInlineEnd = "unset";
     }
     if (
       JSON.stringify(this._cardConfig)?.includes("uix") || JSON.stringify(this._cardConfig)?.includes("card_mod")

@@ -16,8 +16,9 @@ export function createUixIconElement(): HTMLElement {
   const el = document.createElement("ha-svg-icon") as any;
   // Set path so the element renders its shadow SVG immediately
   el.path = UIX_X_PATH;
+  el.setAttribute("slot", "secondaryAction");
   el.style.cssText =
-    "height:1.5em;width:auto;align-self:center;margin:0 8px;flex-shrink:0;";
+    "height:1.5em;width:auto;align-self:center;margin-right:auto";
 
   // After ha-svg-icon renders, fix the viewBox and inject multi-colored paths
   customElements.whenDefined("ha-svg-icon").then(async () => {
