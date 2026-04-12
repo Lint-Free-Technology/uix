@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import os
 import shutil
+import threading
 from pathlib import Path
+from typing import Any
 
 import pytest
 from ha_testcontainer import HATestContainer, HAVersion
@@ -91,3 +93,62 @@ def ha_url(ha: HATestContainer) -> str:
 def ha_token(ha: HATestContainer) -> str:
     """Long-lived access token for the admin user."""
     return ha.get_token()
+
+
+# ---------------------------------------------------------------------------
+# Named Lovelace test dashboard
+# ---------------------------------------------------------------------------
+
+#: URL path for the dedicated UIX test dashboard created at session start.
+UIX_TEST_DASHBOARD_URL_PATH = "uix-tests"
+
+
+def _create_dashboard(ha: HATestContainer, url_path: str, title: str) -> None:
+    """Create a named Lovelace dashboard via the WebSocket API.
+
+    Uses ``lovelace/dashboards/create`` to register a new ``storage``-backed
+    dashboard at *url_path*.  Any existing dashboard with the same ``url_path``
+    is silently ignored so the session fixture is idempotent.
+    """
+    result: dict[str, Any] = {}
+    exc_holder: list[BaseException] = []
+
+    def _run() -> None:
+        try:
+            result.update(
+                ha._ws_call(
+                    {
+                        "id": 1,
+                        "type": "lovelace/dashboards/create",
+                        "url_path": url_path,
+                        "title": title,
+                        "show_in_sidebar": False,
+                        "require_admin": False,
+                    }
+                )
+            )
+        except BaseException as e:  # noqa: BLE001
+            exc_holder.append(e)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(timeout=30)
+    if exc_holder:
+        raise exc_holder[0]
+    # "success": false with code "url_path_already_in_use" means it exists — OK.
+    if not result.get("success"):
+        error = (result.get("error") or {}).get("code", "")
+        if error != "url_path_already_in_use":
+            raise RuntimeError(f"lovelace/dashboards/create failed: {result}")
+
+
+@pytest.fixture(scope="session")
+def ha_lovelace_url_path(ha: HATestContainer) -> str:
+    """URL path of the dedicated UIX test Lovelace dashboard.
+
+    Creates the dashboard (once per session) and returns its ``url_path`` so
+    individual test fixtures can push configs to it and navigate to its views.
+    """
+    _create_dashboard(ha, UIX_TEST_DASHBOARD_URL_PATH, "UIX Tests")
+    return UIX_TEST_DASHBOARD_URL_PATH
+

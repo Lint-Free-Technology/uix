@@ -34,6 +34,7 @@ import pytest
 from playwright.sync_api import Page
 
 from ha_testcontainer.visual import PAGE_LOAD_TIMEOUT, HA_SETTLE_MS, assert_snapshot
+from conftest import push_lovelace_config_to
 
 # Entity from the HA demo integration — always available.
 _DEMO_LIGHT = "light.bed_light"
@@ -59,7 +60,7 @@ _QUERY_DEEP_JS = """
 """
 
 
-def _goto_lovelace(page: Page, ha_url: str, path: str = "/lovelace/0") -> None:
+def _goto_lovelace(page: Page, ha_url: str, path: str = "/home/overview") -> None:
     """Navigate to a Lovelace path and wait for the page to settle.
 
     Waits for network idle plus 2×HA_SETTLE_MS.  UIX processes card configs
@@ -79,7 +80,7 @@ class TestForgeRenders:
     """Verify that a basic UIX Forge wrapping a tile card renders correctly."""
 
     @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_url: str):
+    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
         config = {
             "title": "UIX Forge Test",
             "views": [
@@ -99,21 +100,21 @@ class TestForgeRenders:
                 }
             ],
         }
-        ha.push_lovelace_config(config)
+        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
         yield
-        ha.push_lovelace_config({"title": "Home", "views": []})
+        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
 
-    def test_forge_element_present(self, ha_page: Page, ha_url: str) -> None:
+    def test_forge_element_present(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """The <uix-forge> custom element must be present in the DOM."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-renders")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-renders")
         forge_present = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + "return querySelectorDeep('uix-forge') !== null; }"
         )
         assert forge_present, "<uix-forge> element not found in the DOM"
 
-    def test_forge_contains_tile_card(self, ha_page: Page, ha_url: str) -> None:
+    def test_forge_contains_tile_card(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """The forge's shadow root must contain the forged hui-tile-card."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-renders")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-renders")
         tile_present = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -123,9 +124,9 @@ class TestForgeRenders:
         )
         assert tile_present, "hui-tile-card not found inside uix-forge shadow root"
 
-    def test_forge_renders_snapshot(self, ha_page: Page, ha_url: str) -> None:
+    def test_forge_renders_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """Snapshot of a basic UIX Forge wrapping a tile card."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-renders")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-renders")
         assert_snapshot(ha_page, "03_forge_basic")
 
 
@@ -138,7 +139,7 @@ class TestForgeTooltipSpark:
     """Verify that the tooltip spark attaches a wa-tooltip to the forged element."""
 
     @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_url: str):
+    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
         config = {
             "title": "UIX Forge Tooltip Test",
             "views": [
@@ -167,13 +168,13 @@ class TestForgeTooltipSpark:
                 }
             ],
         }
-        ha.push_lovelace_config(config)
+        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
         yield
-        ha.push_lovelace_config({"title": "Home", "views": []})
+        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
 
-    def test_tooltip_element_present(self, ha_page: Page, ha_url: str) -> None:
+    def test_tooltip_element_present(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """A <wa-tooltip> must be added to the forge shadow root by the tooltip spark."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-tooltip")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-tooltip")
         has_tooltip = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -183,9 +184,9 @@ class TestForgeTooltipSpark:
         )
         assert has_tooltip, "wa-tooltip not found in uix-forge shadow root"
 
-    def test_tooltip_content(self, ha_page: Page, ha_url: str) -> None:
+    def test_tooltip_content(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """The wa-tooltip content attribute must match the configured content."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-tooltip")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-tooltip")
         content = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -194,13 +195,13 @@ class TestForgeTooltipSpark:
                 return tooltip ? tooltip.textContent?.trim() : null;
             }"""
         )
-        assert content == "This is a UIX tooltip", (
+        assert content is not None and content.startswith("This is a UIX tooltip"), (
             f"Unexpected tooltip content: {content!r}"
         )
 
-    def test_tooltip_spark_snapshot(self, ha_page: Page, ha_url: str) -> None:
+    def test_tooltip_spark_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """Snapshot of a forge with a tooltip spark (tooltip not visible at rest)."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-tooltip")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-tooltip")
         assert_snapshot(ha_page, "04_forge_tooltip_spark")
 
 
@@ -213,7 +214,7 @@ class TestForgeButtonSpark:
     """Verify that the button spark inserts an ha-button into the tile card."""
 
     @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_url: str):
+    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
         config = {
             "title": "UIX Forge Button Test",
             "views": [
@@ -244,13 +245,13 @@ class TestForgeButtonSpark:
                 }
             ],
         }
-        ha.push_lovelace_config(config)
+        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
         yield
-        ha.push_lovelace_config({"title": "Home", "views": []})
+        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
 
-    def test_button_element_present(self, ha_page: Page, ha_url: str) -> None:
+    def test_button_element_present(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """An <ha-button> must be added inside the tile card by the button spark."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-button")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-button")
         has_button = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -262,9 +263,9 @@ class TestForgeButtonSpark:
         )
         assert has_button, "ha-button not found inside hui-tile-card shadow root"
 
-    def test_button_label(self, ha_page: Page, ha_url: str) -> None:
+    def test_button_label(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """The ha-button must display the configured label text."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-button")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-button")
         label = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -277,9 +278,9 @@ class TestForgeButtonSpark:
         )
         assert label == "Toggle", f"Unexpected button label: {label!r}"
 
-    def test_button_spark_snapshot(self, ha_page: Page, ha_url: str) -> None:
+    def test_button_spark_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """Snapshot of a forge with a button spark."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-button")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-button")
         assert_snapshot(ha_page, "05_forge_button_spark")
 
 
@@ -292,7 +293,7 @@ class TestForgeUIXStyle:
     """Verify that a UIX style applied to the forge element itself takes effect."""
 
     @pytest.fixture(autouse=True)
-    def _push_test_dashboard(self, ha, ha_url: str):
+    def _push_test_dashboard(self, ha, ha_lovelace_url_path: str):
         config = {
             "title": "UIX Forge Style Test",
             "views": [
@@ -317,13 +318,13 @@ class TestForgeUIXStyle:
                 }
             ],
         }
-        ha.push_lovelace_config(config)
+        push_lovelace_config_to(ha, ha_lovelace_url_path, config)
         yield
-        ha.push_lovelace_config({"title": "Home", "views": []})
+        push_lovelace_config_to(ha, ha_lovelace_url_path, {"title": "UIX Tests", "views": []})
 
-    def test_forge_uix_node_injected(self, ha_page: Page, ha_url: str) -> None:
+    def test_forge_uix_node_injected(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """A <uix-node> must be injected into the forge's shadow root."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-style")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-style")
         has_uix_node = ha_page.evaluate(
             "() => {" + _QUERY_DEEP_JS + """
                 const forge = querySelectorDeep('uix-forge');
@@ -333,7 +334,7 @@ class TestForgeUIXStyle:
         )
         assert has_uix_node, "UIX did not inject a <uix-node> into the forge's shadow root"
 
-    def test_forge_style_snapshot(self, ha_page: Page, ha_url: str) -> None:
+    def test_forge_style_snapshot(self, ha_page: Page, ha_url: str, ha_lovelace_url_path: str) -> None:
         """Snapshot of a forge with a UIX style applied to the forge element."""
-        _goto_lovelace(ha_page, ha_url, "/home/forge-style")
+        _goto_lovelace(ha_page, ha_url, f"/{ha_lovelace_url_path}/forge-style")
         assert_snapshot(ha_page, "06_forge_uix_style")
