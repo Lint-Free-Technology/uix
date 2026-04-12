@@ -11,6 +11,8 @@ UIX can substitute the background entity image displayed by the following elemen
 - `ha-user-badge` (user badges)
 - `ha-person-badge` (person badges)
 
+Styling can be via [specifying for an entity override](#specifying-for-an-entity-override) or a [generic override](#specifying-generic-override).
+
 ## Specifying for an entity override
 
 Define a CSS variable of the form `--uix-image-for-<entity_id>`, where every `.` in the entity ID is replaced with `_`. When an element is rendered for the matching entity, the background image is replaced with the supplied URL.
@@ -33,10 +35,14 @@ uix:
 
 ## Specifying generic override
 
+!!! note
+    Image styling generic override available in 6.3.0-beta.1
+
 Define a generic CSS variable `--uix-image` in the context of the image you wish to override, for example on an element containing `ha-entity-marker` (e.g. map), `ha-tile-icon` (e.g. tile card), or `state-badge` (e.g. entities row).
 
 When a supported element is rendered within that context, the background image is replaced with the supplied URL regardless of entity ID.
 
-If both `--uix-image` and `--uix-image-for-<entity_id>` are defined, `--uix-image` takes precedence.
 Templates are supported.
 
+!!! tip
+    If both `--uix-image` and `--uix-image-for-<entity_id>` are defined, `--uix-image` takes precedence.
