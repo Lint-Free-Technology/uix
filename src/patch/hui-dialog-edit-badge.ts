@@ -2,6 +2,7 @@ import { LitElement } from "lit";
 import { patch_element } from "../helpers/patch_function";
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
 import { stripHtmlAndFunctions } from "./ha-dialog";
+import { createUixIconElement } from "./uix-icon-element";
 
 @patch_element("hui-dialog-edit-badge")
 class HuiDialogEditBadgePatch extends LitElement {
@@ -34,15 +35,16 @@ class HuiDialogEditBadgePatch extends LitElement {
   updated(_orig, ...args) {
     _orig?.(...args);
     if (!this._uixIcon) {
-      this._uixIcon = document.createElement("ha-icon");
-      this._uixIcon.icon = "mdi:brush";
+      this._uixIcon = createUixIconElement();
     }
 
     const button = this.shadowRoot.querySelector(
       "ha-button[slot=secondaryAction]"
     );
     if (!button) return;
-    button.appendChild(this._uixIcon);
+    if (button.nextElementSibling !== this._uixIcon) {
+      button.insertAdjacentElement("afterend", this._uixIcon);
+    }
     if (
       JSON.stringify(this._badgeConfig)?.includes("uix") || JSON.stringify(this._badgeConfig)?.includes("card_mod")
     ) {
