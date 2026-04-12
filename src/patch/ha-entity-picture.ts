@@ -42,38 +42,79 @@ const applyImage = (el: any, imageUrl: string): void => {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
     case "ha-tile-icon":
-      el.imageUrl = imageUrl;
+      const haStateIcon: HTMLElement = el.querySelector("ha-state-icon");
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.imageUrl ?? false;
+        el.imageUrl = imageUrl;
+        if (haStateIcon) {
+          haStateIcon.style.display = "none";
+          haStateIcon.style.visibility = "hidden";
+          haStateIcon.setAttribute("slot", "none");
+        }
+      } else if (el._uix_replaced_image !== undefined) {
+        el.imageUrl = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+        if (haStateIcon) {
+          haStateIcon.style.display = "";
+          haStateIcon.style.visibility = "";
+          haStateIcon.setAttribute("slot", "icon");
+        }
+      }
       break;
     case "state-badge":
-      el.overrideImage = imageUrl;
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.overrideImage ?? false;
+        el.overrideImage = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el.overrideImage = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
       break;
     case "ha-entity-marker":
-      el.entityPicture = imageUrl;
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.entityPicture ?? false;
+        el.entityPicture = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
       break;
     case "ha-user-badge":
-      el._personPicture = imageUrl;
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el._personPicture ?? false;
+        el._personPicture = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el._personPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
       break;
     case "ha-person-badge":
       const pictureEl = el.shadowRoot?.querySelector(".picture");
       if (pictureEl) {
-        pictureEl.style.backgroundImage = `url(${imageUrl})`;
+        if (imageUrl) {
+          el._uix_replaced_image = el._uix_replaced_image ?? pictureEl.style.backgroundImage ?? false;
+           pictureEl.style.backgroundImage = `url(${imageUrl})`;
+        } else if (el._uix_replaced_image !== undefined) {
+           pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
+          delete el._uix_replaced_image;
+        }
       }
       break;
   }
 };
 
 const updateImage = (el: any): void => {
-  const entityId = getEntityId(el);
-  if (!entityId) return;
-
-  const slug = entityId.replace(/\./g, "_");
   const styles = window.getComputedStyle(el);
-  const imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
-  const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
-
-  if (imageUrl) {
-    applyImage(el, imageUrl);
+  let imagePath = styles.getPropertyValue(`--uix-image`).trim();
+  if (!imagePath) {
+    const entityId = getEntityId(el);
+    if (entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
+    }
   }
+  const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
+  applyImage(el, imageUrl);
 };
 
 const bindUix = async (el: any) => {
@@ -154,7 +195,7 @@ function joinSet(dst: Set<any>, src: Set<any>) {
 
 async function findParentUix(node: any, step = 0): Promise<Set<Uix>> {
   let uixElements: Set<Uix> = new Set();
-  if (step === 10) return uixElements;
+  if (step === 20) return uixElements;
   if (!node) return uixElements;
 
   if (node.updateComplete) await node.updateComplete;
