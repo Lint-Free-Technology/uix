@@ -125,7 +125,7 @@ from ha_testcontainer import HATestContainer
 from ha_testcontainer.visual import HA_SETTLE_MS, PAGE_LOAD_TIMEOUT, assert_snapshot
 from playwright.sync_api import Page
 
-from conftest import push_lovelace_config_to
+from lovelace_helpers import push_lovelace_config_to
 
 # Root directory that contains all scenario sub-directories.
 SCENARIOS_DIR = Path(__file__).parent / "scenarios"
