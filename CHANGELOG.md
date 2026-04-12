@@ -1,3 +1,9 @@
+## [6.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0...v6.3.0-beta.1) (2026-04-12)
+
+### ⭐ New Features
+
+* **styling:** allow for generic image override with --uix-image and fix entity override not updating once styling removed ([#210](https://github.com/Lint-Free-Technology/uix/issues/210)) ([7c64eda](https://github.com/Lint-Free-Technology/uix/commit/7c64edaeedbd75fad80c06f29fc021a073d571e2))
+
 ## [6.2.0](https://github.com/Lint-Free-Technology/uix/compare/v6.1.0...v6.2.0) (2026-04-11)
 
 ### ⭐ New Features
