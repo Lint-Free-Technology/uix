@@ -117,6 +117,8 @@ Example — ``ha-button`` inside ``hui-tile-card`` inside ``uix-forge``::
 
 from __future__ import annotations
 
+import os
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -129,6 +131,9 @@ from lovelace_helpers import push_lovelace_config_to
 
 # Root directory that contains all scenario sub-directories.
 SCENARIOS_DIR = Path(__file__).parent / "scenarios"
+
+# Directory where baseline and actual snapshot PNGs are stored.
+SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 
 # Shadow-piercing querySelector injected into every ``page.evaluate`` call.
 _QUERY_DEEP_JS = """
@@ -343,7 +348,11 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
     for assertion in scenario.get("assertions", []):
         atype = assertion["type"]
         if atype == "snapshot":
-            assert_snapshot(page, assertion["name"])
+            threshold = assertion.get("threshold", 0.0)
+            if threshold > 0.0:
+                _assert_snapshot_with_threshold(page, assertion["name"], threshold)
+            else:
+                assert_snapshot(page, assertion["name"])
         elif atype in {
             "element_present",
             "element_absent",
@@ -355,6 +364,74 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
             _run_dom_assertion(page, assertion, atype)
         else:
             raise ValueError(f"Unknown assertion type: {atype!r}")
+
+
+def _assert_snapshot_with_threshold(page: Page, name: str, threshold: float) -> None:
+    """Take a screenshot and compare to baseline, tolerating minor pixel differences.
+
+    Uses Pillow's pixel-level diff when available.  Falls back to an exact
+    byte comparison (no tolerance) if Pillow is not installed.
+
+    Parameters
+    ----------
+    page:
+        Playwright page to screenshot.
+    name:
+        Filename stem for the PNG, e.g. ``"01_card_basic_style"``.
+    threshold:
+        Maximum fraction of pixels (0.0–1.0) that may differ from the
+        baseline before the assertion fails.  For example ``0.001`` allows
+        up to 0.1 % of pixels to differ.  Use this to tolerate minor
+        cross-platform font-rendering differences without masking real
+        visual regressions.
+    """
+    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    baseline = SNAPSHOTS_DIR / f"{name}.png"
+    actual = SNAPSHOTS_DIR / f"{name}.actual.png"
+
+    page.wait_for_timeout(HA_SETTLE_MS)
+    page.screenshot(path=str(actual), full_page=False)
+
+    if os.environ.get("SNAPSHOT_UPDATE") == "1" or not baseline.exists():
+        state = "updated" if baseline.exists() else "created"
+        shutil.copy(actual, baseline)
+        print(f"\n[snapshot] baseline {state}: {baseline}")
+        return
+
+    try:
+        from PIL import Image, ImageChops  # type: ignore[import]
+
+        img_base = Image.open(baseline).convert("RGB")
+        img_actual = Image.open(actual).convert("RGB")
+
+        if img_base.size != img_actual.size:
+            raise AssertionError(
+                f"Snapshot '{name}': image size changed "
+                f"from {img_base.size} to {img_actual.size}. "
+                "Run with SNAPSHOT_UPDATE=1 to accept the new baseline."
+            )
+
+        diff = ImageChops.difference(img_base, img_actual)
+        diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+        total_pixels = img_base.size[0] * img_base.size[1]
+        diff_fraction = diff_pixels / total_pixels
+
+        if diff_fraction > threshold:
+            raise AssertionError(
+                f"Snapshot mismatch for '{name}': "
+                f"{diff_pixels}/{total_pixels} pixels differ "
+                f"({diff_fraction:.4%}), threshold is {threshold:.4%}. "
+                "Run with SNAPSHOT_UPDATE=1 to accept new baseline."
+            )
+
+    except ImportError:
+        # Pillow not installed — fall back to byte-level comparison (no tolerance).
+        if baseline.read_bytes() != actual.read_bytes():
+            raise AssertionError(
+                f"Snapshot mismatch for '{name}'. "
+                "Install Pillow for tolerant comparison, or run with "
+                "SNAPSHOT_UPDATE=1 to accept new baseline."
+            )
 
 
 def _build_root_js(roots: list[str]) -> str:

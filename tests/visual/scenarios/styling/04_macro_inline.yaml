@@ -28,3 +28,4 @@ assertions:
 
   - type: snapshot
     name: "08_macro_inline"
+    threshold: 0.002

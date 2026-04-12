@@ -181,15 +181,30 @@ interactions:
 assertions:
   - type: snapshot
     name: my_scenario_name    # basename of the PNG file (without extension)
+    threshold: 0.001          # optional — fraction of pixels that may differ (default: 0)
 ```
 
-To **update baselines** after an intentional visual change, delete the relevant
-`.png` files from `tests/visual/snapshots/` and re-run the tests — new baselines
-are written automatically.
+The `threshold` field (0.0–1.0) lets you tolerate minor cross-platform rendering
+differences (e.g. sub-pixel font hinting on macOS vs Linux) without masking real
+visual regressions.  A value of `0.001` allows up to 0.1 % of pixels to differ.
+Leave it unset (or set it to `0`) for an exact pixel-perfect comparison.
+
+> **Cross-platform note:** Snapshot baselines in `tests/visual/snapshots/` were
+> created on a specific OS/font stack.  If you run tests on a different operating
+> system and the only failures are in snapshot assertions, the most likely cause
+> is OS-level font rendering differences.  See [Updating snapshot baselines](#updating-snapshot-baselines) for how to regenerate them on your machine.
 
 ---
 
 ## Updating snapshot baselines
+
+Baseline PNGs are stored in `tests/visual/snapshots/` and committed to the
+repository.  They were created on a specific OS/font stack, so they may not
+match pixel-for-pixel on a different operating system (e.g. macOS vs Linux).
+
+### After an intentional visual change
+
+Delete the affected baselines and re-run — new baselines are written automatically:
 
 ```bash
 # Delete one baseline
@@ -199,6 +214,29 @@ rm tests/visual/snapshots/my_scenario_name.png
 rm tests/visual/snapshots/*.png
 
 pytest tests/visual/test_scenarios.py
+```
+
+### When running on a different OS / platform (cross-platform snapshots)
+
+Snapshot failures caused purely by OS-level font rendering (not by a real
+visual regression) look nearly identical to the eye but fail pixel comparison.
+The fastest fix is to regenerate all baselines for your environment using the
+`SNAPSHOT_UPDATE=1` flag — **do not commit these regenerated baselines** unless
+you are intentionally replacing the canonical set:
+
+```bash
+SNAPSHOT_UPDATE=1 pytest tests/visual/test_scenarios.py
+```
+
+Alternatively, add a `threshold` field to the failing scenario's snapshot
+assertion (see [Assertion types](#assertion-types)) so that a small fraction of
+differing pixels is tolerated on all platforms:
+
+```yaml
+assertions:
+  - type: snapshot
+    name: 01_card_basic_style
+    threshold: 0.002    # allow up to 0.2 % of pixels to differ
 ```
 
 ---
