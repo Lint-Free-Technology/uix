@@ -14,8 +14,8 @@ and exercise UIX with a real browser (via [Playwright](https://playwright.dev/py
 - Create and activate a virtual environment, then install test dependencies and Playwright browsers:
 
   ```bash
-  python -m venv .venv
-  source .venv/bin/activate   # Windows: .venv\Scripts\activate
+  python3 -m venv .venv        # use 'python' on Windows
+  source .venv/bin/activate    # Windows: .venv\Scripts\activate
   pip install -e ".[test]"
   playwright install chromium
   ```
