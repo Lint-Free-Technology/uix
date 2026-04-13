@@ -35,17 +35,21 @@ function pseudoMatches(element: Element, selector: string): boolean {
     s = s.slice(tagMatch[1].length);
   }
 
+  // Strip attribute selectors before checking class/ID to avoid false matches
+  // on content inside attribute values (e.g. [attr='#id'] or [attr='foo.bar'])
+  const sForClassId = s.replace(/\[[^\]]*\]/g, "");
+
   // ID selector: #id
   const idRe = /#([a-zA-Z0-9_-]+)/g;
   let idM: RegExpExecArray | null;
-  while ((idM = idRe.exec(s)) !== null) {
+  while ((idM = idRe.exec(sForClassId)) !== null) {
     if (element.id !== idM[1]) return false;
   }
 
   // Class selectors: .classname
   const classRe = /\.([a-zA-Z0-9_-]+)/g;
   let classM: RegExpExecArray | null;
-  while ((classM = classRe.exec(s)) !== null) {
+  while ((classM = classRe.exec(sForClassId)) !== null) {
     if (!element.classList.contains(classM[1])) return false;
   }
 
@@ -91,12 +95,55 @@ export async function await_element(el, hard = false) {
   }
 }
 
+/**
+ * Splits a UIX path string on `$` and space separators, but ignores any `$`
+ * or space that appears inside an attribute-selector bracket `[...]` or inside
+ * quoted strings within those brackets.  This preserves CSS attribute
+ * selectors like `[attr$='value']` or `[attr='val with spaces']` as a single
+ * token.
+ */
+function splitPath(path: string): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let depth = 0;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+
+  for (let i = 0; i < path.length; i++) {
+    const c = path[i];
+    if (inSingleQuote) {
+      if (c === "'") inSingleQuote = false;
+      current += c;
+    } else if (inDoubleQuote) {
+      if (c === '"') inDoubleQuote = false;
+      current += c;
+    } else if (depth > 0) {
+      if (c === "[") depth++;
+      else if (c === "]") depth--;
+      else if (c === "'") inSingleQuote = true;
+      else if (c === '"') inDoubleQuote = true;
+      current += c;
+    } else if (c === "$" || c === " ") {
+      tokens.push(current);
+      tokens.push(c);
+      current = "";
+    } else {
+      if (c === "[") depth++;
+      else if (c === "'") inSingleQuote = true;
+      else if (c === '"') inDoubleQuote = true;
+      current += c;
+    }
+  }
+  if (current !== "") tokens.push(current);
+  return tokens;
+}
+
 async function _selectTree(root, path, all = false) {
   let el = [root];
 
   // Split and clean path
   if (typeof path === "string") {
-    path = path.split(/(\$| )/);
+    path = splitPath(path);
   }
   while (path[path.length - 1] === "") path.pop();
 
