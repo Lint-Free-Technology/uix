@@ -47,6 +47,9 @@ uix-doc-red-classes:
   primary-color: red
   ha-card-border-radius: 20px
   uix-row: |
+    :host {
+      display: block;
+    }
     :host(.teal) {
       background: teal;
     }

@@ -126,6 +126,11 @@ Any scenario YAML may declare a ``doc_image`` key to have a cropped screenshot
 written to a documentation asset path.  See :func:`capture_doc_image` and
 ``tests/visual/test_doc_images.py`` for full details.
 
+Scenarios that exist *only* to generate documentation images (no functional
+assertions) should be placed under ``docs/scenarios/`` rather than
+``tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
+and are excluded from ``test_scenarios.py``.
+
 .. code-block:: yaml
 
     doc_image:
@@ -159,6 +164,10 @@ SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 # Repository root — doc image ``output`` paths are resolved relative to here.
 REPO_ROOT = Path(__file__).parent.parent.parent
 
+# docs/scenarios/ — YAML files here are documentation-image-only scenarios.
+# They participate in ``test_doc_images.py`` but not in ``test_scenarios.py``.
+DOCS_SCENARIOS_DIR = REPO_ROOT / "docs" / "scenarios"
+
 # Shadow-piercing querySelector injected into every ``page.evaluate`` call.
 _QUERY_DEEP_JS = """
     function querySelectorDeep(selector, root) {
@@ -183,9 +192,15 @@ _QUERY_DEEP_JS = """
 
 
 def load_all_scenarios() -> list[dict[str, Any]]:
-    """Return all scenarios loaded from ``*.yaml`` files under *SCENARIOS_DIR*.
+    """Return all test scenarios from ``*.yaml`` files under *SCENARIOS_DIR*.
 
     Files are sorted so the order is deterministic across platforms.
+    Only the ``tests/visual/scenarios/`` tree is searched — documentation-only
+    scenarios living under ``docs/scenarios/`` are intentionally excluded so
+    that ``test_scenarios.py`` does not run them as functional tests.
+
+    Use :func:`load_doc_scenarios` (or :func:`load_all_doc_image_scenarios`) to
+    obtain the scenarios that generate documentation images.
     """
     scenarios: list[dict[str, Any]] = []
     for path in sorted(SCENARIOS_DIR.rglob("*.yaml")):
@@ -194,6 +209,41 @@ def load_all_scenarios() -> list[dict[str, Any]]:
         data.setdefault("_source", path.relative_to(SCENARIOS_DIR.parent).as_posix())
         scenarios.append(data)
     return scenarios
+
+
+def load_doc_scenarios() -> list[dict[str, Any]]:
+    """Return scenarios from ``docs/scenarios/`` that exist solely to generate doc images.
+
+    These files live under the ``docs/`` tree (rather than ``tests/``) because they are
+    documentation assets, not functional tests.  They must all declare a ``doc_image:``
+    key; a ``ValueError`` is raised for any file that does not.
+    """
+    scenarios: list[dict[str, Any]] = []
+    if not DOCS_SCENARIOS_DIR.exists():
+        return scenarios
+    for path in sorted(DOCS_SCENARIOS_DIR.rglob("*.yaml")):
+        with path.open(encoding="utf-8") as fh:
+            data = yaml.safe_load(fh)
+        if "doc_image" not in data:
+            raise ValueError(
+                f"Scenario in docs/scenarios/ is missing 'doc_image:' key: {path}"
+            )
+        data.setdefault("_source", path.relative_to(REPO_ROOT).as_posix())
+        scenarios.append(data)
+    return scenarios
+
+
+def load_all_doc_image_scenarios() -> list[dict[str, Any]]:
+    """Return every scenario (from both ``tests/`` and ``docs/``) that declares ``doc_image:``.
+
+    This is the combined list used by ``test_doc_images.py``.
+    """
+    combined: list[dict[str, Any]] = []
+    # Scenarios in tests/ that have a doc_image: key
+    combined.extend(s for s in load_all_scenarios() if "doc_image" in s)
+    # Dedicated doc-image-only scenarios from docs/scenarios/
+    combined.extend(load_doc_scenarios())
+    return combined
 
 
 # ---------------------------------------------------------------------------

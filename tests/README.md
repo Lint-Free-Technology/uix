@@ -89,8 +89,10 @@ tests/
     ├── test_uix_styling.py  # Smoke tests (HA boots, UIX integration visible, no JS errors)
     └── scenarios/
         ├── styling/         # Card CSS, template, macro, and theme scenarios
-        ├── forge/           # UIX-Forge scenarios
-        └── doc-images/      # Scenarios whose sole purpose is to generate doc page assets
+        └── forge/           # UIX-Forge scenarios
+
+docs/
+└── scenarios/               # Documentation-image-only scenarios (must declare doc_image:)
 ```
 
 ---
@@ -259,17 +261,33 @@ page asset.  Scenarios that declare it are picked up by
 `tests/visual/test_doc_images.py` and the resulting cropped screenshot is saved
 (and compared) at the specified path inside the repository.
 
-### Running doc image tests
+### Quick commands (Makefile aliases)
 
 ```bash
-# Run all doc image tests (generates / verifies images)
+# Generate any missing doc images (first-run bootstrap, verifies existing ones)
+make doc_images_gen
+
+# Force-regenerate ALL doc images (use after an intentional HA/UIX visual change)
+make doc_images_update
+```
+
+### Running directly with pytest
+
+Environment variables are passed to pytest using the `VAR=value pytest ...` syntax
+on Linux/macOS, or `set VAR=value && pytest ...` on Windows:
+
+```bash
+# Generate / verify all doc images
 pytest tests/visual/test_doc_images.py
 
-# Run a single doc image test
+# Run a single doc image test by scenario id
 pytest tests/visual/test_doc_images.py -k doc_theme_red_basic
 
 # Force-regenerate all doc images (overwrites existing files)
 DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py
+
+# Force-regenerate a single image and also pin a specific HA version
+HA_VERSION=2025.1.0 DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py -k doc_theme_red_basic
 ```
 
 ### Schema reference
@@ -305,8 +323,10 @@ doc_image:
 
 * If the scenario also has functional `assertions:`, add `doc_image:` to the
   same YAML — the same HA state is used for both the test and the image.
-* If the scenario exists solely to capture a documentation image (no assertions
-  beyond the image itself), place it under `tests/visual/scenarios/doc-images/`.
+* If the scenario exists solely to capture a documentation image (no functional
+  assertions), place it under `docs/scenarios/` instead of `tests/visual/scenarios/`.
+  Scenarios in `docs/scenarios/` **must** declare `doc_image:` and are never
+  run by `test_scenarios.py`.
 
 ### Update workflow
 
@@ -314,7 +334,7 @@ When a Home Assistant update causes a doc image to look different:
 
 ```bash
 # 1. Regenerate all doc images
-DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py
+make doc_images_update
 
 # 2. Review the diff, then commit
 git add docs/source/assets/page-assets/

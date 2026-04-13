@@ -4,25 +4,39 @@ Any scenario that declares a ``doc_image:`` key participates in doc image
 generation.  The image is written to the path specified by ``doc_image.output``
 (relative to the repository root).
 
+Scenarios are loaded from two locations:
+
+* ``tests/visual/scenarios/`` — regular test scenarios that *also* declare
+  ``doc_image:``.  The same card configuration, theme, and interactions are
+  used for both the functional assertions and the documentation image.
+* ``docs/scenarios/`` — documentation-image-only scenarios with no functional
+  assertions.  These live in the ``docs/`` tree because they are documentation
+  assets, not tests.
+
 Usage
 -----
 
 .. code-block:: bash
 
-    # Generate / verify all doc images
-    pytest tests/visual/test_doc_images.py
+    # Makefile aliases (recommended)
+    make doc_images_gen      # generate missing images; verify existing ones
+    make doc_images_update   # regenerate ALL doc images (overwrite existing)
 
-    # Force-regenerate all doc images (overwrites existing files)
+    # Or run pytest directly (VAR=value syntax passes environment variables)
+    pytest tests/visual/test_doc_images.py
     DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py
 
-    # Generate a single image identified by its scenario id
+    # Single image by scenario id
     pytest tests/visual/test_doc_images.py -k card_basic_style
+
+    # Pin a specific HA version while regenerating
+    HA_VERSION=2025.1.0 DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py
 
 Adding a documentation image
 -----------------------------
-Add a ``doc_image:`` key to any scenario YAML file.  The scenario's ``card``,
-``theme``, ``setup``, and ``interactions`` keys are used as-is, so the exact
-card state captured for testing is also the state captured for the docs.
+Add a ``doc_image:`` key to any scenario YAML file.  For scenarios that exist
+solely to capture a doc image (no functional assertions), place the file under
+``docs/scenarios/`` instead of ``tests/visual/scenarios/``.
 
 .. code-block:: yaml
 
@@ -61,14 +75,10 @@ the affected images and commit them:
 
 .. code-block:: bash
 
-    # Regenerate all doc images
-    DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py
-
-    # Regenerate a single image
-    DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py -k my_scenario_id
+    make doc_images_update
 
     git add docs/source/assets/page-assets/
-    git commit -m "docs: regenerate documentation images"
+    git commit -m "docs: regenerate documentation images for HA X.Y"
 """
 
 from __future__ import annotations
@@ -81,7 +91,7 @@ from scenario_runner import (
     capture_doc_image,
     clear_scenario,
     goto_scenario,
-    load_all_scenarios,
+    load_all_doc_image_scenarios,
     push_scenario,
     reset_theme,
     run_interactions,
@@ -90,10 +100,11 @@ from scenario_runner import (
 
 # ---------------------------------------------------------------------------
 # Collect only scenarios that declare a doc_image key.
+# This includes both test scenarios (tests/visual/scenarios/) that have
+# doc_image: and dedicated doc-image scenarios from docs/scenarios/.
 # ---------------------------------------------------------------------------
 
-_ALL_SCENARIOS = load_all_scenarios()
-_DOC_SCENARIOS = [s for s in _ALL_SCENARIOS if "doc_image" in s]
+_DOC_SCENARIOS = load_all_doc_image_scenarios()
 _DOC_SCENARIO_IDS = [s["id"] for s in _DOC_SCENARIOS]
 _DOC_SCENARIO_MAP = {s["id"]: s for s in _DOC_SCENARIOS}
 
