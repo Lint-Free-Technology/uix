@@ -5,7 +5,9 @@ in doc asset generation.
 
 ``doc_image``
     Captures a static PNG screenshot.  ``doc_image`` accepts a **single mapping**
-    or a **list of mappings** (to capture multiple images from the same page state):
+    or a **list of mappings**.  Each list entry may include its own
+    ``interactions`` sub-key to advance the page to a new state before that
+    capture, enabling stepped documentation:
 
     .. code-block:: yaml
 
@@ -16,14 +18,19 @@ in doc asset generation.
           padding: 16
           threshold: 0.02
 
-        # Multiple images
+        # Stepped capture — each entry runs additional interactions then captures
         doc_image:
-          - output: docs/source/assets/page-assets/using/my-feature-card.png
-            root: hui-entities-card
-            padding: 16
-            threshold: 0.02
-          - output: docs/source/assets/page-assets/using/my-feature-full.png
-            threshold: 0.02
+          - output: docs/source/assets/page-assets/using/my-feature-default.png
+            root: hui-tile-card
+            padding: 8
+          - interactions:
+              - type: hover
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 800
+            output: docs/source/assets/page-assets/using/my-feature-hover.png
+            root: hui-tile-card
+            padding: 8
 
 ``doc_animation``
     Captures an animated GIF.  Frames are taken at *interval_ms* millisecond
@@ -94,6 +101,12 @@ solely to capture a doc image (no functional assertions), place the file under
     assertions.  A value of ``0.02`` allows up to 2 % of pixels to differ, which
     is enough to tolerate minor cross-platform font-rendering differences without
     masking genuine visual regressions.
+
+``interactions`` *(list entries only)*
+    Additional interactions to run before this specific capture.  Uses the same
+    interaction types as the top-level ``interactions:`` key (``hover``,
+    ``click``, ``ha_service``, ``wait``).  Interactions are cumulative — each
+    entry starts from the page state left by the previous entry.
 
 Adding a documentation animation
 ----------------------------------
@@ -202,7 +215,7 @@ def test_doc_image(
         run_interactions(ha_page, scenario, ha=ha, key="setup")
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
         run_interactions(ha_page, scenario, ha=ha)
-        capture_doc_image(ha_page, scenario)
+        capture_doc_image(ha_page, scenario, ha=ha)
         capture_doc_animation(ha_page, scenario)
     finally:
         if theme:

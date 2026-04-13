@@ -131,8 +131,9 @@ assertions) should be placed under ``docs/scenarios/`` rather than
 ``tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
 and are excluded from ``test_scenarios.py``.
 
-``doc_image`` accepts a **single mapping** or a **list of mappings** (to
-capture multiple images from the same scenario page state):
+``doc_image`` accepts a **single mapping** or a **list of mappings**.  Each
+list entry may include its own ``interactions`` sub-key to advance the page to
+a new state before that entry's capture, enabling stepped documentation:
 
 .. code-block:: yaml
 
@@ -143,14 +144,27 @@ capture multiple images from the same scenario page state):
       padding: 16               # optional pixels of whitespace border (default 0)
       threshold: 0.02           # optional pixel-diff tolerance (default 0)
 
-    # Multiple images from the same scenario
+    # Stepped capture — each entry runs additional interactions then captures
     doc_image:
-      - output: docs/source/assets/page-assets/using/my-feature-card.png
-        root: hui-entities-card
-        padding: 16
-        threshold: 0.02
-      - output: docs/source/assets/page-assets/using/my-feature-full.png
-        threshold: 0.02
+      - output: docs/source/assets/page-assets/using/my-feature-default.png
+        root: hui-tile-card
+        padding: 8
+      - interactions:
+          - type: hover
+            root: hui-tile-card
+            selector: ha-tile-icon
+            settle_ms: 800
+        output: docs/source/assets/page-assets/using/my-feature-hover.png
+        root: hui-tile-card
+        padding: 8
+      - interactions:
+          - type: click
+            root: hui-tile-card
+            selector: ha-tile-icon
+            settle_ms: 1500
+        output: docs/source/assets/page-assets/using/my-feature-active.png
+        root: hui-tile-card
+        padding: 8
 
 Documentation animations
 ------------------------
@@ -689,29 +703,56 @@ def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
+def capture_doc_image(
+    page: Page,
+    scenario: dict[str, Any],
+    ha: HATestContainer | None = None,
+) -> None:
     """Capture cropped screenshots for documentation if *doc_image* is declared.
 
     The ``doc_image`` key in a scenario YAML specifies how and where to save
-    the image.  It accepts a **single mapping** or a **list of mappings**:
+    the image.  It accepts a **single mapping** or a **list of mappings**.
+
+    Each list entry may include an ``interactions`` sub-key containing
+    additional interaction steps to run before that entry's screenshot is
+    taken.  This makes it possible to capture a sequence of page states —
+    default, hovered, clicked — from a single scenario:
 
     .. code-block:: yaml
 
-        # Single image
+        # Single image (original form — still supported)
         doc_image:
           output: docs/source/assets/page-assets/using/my-feature.png
           root: hui-entities-card   # shadow-piercing selector to crop to
           padding: 16               # optional pixel border around element
           threshold: 0.02           # optional pixel-diff tolerance (default 0)
 
-        # Multiple images from the same page state
+        # Stepped capture — each entry runs additional interactions then captures
         doc_image:
-          - output: docs/source/assets/page-assets/using/my-feature-card.png
-            root: hui-entities-card
-            padding: 16
-            threshold: 0.02
-          - output: docs/source/assets/page-assets/using/my-feature-full.png
-            threshold: 0.02
+          - output: docs/source/assets/page-assets/using/my-feature-default.png
+            root: hui-tile-card
+            padding: 8
+          - interactions:
+              - type: hover
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 800
+            output: docs/source/assets/page-assets/using/my-feature-hover.png
+            root: hui-tile-card
+            padding: 8
+          - interactions:
+              - type: click
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 1500
+            output: docs/source/assets/page-assets/using/my-feature-active.png
+            root: hui-tile-card
+            padding: 8
+
+    Interactions in each entry use the same types as the top-level
+    ``interactions:`` key (``hover``, ``click``, ``ha_service``, ``wait``).
+    Pass the HA container as *ha* when any entry uses ``ha_service``
+    interactions.
 
     The ``output`` path is relative to the repository root.
 
@@ -737,6 +778,10 @@ def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
     page.wait_for_timeout(HA_SETTLE_MS)
 
     for doc_image in entries:
+        # Run any per-entry interactions to advance the page to the desired state.
+        if "interactions" in doc_image:
+            run_interactions(page, doc_image, ha=ha)
+
         output_path = REPO_ROOT / doc_image["output"]
         padding: int = doc_image.get("padding", 0)
         threshold: float = doc_image.get("threshold", 0.0)
