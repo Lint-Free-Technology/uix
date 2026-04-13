@@ -412,14 +412,9 @@ def _assert_snapshot_with_threshold(page: Page, name: str, threshold: float) -> 
             )
 
         diff = ImageChops.difference(img_base, img_actual)
-        # get_flattened_data was introduced in Pillow 10.2; fall back to getdata for older versions.
+        # get_flattened_data returns one tuple-per-pixel; fall back to getdata for older Pillow.
         try:
-            flat_data = diff.get_flattened_data()
-            channels = len(img_base.getbands())
-            diff_pixels = sum(
-                1 for i in range(0, len(flat_data), channels)
-                if any(flat_data[i + c] > 0 for c in range(channels))
-            )
+            diff_pixels = sum(1 for p in diff.get_flattened_data() if any(c > 0 for c in p))
         except AttributeError:
             diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))  # type: ignore[attr-defined]
         total_pixels = img_base.size[0] * img_base.size[1]
