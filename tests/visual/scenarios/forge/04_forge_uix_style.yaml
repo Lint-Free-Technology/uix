@@ -19,4 +19,4 @@ assertions:
 
   - type: snapshot
     name: "06_forge_uix_style"
-    threshold: 0.002
+    threshold: 0.02

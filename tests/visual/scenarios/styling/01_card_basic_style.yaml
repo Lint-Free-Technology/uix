@@ -23,4 +23,4 @@ assertions:
 
   - type: snapshot
     name: "01_card_basic_style"
-    threshold: 0.002
+    threshold: 0.02

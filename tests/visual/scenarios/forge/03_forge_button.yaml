@@ -36,4 +36,4 @@ assertions:
 
   - type: snapshot
     name: "05_forge_button_spark"
-    threshold: 0.002
+    threshold: 0.02

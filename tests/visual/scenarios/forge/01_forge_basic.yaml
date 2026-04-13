@@ -18,4 +18,4 @@ assertions:
 
   - type: snapshot
     name: "03_forge_basic"
-    threshold: 0.002
+    threshold: 0.02

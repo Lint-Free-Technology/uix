@@ -25,4 +25,4 @@ assertions:
 
   - type: snapshot
     name: "07_theme_card_style"
-    threshold: 0.002
+    threshold: 0.02

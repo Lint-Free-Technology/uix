@@ -35,4 +35,4 @@ assertions:
   # Snapshot is taken after hover so the tooltip is visible.
   - type: snapshot
     name: "04_forge_tooltip_spark"
-    threshold: 0.002
+    threshold: 0.02

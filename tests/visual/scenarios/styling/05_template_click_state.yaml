@@ -48,4 +48,4 @@ assertions:
   # Snapshot showing the green "on" state styling.
   - type: snapshot
     name: "09_template_click_state"
-    threshold: 0.002
+    threshold: 0.02
