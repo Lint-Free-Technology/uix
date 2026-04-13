@@ -112,7 +112,7 @@ Matching is done by directly inspecting the parent/host properties — not via C
 | `[attr~=val]` | whitespace-separated word match |
 | `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
 
-Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Selectors containing spaces are **not** supported because the path is split on spaces.
+Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Spaces **outside** attribute-selector brackets split the path and are therefore **not** supported in a `&` selector. Spaces and `$` that appear inside `[…]` (including inside quoted values) are treated as literals, so operators such as `$=` (ends-with) and attribute values containing dots or spaces work correctly.
 
 Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
 
@@ -139,6 +139,35 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
       "&.type-power-total ha-badge $": |
         .badge {
           border-style: double !important;
+        }
+    ```
+
+!!! example "Example attribute selectors with `$=` and dots"
+    Attribute selectors — including ends-with (`$=`) and values containing dots — work correctly because `$` and `.` inside `[…]` are never treated as path separators or class tokens.
+
+    Apply styles to a map entity marker whose `entity-id` attribute ends with `dev`:
+    ```yaml
+    uix-entity-marker-yaml: |
+      "&[entity-id$='dev']": |
+        :host {
+          --uix-image: /local/media/person_grey.png;
+        }
+        div.marker {
+          border-color: red !important;
+          border-width: 5px;
+        }
+    ```
+
+    Apply styles to a map entity marker for the entity `person.dev` (dot in the entity id):
+    ```yaml
+    uix-entity-marker-yaml: |
+      "&[entity-id='person.dev']": |
+        :host {
+          --uix-image: /local/media/person_grey.png;
+        }
+        div.marker {
+          border-color: red !important;
+          border-width: 5px;
         }
     ```
 
