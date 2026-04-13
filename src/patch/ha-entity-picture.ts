@@ -176,7 +176,7 @@ class HaEntityMarkerPatch extends ModdedElement {
     variables.marker['entityName'] = this.entityName;
     variables.marker['entityUnit'] = this.entityUnit;
     variables.marker['entityPicture'] = this.entityPicture;
-    if (entityConfig) variables['entityConfig'] = entityConfig;
+    if (entityConfig) variables['config'] = entityConfig;
     await apply_uix(
       this, 
       "entity-marker", 
