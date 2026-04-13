@@ -112,7 +112,7 @@ Matching is done by directly inspecting the parent/host properties — not via C
 | `[attr~=val]` | whitespace-separated word match |
 | `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
 
-Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Spaces **outside** attribute-selector brackets split the path and are therefore **not** supported in a `&` selector. Spaces and `$` that appear inside `[…]` (including inside quoted values) are treated as literals, so operators such as `$=` (ends-with) and attribute values containing dots or spaces work correctly.
+Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Spaces **outside** attribute-selector brackets split the path and are therefore **not** supported in a `&` selector. Spaces and `$` inside `[…]` (including inside quoted values) are treated as literals, so operators such as `$=` (ends-with) and attribute values containing dots or spaces work correctly.
 
 Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
 
