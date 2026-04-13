@@ -164,8 +164,8 @@ class HaEntityMarkerPatch extends ModdedElement {
     const huiMapCard = ((haMap.closest("ha-card") as Element)?.parentNode as any)?.host;
     let entityConfig;
     if (huiMapCard?.tagName.toLowerCase() === "hui-map-card") {
-       const config = (huiMapCard as any)._config;
-       entityConfig = config?.entities?.find((e) => { 
+       const config = (huiMapCard as any).config ?? (huiMapCard as any)._config;
+       entityConfig = config?.entities?.find((e) => {
         if (typeof e === "string") return e === entityId;
         return e.entity === entityId;
       });
