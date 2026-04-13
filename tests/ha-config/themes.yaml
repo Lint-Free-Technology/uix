@@ -10,3 +10,46 @@ uix-test-theme:
       background: rgb(0, 0, 128) !important;
       color: white !important;
     }
+
+# ---------------------------------------------------------------------------
+# Documentation image themes — used by scenarios under
+# tests/visual/scenarios/doc-images/ to generate the page-asset PNGs
+# referenced in docs/source/using/themes.md.
+# ---------------------------------------------------------------------------
+
+uix-doc-red-basic:
+  uix-theme: uix-doc-red-basic
+  primary-color: red
+  ha-card-border-radius: 20px
+
+uix-doc-red-border:
+  uix-theme: uix-doc-red-border
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host {
+      display: block;
+      border: 1px solid black;
+    }
+
+uix-doc-red-template:
+  uix-theme: uix-doc-red-template
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host {
+      display: block;
+      border: 1px solid {% if is_state(config.entity, 'on') %} red {% else %} black {% endif %};
+    }
+
+uix-doc-red-classes:
+  uix-theme: uix-doc-red-classes
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host(.teal) {
+      background: teal;
+    }
+    :host(.purple) {
+      background: purple;
+    }

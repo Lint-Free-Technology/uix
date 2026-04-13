@@ -119,10 +119,25 @@ Example — ``ha-button`` inside ``hui-tile-card`` inside ``uix-forge``::
       - uix-forge
       - hui-tile-card
     selector: ha-button
+
+Documentation images
+--------------------
+Any scenario YAML may declare a ``doc_image`` key to have a cropped screenshot
+written to a documentation asset path.  See :func:`capture_doc_image` and
+``tests/visual/test_doc_images.py`` for full details.
+
+.. code-block:: yaml
+
+    doc_image:
+      output: docs/source/assets/page-assets/using/my-feature.png
+      root: hui-entities-card   # shadow-piercing selector for the element to crop to
+      padding: 16               # optional pixels of whitespace border (default 0)
+      threshold: 0.02           # optional pixel-diff tolerance (default 0)
 """
 
 from __future__ import annotations
 
+import io
 import os
 import shutil
 from pathlib import Path
@@ -140,6 +155,9 @@ SCENARIOS_DIR = Path(__file__).parent / "scenarios"
 
 # Directory where baseline and actual snapshot PNGs are stored.
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
+
+# Repository root — doc image ``output`` paths are resolved relative to here.
+REPO_ROOT = Path(__file__).parent.parent.parent
 
 # Shadow-piercing querySelector injected into every ``page.evaluate`` call.
 _QUERY_DEEP_JS = """
@@ -571,3 +589,135 @@ def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
         raise AssertionError(
             f"Shadow-DOM traversal failed for assertion {assertion}: {result['error']}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Documentation image capture
+# ---------------------------------------------------------------------------
+
+
+def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
+    """Capture a cropped screenshot for documentation if *doc_image* is declared.
+
+    The ``doc_image`` key in a scenario YAML specifies how and where to save
+    the image:
+
+    .. code-block:: yaml
+
+        doc_image:
+          output: docs/source/assets/page-assets/using/my-feature.png
+          root: hui-entities-card   # shadow-piercing selector to crop to
+          padding: 16               # optional pixel border around element
+          threshold: 0.02           # optional pixel-diff tolerance (default 0)
+
+    The ``output`` path is relative to the repository root.
+
+    If the ``root`` key is omitted the full viewport is captured.
+
+    Behaviour
+    ---------
+    * If the output file does not yet exist it is created (first-run bootstrap).
+    * If ``DOC_IMAGE_UPDATE=1`` is set in the environment the file is always
+      overwritten (useful after intentional visual changes to HA or UIX).
+    * Otherwise the freshly captured PNG is compared to the on-disk file using
+      the same pixel-diff logic as snapshot assertions.  The test fails when
+      the images differ beyond *threshold*, prompting the author to run with
+      ``DOC_IMAGE_UPDATE=1`` and commit the updated image.
+    """
+    doc_image = scenario.get("doc_image")
+    if not doc_image:
+        return
+
+    output_path = REPO_ROOT / doc_image["output"]
+    padding: int = doc_image.get("padding", 0)
+    threshold: float = doc_image.get("threshold", 0.0)
+
+    page.wait_for_timeout(HA_SETTLE_MS)
+
+    # --- capture ---
+    if "root" in doc_image:
+        rect = _get_doc_image_rect(page, doc_image["root"])
+        clip = {
+            "x": max(0, rect["x"] - padding),
+            "y": max(0, rect["y"] - padding),
+            "width": rect["w"] + padding * 2,
+            "height": rect["h"] + padding * 2,
+        }
+        actual_png = page.screenshot(clip=clip, full_page=False)
+    else:
+        actual_png = page.screenshot(full_page=False)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # --- write or compare ---
+    if os.environ.get("DOC_IMAGE_UPDATE") == "1" or not output_path.exists():
+        state = "updated" if output_path.exists() else "created"
+        output_path.write_bytes(actual_png)
+        print(f"\n[doc_image] {state}: {output_path.relative_to(REPO_ROOT)}")
+        return
+
+    existing_png = output_path.read_bytes()
+    if existing_png == actual_png:
+        return
+
+    if threshold > 0.0:
+        try:
+            from PIL import Image, ImageChops  # type: ignore[import]
+
+            img_existing = Image.open(io.BytesIO(existing_png)).convert("RGB")
+            img_actual = Image.open(io.BytesIO(actual_png)).convert("RGB")
+
+            if img_existing.size != img_actual.size:
+                raise AssertionError(
+                    f"Doc image '{doc_image['output']}': image size changed "
+                    f"from {img_existing.size} to {img_actual.size}. "
+                    "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+                )
+
+            diff = ImageChops.difference(img_existing, img_actual)
+            try:
+                diff_pixels = sum(
+                    1 for p in diff.get_flattened_data() if any(c > 0 for c in p)
+                )
+            except AttributeError:
+                diff_pixels = sum(
+                    1
+                    for p in diff.getdata()  # type: ignore[attr-defined]
+                    if any(c > 0 for c in p)
+                )
+            total_pixels = img_existing.size[0] * img_existing.size[1]
+            diff_fraction = diff_pixels / total_pixels
+
+            if diff_fraction <= threshold:
+                return
+
+            raise AssertionError(
+                f"Doc image mismatch for '{doc_image['output']}': "
+                f"{diff_pixels}/{total_pixels} pixels differ "
+                f"({diff_fraction:.4%}), threshold is {threshold:.4%}. "
+                "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+            )
+
+        except ImportError:
+            pass  # Pillow not installed — fall through to byte-level failure
+
+    raise AssertionError(
+        f"Doc image changed: '{doc_image['output']}'. "
+        "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+    )
+
+
+def _get_doc_image_rect(page: Page, selector: str) -> dict[str, float]:
+    """Find *selector* anywhere in the DOM (piercing shadow roots) and return its bounding rect."""
+    rect = page.evaluate(
+        f"""() => {{
+            {_QUERY_DEEP_JS}
+            var el = querySelectorDeep({selector!r}, document.documentElement);
+            if (!el) return {{error: 'Element not found: {selector}'}};
+            var r = el.getBoundingClientRect();
+            return {{x: r.x, y: r.y, w: r.width, h: r.height}};
+        }}"""
+    )
+    if isinstance(rect, dict) and "error" in rect:
+        raise AssertionError(f"Doc image element not found: {rect['error']}")
+    return rect  # type: ignore[return-value]

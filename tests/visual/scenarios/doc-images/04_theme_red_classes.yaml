@@ -1,0 +1,24 @@
+id: doc_theme_red_classes
+description: "Doc image: red theme with teal/purple entity row classes (themes.md)"
+view_path: doc-theme-red-classes
+theme: uix-doc-red-classes
+
+card:
+  type: entities
+  title: Lights
+  entities:
+    - light.bed_light
+    - entity: light.ceiling_lights
+      uix:
+        class: teal
+    - entity: light.kitchen_lights
+      uix:
+        class: purple
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-red-classes.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02
