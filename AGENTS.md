@@ -85,7 +85,7 @@ Home Assistant makes heavy use of the [shadow DOM](https://developer.mozilla.org
 - A dollar sign `$` in the key replaces a `#shadow-root` crossing.
 - A key of `.` (period) selects the current root element.
 - Selector steps are separated by spaces; only the **first** match is followed at each intermediate step, but the **final** step matches **all** elements.
-- A key may begin with `&` to filter the initial element before any traversal (see below).
+- A key may begin with `&` to filter the initial element before any traversal (see the [`&` host/element filter](#-hostelement-filter) section below).
 
 ### Example: styling `<h3>` inside a markdown card
 
@@ -124,7 +124,14 @@ uix:
 
 A path key may begin with `&` as its first step to filter the initial element before any traversal. If the initial context is a shadow root, the `&` filter is tested against the **host** element; if it is a regular element, it is tested against that element.
 
-Supported tokens: `tagname`, `.classname`, `#id`, `[attr]`, `[attr=val]`, `[attr^=val]`, `[attr$=val]`, `[attr*=val]`, `[attr~=val]`, `[attr|=val]`. All present tokens must match. Tokens can be combined (e.g. `&ha-dialog.my-class[data-type="video"]`). Selectors containing spaces are **not** supported. Class selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` equals `&.my-class`.
+Supported tokens (all present tokens must match):
+
+- `tagname` — element local name match
+- `.classname` — class list check
+- `#id` — element ID match
+- `[attr]`, `[attr=val]`, `[attr^=val]`, `[attr$=val]`, `[attr*=val]`, `[attr~=val]`, `[attr|=val]` — attribute checks
+
+Tokens may be combined (e.g. `&ha-dialog.my-class[data-type="video"]`). Selectors containing spaces are **not** supported. Class selectors may optionally be wrapped in parentheses: `&(.my-class)` equals `&.my-class`.
 
 This is primarily useful in themes to scope a style path to a specific host class or attribute:
 
@@ -569,7 +576,7 @@ UIX has an automated visual test suite located under `tests/` (currently on the 
 ### Prerequisites
 
 - Docker
-- Python ≥ 3.11
+- Python 3.11 or later
 
 ```bash
 python3 -m venv .venv
@@ -679,7 +686,11 @@ assertions:
     threshold: 0.02              # fraction of pixels allowed to differ (default exact)
 ```
 
-`run_interactions(page, scenario, ha=ha)` — pass `ha` when using `ha_service` interactions.
+When calling `run_interactions` from a custom test, pass the `ha` container fixture when any interaction has `type: ha_service`:
+
+```python
+run_interactions(page, scenario, ha=ha)
+```
 
 ### HA config and themes
 
