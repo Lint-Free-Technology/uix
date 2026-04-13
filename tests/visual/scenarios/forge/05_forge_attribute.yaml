@@ -1,0 +1,25 @@
+id: forge_uix_attribute
+description: "UIX attribute spark modifies the title attribute of the weather forecast card"
+view_path: forge-uix-attribute
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: attribute
+        for: hui-weather-forecast-card $ div.name
+        attribute: title
+        action: replace
+        value: Weather forecast for Demo South and surrounding districts.
+  element:
+    show_current: true
+    show_forecast: false
+    type: weather-forecast
+    entity: weather.demo_weather_south
+    forecast_type: daily
+
+assertions:
+  - type: element_present
+    root: "hui-weather-forecast-card"
+    selector: "div.name[title='Weather forecast for Demo South and surrounding districts.']"
