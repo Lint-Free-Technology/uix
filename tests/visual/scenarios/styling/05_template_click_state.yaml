@@ -1,0 +1,51 @@
+id: template_click_state
+description: "UIX Jinja2 template re-evaluates after clicking the tile icon to toggle entity state"
+view_path: template-click-state
+
+# Tile card whose background colour is driven by is_state() in a UIX template.
+# Green = light on, red = light off.
+card:
+  type: tile
+  entity: light.bed_light
+  tap_action:
+    action: toggle
+  uix:
+    style: |
+      ha-card {
+        {% if is_state('light.bed_light', 'on') %}
+        background: rgb(0, 128, 0) !important;
+        {% else %}
+        background: rgb(128, 0, 0) !important;
+        {% endif %}
+      }
+
+interactions:
+  # Establish a known initial state so the test is repeatable regardless of
+  # what earlier tests left the entity in.
+  - type: ha_service
+    domain: light
+    service: turn_off
+    entity_id: light.bed_light
+  # Allow HA's state update to propagate to the browser and UIX to re-render.
+  - type: wait
+    ms: 2000
+  # Click the tile icon to toggle the light on.
+  - type: click
+    root: hui-tile-card
+    selector: ha-tile-icon
+    # Allow HA state round-trip + UIX template re-render.
+    settle_ms: 3000
+
+assertions:
+  # After the click, is_state('light.bed_light', 'on') should be true,
+  # so the template picks the green branch.
+  - type: css_property
+    root: hui-tile-card
+    selector: ha-card
+    property: backgroundColor
+    expected: "rgb(0, 128, 0)"
+
+  # Snapshot showing the green "on" state styling.
+  - type: snapshot
+    name: "09_template_click_state"
+    threshold: 0.02

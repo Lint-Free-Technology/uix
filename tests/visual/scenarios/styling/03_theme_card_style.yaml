@@ -1,0 +1,28 @@
+id: theme_card_style
+description: "UIX theme variable uix-card applies background-color to all cards"
+
+# The theme must be defined in tests/ha-config/themes.yaml and included in
+# configuration.yaml.  The test runner calls frontend.set_theme before
+# navigating and resets to 'default' in its teardown.
+theme: uix-test-theme
+
+view_path: theme-card-style
+
+# A plain entities card — no uix: key.  The styling comes entirely from the
+# active theme's uix-card variable.
+card:
+  type: entities
+  title: "Theme Styled Card"
+  entities:
+    - light.bed_light
+
+assertions:
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 0, 128)"
+
+  - type: snapshot
+    name: "07_theme_card_style"
+    threshold: 0.02

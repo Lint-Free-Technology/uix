@@ -1,0 +1,12 @@
+# HA theme definitions used by UIX visual tests.
+#
+# Each theme is available via the ``frontend.set_theme`` service call and
+# is referenced by the ``theme:`` key in a scenario YAML file.
+
+uix-test-theme:
+  uix-theme: uix-test-theme
+  uix-card: |
+    ha-card {
+      background: rgb(0, 0, 128) !important;
+      color: white !important;
+    }
