@@ -1,3 +1,17 @@
+## [6.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.1...v6.3.0-beta.2) (2026-04-13)
+
+### ⭐ New Features
+
+* **styling:** Allow styling of entity markers either directly by config on map card or through theme variable `uix-entity-marker(-yaml)` ([#215](https://github.com/Lint-Free-Technology/uix/issues/215)) ([38c9009](https://github.com/Lint-Free-Technology/uix/commit/38c9009ba90d435f760db43b000077963a9fbe2b))
+
+### 🐞 Bug Fixes
+
+* `&` host/element selector broken by `$=` operator and `.` in attribute values. Allow spaces in attribute selection. ([#213](https://github.com/Lint-Free-Technology/uix/issues/213)) ([3416921](https://github.com/Lint-Free-Technology/uix/commit/3416921fc4ac697dc2aa40808063d85981ce4557))
+
+### ⚙️ Miscellaneous
+
+* **tests:** Update tests to use Lint-Free-Technology/ha-testcontainer with visual snapshot comparisons ([a521e48](https://github.com/Lint-Free-Technology/uix/commit/a521e48562e9933f6264c00f005f82180bbe1767))
+
 ## [6.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0...v6.3.0-beta.1) (2026-04-12)
 
 ### ⭐ New Features
