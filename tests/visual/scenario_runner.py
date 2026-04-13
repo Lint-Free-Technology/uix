@@ -675,16 +675,7 @@ def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
                 )
 
             diff = ImageChops.difference(img_existing, img_actual)
-            try:
-                diff_pixels = sum(
-                    1 for p in diff.get_flattened_data() if any(c > 0 for c in p)
-                )
-            except AttributeError:
-                diff_pixels = sum(
-                    1
-                    for p in diff.getdata()  # type: ignore[attr-defined]
-                    if any(c > 0 for c in p)
-                )
+            diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
             total_pixels = img_existing.size[0] * img_existing.size[1]
             diff_fraction = diff_pixels / total_pixels
 
@@ -710,13 +701,14 @@ def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
 def _get_doc_image_rect(page: Page, selector: str) -> dict[str, float]:
     """Find *selector* anywhere in the DOM (piercing shadow roots) and return its bounding rect."""
     rect = page.evaluate(
-        f"""() => {{
+        f"""(selector) => {{
             {_QUERY_DEEP_JS}
-            var el = querySelectorDeep({selector!r}, document.documentElement);
-            if (!el) return {{error: 'Element not found: {selector}'}};
+            var el = querySelectorDeep(selector, document.documentElement);
+            if (!el) return {{error: 'Element not found: ' + selector}};
             var r = el.getBoundingClientRect();
             return {{x: r.x, y: r.y, w: r.width, h: r.height}};
-        }}"""
+        }}""",
+        selector,
     )
     if isinstance(rect, dict) and "error" in rect:
         raise AssertionError(f"Doc image element not found: {rect['error']}")

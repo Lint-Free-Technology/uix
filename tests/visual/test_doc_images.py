@@ -74,6 +74,7 @@ the affected images and commit them:
 from __future__ import annotations
 
 import pytest
+from ha_testcontainer import HATestContainer
 from playwright.sync_api import Page
 
 from scenario_runner import (
@@ -105,7 +106,7 @@ _DOC_SCENARIO_MAP = {s["id"]: s for s in _DOC_SCENARIOS}
 @pytest.mark.parametrize("scenario_id", _DOC_SCENARIO_IDS)
 def test_doc_image(
     scenario_id: str,
-    ha,
+    ha: HATestContainer,
     ha_page: Page,
     ha_url: str,
     ha_lovelace_url_path: str,
