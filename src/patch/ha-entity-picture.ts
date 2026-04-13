@@ -1,4 +1,4 @@
-import { ModdedElement } from "../helpers/apply_uix";
+import { apply_uix, ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
 import { Uix } from "../uix";
 
@@ -143,11 +143,47 @@ const bindUix = async (el: any) => {
 
 @patch_element("ha-entity-marker")
 class HaEntityMarkerPatch extends ModdedElement {
+  entityId;
+  entityColor;
+  entityName;
+  entityUnit;
+  entityPicture;
   uix_image_retries = 0;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    this._applyUix().then(() => bindUix(this));
+  }
+  async _applyUix() {
+    const entityId = this.entityId;
+    if (!entityId) return;
+    const map = this.closest("#map");
+    if (!map || !map.parentNode) return;
+    const haMap = (map.parentNode as any)?.host;
+    if (!haMap || haMap.tagName.toLowerCase() !== "ha-map") return;
+    const huiMapCard = ((haMap.closest("ha-card") as Element)?.parentNode as any)?.host;
+    let entityConfig;
+    if (huiMapCard?.tagName.toLowerCase() === "hui-map-card") {
+       const config = (huiMapCard as any)._config;
+       entityConfig = config?.entities?.find((e) => { 
+        if (typeof e === "string") return e === entityId;
+        return e.entity === entityId;
+      });
+    }
+    const variables = { marker: {} };
+    variables.marker['entityId'] = this.entityId;
+    variables.marker['entityColor'] = this.entityColor;
+    variables.marker['entityName'] = this.entityName;
+    variables.marker['entityUnit'] = this.entityUnit;
+    variables.marker['entityPicture'] = this.entityPicture;
+    await apply_uix(
+      this, 
+      "entity-marker", 
+      entityConfig ? (entityConfig?.uix ?? entityConfig?.card_mod) : undefined, 
+      variables, 
+      true,
+      "type-entity-marker"
+    );
   }
 }
 
