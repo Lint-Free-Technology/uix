@@ -226,7 +226,8 @@ def load_doc_scenarios() -> list[dict[str, Any]]:
             data = yaml.safe_load(fh)
         if "doc_image" not in data:
             raise ValueError(
-                f"Scenario in docs/scenarios/ is missing 'doc_image:' key: {path}"
+                f"Scenario in {DOCS_SCENARIOS_DIR.relative_to(REPO_ROOT)} "
+                f"is missing 'doc_image:' key: {path}"
             )
         data.setdefault("_source", path.relative_to(REPO_ROOT).as_posix())
         scenarios.append(data)

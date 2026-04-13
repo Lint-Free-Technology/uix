@@ -3,6 +3,10 @@
 # All targets assume you are running from the repository root with an activated
 # virtual environment (source .venv/bin/activate).
 #
+# Note: the `VAR=value make target` syntax for passing environment variables
+# works on Linux/macOS.  Windows users should use `set VAR=value && make target`
+# or see tests/README.md for the equivalent `pytest` invocations.
+#
 # Quick reference
 # ---------------
 #   make doc_images_gen      Generate any missing documentation images (first-run bootstrap)
