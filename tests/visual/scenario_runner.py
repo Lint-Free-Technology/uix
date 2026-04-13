@@ -119,10 +119,30 @@ Example — ``ha-button`` inside ``hui-tile-card`` inside ``uix-forge``::
       - uix-forge
       - hui-tile-card
     selector: ha-button
+
+Documentation images
+--------------------
+Any scenario YAML may declare a ``doc_image`` key to have a cropped screenshot
+written to a documentation asset path.  See :func:`capture_doc_image` and
+``tests/visual/test_doc_images.py`` for full details.
+
+Scenarios that exist *only* to generate documentation images (no functional
+assertions) should be placed under ``docs/scenarios/`` rather than
+``tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
+and are excluded from ``test_scenarios.py``.
+
+.. code-block:: yaml
+
+    doc_image:
+      output: docs/source/assets/page-assets/using/my-feature.png
+      root: hui-entities-card   # shadow-piercing selector for the element to crop to
+      padding: 16               # optional pixels of whitespace border (default 0)
+      threshold: 0.02           # optional pixel-diff tolerance (default 0)
 """
 
 from __future__ import annotations
 
+import io
 import os
 import shutil
 from pathlib import Path
@@ -140,6 +160,13 @@ SCENARIOS_DIR = Path(__file__).parent / "scenarios"
 
 # Directory where baseline and actual snapshot PNGs are stored.
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
+
+# Repository root — doc image ``output`` paths are resolved relative to here.
+REPO_ROOT = Path(__file__).parent.parent.parent
+
+# docs/scenarios/ — YAML files here are documentation-image-only scenarios.
+# They participate in ``test_doc_images.py`` but not in ``test_scenarios.py``.
+DOCS_SCENARIOS_DIR = REPO_ROOT / "docs" / "scenarios"
 
 # Shadow-piercing querySelector injected into every ``page.evaluate`` call.
 _QUERY_DEEP_JS = """
@@ -165,9 +192,15 @@ _QUERY_DEEP_JS = """
 
 
 def load_all_scenarios() -> list[dict[str, Any]]:
-    """Return all scenarios loaded from ``*.yaml`` files under *SCENARIOS_DIR*.
+    """Return all test scenarios from ``*.yaml`` files under *SCENARIOS_DIR*.
 
     Files are sorted so the order is deterministic across platforms.
+    Only the ``tests/visual/scenarios/`` tree is searched — documentation-only
+    scenarios living under ``docs/scenarios/`` are intentionally excluded so
+    that ``test_scenarios.py`` does not run them as functional tests.
+
+    Use :func:`load_doc_scenarios` (or :func:`load_all_doc_image_scenarios`) to
+    obtain the scenarios that generate documentation images.
     """
     scenarios: list[dict[str, Any]] = []
     for path in sorted(SCENARIOS_DIR.rglob("*.yaml")):
@@ -176,6 +209,42 @@ def load_all_scenarios() -> list[dict[str, Any]]:
         data.setdefault("_source", path.relative_to(SCENARIOS_DIR.parent).as_posix())
         scenarios.append(data)
     return scenarios
+
+
+def load_doc_scenarios() -> list[dict[str, Any]]:
+    """Return scenarios from ``docs/scenarios/`` that exist solely to generate doc images.
+
+    These files live under the ``docs/`` tree (rather than ``tests/``) because they are
+    documentation assets, not functional tests.  They must all declare a ``doc_image:``
+    key; a ``ValueError`` is raised for any file that does not.
+    """
+    scenarios: list[dict[str, Any]] = []
+    if not DOCS_SCENARIOS_DIR.exists():
+        return scenarios
+    for path in sorted(DOCS_SCENARIOS_DIR.rglob("*.yaml")):
+        with path.open(encoding="utf-8") as fh:
+            data = yaml.safe_load(fh)
+        if "doc_image" not in data:
+            raise ValueError(
+                f"Scenario in {DOCS_SCENARIOS_DIR.relative_to(REPO_ROOT)} "
+                f"is missing 'doc_image:' key: {path}"
+            )
+        data.setdefault("_source", path.relative_to(REPO_ROOT).as_posix())
+        scenarios.append(data)
+    return scenarios
+
+
+def load_all_doc_image_scenarios() -> list[dict[str, Any]]:
+    """Return every scenario (from both ``tests/`` and ``docs/``) that declares ``doc_image:``.
+
+    This is the combined list used by ``test_doc_images.py``.
+    """
+    combined: list[dict[str, Any]] = []
+    # Scenarios in tests/ that have a doc_image: key
+    combined.extend(s for s in load_all_scenarios() if "doc_image" in s)
+    # Dedicated doc-image-only scenarios from docs/scenarios/
+    combined.extend(load_doc_scenarios())
+    return combined
 
 
 # ---------------------------------------------------------------------------
@@ -571,3 +640,127 @@ def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
         raise AssertionError(
             f"Shadow-DOM traversal failed for assertion {assertion}: {result['error']}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Documentation image capture
+# ---------------------------------------------------------------------------
+
+
+def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
+    """Capture a cropped screenshot for documentation if *doc_image* is declared.
+
+    The ``doc_image`` key in a scenario YAML specifies how and where to save
+    the image:
+
+    .. code-block:: yaml
+
+        doc_image:
+          output: docs/source/assets/page-assets/using/my-feature.png
+          root: hui-entities-card   # shadow-piercing selector to crop to
+          padding: 16               # optional pixel border around element
+          threshold: 0.02           # optional pixel-diff tolerance (default 0)
+
+    The ``output`` path is relative to the repository root.
+
+    If the ``root`` key is omitted the full viewport is captured.
+
+    Behaviour
+    ---------
+    * If the output file does not yet exist it is created (first-run bootstrap).
+    * If ``DOC_IMAGE_UPDATE=1`` is set in the environment the file is always
+      overwritten (useful after intentional visual changes to HA or UIX).
+    * Otherwise the freshly captured PNG is compared to the on-disk file using
+      the same pixel-diff logic as snapshot assertions.  The test fails when
+      the images differ beyond *threshold*, prompting the author to run with
+      ``DOC_IMAGE_UPDATE=1`` and commit the updated image.
+    """
+    doc_image = scenario.get("doc_image")
+    if not doc_image:
+        return
+
+    output_path = REPO_ROOT / doc_image["output"]
+    padding: int = doc_image.get("padding", 0)
+    threshold: float = doc_image.get("threshold", 0.0)
+
+    page.wait_for_timeout(HA_SETTLE_MS)
+
+    # --- capture ---
+    if "root" in doc_image:
+        rect = _get_doc_image_rect(page, doc_image["root"])
+        clip = {
+            "x": max(0, rect["x"] - padding),
+            "y": max(0, rect["y"] - padding),
+            "width": rect["w"] + padding * 2,
+            "height": rect["h"] + padding * 2,
+        }
+        actual_png = page.screenshot(clip=clip, full_page=False)
+    else:
+        actual_png = page.screenshot(full_page=False)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # --- write or compare ---
+    if os.environ.get("DOC_IMAGE_UPDATE") == "1" or not output_path.exists():
+        state = "updated" if output_path.exists() else "created"
+        output_path.write_bytes(actual_png)
+        print(f"\n[doc_image] {state}: {output_path.relative_to(REPO_ROOT)}")
+        return
+
+    existing_png = output_path.read_bytes()
+    if existing_png == actual_png:
+        return
+
+    if threshold > 0.0:
+        try:
+            from PIL import Image, ImageChops  # type: ignore[import]
+
+            img_existing = Image.open(io.BytesIO(existing_png)).convert("RGB")
+            img_actual = Image.open(io.BytesIO(actual_png)).convert("RGB")
+
+            if img_existing.size != img_actual.size:
+                raise AssertionError(
+                    f"Doc image '{doc_image['output']}': image size changed "
+                    f"from {img_existing.size} to {img_actual.size}. "
+                    "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+                )
+
+            diff = ImageChops.difference(img_existing, img_actual)
+            diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+            total_pixels = img_existing.size[0] * img_existing.size[1]
+            diff_fraction = diff_pixels / total_pixels
+
+            if diff_fraction <= threshold:
+                return
+
+            raise AssertionError(
+                f"Doc image mismatch for '{doc_image['output']}': "
+                f"{diff_pixels}/{total_pixels} pixels differ "
+                f"({diff_fraction:.4%}), threshold is {threshold:.4%}. "
+                "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+            )
+
+        except ImportError:
+            pass  # Pillow not installed — fall through to byte-level failure
+
+    raise AssertionError(
+        f"Doc image changed: '{doc_image['output']}'. "
+        "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+    )
+
+
+def _get_doc_image_rect(page: Page, selector: str) -> dict[str, float]:
+    """Find *selector* anywhere in the DOM (piercing shadow roots) and return its bounding rect."""
+    rect = page.evaluate(
+        f"""(selector) => {{
+            {_QUERY_DEEP_JS}
+            var el = querySelectorDeep(selector, document.documentElement);
+            if (!el) return {{error: 'Element not found: ' + selector}};
+            var r = el.getBoundingClientRect();
+            return {{x: r.x, y: r.y, w: r.width, h: r.height}};
+        }}""",
+        selector,
+    )
+    if isinstance(rect, dict) and "error" in rect:
+        raise AssertionError(f"Doc image element not found: {rect['error']}")
+    return rect  # type: ignore[return-value]

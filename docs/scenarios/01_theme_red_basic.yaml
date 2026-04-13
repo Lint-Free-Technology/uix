@@ -1,0 +1,20 @@
+id: doc_theme_red_basic
+description: "Doc image: basic red theme applied to an entities card (themes.md)"
+view_path: doc-theme-red-basic
+theme: uix-doc-red-basic
+
+card:
+  type: entities
+  title: Lights
+  entities:
+    - light.bed_light
+    - light.ceiling_lights
+    - light.kitchen_lights
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-red.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02

@@ -1,0 +1,20 @@
+id: doc_theme_red_border
+description: "Doc image: red theme with black row borders via uix-row (themes.md)"
+view_path: doc-theme-red-border
+theme: uix-doc-red-border
+
+card:
+  type: entities
+  title: Lights
+  entities:
+    - light.bed_light
+    - light.ceiling_lights
+    - light.kitchen_lights
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-red-black-rows-border.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02
