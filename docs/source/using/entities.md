@@ -1,7 +1,7 @@
 ---
 description: Learn all about styling entities, badges, elements and entity markers.
 ---
-# Styling entities, badges and elements
+# Styling entities, badges, elements and entity markers
 
 In `entities`, `glance` and `map` cards, [each entity can have options](https://www.home-assistant.io/lovelace/entities/#options-for-entities). Those elements can be styled individually by adding a `uix` parameter to the entity configuration.
 
