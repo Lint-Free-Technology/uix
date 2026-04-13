@@ -1,9 +1,9 @@
 ---
-description: Learn all about styling entities, badges and elements.
+description: Learn all about styling entities, badges, elements and entity markers.
 ---
 # Styling entities, badges and elements
 
-In `entities` and `glance` cards, [each entity can have options](https://www.home-assistant.io/lovelace/entities/#options-for-entities). Those elements can be styled individually by adding a `uix` parameter to the entity configuration.
+In `entities`, `glance` and `map` cards, [each entity can have options](https://www.home-assistant.io/lovelace/entities/#options-for-entities). Those elements can be styled individually by adding a `uix` parameter to the entity configuration.
 
 For those cases, the styles are injected into a shadowRoot, and the bottommost element is thus accessed through `:host`.
 
@@ -168,3 +168,44 @@ The elements in a picture-elements conditional element can be styled directly. I
               --primary-text-color: purple;
             }
     ```
+
+## Styling entity markers on a map
+
+!!! note
+    Styling entity markers available in 6.3.0-beta.2
+
+Entity markers on a map can be styled individually by card config or by theme. In both examples the picture image is also styled.
+
+Styling by config.
+
+```yaml
+type: map
+entities:
+  - entity: device_tracker.iphone_16_pro
+    uix:
+      style: |
+        :host {
+          --uix-image: /local/media/person_grey.png
+        }
+        div.marker {
+          border-color: red !important;
+          border-width: 5px;
+        }
+fit_zones: true
+hours_to_show: 3
+theme_mode: auto
+```
+
+Styling by theme. Here the `&` host selector is used to take advantage of the `ha-entity-marker` having the `entity-id` as an attribute.
+
+```yaml
+  uix-entity-marker-yaml: |
+    "&[entity-id='device_tracker.iphone_16_pro']": |
+      :host {
+        --uix-image: /local/media/person_grey.png
+      }
+      div.marker {
+        border-color: red !important;
+        border-width: 5px;
+      }
+```

@@ -216,6 +216,7 @@ red-theme:
 - `uix-heading-badge`
 - `uix-assist-chip`
 - `uix-element`
+- `uix-entity-marker`
 - `uix-root`
 - `uix-view`
 - `uix-more-info`
