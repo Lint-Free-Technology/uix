@@ -2,10 +2,25 @@ id: map_entity_marker
 description: "UIX injects a uix-node and styling for map entity marker"
 view_path: map-entity-marker
 
+# Create a static device tracker with a fixed GPS location before the page
+# loads so the map marker position is deterministic across test runs.
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_test_person
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
 card:
   type: map
   entities:
-    - entity: device_tracker.demo_paulus
+    - entity: device_tracker.uix_test_person
       uix:
         style: |
           div.marker {

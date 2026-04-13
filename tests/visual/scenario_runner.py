@@ -12,6 +12,12 @@ executed (in order) after navigation but before assertions.  They are useful
 for triggering hover effects, tooltips, clicks that change entity state, or
 any other action that must happen before assertions and snapshots.
 
+A ``setup:`` key (same structure as ``interactions:``) may also be declared.
+Setup interactions run **before** page navigation and are intended for
+``ha_service`` calls that create or pre-position entities so they exist when
+the page first loads.  Only ``ha_service`` and ``wait`` are meaningful in a
+``setup`` block.
+
 hover
     Hover over an element using one of two forms:
 
@@ -243,8 +249,9 @@ def run_interactions(
     page: Page,
     scenario: dict[str, Any],
     ha: HATestContainer | None = None,
+    key: str = "interactions",
 ) -> None:
-    """Execute any interactions declared in *scenario* before assertions.
+    """Execute interactions declared under *key* in *scenario*.
 
     Interactions let tests put the page into a specific UI state (e.g. a
     hover that reveals a tooltip, a click that changes entity state) before
@@ -252,8 +259,14 @@ def run_interactions(
 
     Pass the HA container as *ha* when any ``ha_service`` interactions are
     present in the scenario.
+
+    *key* selects which list to execute.  Use ``"setup"`` for interactions that
+    should run **before** page navigation (e.g. ``ha_service`` calls that
+    create entities so they exist when the page first loads); use the default
+    ``"interactions"`` for actions taken after navigation.  Only ``ha_service``
+    and ``wait`` interaction types are meaningful in a ``setup`` block.
     """
-    for interaction in scenario.get("interactions", []):
+    for interaction in scenario.get(key, []):
         itype = interaction["type"]
         if itype == "hover":
             _perform_hover(page, interaction)

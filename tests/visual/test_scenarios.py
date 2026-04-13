@@ -75,6 +75,7 @@ def test_scenario(
         set_theme(ha, theme)
 
     try:
+        run_interactions(ha_page, scenario, ha=ha, key="setup")
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
         run_interactions(ha_page, scenario, ha=ha)
         run_assertions(ha_page, scenario)
