@@ -1,0 +1,30 @@
+id: map_entity_marker
+description: "UIX injects a uix-node and styling for map entity marker"
+view_path: map-entity-marker
+
+card:
+  type: map
+  entities:
+    - entity: device_tracker.demo_paulus
+      uix:
+        style: |
+          div.marker {
+            border-color: red !important;
+            border-width: 5px;
+          }
+  theme_mode: auto
+
+assertions:
+  - type: element_present
+    root: "hui-map-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "ha-entity-marker"
+    selector: "div.marker"
+    property: "borderColor"
+    expected: "rgb(255, 0, 0)"
+
+  - type: snapshot
+    name: "06_map_entity_marker"
+    threshold: 0.02
