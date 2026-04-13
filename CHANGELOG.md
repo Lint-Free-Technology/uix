@@ -1,3 +1,10 @@
+## [6.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.2...v6.3.0-beta.3) (2026-04-13)
+
+### ⚙️ Miscellaneous
+
+* Map entity marker test ([#217](https://github.com/Lint-Free-Technology/uix/issues/217)) ([acdead6](https://github.com/Lint-Free-Technology/uix/commit/acdead646ee0dc02a858e1e534d075f3c3521965)), closes [#216](https://github.com/Lint-Free-Technology/uix/issues/216)
+* **styling:** Correct new entity marker patch to provide variable config rather than entityConfig ([f1fb013](https://github.com/Lint-Free-Technology/uix/commit/f1fb013aaee290256bc0559b16c324469423e13b))
+
 ## [6.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.1...v6.3.0-beta.2) (2026-04-13)
 
 ### ⭐ New Features
