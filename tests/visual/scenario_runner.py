@@ -907,6 +907,7 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
     page.wait_for_timeout(HA_SETTLE_MS)
 
     # --- capture frames ---
+    # Each frame is an Image.Image object (PIL dynamically imported above).
     frame_images: list[Any] = []
     for i in range(frame_count):
         if "root" in doc_animation:
@@ -921,6 +922,9 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
         else:
             png_bytes = page.screenshot(full_page=False)
 
+        # RGBA gives Pillow's GIF encoder a full alpha channel for palette
+        # selection; alpha is always opaque for browser screenshots, so this
+        # does not affect visual output.
         frame_images.append(Image.open(io.BytesIO(png_bytes)).convert("RGBA"))
 
         if i < frame_count - 1:
@@ -955,6 +959,8 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
     img_existing = Image.open(io.BytesIO(existing_gif))
     img_actual_gif = Image.open(io.BytesIO(actual_gif))
 
+    # GIF frames are palette-indexed ("P" mode); convert to RGB so
+    # ImageChops.difference works and alpha is not a factor in the comparison.
     existing_frames = [f.copy().convert("RGB") for f in ImageSequence.Iterator(img_existing)]
     actual_frames = [f.copy().convert("RGB") for f in ImageSequence.Iterator(img_actual_gif)]
 
