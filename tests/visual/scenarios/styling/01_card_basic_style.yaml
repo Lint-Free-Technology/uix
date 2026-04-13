@@ -24,9 +24,3 @@ assertions:
   - type: snapshot
     name: "01_card_basic_style"
     threshold: 0.02
-
-doc_image:
-  output: docs/source/assets/page-assets/using/card-basic-style.png
-  root: hui-entities-card
-  padding: 8
-  threshold: 0.02

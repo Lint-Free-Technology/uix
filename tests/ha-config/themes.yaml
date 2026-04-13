@@ -49,6 +49,7 @@ uix-doc-red-classes:
   uix-row: |
     :host {
       display: block;
+      border: 1px solid {% if is_state(config.entity, 'on') %} red {% else %} black {% endif %};
     }
     :host(.teal) {
       background: teal;
