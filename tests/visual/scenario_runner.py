@@ -131,13 +131,55 @@ assertions) should be placed under ``docs/scenarios/`` rather than
 ``tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
 and are excluded from ``test_scenarios.py``.
 
+``doc_image`` accepts a **single mapping** or a **list of mappings** (to
+capture multiple images from the same scenario page state):
+
 .. code-block:: yaml
 
+    # Single image (original form — still supported)
     doc_image:
       output: docs/source/assets/page-assets/using/my-feature.png
       root: hui-entities-card   # shadow-piercing selector for the element to crop to
       padding: 16               # optional pixels of whitespace border (default 0)
       threshold: 0.02           # optional pixel-diff tolerance (default 0)
+
+    # Multiple images from the same scenario
+    doc_image:
+      - output: docs/source/assets/page-assets/using/my-feature-card.png
+        root: hui-entities-card
+        padding: 16
+        threshold: 0.02
+      - output: docs/source/assets/page-assets/using/my-feature-full.png
+        threshold: 0.02
+
+Documentation animations
+------------------------
+Any scenario YAML may declare a ``doc_animation`` key to capture an animated
+GIF for documentation.  Frames are captured at *interval_ms* millisecond
+intervals from the live page.  Pillow is required.
+
+.. code-block:: yaml
+
+    doc_animation:
+      output: docs/source/assets/page-assets/using/my-feature.gif
+      root: hui-tile-card   # shadow-piercing selector for the element to crop to
+      padding: 8            # optional pixels of whitespace border (default 0)
+      frames: 12            # number of frames to capture (default 10)
+      interval_ms: 100      # milliseconds between frames (default 100)
+      threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
+
+``frames``
+    Number of screenshots to take.  The first frame is captured after the
+    normal HA settle delay; subsequent frames follow at *interval_ms* gaps.
+
+``interval_ms``
+    Gap between consecutive frame captures **and** the per-frame display
+    duration written into the GIF.
+
+``threshold``
+    Maximum fraction of pixels (0.0–1.0) that may differ between any
+    corresponding pair of frames across runs.  Recommended non-zero value
+    (e.g. ``0.02``) to absorb minor GIF palette-quantisation differences.
 """
 
 from __future__ import annotations
@@ -224,10 +266,10 @@ def load_doc_scenarios() -> list[dict[str, Any]]:
     for path in sorted(DOCS_SCENARIOS_DIR.rglob("*.yaml")):
         with path.open(encoding="utf-8") as fh:
             data = yaml.safe_load(fh)
-        if "doc_image" not in data:
+        if "doc_image" not in data and "doc_animation" not in data:
             raise ValueError(
                 f"Scenario in {DOCS_SCENARIOS_DIR.relative_to(REPO_ROOT)} "
-                f"is missing 'doc_image:' key: {path}"
+                f"is missing 'doc_image:' or 'doc_animation:' key: {path}"
             )
         data.setdefault("_source", path.relative_to(REPO_ROOT).as_posix())
         scenarios.append(data)
@@ -235,13 +277,13 @@ def load_doc_scenarios() -> list[dict[str, Any]]:
 
 
 def load_all_doc_image_scenarios() -> list[dict[str, Any]]:
-    """Return every scenario (from both ``tests/`` and ``docs/``) that declares ``doc_image:``.
+    """Return every scenario (from both ``tests/`` and ``docs/``) that declares ``doc_image:`` or ``doc_animation:``.
 
     This is the combined list used by ``test_doc_images.py``.
     """
     combined: list[dict[str, Any]] = []
-    # Scenarios in tests/ that have a doc_image: key
-    combined.extend(s for s in load_all_scenarios() if "doc_image" in s)
+    # Scenarios in tests/ that have a doc_image: or doc_animation: key
+    combined.extend(s for s in load_all_scenarios() if "doc_image" in s or "doc_animation" in s)
     # Dedicated doc-image-only scenarios from docs/scenarios/
     combined.extend(load_doc_scenarios())
     return combined
@@ -648,18 +690,28 @@ def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
 
 
 def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
-    """Capture a cropped screenshot for documentation if *doc_image* is declared.
+    """Capture cropped screenshots for documentation if *doc_image* is declared.
 
     The ``doc_image`` key in a scenario YAML specifies how and where to save
-    the image:
+    the image.  It accepts a **single mapping** or a **list of mappings**:
 
     .. code-block:: yaml
 
+        # Single image
         doc_image:
           output: docs/source/assets/page-assets/using/my-feature.png
           root: hui-entities-card   # shadow-piercing selector to crop to
           padding: 16               # optional pixel border around element
           threshold: 0.02           # optional pixel-diff tolerance (default 0)
+
+        # Multiple images from the same page state
+        doc_image:
+          - output: docs/source/assets/page-assets/using/my-feature-card.png
+            root: hui-entities-card
+            padding: 16
+            threshold: 0.02
+          - output: docs/source/assets/page-assets/using/my-feature-full.png
+            threshold: 0.02
 
     The ``output`` path is relative to the repository root.
 
@@ -675,76 +727,219 @@ def capture_doc_image(page: Page, scenario: dict[str, Any]) -> None:
       the images differ beyond *threshold*, prompting the author to run with
       ``DOC_IMAGE_UPDATE=1`` and commit the updated image.
     """
-    doc_image = scenario.get("doc_image")
-    if not doc_image:
+    raw = scenario.get("doc_image")
+    if not raw:
         return
 
-    output_path = REPO_ROOT / doc_image["output"]
-    padding: int = doc_image.get("padding", 0)
-    threshold: float = doc_image.get("threshold", 0.0)
+    # Normalise to a list so both the single-dict and list forms are handled uniformly.
+    entries: list[dict[str, Any]] = raw if isinstance(raw, list) else [raw]
 
     page.wait_for_timeout(HA_SETTLE_MS)
 
-    # --- capture ---
-    if "root" in doc_image:
-        rect = _get_doc_image_rect(page, doc_image["root"])
-        clip = {
-            "x": max(0, rect["x"] - padding),
-            "y": max(0, rect["y"] - padding),
-            "width": rect["w"] + padding * 2,
-            "height": rect["h"] + padding * 2,
-        }
-        actual_png = page.screenshot(clip=clip, full_page=False)
-    else:
-        actual_png = page.screenshot(full_page=False)
+    for doc_image in entries:
+        output_path = REPO_ROOT / doc_image["output"]
+        padding: int = doc_image.get("padding", 0)
+        threshold: float = doc_image.get("threshold", 0.0)
+
+        # --- capture ---
+        if "root" in doc_image:
+            rect = _get_doc_image_rect(page, doc_image["root"])
+            clip = {
+                "x": max(0, rect["x"] - padding),
+                "y": max(0, rect["y"] - padding),
+                "width": rect["w"] + padding * 2,
+                "height": rect["h"] + padding * 2,
+            }
+            actual_png = page.screenshot(clip=clip, full_page=False)
+        else:
+            actual_png = page.screenshot(full_page=False)
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # --- write or compare ---
+        if os.environ.get("DOC_IMAGE_UPDATE") == "1" or not output_path.exists():
+            state = "updated" if output_path.exists() else "created"
+            output_path.write_bytes(actual_png)
+            print(f"\n[doc_image] {state}: {output_path.relative_to(REPO_ROOT)}")
+            continue
+
+        existing_png = output_path.read_bytes()
+        if existing_png == actual_png:
+            continue
+
+        if threshold > 0.0:
+            try:
+                from PIL import Image, ImageChops  # type: ignore[import]
+
+                img_existing = Image.open(io.BytesIO(existing_png)).convert("RGB")
+                img_actual = Image.open(io.BytesIO(actual_png)).convert("RGB")
+
+                if img_existing.size != img_actual.size:
+                    raise AssertionError(
+                        f"Doc image '{doc_image['output']}': image size changed "
+                        f"from {img_existing.size} to {img_actual.size}. "
+                        "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+                    )
+
+                diff = ImageChops.difference(img_existing, img_actual)
+                diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+                total_pixels = img_existing.size[0] * img_existing.size[1]
+                diff_fraction = diff_pixels / total_pixels
+
+                if diff_fraction <= threshold:
+                    continue
+
+                raise AssertionError(
+                    f"Doc image mismatch for '{doc_image['output']}': "
+                    f"{diff_pixels}/{total_pixels} pixels differ "
+                    f"({diff_fraction:.4%}), threshold is {threshold:.4%}. "
+                    "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+                )
+
+            except ImportError:
+                pass  # Pillow not installed — fall through to byte-level failure
+
+        raise AssertionError(
+            f"Doc image changed: '{doc_image['output']}'. "
+            "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+        )
+
+
+def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
+    """Capture an animated GIF for documentation if *doc_animation* is declared.
+
+    The ``doc_animation`` key in a scenario YAML specifies how to record and
+    where to save the animation:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card   # shadow-piercing selector to crop to
+          padding: 8            # optional pixel border around element (default 0)
+          frames: 12            # number of frames to capture (default 10)
+          interval_ms: 100      # milliseconds between frames (default 100)
+          threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
+
+    The ``output`` path is relative to the repository root.
+
+    If the ``root`` key is omitted each frame covers the full viewport.
+
+    **Pillow is required** — install it with ``pip install Pillow``.
+
+    Behaviour
+    ---------
+    * Frames are captured at *interval_ms* millisecond intervals starting after
+      the standard HA settle delay.
+    * The frames are assembled into an animated GIF with *interval_ms* as the
+      per-frame display duration and an infinite loop.
+    * If the output file does not yet exist it is created (first-run bootstrap).
+    * If ``DOC_IMAGE_UPDATE=1`` is set in the environment the file is always
+      overwritten.
+    * Otherwise the stored GIF is compared to the freshly generated one
+      frame-by-frame.  When *threshold* > 0 a pixel-diff tolerance is applied
+      (recommended to handle minor GIF palette-quantisation differences across
+      runs).  The test fails when any frame exceeds the threshold.
+    """
+    doc_animation = scenario.get("doc_animation")
+    if not doc_animation:
+        return
+
+    try:
+        from PIL import Image, ImageChops, ImageSequence  # type: ignore[import]
+    except ImportError as exc:
+        raise RuntimeError(
+            "Pillow is required for doc_animation capture. "
+            "Install it with: pip install Pillow"
+        ) from exc
+
+    output_path = REPO_ROOT / doc_animation["output"]
+    padding: int = doc_animation.get("padding", 0)
+    frame_count: int = doc_animation.get("frames", 10)
+    interval_ms: int = doc_animation.get("interval_ms", 100)
+    threshold: float = doc_animation.get("threshold", 0.0)
+
+    page.wait_for_timeout(HA_SETTLE_MS)
+
+    # --- capture frames ---
+    frame_images: list[Any] = []
+    for i in range(frame_count):
+        if "root" in doc_animation:
+            rect = _get_doc_image_rect(page, doc_animation["root"])
+            clip = {
+                "x": max(0, rect["x"] - padding),
+                "y": max(0, rect["y"] - padding),
+                "width": rect["w"] + padding * 2,
+                "height": rect["h"] + padding * 2,
+            }
+            png_bytes = page.screenshot(clip=clip, full_page=False)
+        else:
+            png_bytes = page.screenshot(full_page=False)
+
+        frame_images.append(Image.open(io.BytesIO(png_bytes)).convert("RGBA"))
+
+        if i < frame_count - 1:
+            page.wait_for_timeout(interval_ms)
+
+    # --- assemble GIF ---
+    gif_buf = io.BytesIO()
+    frame_images[0].save(
+        gif_buf,
+        format="GIF",
+        save_all=True,
+        append_images=frame_images[1:],
+        loop=0,
+        duration=interval_ms,
+        optimize=False,
+    )
+    actual_gif = gif_buf.getvalue()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # --- write or compare ---
     if os.environ.get("DOC_IMAGE_UPDATE") == "1" or not output_path.exists():
         state = "updated" if output_path.exists() else "created"
-        output_path.write_bytes(actual_png)
-        print(f"\n[doc_image] {state}: {output_path.relative_to(REPO_ROOT)}")
+        output_path.write_bytes(actual_gif)
+        print(f"\n[doc_animation] {state}: {output_path.relative_to(REPO_ROOT)}")
         return
 
-    existing_png = output_path.read_bytes()
-    if existing_png == actual_png:
+    existing_gif = output_path.read_bytes()
+    if existing_gif == actual_gif:
         return
 
-    if threshold > 0.0:
-        try:
-            from PIL import Image, ImageChops  # type: ignore[import]
+    img_existing = Image.open(io.BytesIO(existing_gif))
+    img_actual_gif = Image.open(io.BytesIO(actual_gif))
 
-            img_existing = Image.open(io.BytesIO(existing_png)).convert("RGB")
-            img_actual = Image.open(io.BytesIO(actual_png)).convert("RGB")
+    existing_frames = [f.copy().convert("RGB") for f in ImageSequence.Iterator(img_existing)]
+    actual_frames = [f.copy().convert("RGB") for f in ImageSequence.Iterator(img_actual_gif)]
 
-            if img_existing.size != img_actual.size:
-                raise AssertionError(
-                    f"Doc image '{doc_image['output']}': image size changed "
-                    f"from {img_existing.size} to {img_actual.size}. "
-                    "Run with DOC_IMAGE_UPDATE=1 to regenerate."
-                )
+    if len(existing_frames) != len(actual_frames):
+        raise AssertionError(
+            f"Doc animation '{doc_animation['output']}': frame count changed "
+            f"from {len(existing_frames)} to {len(actual_frames)}. "
+            "Run with DOC_IMAGE_UPDATE=1 to regenerate."
+        )
 
-            diff = ImageChops.difference(img_existing, img_actual)
-            diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
-            total_pixels = img_existing.size[0] * img_existing.size[1]
-            diff_fraction = diff_pixels / total_pixels
-
-            if diff_fraction <= threshold:
-                return
-
+    max_diff_fraction = 0.0
+    for ef, af in zip(existing_frames, actual_frames):
+        if ef.size != af.size:
             raise AssertionError(
-                f"Doc image mismatch for '{doc_image['output']}': "
-                f"{diff_pixels}/{total_pixels} pixels differ "
-                f"({diff_fraction:.4%}), threshold is {threshold:.4%}. "
+                f"Doc animation '{doc_animation['output']}': frame size changed "
+                f"from {ef.size} to {af.size}. "
                 "Run with DOC_IMAGE_UPDATE=1 to regenerate."
             )
+        diff = ImageChops.difference(ef, af)
+        diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+        total_pixels = ef.size[0] * ef.size[1]
+        max_diff_fraction = max(max_diff_fraction, diff_pixels / total_pixels)
 
-        except ImportError:
-            pass  # Pillow not installed — fall through to byte-level failure
+    if max_diff_fraction <= threshold:
+        return
 
     raise AssertionError(
-        f"Doc image changed: '{doc_image['output']}'. "
+        f"Doc animation mismatch for '{doc_animation['output']}': "
+        f"up to {max_diff_fraction:.4%} of pixels differ per frame, "
+        f"threshold is {threshold:.4%}. "
         "Run with DOC_IMAGE_UPDATE=1 to regenerate."
     )
 
