@@ -137,6 +137,12 @@ solely to capture a doc image (no functional assertions), place the file under
     is enough to tolerate minor cross-platform font-rendering differences without
     masking genuine visual regressions.
 
+``scale``
+    Playwright screenshot scale mode: ``"css"`` (default) or ``"device"``.
+    Set to ``"device"`` to capture at the browser's device pixel ratio for
+    higher-resolution output.  Requires the browser context to be configured
+    with a ``device_scale_factor`` greater than 1 to have an effect.
+
 ``interactions`` *(list entries only)*
     Additional interactions to run before this specific capture.  Uses the same
     interaction types as the top-level ``interactions:`` key (``hover``,
@@ -170,6 +176,20 @@ installed (``pip install Pillow``).
     Maximum fraction of pixels (0.0–1.0) that may differ between any pair of
     corresponding frames across runs.  A non-zero value (e.g. ``0.02``) is
     recommended to absorb minor GIF palette-quantisation differences.
+
+``scale``
+    Playwright screenshot scale mode for each captured frame: ``"css"``
+    (default) or ``"device"``.  Set to ``"device"`` in combination with a
+    browser context configured with a ``device_scale_factor`` greater than 1
+    to produce higher-resolution frames and a sharper resulting GIF.
+
+``dither``
+    Whether to apply Floyd-Steinberg dithering when quantising frames to the
+    256-colour GIF palette (default ``true``).  Dithering eliminates the
+    colour banding that appears in gradients (including greyscale gradients)
+    by diffusing quantisation error across neighbouring pixels.  Set to
+    ``false`` only for flat-colour content where dithering would introduce
+    unwanted noise.
 
 ``interactions``
     Optional list of interactions to run **before** the first frame is
