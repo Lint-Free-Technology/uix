@@ -163,6 +163,7 @@ a new state before that entry's capture, enabling stepped documentation:
       root: hui-entities-card   # shadow-piercing selector for the element to crop to
       padding: 16               # optional pixels of whitespace border (default 0)
       threshold: 0.02           # optional pixel-diff tolerance (default 0)
+      scale: device             # optional — "css" (default) or "device" for HiDPI
 
     # Stepped capture — each entry runs additional interactions then captures
     doc_image:
@@ -204,6 +205,7 @@ intervals from the live page.  Pillow is required.
       frames: 12            # number of frames to capture (default 10)
       interval_ms: 100      # milliseconds between frames (default 100)
       threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
+      scale: device         # optional — "css" (default) or "device" for HiDPI
       interactions:         # optional — run before frame capture begins
         - type: hover
           root: hui-tile-card
@@ -251,6 +253,13 @@ animation:
     Maximum fraction of pixels (0.0–1.0) that may differ between any
     corresponding pair of frames across runs.  Recommended non-zero value
     (e.g. ``0.02``) to absorb minor GIF palette-quantisation differences.
+
+``scale``
+    Playwright screenshot scale mode: ``"css"`` (default) or ``"device"``.
+    Set to ``"device"`` to capture frames at the browser's device pixel ratio
+    for higher-resolution output on HiDPI displays.  Requires the browser
+    context to be configured with a ``device_scale_factor`` greater than 1 to
+    have an effect.
 
 ``interactions``
     Optional list of interactions to run **before** the first frame is
@@ -872,6 +881,12 @@ def capture_doc_image(
 
     If the ``root`` key is omitted the full viewport is captured.
 
+    The optional ``scale`` key controls Playwright's screenshot scale mode:
+    ``"css"`` (default) captures at CSS pixel resolution, while ``"device"``
+    captures at the browser's device pixel ratio.  Use ``scale: device`` in
+    combination with a browser context configured with a ``device_scale_factor``
+    greater than 1 to produce higher-resolution documentation images.
+
     Behaviour
     ---------
     * If the output file does not yet exist it is created (first-run bootstrap).
@@ -899,6 +914,7 @@ def capture_doc_image(
         output_path = REPO_ROOT / doc_image["output"]
         padding: int = doc_image.get("padding", 0)
         threshold: float = doc_image.get("threshold", 0.0)
+        scale: str = doc_image.get("scale", "css")
 
         # --- capture ---
         if "root" in doc_image:
@@ -909,9 +925,9 @@ def capture_doc_image(
                 "width": rect["w"] + padding * 2,
                 "height": rect["h"] + padding * 2,
             }
-            actual_png = page.screenshot(clip=clip, full_page=False)
+            actual_png = page.screenshot(clip=clip, full_page=False, scale=scale)
         else:
-            actual_png = page.screenshot(full_page=False)
+            actual_png = page.screenshot(full_page=False, scale=scale)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1036,6 +1052,12 @@ def capture_doc_animation(
     Pass the HA container as *ha* when any ``ha_service`` interactions are
     present.
 
+    The optional ``scale`` key controls Playwright's screenshot scale mode for
+    each captured frame: ``"css"`` (default) or ``"device"``.  Set to
+    ``"device"`` in combination with a browser context configured with a
+    ``device_scale_factor`` greater than 1 to produce higher-resolution frames
+    and a sharper resulting GIF.
+
     Behaviour
     ---------
     * The standard HA settle delay is applied once at the start.
@@ -1070,6 +1092,7 @@ def capture_doc_animation(
     padding: int = doc_animation.get("padding", 0)
     interval_ms: int = doc_animation.get("interval_ms", 100)
     threshold: float = doc_animation.get("threshold", 0.0)
+    scale: str = doc_animation.get("scale", "css")
 
     def _compute_clip() -> dict[str, float] | None:
         """Return the screenshot clip rect for the configured *root*, or None."""
@@ -1086,9 +1109,9 @@ def capture_doc_animation(
     def take_frame(clip: dict[str, float] | None) -> Any:
         """Capture one animation frame using a pre-computed *clip* rect."""
         png_bytes = (
-            page.screenshot(clip=clip, full_page=False)
+            page.screenshot(clip=clip, full_page=False, scale=scale)
             if clip is not None
-            else page.screenshot(full_page=False)
+            else page.screenshot(full_page=False, scale=scale)
         )
         # RGBA gives Pillow's GIF encoder a full alpha channel for palette
         # selection; alpha is always opaque for browser screenshots, so this
