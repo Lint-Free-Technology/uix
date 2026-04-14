@@ -75,7 +75,9 @@ pinned version string such as `2024.6.0`.
 
 ```
 tests/
-├── conftest.py              # Session-scoped HA container + Lovelace dashboard fixtures
+├── conftest.py                       # Session-scoped HA container + Lovelace dashboard fixtures
+├── test_doc_audit.py                 # Doc-image audit — checks all PNG/GIF refs are tracked
+├── doc-image-audit-exclusions.txt    # Paths excluded from the audit (hand-crafted images)
 ├── ha-config/
 │   ├── configuration.yaml   # HA configuration loaded by the test container
 │   └── themes.yaml          # UIX test themes (referenced by scenario YAML files)
@@ -309,6 +311,38 @@ doc_image:
 | `padding` | — | Extra pixels added on each side of the element's bounding box. |
 | `threshold` | — | Maximum fraction of pixels (0.0–1.0) that may differ from the on-disk file before the test fails.  Mirrors the `threshold` field on snapshot assertions. |
 
+### Stepped captures (multiple images per scenario)
+
+`doc_image` also accepts a **list** of entries.  Each entry captures one PNG; the
+optional `interactions` sub-key runs additional interactions before that capture.
+Interactions are **cumulative** — each entry picks up from the state left by the
+previous one.
+
+```yaml
+doc_image:
+  - output: docs/source/assets/page-assets/using/my-feature-default.png
+    root: hui-tile-card
+    padding: 8
+
+  - interactions:
+      - type: hover
+        root: hui-tile-card
+        selector: ha-tile-icon
+        settle_ms: 800      # wait for hover CSS to settle before capturing
+    output: docs/source/assets/page-assets/using/my-feature-hover.png
+    root: hui-tile-card
+    padding: 8
+
+  - interactions:
+      - type: click
+        root: hui-tile-card
+        selector: ha-tile-icon
+        settle_ms: 1500
+    output: docs/source/assets/page-assets/using/my-feature-active.png
+    root: hui-tile-card
+    padding: 8
+```
+
 ### Behaviour
 
 * **First run (no existing file):** the image is written automatically.
@@ -339,4 +373,168 @@ make doc_images_update
 # 2. Review the diff, then commit
 git add docs/source/assets/page-assets/
 git commit -m "docs: regenerate documentation images for HA X.Y"
+```
+
+---
+
+## Documentation animations (animated GIFs)
+
+The `doc_animation:` key captures N frames at fixed intervals and assembles them
+into an animated GIF.  It is an alternative to `doc_image:` for scenarios where
+a short looping animation better illustrates the feature.
+
+### Schema reference
+
+```yaml
+doc_animation:
+  output: docs/source/assets/page-assets/using/my-feature.gif
+  root: hui-tile-card   # shadow-piercing CSS selector to crop each frame to
+  padding: 8            # optional — pixels of border around element (default 0)
+  frames: 12            # number of frames to capture (default 10)
+  interval_ms: 100      # milliseconds between frames (default 100)
+  threshold: 0.02       # optional — per-frame pixel-diff tolerance (default 0)
+```
+
+| Key | Required | Description |
+|-----|----------|-------------|
+| `output` | ✅ | Output GIF path relative to the repository root.  Parent directories are created automatically. |
+| `root` | — | Shadow-piercing CSS selector for the element to crop.  When omitted the full viewport is captured. |
+| `padding` | — | Extra pixels added on each side of the element's bounding box per frame. |
+| `frames` | — | Number of frames to capture.  Total capture time = `frames × interval_ms` ms. |
+| `interval_ms` | — | Delay between frames in milliseconds — also sets the GIF per-frame display duration. |
+| `threshold` | — | Maximum fraction of pixels (0.0–1.0) that may differ per frame from the stored GIF.  A small non-zero value (e.g. `0.02`) is recommended to absorb minor GIF palette-quantisation drift across runs. |
+
+### How to trigger an animation before capture
+
+The top-level `interactions:` block in a scenario runs **immediately before**
+`capture_doc_animation`, so you can fire an interaction with a very short
+`settle_ms` to trigger a CSS transition and then capture frames while it is
+still playing.
+
+**Hover-triggered CSS transition** (fire hover, then capture frames mid-animation):
+
+```yaml
+interactions:
+  - type: hover
+    root: hui-tile-card
+    selector: ha-tile-icon
+    settle_ms: 0      # trigger the hover but don't wait for the animation to finish
+
+doc_animation:
+  output: docs/source/assets/page-assets/using/my-feature-hover.gif
+  root: hui-tile-card
+  padding: 8
+  frames: 10          # e.g. 10 × 80 ms = 800 ms total
+  interval_ms: 80
+  threshold: 0.02
+```
+
+**CSS `@keyframes` that plays on page load** (no interaction needed — capture begins right after the HA settle delay):
+
+```yaml
+doc_animation:
+  output: docs/source/assets/page-assets/using/my-feature-load.gif
+  root: hui-tile-card
+  padding: 8
+  frames: 12
+  interval_ms: 100
+  threshold: 0.02
+```
+
+**State change via HA service** (call service, wait briefly for state to register, then capture):
+
+```yaml
+interactions:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room
+  - type: wait
+    ms: 50            # let state propagate, but don't let the animation finish
+
+doc_animation:
+  output: docs/source/assets/page-assets/using/light-on-animation.gif
+  root: hui-tile-card
+  padding: 8
+  frames: 15
+  interval_ms: 100
+  threshold: 0.02
+```
+
+### Behaviour
+
+* **First run (no existing file):** the GIF is written automatically.
+* **Subsequent runs:** each frame is compared against the corresponding frame in
+  the stored GIF.  The test fails when any frame exceeds `threshold`.
+* **`DOC_IMAGE_UPDATE=1`:** always overwrites the on-disk file.  Use this after
+  an intentional visual change to UIX or HA, then commit the updated GIFs.
+* **Pillow is required** — it is included in the `[test]` extra:
+  `pip install -e ".[test]"` installs it automatically.
+
+### Where to put doc animation scenarios
+
+Same rules as `doc_image:` scenarios:
+
+* If the scenario also has functional `assertions:`, add `doc_animation:` to the
+  same YAML.
+* If the scenario exists solely to capture a documentation asset, place it under
+  `docs/scenarios/`.  Scenarios there are never run by `test_scenarios.py`.
+
+---
+
+## Documentation image audit
+
+`tests/test_doc_audit.py` scans every `.md` file under `docs/source/` for
+Markdown image references (`![...](...)`) and checks that each PNG or GIF is
+either:
+
+* **generated by a scenario** — declared as `output:` inside a `doc_image:` or
+  `doc_animation:` block in any scenario YAML, or
+* **excluded** — listed in `tests/doc-image-audit-exclusions.txt`.
+
+This prevents new documentation images from being added without either a
+matching scenario or an explicit acknowledgement that the image is hand-crafted.
+
+### Running the audit
+
+```bash
+# Via the Makefile alias (no Docker / browser required)
+make doc_audit
+
+# Directly with pytest
+pytest tests/test_doc_audit.py
+```
+
+The audit does **not** start a Home Assistant container or a browser, so it
+runs instantly.
+
+### Exclusion list
+
+`tests/doc-image-audit-exclusions.txt` holds images that are intentionally
+hand-crafted — diagrams, logos, screenshots that cannot or need not be
+reproduced by automated scenarios.  One repo-relative path per line;
+lines beginning with `#` and blank lines are ignored.
+
+When you add a new hand-crafted image to the docs, also add its path here:
+
+```
+# My new hand-crafted diagram
+docs/source/assets/page-assets/my-page/my-diagram.png
+```
+
+If the audit fails because an image was not yet classified, you will see a
+message like:
+
+```
+FAILED tests/test_doc_audit.py::test_all_doc_images_are_tracked
+  2 doc image(s) are not generated by any scenario and are not listed in
+  tests/doc-image-audit-exclusions.txt.
+
+  Add a doc_image:/doc_animation: key to a scenario YAML to auto-generate
+  each image, or add it to tests/doc-image-audit-exclusions.txt if it is
+  intentionally hand-crafted:
+
+    docs/source/assets/page-assets/forge/my-new-image.png
+    docs/source/assets/page-assets/forge/my-other-image.gif
 ```

@@ -1,15 +1,58 @@
-"""Generate and verify documentation images from scenario YAML files.
+"""Generate and verify documentation images and animations from scenario YAML files.
 
-Any scenario that declares a ``doc_image:`` key participates in doc image
-generation.  The image is written to the path specified by ``doc_image.output``
-(relative to the repository root).
+Any scenario that declares a ``doc_image:`` or ``doc_animation:`` key participates
+in doc asset generation.
+
+``doc_image``
+    Captures a static PNG screenshot.  ``doc_image`` accepts a **single mapping**
+    or a **list of mappings**.  Each list entry may include its own
+    ``interactions`` sub-key to advance the page to a new state before that
+    capture, enabling stepped documentation:
+
+    .. code-block:: yaml
+
+        # Single image
+        doc_image:
+          output: docs/source/assets/page-assets/using/my-feature.png
+          root: hui-entities-card
+          padding: 16
+          threshold: 0.02
+
+        # Stepped capture — each entry runs additional interactions then captures
+        doc_image:
+          - output: docs/source/assets/page-assets/using/my-feature-default.png
+            root: hui-tile-card
+            padding: 8
+          - interactions:
+              - type: hover
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 800
+            output: docs/source/assets/page-assets/using/my-feature-hover.png
+            root: hui-tile-card
+            padding: 8
+
+``doc_animation``
+    Captures an animated GIF.  Frames are taken at *interval_ms* millisecond
+    intervals; Pillow is required.
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          padding: 8
+          frames: 12
+          interval_ms: 100
+          threshold: 0.02
 
 Scenarios are loaded from two locations:
 
 * ``tests/visual/scenarios/`` — regular test scenarios that *also* declare
-  ``doc_image:``.  The same card configuration, theme, and interactions are
-  used for both the functional assertions and the documentation image.
-* ``docs/scenarios/`` — documentation-image-only scenarios with no functional
+  ``doc_image:`` and/or ``doc_animation:``.  The same card configuration, theme,
+  and interactions are used for both the functional assertions and the
+  documentation assets.
+* ``docs/scenarios/`` — documentation-asset-only scenarios with no functional
   assertions.  These live in the ``docs/`` tree because they are documentation
   assets, not tests.
 
@@ -38,14 +81,6 @@ Add a ``doc_image:`` key to any scenario YAML file.  For scenarios that exist
 solely to capture a doc image (no functional assertions), place the file under
 ``docs/scenarios/`` instead of ``tests/visual/scenarios/``.
 
-.. code-block:: yaml
-
-    doc_image:
-      output: docs/source/assets/page-assets/using/my-feature.png
-      root: hui-entities-card   # shadow-piercing CSS selector for the element to crop
-      padding: 16               # optional — pixels of whitespace border (default 0)
-      threshold: 0.02           # optional — pixel-diff tolerance (default 0)
-
 ``output``
     Path to the PNG, relative to the repository root.  Parent directories are
     created automatically.
@@ -67,11 +102,44 @@ solely to capture a doc image (no functional assertions), place the file under
     is enough to tolerate minor cross-platform font-rendering differences without
     masking genuine visual regressions.
 
+``interactions`` *(list entries only)*
+    Additional interactions to run before this specific capture.  Uses the same
+    interaction types as the top-level ``interactions:`` key (``hover``,
+    ``click``, ``ha_service``, ``wait``).  Interactions are cumulative — each
+    entry starts from the page state left by the previous entry.
+
+Adding a documentation animation
+----------------------------------
+Add a ``doc_animation:`` key to any scenario YAML file.  Pillow must be
+installed (``pip install Pillow``).
+
+``output``
+    Path to the GIF, relative to the repository root.
+
+``root``
+    Shadow-piercing CSS selector for the element to crop to.  Omit for full
+    viewport.
+
+``padding``
+    Extra pixels added around the element bounding box (default 0).
+
+``frames``
+    Number of frames to capture (default 10).
+
+``interval_ms``
+    Gap between consecutive frame captures in milliseconds, also used as the
+    per-frame display duration in the resulting GIF (default 100).
+
+``threshold``
+    Maximum fraction of pixels (0.0–1.0) that may differ between any pair of
+    corresponding frames across runs.  A non-zero value (e.g. ``0.02``) is
+    recommended to absorb minor GIF palette-quantisation differences.
+
 Update workflow
 ---------------
-When a Home Assistant update (or a UIX change) causes a doc image to look
+When a Home Assistant update (or a UIX change) causes a doc asset to look
 different, the test will fail with a message explaining the diff.  Regenerate
-the affected images and commit them:
+the affected assets and commit them:
 
 .. code-block:: bash
 
@@ -88,6 +156,7 @@ from ha_testcontainer import HATestContainer
 from playwright.sync_api import Page
 
 from scenario_runner import (
+    capture_doc_animation,
     capture_doc_image,
     clear_scenario,
     goto_scenario,
@@ -99,9 +168,9 @@ from scenario_runner import (
 )
 
 # ---------------------------------------------------------------------------
-# Collect only scenarios that declare a doc_image key.
+# Collect scenarios that declare a doc_image: or doc_animation: key.
 # This includes both test scenarios (tests/visual/scenarios/) that have
-# doc_image: and dedicated doc-image scenarios from docs/scenarios/.
+# either key and dedicated doc-asset scenarios from docs/scenarios/.
 # ---------------------------------------------------------------------------
 
 _DOC_SCENARIOS = load_all_doc_image_scenarios()
@@ -122,17 +191,18 @@ def test_doc_image(
     ha_url: str,
     ha_lovelace_url_path: str,
 ) -> None:
-    """Capture and verify the documentation image for a UIX scenario.
+    """Capture and verify documentation assets for a UIX scenario.
 
     The test pushes the scenario's card configuration to the shared
     ``uix-tests`` Lovelace dashboard, navigates to it, runs any declared
     interactions (setup and post-navigation), then calls
-    :func:`capture_doc_image` to take a cropped screenshot and compare it
-    against the on-disk documentation asset.
+    :func:`capture_doc_image` and :func:`capture_doc_animation` to produce
+    the requested documentation assets and compare them against the on-disk
+    files.
 
-    The test fails when the captured image differs from the stored file beyond
+    The test fails when a captured asset differs from the stored file beyond
     the configured ``threshold``.  Run with ``DOC_IMAGE_UPDATE=1`` to
-    regenerate all doc images.
+    regenerate all doc assets.
     """
     scenario = _DOC_SCENARIO_MAP[scenario_id]
     theme = scenario.get("theme")
@@ -145,7 +215,8 @@ def test_doc_image(
         run_interactions(ha_page, scenario, ha=ha, key="setup")
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
         run_interactions(ha_page, scenario, ha=ha)
-        capture_doc_image(ha_page, scenario)
+        capture_doc_image(ha_page, scenario, ha=ha)
+        capture_doc_animation(ha_page, scenario)
     finally:
         if theme:
             reset_theme(ha)
