@@ -1236,8 +1236,7 @@ def capture_doc_image(
         cursor_type: str | None = None if (_raw_cursor is None or _raw_cursor == "none") else _raw_cursor
         # Normalise: click_circle: none (YAML null), false, or the string "none"
         # means hide; any other truthy value means show.
-        _raw_cc = doc_image.get("click_circle")
-        show_click_circle: bool = bool(_raw_cc) and _raw_cc != "none"
+        show_click_circle: bool = _want_click_circle(doc_image.get("click_circle"))
 
         # --- capture ---
         if cursor_type:
@@ -1476,7 +1475,7 @@ def capture_doc_animation(
                   settle_ms: 800
               frames: 4           # short segment — circle visible while click settles
               click_circle: true
-            - frames: 8           # circle removed; show result
+            - frames: 8           # circle removed; show settled state
               cursor: none
 
     Behaviour
@@ -1575,13 +1574,12 @@ def capture_doc_animation(
         # Determine whether to show a click-circle for this segment.  A
         # ``click_circle: true`` (or any truthy non-"none" value) injects the
         # circle at the position of the last click recorded by the tracker.
-        # ``click_circle: none`` (null in YAML) or ``false`` removes it.
+        # ``click_circle: none`` (null in YAML), ``false``, or ``"none"`` removes it.
         if "click_circle" in seg:
-            cc = seg["click_circle"]
-            if cc is None or cc == "none" or cc is False:
-                _remove_click_circle(page)
-            else:
+            if _want_click_circle(seg["click_circle"]):
                 _inject_click_circle(page)
+            else:
+                _remove_click_circle(page)
         n: int = seg.get("frames", 10)
         for i in range(n):
             frame_images.append(take_frame(fixed_clip))
@@ -1812,3 +1810,12 @@ def _inject_click_circle(page: Page) -> None:
 def _remove_click_circle(page: Page) -> None:
     """Remove the click-circle overlay element injected by :func:`_inject_click_circle`."""
     page.evaluate(_CLICK_CIRCLE_REMOVAL_JS, _CLICK_CIRCLE_OVERLAY_ID)
+
+
+def _want_click_circle(raw: Any) -> bool:
+    """Return ``True`` when *raw* represents a request to show the click circle.
+
+    ``False``, ``None`` (YAML null), and the string ``"none"`` all mean *hide*.
+    Any other truthy value means *show*.
+    """
+    return bool(raw) and raw != "none"
