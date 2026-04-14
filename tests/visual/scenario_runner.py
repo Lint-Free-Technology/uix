@@ -352,37 +352,53 @@ _QUERY_DEEP_JS = """
 _CURSOR_OVERLAY_ID = "__uix_cursor_overlay"
 
 # Cursor SVG definitions: name → (svg_html, hotspot_x, hotspot_y).
-# The hotspot is the pixel within the SVG that corresponds to the pointer tip.
-# Black fill with white stroke ensures visibility on both light and dark backgrounds.
+# The hotspot is the display pixel that corresponds to the pointer tip.
+#
+# Paths are derived from the KDE Breeze cursor theme (LGPL-3.0-or-later).
+# Source: https://github.com/KDE/breeze/tree/master/cursors/Breeze/src/svg
+#
+# Each cursor uses two overlapping paths — a white-filled/stroked shape behind
+# and a black-filled shape in front — to ensure readability on both light and
+# dark backgrounds without relying on a drop-shadow filter.
+#
+# The viewBox crops the original 32×32 Breeze canvas to just the cursor region.
+
+# --- arrow (default) --------------------------------------------------------
+# Original hotspot: (4, 4) on the 32×32 canvas.
+# viewBox "3 3 13 18" crops to content; displayed as 14×21 px.
+# Display hotspot: (1, 1)  — very tip of the arrow.
 _CURSOR_SVG_ARROW = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="22">'
-    '<path d="M1 1L1 18L5 13L7.5 19L10 18L7.5 12L13 12Z"'
-    ' fill="#000" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="21" viewBox="3 3 13 18">'
+    '<path d="m4 3.873-.004 15.977 3.352-1.766 2.271 2.73'
+    "a1.402 1.402 0 0 0 2.389-.988l-.326-3.539 3.619-1.119z"
+    '" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+    '<path d="m4 3.873-.004 15.977 3.352-1.766 2.271 2.73'
+    "a1.402 1.402 0 0 0 2.389-.988l-.326-3.539 3.619-1.119z"
+    '" fill="#000"/>'
     "</svg>",
     1,
     1,
 )
 
+# --- pointer (hand) ---------------------------------------------------------
+# Original hotspot: (17.5, 4) on the 32×32 canvas — tip of the index finger.
+# viewBox "8 2.5 19.5 21" crops to content; displayed as 20×22 px.
+# Display hotspot: (10, 2)  — fingertip.
 _CURSOR_SVG_POINTER = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="22">'
-    # Index finger (tallest — hotspot is at its tip)
-    '<rect x="5" y="0" width="3.5" height="12" rx="1.75"'
-    ' fill="#000" stroke="#fff" stroke-width="0.8"/>'
-    # Middle finger
-    '<rect x="8.7" y="2" width="3.5" height="10" rx="1.75"'
-    ' fill="#000" stroke="#fff" stroke-width="0.8"/>'
-    # Ring + pinky
-    '<rect x="12.4" y="3.5" width="3" height="8.5" rx="1.5"'
-    ' fill="#000" stroke="#fff" stroke-width="0.8"/>'
-    # Thumb
-    '<rect x="0.5" y="7" width="3.5" height="7" rx="1.75"'
-    ' fill="#000" stroke="#fff" stroke-width="0.8"/>'
-    # Palm
-    '<path d="M0.5 12Q0.5 21.5 8 21.5L10.5 21.5Q15.4 21.5 15.4 16.5L15.4 12Z"'
-    ' fill="#000" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="8 2.5 19.5 21">'
+    '<path d="m17.166 23.057 8.834-.057 1-10'
+    "c.21-2.027-2.303-2.87-3-1 .009-2.248-2.304-2.529-3-1"
+    " .087-1.857-2.272-2.576-3-1v-4c0-3-3-3-3 0v9"
+    'c-5-5-6.226-1.407-6.226-1.407 3.398 2.294 5.476 9.483 8.392 9.464"'
+    ' fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+    '<path d="m17.166 23.057 8.834-.057 1-10'
+    "c.21-2.027-2.303-2.87-3-1 .009-2.248-2.304-2.529-3-1"
+    " .087-1.857-2.272-2.576-3-1v-4c0-3-3-3-3 0v9"
+    'c-5-5-6.226-1.407-6.226-1.407 3.398 2.294 5.476 9.483 8.392 9.464"'
+    ' fill="#000"/>'
     "</svg>",
-    7,
-    0,
+    10,
+    2,
 )
 
 # All recognised cursor type names.  "arrow" and "hand" are aliases for the
