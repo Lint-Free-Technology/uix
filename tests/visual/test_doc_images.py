@@ -183,6 +183,14 @@ installed (``pip install Pillow``).
     browser context configured with a ``device_scale_factor`` greater than 1
     to produce higher-resolution frames and a sharper resulting GIF.
 
+``dither``
+    Whether to apply Floyd-Steinberg dithering when quantising frames to the
+    256-colour GIF palette (default ``true``).  Dithering eliminates the
+    colour banding that appears in gradients (including greyscale gradients)
+    by diffusing quantisation error across neighbouring pixels.  Set to
+    ``false`` only for flat-colour content where dithering would introduce
+    unwanted noise.
+
 ``interactions``
     Optional list of interactions to run **before** the first frame is
     captured (flat mode only).  Uses the same interaction types as the
