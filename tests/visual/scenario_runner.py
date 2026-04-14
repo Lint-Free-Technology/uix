@@ -312,6 +312,7 @@ from ha_testcontainer import HATestContainer
 from ha_testcontainer.visual import HA_SETTLE_MS, PAGE_LOAD_TIMEOUT, assert_snapshot
 from playwright.sync_api import Page
 
+from cursors import CURSOR_SVGS as _CURSOR_SVGS
 from lovelace_helpers import push_lovelace_config_to
 
 # Root directory that contains all scenario sub-directories.
@@ -350,65 +351,6 @@ _QUERY_DEEP_JS = """
 
 # DOM id used for the injected cursor overlay element.
 _CURSOR_OVERLAY_ID = "__uix_cursor_overlay"
-
-# Cursor SVG definitions: name → (svg_html, hotspot_x, hotspot_y).
-# The hotspot is the display pixel that corresponds to the pointer tip.
-#
-# Paths are derived from the KDE Breeze cursor theme (LGPL-3.0-or-later).
-# Source: https://github.com/KDE/breeze/tree/master/cursors/Breeze/src/svg
-#
-# Each cursor uses two overlapping paths — a white-filled/stroked shape behind
-# and a black-filled shape in front — to ensure readability on both light and
-# dark backgrounds without relying on a drop-shadow filter.
-#
-# The viewBox crops the original 32×32 Breeze canvas to just the cursor region.
-
-# --- arrow (default) --------------------------------------------------------
-# Original hotspot: (4, 4) on the 32×32 canvas.
-# viewBox "3 3 13 18" crops to content; displayed as 14×21 px.
-# Display hotspot: (1, 1)  — very tip of the arrow.
-_CURSOR_SVG_ARROW = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="21" viewBox="3 3 13 18">'
-    '<path d="m4 3.873-.004 15.977 3.352-1.766 2.271 2.73'
-    "a1.402 1.402 0 0 0 2.389-.988l-.326-3.539 3.619-1.119z"
-    '" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
-    '<path d="m4 3.873-.004 15.977 3.352-1.766 2.271 2.73'
-    "a1.402 1.402 0 0 0 2.389-.988l-.326-3.539 3.619-1.119z"
-    '" fill="#000"/>'
-    "</svg>",
-    1,
-    1,
-)
-
-# --- pointer (hand) ---------------------------------------------------------
-# Original hotspot: (17.5, 4) on the 32×32 canvas — tip of the index finger.
-# viewBox "8 2.5 19.5 21" crops to content; displayed as 20×22 px.
-# Display hotspot: (10, 2)  — fingertip.
-_CURSOR_SVG_POINTER = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="8 2.5 19.5 21">'
-    '<path d="m17.166 23.057 8.834-.057 1-10'
-    "c.21-2.027-2.303-2.87-3-1 .009-2.248-2.304-2.529-3-1"
-    " .087-1.857-2.272-2.576-3-1v-4c0-3-3-3-3 0v9"
-    'c-5-5-6.226-1.407-6.226-1.407 3.398 2.294 5.476 9.483 8.392 9.464"'
-    ' fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
-    '<path d="m17.166 23.057 8.834-.057 1-10'
-    "c.21-2.027-2.303-2.87-3-1 .009-2.248-2.304-2.529-3-1"
-    " .087-1.857-2.272-2.576-3-1v-4c0-3-3-3-3 0v9"
-    'c-5-5-6.226-1.407-6.226-1.407 3.398 2.294 5.476 9.483 8.392 9.464"'
-    ' fill="#000"/>'
-    "</svg>",
-    10,
-    2,
-)
-
-# All recognised cursor type names.  "arrow" and "hand" are aliases for the
-# two canonical cursor shapes.
-_CURSOR_SVGS: dict[str, tuple[str, int, int]] = {
-    "default": _CURSOR_SVG_ARROW,
-    "arrow": _CURSOR_SVG_ARROW,
-    "pointer": _CURSOR_SVG_POINTER,
-    "hand": _CURSOR_SVG_POINTER,
-}
 
 # JavaScript that installs a ``mousemove`` listener storing the current pointer
 # position in ``window.__uix_cursor_pos``.  Idempotent — safe to evaluate
