@@ -310,6 +310,7 @@ doc_image:
 | `root` | — | Shadow-piercing CSS selector for the element whose bounding box defines the crop.  When omitted the full viewport is captured. |
 | `padding` | — | Extra pixels added on each side of the element's bounding box. |
 | `threshold` | — | Maximum fraction of pixels (0.0–1.0) that may differ from the on-disk file before the test fails.  Mirrors the `threshold` field on snapshot assertions. |
+| `cursor` | — | Render a visible cursor overlay at the current mouse position before the screenshot.  Accepted values: `"default"` / `"arrow"` (standard arrow) or `"pointer"` / `"hand"` (pointing hand).  The overlay is removed immediately after capture. |
 
 ### Stepped captures (multiple images per scenario)
 
@@ -403,6 +404,7 @@ doc_animation:
 | `frames` | — | Number of frames to capture.  Total capture time = `frames × interval_ms` ms. |
 | `interval_ms` | — | Delay between frames in milliseconds — also sets the GIF per-frame display duration. |
 | `threshold` | — | Maximum fraction of pixels (0.0–1.0) that may differ per frame from the stored GIF.  A small non-zero value (e.g. `0.02`) is recommended to absorb minor GIF palette-quantisation drift across runs. |
+| `cursor` | — | Render a visible cursor overlay at the current mouse position in every captured frame.  Accepted values: `"default"` / `"arrow"` or `"pointer"` / `"hand"`.  In segmented mode individual segments may override this with their own `cursor` key; set it to `none` to hide the cursor in that segment. |
 
 ### How to trigger an animation before capture
 
@@ -460,6 +462,48 @@ doc_animation:
   frames: 15
   interval_ms: 100
   threshold: 0.02
+```
+
+**Cursor overlay** (show the pointer at the hover position):
+
+```yaml
+doc_animation:
+  output: docs/source/assets/page-assets/using/my-feature-hover.gif
+  root: hui-tile-card
+  padding: 8
+  frames: 10
+  interval_ms: 80
+  threshold: 0.02
+  cursor: pointer
+  interactions:
+    - type: hover
+      root: hui-tile-card
+      selector: ha-tile-icon
+      settle_ms: 800
+```
+
+**Cursor per segment** (show cursor while hovering, hide it after hover_away):
+
+```yaml
+doc_animation:
+  output: docs/source/assets/page-assets/using/my-feature-hover-away.gif
+  root: hui-tile-card
+  padding: 8
+  interval_ms: 80
+  threshold: 0.02
+  cursor: pointer          # default cursor for all segments
+  segments:
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 800
+      frames: 8            # pointer cursor shown (inherited)
+    - interactions:
+        - type: hover_away
+          settle_ms: 400
+      frames: 6
+      cursor: none         # hide cursor after pointer leaves element
 ```
 
 ### Behaviour
