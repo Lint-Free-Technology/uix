@@ -12,3 +12,8 @@ lovelace:
 
 frontend:
   themes: !include themes.yaml
+
+input_boolean:
+  test_boolean:
+    name: Test Boolean
+    initial: off

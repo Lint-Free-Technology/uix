@@ -1,0 +1,41 @@
+id: doc_entity_marker
+description: "Styling for map entity marker (entities.md)"
+view_path: doc-entity-marker
+
+# Create a static device tracker with a fixed GPS location before the page
+# loads so the map marker position is deterministic across doc generation runs.
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_test_person
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
+card:
+  type: map
+  entities:
+    - entity: device_tracker.uix_test_person
+      uix:
+        style: |
+          :host {
+            --uix-image: /local/media/person-grey.png;
+          }
+          div.marker {
+            border-color: red !important;
+            border-width: 5px;
+          }
+  theme_mode: auto
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/entity-marker.png
+  root: hui-map-card
+  padding: 16
+  threshold: 0.02

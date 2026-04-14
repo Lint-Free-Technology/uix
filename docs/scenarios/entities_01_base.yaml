@@ -1,0 +1,50 @@
+id: doc_entities_base
+description: "Doc image: base entities card with no UIX styling (entities.md)"
+view_path: doc-entities-base
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.ceiling_lights
+    brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.kitchen_lights
+    brightness: 255
+
+card:
+  type: entities
+  entities:
+    - entity: light.bed_light
+      uix:
+        style: |
+          :host {
+            color: red;
+            }
+    - entity: light.ceiling_lights
+      uix:
+        style: |
+          :host {
+            color: green;
+          }
+    - entity: light.kitchen_lights
+      uix:
+        style: |
+          :host {
+            color: blue;
+          }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/entities-base.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02
