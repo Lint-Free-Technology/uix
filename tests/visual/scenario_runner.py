@@ -225,16 +225,16 @@ animation:
       segments:
         - interactions:
             - type: ha_service
-              service: input_boolean.turn_off
-              data:
-                entity_id: input_boolean.my_bool
+              domain: input_boolean
+              service: turn_off
+              entity_id: input_boolean.my_bool
               settle_ms: 400
           frames: 10
         - interactions:
             - type: ha_service
-              service: input_boolean.turn_on
-              data:
-                entity_id: input_boolean.my_bool
+              domain: input_boolean
+              service: turn_on
+              entity_id: input_boolean.my_bool
               settle_ms: 400
           frames: 10
 
@@ -1003,16 +1003,16 @@ def capture_doc_animation(
           segments:
             - interactions:
                 - type: ha_service
-                  service: input_boolean.turn_off
-                  data:
-                    entity_id: input_boolean.my_bool
+                  domain: input_boolean
+                  service: turn_off
+                  entity_id: input_boolean.my_bool
                   settle_ms: 400
               frames: 10          # capture 10 frames with entity off
             - interactions:
                 - type: ha_service
-                  service: input_boolean.turn_on
-                  data:
-                    entity_id: input_boolean.my_bool
+                  domain: input_boolean
+                  service: turn_on
+                  entity_id: input_boolean.my_bool
                   settle_ms: 400
               frames: 10          # capture 10 frames with entity on
 
