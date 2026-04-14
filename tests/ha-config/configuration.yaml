@@ -2,6 +2,8 @@ homeassistant:
   country: US
   unit_system: metric
   time_zone: UTC
+  media_dirs:
+    media: /config/media
 
 default_config:
 
