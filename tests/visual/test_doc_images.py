@@ -126,9 +126,18 @@ solely to capture a doc image (no functional assertions), place the file under
     the full browser viewport is captured.
 
 ``padding``
-    Extra pixels added on every side of the element's bounding box before
-    cropping.  Useful to include drop shadows or borders that extend slightly
-    outside the element's layout rect.
+    Extra whitespace added around the element's bounding box before cropping
+    (default ``0``).  Follows the same shorthand notation as CSS ``padding``
+    but values are always pixels (no units):
+
+    * **1 value** — all sides: ``padding: 16``
+    * **2 values** — top/bottom, left/right: ``padding: "16 8"``
+    * **3 values** — top, left/right, bottom: ``padding: "16 8 4"``
+    * **4 values** — top, right, bottom, left: ``padding: "20 8 8 8"``
+
+    Useful to include drop shadows or borders that extend outside the element's
+    layout rect, or to add extra space on one side only (e.g. more top padding
+    for a tooltip arrow).
 
 ``threshold``
     Maximum fraction of pixels (0.0–1.0) that may differ from the on-disk file
@@ -182,7 +191,10 @@ installed (``pip install Pillow``).
     viewport.
 
 ``padding``
-    Extra pixels added around the element bounding box (default 0).
+    Extra whitespace added around the element bounding box (default ``0``).
+    Follows the same CSS-like shorthand as ``doc_image.padding`` — a single
+    number applies to all sides; ``"top right bottom left"`` sets each side
+    individually.
 
 ``frames``
     Number of frames to capture per segment (default 10).  In flat mode this
