@@ -33,8 +33,11 @@ in doc asset generation.
             padding: 8
 
 ``doc_animation``
-    Captures an animated GIF.  Frames are taken at *interval_ms* millisecond
-    intervals; Pillow is required.
+    Captures an animated GIF.  Pillow is required.
+
+    **Flat mode** — an optional ``interactions:`` sub-key runs interactions
+    before the first frame is captured, then all frames are taken at
+    *interval_ms* intervals:
 
     .. code-block:: yaml
 
@@ -45,6 +48,38 @@ in doc asset generation.
           frames: 12
           interval_ms: 100
           threshold: 0.02
+          interactions:         # optional — run before frame capture begins
+            - type: hover
+              root: hui-tile-card
+              selector: ha-tile-icon
+              settle_ms: 800
+
+    **Segmented mode** — a ``segments:`` list interleaves interactions with
+    groups of frames.  Each segment may declare its own ``interactions`` and
+    ``frames`` count:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          interval_ms: 100
+          threshold: 0.02
+          segments:
+            - interactions:
+                - type: ha_service
+                  domain: input_boolean
+                  service: turn_off
+                  entity_id: input_boolean.my_bool
+                  settle_ms: 400
+              frames: 10        # capture 10 frames with entity off
+            - interactions:
+                - type: ha_service
+                  domain: input_boolean
+                  service: turn_on
+                  entity_id: input_boolean.my_bool
+                  settle_ms: 400
+              frames: 10        # capture 10 frames with entity on
 
 Scenarios are loaded from two locations:
 
@@ -124,7 +159,8 @@ installed (``pip install Pillow``).
     Extra pixels added around the element bounding box (default 0).
 
 ``frames``
-    Number of frames to capture (default 10).
+    Number of frames to capture per segment (default 10).  In flat mode this
+    is the total frame count; in segmented mode it is the per-segment count.
 
 ``interval_ms``
     Gap between consecutive frame captures in milliseconds, also used as the
@@ -134,6 +170,20 @@ installed (``pip install Pillow``).
     Maximum fraction of pixels (0.0–1.0) that may differ between any pair of
     corresponding frames across runs.  A non-zero value (e.g. ``0.02``) is
     recommended to absorb minor GIF palette-quantisation differences.
+
+``interactions``
+    Optional list of interactions to run **before** the first frame is
+    captured (flat mode only).  Uses the same interaction types as the
+    top-level ``interactions:`` key (``hover``, ``click``, ``ha_service``,
+    ``wait``).  Pass the HA container via ``ha=`` when any ``ha_service``
+    interactions are present (handled automatically by the test runner).
+
+``segments``
+    Optional list of capture segments.  When present, the top-level
+    ``frames:`` and ``interactions:`` keys are ignored.  Each segment may
+    declare its own ``interactions`` (run before that segment's frames) and
+    ``frames`` count.  This enables interactions to be interleaved with frame
+    capture — for example toggling an entity on and off across the animation.
 
 Update workflow
 ---------------
@@ -216,7 +266,7 @@ def test_doc_image(
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
         run_interactions(ha_page, scenario, ha=ha)
         capture_doc_image(ha_page, scenario, ha=ha)
-        capture_doc_animation(ha_page, scenario)
+        capture_doc_animation(ha_page, scenario, ha=ha)
     finally:
         if theme:
             reset_theme(ha)
