@@ -1053,6 +1053,11 @@ def capture_doc_image(
     entries: list[dict[str, Any]] = raw if isinstance(raw, list) else [raw]
 
     page.wait_for_timeout(HA_SETTLE_MS)
+    # Install the mouse-position tracker before any per-entry interactions run.
+    # Interactions (e.g. hover) move the mouse via Playwright, which fires JS
+    # ``mousemove`` events.  The tracker must be in place to catch those events
+    # so ``_inject_cursor`` can read the correct position afterwards.
+    _ensure_mouse_tracker(page)
 
     for doc_image in entries:
         # Run any per-entry interactions to advance the page to the desired state.
@@ -1372,6 +1377,10 @@ def capture_doc_animation(
                 page.wait_for_timeout(interval_ms)
 
     page.wait_for_timeout(HA_SETTLE_MS)
+    # Install the mouse-position tracker before any segment interactions run.
+    # Hover interactions move the mouse before _inject_cursor is called; the
+    # tracker must already be listening so it captures those movements.
+    _ensure_mouse_tracker(page)
 
     # --- capture frames ---
     # Each frame is an Image.Image object (PIL dynamically imported above).
