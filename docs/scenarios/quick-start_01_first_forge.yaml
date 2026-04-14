@@ -1,0 +1,49 @@
+id: doc_quick_start_first_forge
+description: "Doc image: first UIX Forge (quick-start.md)"
+view_path: doc-quick-start-first-forge
+
+setup:
+  - type: ha_service
+    domain: input_boolean
+    service: turn_off
+    data:
+      entity_id: input_boolean.test_boolean
+
+cards:
+  - type: tile
+    entity: input_boolean.test_boolean
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      hidden: "{{ is_state('input_boolean.test_boolean', 'on') }}"
+      grid_options:
+        columns: "{{ 6 }}"
+        rows: 1
+    element:
+      type: tile
+      icon: "{{ 'mdi:test-tube' }}"
+      entity: "{{ 'sun.sun' }}"
+      uix:
+        style: |
+          ha-card {
+            background: red;
+          }
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/quick-start/basic-first-forge.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 15   # ~1 s with entity on
+    - interactions:
+        - type: ha_service
+          domain: input_boolean
+          service: turn_on
+          data:
+            entity_id: input_boolean.test_boolean
+          settle_ms: 50
+      frames: 15   # ~1 s with entity off

@@ -75,3 +75,5 @@ element:
         background: red;
       }
 ```
+
+![First UIX Forge](./assets/page-assets/quick-start/basic-first-forge.gif)
