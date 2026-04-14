@@ -134,7 +134,19 @@ text_startswith
     start with *expected*.
 
 snapshot
-    A full-page Playwright snapshot is captured under the name *name*.
+    A Playwright snapshot is captured under the name *name*.  By default the
+    full viewport is captured.  Add a ``root`` key (shadow-piercing selector)
+    to crop the screenshot to a specific element, optionally combined with
+    ``padding`` (same CSS shorthand as ``doc_image`` — see below).
+
+    .. code-block:: yaml
+
+        assertions:
+          - type: snapshot
+            name: my_tooltip
+            root: my-tooltip-element
+            padding: "20 8 8 8"   # more space at top for tooltip arrow
+            threshold: 0.001
 
 Shadow-root traversal
 ---------------------
@@ -172,7 +184,7 @@ a new state before that entry's capture, enabling stepped documentation:
     doc_image:
       output: docs/source/assets/page-assets/using/my-feature.png
       root: hui-entities-card   # shadow-piercing selector for the element to crop to
-      padding: 16               # optional pixels of whitespace border (default 0)
+      padding: 16               # optional whitespace border — see below (default 0)
       threshold: 0.02           # optional pixel-diff tolerance (default 0)
       scale: device             # optional — "css" (default) or "device" for HiDPI
 
@@ -198,6 +210,14 @@ a new state before that entry's capture, enabling stepped documentation:
         root: hui-tile-card
         padding: 8
 
+``padding`` follows the same shorthand notation as CSS ``padding`` but values
+are always pixels (no units):
+
+* **1 value** — all sides: ``padding: 16``
+* **2 values** — top/bottom, left/right: ``padding: "16 8"``
+* **3 values** — top, left/right, bottom: ``padding: "16 8 4"``
+* **4 values** — top, right, bottom, left: ``padding: "20 8 8 8"``
+
 Documentation animations
 ------------------------
 Any scenario YAML may declare a ``doc_animation`` key to capture an animated
@@ -212,7 +232,7 @@ intervals from the live page.  Pillow is required.
     doc_animation:
       output: docs/source/assets/page-assets/using/my-feature.gif
       root: hui-tile-card   # shadow-piercing selector for the element to crop to
-      padding: 8            # optional pixels of whitespace border (default 0)
+      padding: 8            # optional whitespace border — same shorthand as doc_image (default 0)
       frames: 12            # number of frames to capture (default 10)
       interval_ms: 100      # milliseconds between frames (default 100)
       threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
@@ -327,6 +347,55 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 # docs/scenarios/ — YAML files here are documentation-image-only scenarios.
 # They participate in ``test_doc_images.py`` but not in ``test_scenarios.py``.
 DOCS_SCENARIOS_DIR = REPO_ROOT / "docs" / "scenarios"
+
+# ---------------------------------------------------------------------------
+# Padding helpers
+# ---------------------------------------------------------------------------
+
+
+def _parse_padding(value: int | float | str | list[Any]) -> tuple[float, float, float, float]:
+    """Parse a CSS-like padding value into ``(top, right, bottom, left)`` pixel amounts.
+
+    Accepts the same shorthand notation as CSS ``padding`` but values are
+    always pixels (no units):
+
+    * **1 value** — applied to all four sides:
+      ``padding: 16``  →  ``(16, 16, 16, 16)``
+    * **2 values** — ``top/bottom  left/right``:
+      ``padding: "16 8"``  →  ``(16, 8, 16, 8)``
+    * **3 values** — ``top  left/right  bottom``:
+      ``padding: "16 8 4"``  →  ``(16, 8, 4, 8)``
+    * **4 values** — ``top  right  bottom  left``:
+      ``padding: "20 8 8 8"``  →  ``(20, 8, 8, 8)``
+
+    *value* may be:
+
+    * An ``int`` or ``float`` (single uniform padding).
+    * A whitespace-separated **string** of 1–4 numbers.
+    * A **list** of 1–4 numbers.
+    """
+    if isinstance(value, (int, float)):
+        v = float(value)
+        return v, v, v, v
+
+    if isinstance(value, str):
+        parts: list[float] = [float(x) for x in value.split()]
+    else:
+        parts = [float(x) for x in value]
+
+    if len(parts) == 1:
+        v = parts[0]
+        return v, v, v, v
+    if len(parts) == 2:
+        return parts[0], parts[1], parts[0], parts[1]
+    if len(parts) == 3:
+        return parts[0], parts[1], parts[2], parts[1]
+    if len(parts) == 4:
+        return parts[0], parts[1], parts[2], parts[3]
+    raise ValueError(
+        f"padding must have 1–4 values, got {len(parts)}: {value!r}"
+    )
+
 
 # Shadow-piercing querySelector injected into every ``page.evaluate`` call.
 _QUERY_DEEP_JS = """
@@ -691,8 +760,18 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
         atype = assertion["type"]
         if atype == "snapshot":
             threshold = assertion.get("threshold", 0.0)
-            if threshold > 0.0:
-                _assert_snapshot_with_threshold(page, assertion["name"], threshold)
+            clip: dict[str, float] | None = None
+            if "root" in assertion:
+                rect = _get_doc_image_rect(page, assertion["root"])
+                pt, pr, pb, pl = _parse_padding(assertion.get("padding", 0))
+                clip = {
+                    "x": max(0, rect["x"] - pl),
+                    "y": max(0, rect["y"] - pt),
+                    "width": rect["w"] + pl + pr,
+                    "height": rect["h"] + pt + pb,
+                }
+            if threshold > 0.0 or clip is not None:
+                _assert_snapshot_with_threshold(page, assertion["name"], threshold, clip=clip)
             else:
                 assert_snapshot(page, assertion["name"])
         elif atype in {
@@ -708,7 +787,13 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
             raise ValueError(f"Unknown assertion type: {atype!r}")
 
 
-def _assert_snapshot_with_threshold(page: Page, name: str, threshold: float) -> None:
+def _assert_snapshot_with_threshold(
+    page: Page,
+    name: str,
+    threshold: float,
+    *,
+    clip: dict[str, float] | None = None,
+) -> None:
     """Take a screenshot and compare to baseline, tolerating minor pixel differences.
 
     Uses Pillow's pixel-level diff when available.  Falls back to an exact
@@ -726,13 +811,19 @@ def _assert_snapshot_with_threshold(page: Page, name: str, threshold: float) -> 
         up to 0.1 % of pixels to differ.  Use this to tolerate minor
         cross-platform font-rendering differences without masking real
         visual regressions.
+    clip:
+        Optional ``{x, y, width, height}`` dict to crop the screenshot to a
+        specific region.  When ``None`` the full viewport is captured.
     """
     SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     baseline = SNAPSHOTS_DIR / f"{name}.png"
     actual = SNAPSHOTS_DIR / f"{name}.actual.png"
 
     page.wait_for_timeout(HA_SETTLE_MS)
-    page.screenshot(path=str(actual), full_page=False)
+    if clip is not None:
+        page.screenshot(path=str(actual), clip=clip, full_page=False)
+    else:
+        page.screenshot(path=str(actual), full_page=False)
 
     if os.environ.get("SNAPSHOT_UPDATE") == "1" or not baseline.exists():
         state = "updated" if baseline.exists() else "created"
@@ -928,7 +1019,7 @@ def capture_doc_image(
         doc_image:
           output: docs/source/assets/page-assets/using/my-feature.png
           root: hui-entities-card   # shadow-piercing selector to crop to
-          padding: 16               # optional pixel border around element
+          padding: 16               # optional border — same shorthand as CSS (default 0)
           threshold: 0.02           # optional pixel-diff tolerance (default 0)
 
         # Stepped capture — each entry runs additional interactions then captures
@@ -952,6 +1043,12 @@ def capture_doc_image(
             output: docs/source/assets/page-assets/using/my-feature-active.png
             root: hui-tile-card
             padding: 8
+
+    ``padding`` follows the same shorthand notation as CSS ``padding`` but
+    values are always pixels (no units): a single number applies to all sides;
+    two numbers are ``top/bottom left/right``; four numbers are
+    ``top right bottom left``.  For example ``"20 8 8 8"`` adds 20 px of
+    space at the top and 8 px on the other three sides.
 
     Interactions in each entry use the same types as the top-level
     ``interactions:`` key (``hover``, ``hover_away``, ``click``,
@@ -1023,7 +1120,7 @@ def capture_doc_image(
             run_interactions(page, doc_image, ha=ha)
 
         output_path = REPO_ROOT / doc_image["output"]
-        padding: int = doc_image.get("padding", 0)
+        pt, pr, pb, pl = _parse_padding(doc_image.get("padding", 0))
         threshold: float = doc_image.get("threshold", 0.0)
         scale: str = doc_image.get("scale", "css")
         # Normalise: cursor: none (YAML null) and the string "none" both mean no cursor.
@@ -1037,10 +1134,10 @@ def capture_doc_image(
             if "root" in doc_image:
                 rect = _get_doc_image_rect(page, doc_image["root"])
                 clip = {
-                    "x": max(0, rect["x"] - padding),
-                    "y": max(0, rect["y"] - padding),
-                    "width": rect["w"] + padding * 2,
-                    "height": rect["h"] + padding * 2,
+                    "x": max(0, rect["x"] - pl),
+                    "y": max(0, rect["y"] - pt),
+                    "width": rect["w"] + pl + pr,
+                    "height": rect["h"] + pt + pb,
                 }
                 actual_png = page.screenshot(clip=clip, full_page=False, scale=scale)
             else:
@@ -1118,7 +1215,7 @@ def capture_doc_animation(
         doc_animation:
           output: docs/source/assets/page-assets/using/my-feature.gif
           root: hui-tile-card   # shadow-piercing selector to crop to
-          padding: 8            # optional pixel border around element (default 0)
+          padding: 8            # optional border — same shorthand as doc_image (default 0)
           frames: 12            # number of frames to capture (default 10)
           interval_ms: 100      # milliseconds between frames (default 100)
           threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
@@ -1266,7 +1363,7 @@ def capture_doc_animation(
         ) from exc
 
     output_path = REPO_ROOT / doc_animation["output"]
-    padding: int = doc_animation.get("padding", 0)
+    pt, pr, pb, pl = _parse_padding(doc_animation.get("padding", 0))
     interval_ms: int = doc_animation.get("interval_ms", 100)
     threshold: float = doc_animation.get("threshold", 0.0)
     scale: str = doc_animation.get("scale", "css")
@@ -1282,10 +1379,10 @@ def capture_doc_animation(
             return None
         rect = _get_doc_image_rect(page, doc_animation["root"])
         return {
-            "x": max(0, rect["x"] - padding),
-            "y": max(0, rect["y"] - padding),
-            "width": rect["w"] + padding * 2,
-            "height": rect["h"] + padding * 2,
+            "x": max(0, rect["x"] - pl),
+            "y": max(0, rect["y"] - pt),
+            "width": rect["w"] + pl + pr,
+            "height": rect["h"] + pt + pb,
         }
 
     def take_frame(clip: dict[str, float] | None) -> Any:
