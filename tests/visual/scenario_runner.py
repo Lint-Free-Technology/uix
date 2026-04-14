@@ -1181,16 +1181,19 @@ def capture_doc_animation(
                 page.wait_for_timeout(interval_ms)
 
     # --- assemble GIF ---
-    # Build a global palette from all frames combined so that every frame uses
-    # a consistent colour mapping — this avoids palette flicker between frames.
+    # Build a global palette by stacking all frames vertically into one image
+    # so the quantiser sees the actual pixel distribution across the entire
+    # animation rather than a blended average.  Every frame then uses the
+    # same palette, which avoids colour-flicker between frames.
     # Floyd-Steinberg dithering (dither=1) is applied when ``dither`` is True;
     # it diffuses quantisation error across neighbouring pixels and eliminates
     # the banding that would otherwise appear in gradients (including greyscale).
     gif_buf = io.BytesIO()
-    combined = Image.new("RGBA", frame_images[0].size)
-    for f in frame_images:
-        combined = Image.alpha_composite(combined, f)
-    palette_image = combined.convert("RGB").quantize(colors=256, dither=0)
+    fw, fh = frame_images[0].size
+    palette_source = Image.new("RGB", (fw, fh * len(frame_images)))
+    for idx, f in enumerate(frame_images):
+        palette_source.paste(f.convert("RGB"), (0, idx * fh))
+    palette_image = palette_source.quantize(colors=256, dither=0)
     dither_flag = 1 if dither else 0
     quantized_frames = [
         f.convert("RGB").quantize(colors=256, palette=palette_image, dither=dither_flag)
