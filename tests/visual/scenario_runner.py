@@ -263,7 +263,11 @@ animation:
     ``interactions:`` at the top level are ignored.  Each segment may declare
     its own ``interactions`` (run before that segment's frames) and ``frames``
     count.  An *interval_ms* gap separates the last frame of one segment from
-    the start of the next segment's interactions.
+    the start of the next segment's interactions.  The screenshot crop area is
+    fixed to the dimensions of the *root* element after the **first** segment's
+    interactions settle, so all frames share the same size even when the
+    captured element changes dimensions between segments (e.g. a conditional
+    card row appearing or disappearing).
 """
 
 from __future__ import annotations
@@ -1018,7 +1022,10 @@ def capture_doc_animation(
 
     When ``segments:`` is present, the top-level ``frames:`` and
     ``interactions:`` keys are ignored; each segment specifies its own
-    ``frames`` count (default 10) and optional ``interactions``.
+    ``frames`` count (default 10) and optional ``interactions``.  The
+    screenshot crop area is locked to the *root* element's dimensions after
+    the first segment's interactions settle, so all frames share the same size
+    even when the captured element changes dimensions between segments.
 
     The ``output`` path is relative to the repository root.
 
@@ -1064,31 +1071,47 @@ def capture_doc_animation(
     interval_ms: int = doc_animation.get("interval_ms", 100)
     threshold: float = doc_animation.get("threshold", 0.0)
 
-    def take_frame() -> Any:
-        """Capture one animation frame, optionally cropped to *root*."""
-        if "root" in doc_animation:
-            rect = _get_doc_image_rect(page, doc_animation["root"])
-            clip = {
-                "x": max(0, rect["x"] - padding),
-                "y": max(0, rect["y"] - padding),
-                "width": rect["w"] + padding * 2,
-                "height": rect["h"] + padding * 2,
-            }
-            png_bytes = page.screenshot(clip=clip, full_page=False)
-        else:
-            png_bytes = page.screenshot(full_page=False)
+    def _compute_clip() -> dict[str, float] | None:
+        """Return the screenshot clip rect for the configured *root*, or None."""
+        if "root" not in doc_animation:
+            return None
+        rect = _get_doc_image_rect(page, doc_animation["root"])
+        return {
+            "x": max(0, rect["x"] - padding),
+            "y": max(0, rect["y"] - padding),
+            "width": rect["w"] + padding * 2,
+            "height": rect["h"] + padding * 2,
+        }
+
+    def take_frame(clip: dict[str, float] | None) -> Any:
+        """Capture one animation frame using a pre-computed *clip* rect."""
+        png_bytes = (
+            page.screenshot(clip=clip, full_page=False)
+            if clip is not None
+            else page.screenshot(full_page=False)
+        )
         # RGBA gives Pillow's GIF encoder a full alpha channel for palette
         # selection; alpha is always opaque for browser screenshots, so this
         # does not affect visual output.
         return Image.open(io.BytesIO(png_bytes)).convert("RGBA")
 
+    # fixed_clip is measured once after the first segment's interactions settle
+    # so that all frames share the same crop dimensions even when the captured
+    # element changes size between segments (e.g. a conditional card row).
+    fixed_clip: dict[str, float] | None = None
+
     def capture_segment(seg: dict[str, Any]) -> None:
         """Run a segment's optional interactions then capture its frames."""
+        nonlocal fixed_clip
         if "interactions" in seg:
             run_interactions(page, seg, ha=ha)
+        # Lock the clip to the first segment's dimensions so every frame in the
+        # GIF is the same size, regardless of how later segments affect the DOM.
+        if fixed_clip is None:
+            fixed_clip = _compute_clip()
         n: int = seg.get("frames", 10)
         for i in range(n):
-            frame_images.append(take_frame())
+            frame_images.append(take_frame(fixed_clip))
             if i < n - 1:
                 page.wait_for_timeout(interval_ms)
 
@@ -1101,7 +1124,7 @@ def capture_doc_animation(
     segments = doc_animation.get("segments")
     if segments is not None:
         # Segmented mode: interactions are interspersed between groups of frames.
-        # Each segment may declare its own ``interactions`` and ``frames`` count.
+        # The clip is locked to the first segment's dimensions (see capture_segment).
         for idx, segment in enumerate(segments):
             capture_segment(segment)
             if idx < len(segments) - 1:
@@ -1111,8 +1134,9 @@ def capture_doc_animation(
         frame_count: int = doc_animation.get("frames", 10)
         if "interactions" in doc_animation:
             run_interactions(page, doc_animation, ha=ha)
+        clip = _compute_clip()
         for i in range(frame_count):
-            frame_images.append(take_frame())
+            frame_images.append(take_frame(clip))
             if i < frame_count - 1:
                 page.wait_for_timeout(interval_ms)
 
