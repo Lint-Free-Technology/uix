@@ -15,6 +15,11 @@ specify what Lovelace config is pushed:
     view (containing a ``grid`` section) so the card is rendered in the same
     layout as a real Lovelace dashboard.  ``view_path:`` is required.
 
+``cards:``
+    A list of card definitions.  All cards are placed in the same single
+    ``grid`` section of a ``sections`` view, identical to the wrapping used
+    for ``card:``.  ``view_path:`` is required.
+
 ``dashboard:``
     A complete Lovelace dashboard config dict (must include a ``views:``
     list).  The config is pushed verbatim without any wrapping.  ``view_path:``
@@ -361,6 +366,11 @@ def push_scenario(ha: HATestContainer, url_path: str, scenario: dict[str, Any]) 
         ``path`` of the generated view and is used by :func:`goto_scenario` to
         navigate to that view after the push.
 
+    ``cards:``
+        A list of card definitions.  All cards are placed in the same single
+        ``grid`` section of a ``sections`` view — identical wrapping to
+        ``card:``.  ``view_path:`` must also be declared.
+
     ``dashboard:``
         A full Lovelace dashboard config dict (must include a ``views:`` list).
         The value is pushed verbatim — no automatic wrapping is applied.
@@ -371,6 +381,7 @@ def push_scenario(ha: HATestContainer, url_path: str, scenario: dict[str, Any]) 
     if "dashboard" in scenario:
         config = scenario["dashboard"]
     else:
+        cards = scenario["cards"] if "cards" in scenario else [scenario["card"]]
         config = {
             "title": f"UIX Scenario: {scenario['id']}",
             "views": [
@@ -381,7 +392,7 @@ def push_scenario(ha: HATestContainer, url_path: str, scenario: dict[str, Any]) 
                     "sections": [
                         {
                             "type": "grid",
-                            "cards": [scenario["card"]],
+                            "cards": cards,
                         }
                     ],
                 }
