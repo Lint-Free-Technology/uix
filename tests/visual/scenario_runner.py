@@ -201,6 +201,11 @@ intervals from the live page.  Pillow is required.
       frames: 12            # number of frames to capture (default 10)
       interval_ms: 100      # milliseconds between frames (default 100)
       threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
+      interactions:         # optional — run before frame capture begins
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 800
 
 ``frames``
     Number of screenshots to take.  The first frame is captured after the
@@ -214,6 +219,13 @@ intervals from the live page.  Pillow is required.
     Maximum fraction of pixels (0.0–1.0) that may differ between any
     corresponding pair of frames across runs.  Recommended non-zero value
     (e.g. ``0.02``) to absorb minor GIF palette-quantisation differences.
+
+``interactions``
+    Optional list of interactions to run **before** the first frame is
+    captured.  This is useful for triggering a hover effect, CSS animation,
+    or entity state change that should be visible throughout the recorded
+    frames.  Uses the same interaction types as the top-level
+    ``interactions:`` key (``hover``, ``click``, ``ha_service``, ``wait``).
 """
 
 from __future__ import annotations
@@ -910,7 +922,11 @@ def capture_doc_image(
         )
 
 
-def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
+def capture_doc_animation(
+    page: Page,
+    scenario: dict[str, Any],
+    ha: HATestContainer | None = None,
+) -> None:
     """Capture an animated GIF for documentation if *doc_animation* is declared.
 
     The ``doc_animation`` key in a scenario YAML specifies how to record and
@@ -925,6 +941,11 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
           frames: 12            # number of frames to capture (default 10)
           interval_ms: 100      # milliseconds between frames (default 100)
           threshold: 0.02       # optional pixel-diff tolerance per frame (default 0)
+          interactions:         # optional — run before frame capture begins
+            - type: hover
+              root: hui-tile-card
+              selector: ha-tile-icon
+              settle_ms: 800
 
     The ``output`` path is relative to the repository root.
 
@@ -932,10 +953,14 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
 
     **Pillow is required** — install it with ``pip install Pillow``.
 
+    Pass the HA container as *ha* when any ``ha_service`` interactions are
+    present in the ``interactions`` list.
+
     Behaviour
     ---------
-    * Frames are captured at *interval_ms* millisecond intervals starting after
-      the standard HA settle delay.
+    * Any declared ``interactions`` are executed after the standard HA settle
+      delay and before the first frame is captured.
+    * Frames are captured at *interval_ms* millisecond intervals.
     * The frames are assembled into an animated GIF with *interval_ms* as the
       per-frame display duration and an infinite loop.
     * If the output file does not yet exist it is created (first-run bootstrap).
@@ -965,6 +990,9 @@ def capture_doc_animation(page: Page, scenario: dict[str, Any]) -> None:
     threshold: float = doc_animation.get("threshold", 0.0)
 
     page.wait_for_timeout(HA_SETTLE_MS)
+
+    if "interactions" in doc_animation:
+        run_interactions(page, doc_animation, ha=ha)
 
     # --- capture frames ---
     # Each frame is an Image.Image object (PIL dynamically imported above).

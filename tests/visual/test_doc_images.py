@@ -34,7 +34,9 @@ in doc asset generation.
 
 ``doc_animation``
     Captures an animated GIF.  Frames are taken at *interval_ms* millisecond
-    intervals; Pillow is required.
+    intervals; Pillow is required.  An optional ``interactions:`` sub-key runs
+    interactions before the first frame is captured, enabling animations that
+    show the UI responding to a hover, click, or state change.
 
     .. code-block:: yaml
 
@@ -45,6 +47,11 @@ in doc asset generation.
           frames: 12
           interval_ms: 100
           threshold: 0.02
+          interactions:         # optional — run before frame capture begins
+            - type: hover
+              root: hui-tile-card
+              selector: ha-tile-icon
+              settle_ms: 800
 
 Scenarios are loaded from two locations:
 
@@ -135,6 +142,13 @@ installed (``pip install Pillow``).
     corresponding frames across runs.  A non-zero value (e.g. ``0.02``) is
     recommended to absorb minor GIF palette-quantisation differences.
 
+``interactions``
+    Optional list of interactions to run **before** the first frame is
+    captured.  Uses the same interaction types as the top-level
+    ``interactions:`` key (``hover``, ``click``, ``ha_service``, ``wait``).
+    Pass the HA container via ``ha=`` when any ``ha_service`` interactions are
+    present (handled automatically by the test runner).
+
 Update workflow
 ---------------
 When a Home Assistant update (or a UIX change) causes a doc asset to look
@@ -216,7 +230,7 @@ def test_doc_image(
         goto_scenario(ha_page, ha_url, ha_lovelace_url_path, scenario["view_path"])
         run_interactions(ha_page, scenario, ha=ha)
         capture_doc_image(ha_page, scenario, ha=ha)
-        capture_doc_animation(ha_page, scenario)
+        capture_doc_animation(ha_page, scenario, ha=ha)
     finally:
         if theme:
             reset_theme(ha)
