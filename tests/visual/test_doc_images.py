@@ -143,6 +143,26 @@ solely to capture a doc image (no functional assertions), place the file under
     higher-resolution output.  Requires the browser context to be configured
     with a ``device_scale_factor`` greater than 1 to have an effect.
 
+``cursor`` *(optional)*
+    Render a visible cursor overlay at the current mouse position before taking
+    the screenshot.  The overlay is removed immediately after capture.
+    Accepted values: ``"default"`` / ``"arrow"`` (standard arrow cursor) or
+    ``"pointer"`` / ``"hand"`` (pointing-hand cursor).  Use together with a
+    ``hover`` interaction to show where the pointer is:
+
+    .. code-block:: yaml
+
+        doc_image:
+          - interactions:
+              - type: hover
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 800
+            output: docs/source/assets/page-assets/using/my-feature-hover.png
+            root: hui-tile-card
+            padding: 8
+            cursor: pointer
+
 ``interactions`` *(list entries only)*
     Additional interactions to run before this specific capture.  Uses the same
     interaction types as the top-level ``interactions:`` key (``hover``,
@@ -190,6 +210,15 @@ installed (``pip install Pillow``).
     by diffusing quantisation error across neighbouring pixels.  Set to
     ``false`` only for flat-colour content where dithering would introduce
     unwanted noise.
+
+``cursor`` *(optional)*
+    Render a visible cursor overlay at the current mouse position in every
+    captured frame.  In segmented mode the cursor is re-injected after each
+    segment's interactions so it tracks the latest mouse position.
+    Accepted values: ``"default"`` / ``"arrow"`` or ``"pointer"`` / ``"hand"``.
+    Individual segments may override this with their own ``cursor`` key;
+    set it to ``none`` (YAML null or the string ``"none"``) to hide the cursor
+    in that segment.
 
 ``interactions``
     Optional list of interactions to run **before** the first frame is

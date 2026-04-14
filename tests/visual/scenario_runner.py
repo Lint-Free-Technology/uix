@@ -312,6 +312,7 @@ from ha_testcontainer import HATestContainer
 from ha_testcontainer.visual import HA_SETTLE_MS, PAGE_LOAD_TIMEOUT, assert_snapshot
 from playwright.sync_api import Page
 
+from cursors import CURSOR_SVGS as _CURSOR_SVGS
 from lovelace_helpers import push_lovelace_config_to
 
 # Root directory that contains all scenario sub-directories.
@@ -343,6 +344,53 @@ _QUERY_DEEP_JS = """
         return null;
     }
 """
+
+# ---------------------------------------------------------------------------
+# Cursor overlay support for doc images and animations
+# ---------------------------------------------------------------------------
+
+# DOM id used for the injected cursor overlay element.
+_CURSOR_OVERLAY_ID = "__uix_cursor_overlay"
+
+# JavaScript that installs a ``mousemove`` listener storing the current pointer
+# position in ``window.__uix_cursor_pos``.  Idempotent — safe to evaluate
+# multiple times on the same page.
+_MOUSE_TRACKER_JS = """\
+() => {
+    if (!window.__uix_cursor_pos) {
+        window.__uix_cursor_pos = {x: 0, y: 0};
+        document.addEventListener('mousemove', function(e) {
+            window.__uix_cursor_pos = {x: e.clientX, y: e.clientY};
+        }, {capture: true, passive: true});
+    }
+}"""
+
+# JavaScript that injects the cursor SVG overlay.  Receives a 4-element array:
+# [svgHtml, hotspotX, hotspotY, overlayId].
+_CURSOR_INJECTION_JS = """\
+([svgHtml, hotspotX, hotspotY, overlayId]) => {
+    var existing = document.getElementById(overlayId);
+    if (existing) existing.remove();
+    var pos = window.__uix_cursor_pos || {x: 0, y: 0};
+    var el = document.createElement('div');
+    el.id = overlayId;
+    el.style.cssText = (
+        'position:fixed;'
+        + 'left:' + (pos.x - hotspotX) + 'px;'
+        + 'top:' + (pos.y - hotspotY) + 'px;'
+        + 'pointer-events:none;'
+        + 'z-index:2147483647;'
+    );
+    el.innerHTML = svgHtml;
+    document.documentElement.appendChild(el);
+}"""
+
+# JavaScript that removes the cursor overlay element by id.
+_CURSOR_REMOVAL_JS = """\
+(overlayId) => {
+    var el = document.getElementById(overlayId);
+    if (el) el.remove();
+}"""
 
 
 # ---------------------------------------------------------------------------
@@ -921,6 +969,30 @@ def capture_doc_image(
     combination with a browser context configured with a ``device_scale_factor``
     greater than 1 to produce higher-resolution documentation images.
 
+    The optional ``cursor`` key renders a visible cursor overlay at the current
+    mouse position before taking the screenshot.  The cursor is removed
+    immediately after capture so it does not bleed into the DOM state for
+    subsequent entries.  Accepted values:
+
+    * ``"default"`` / ``"arrow"`` — standard arrow cursor.
+    * ``"pointer"`` / ``"hand"`` — pointing-hand cursor (use this when
+      hovering over a clickable element).
+
+    Example — hover + visible pointer cursor:
+
+    .. code-block:: yaml
+
+        doc_image:
+          - interactions:
+              - type: hover
+                root: hui-tile-card
+                selector: ha-tile-icon
+                settle_ms: 800
+            output: docs/source/assets/page-assets/using/my-feature-hover.png
+            root: hui-tile-card
+            padding: 8
+            cursor: pointer
+
     Behaviour
     ---------
     * If the output file does not yet exist it is created (first-run bootstrap).
@@ -939,6 +1011,11 @@ def capture_doc_image(
     entries: list[dict[str, Any]] = raw if isinstance(raw, list) else [raw]
 
     page.wait_for_timeout(HA_SETTLE_MS)
+    # Install the mouse-position tracker before any per-entry interactions run.
+    # Interactions (e.g. hover) move the mouse via Playwright, which fires JS
+    # ``mousemove`` events.  The tracker must be in place to catch those events
+    # so ``_inject_cursor`` can read the correct position afterwards.
+    _ensure_mouse_tracker(page)
 
     for doc_image in entries:
         # Run any per-entry interactions to advance the page to the desired state.
@@ -949,19 +1026,28 @@ def capture_doc_image(
         padding: int = doc_image.get("padding", 0)
         threshold: float = doc_image.get("threshold", 0.0)
         scale: str = doc_image.get("scale", "css")
+        # Normalise: cursor: none (YAML null) and the string "none" both mean no cursor.
+        _raw_cursor = doc_image.get("cursor")
+        cursor_type: str | None = None if (_raw_cursor is None or _raw_cursor == "none") else _raw_cursor
 
         # --- capture ---
-        if "root" in doc_image:
-            rect = _get_doc_image_rect(page, doc_image["root"])
-            clip = {
-                "x": max(0, rect["x"] - padding),
-                "y": max(0, rect["y"] - padding),
-                "width": rect["w"] + padding * 2,
-                "height": rect["h"] + padding * 2,
-            }
-            actual_png = page.screenshot(clip=clip, full_page=False, scale=scale)
-        else:
-            actual_png = page.screenshot(full_page=False, scale=scale)
+        if cursor_type:
+            _inject_cursor(page, cursor_type)
+        try:
+            if "root" in doc_image:
+                rect = _get_doc_image_rect(page, doc_image["root"])
+                clip = {
+                    "x": max(0, rect["x"] - padding),
+                    "y": max(0, rect["y"] - padding),
+                    "width": rect["w"] + padding * 2,
+                    "height": rect["h"] + padding * 2,
+                }
+                actual_png = page.screenshot(clip=clip, full_page=False, scale=scale)
+            else:
+                actual_png = page.screenshot(full_page=False, scale=scale)
+        finally:
+            if cursor_type:
+                _remove_cursor(page)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1099,6 +1185,56 @@ def capture_doc_animation(
     quantisation error across neighbouring pixels.  Set to ``false`` only for
     flat-colour content where dithering would introduce unwanted noise.
 
+    The optional ``cursor`` key renders a visible cursor overlay at the current
+    mouse position in every captured frame.  In segmented mode the cursor is
+    re-injected after each segment's interactions so it always reflects the
+    latest mouse position (e.g. after a ``hover`` interaction).  Accepted values:
+
+    * ``"default"`` / ``"arrow"`` — standard arrow cursor.
+    * ``"pointer"`` / ``"hand"`` — pointing-hand cursor (use this when
+      hovering over a clickable element).
+
+    Individual segments may override the top-level ``cursor`` with their own
+    ``cursor`` key.  Setting it to ``none`` (YAML null) or the string
+    ``"none"`` explicitly hides the cursor for that segment — useful when a
+    later segment moves the pointer away with ``hover_away``:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          interval_ms: 80
+          cursor: pointer        # default: show pointer cursor
+          segments:
+            - interactions:
+                - type: hover
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 800
+              frames: 10         # pointer cursor shown (inherited)
+            - interactions:
+                - type: hover_away
+                  settle_ms: 400
+              frames: 6
+              cursor: none       # hide cursor after pointer leaves element
+
+    Example — flat-mode animation showing a hover with a visible pointer:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          frames: 10
+          interval_ms: 80
+          cursor: pointer
+          interactions:
+            - type: hover
+              root: hui-tile-card
+              selector: ha-tile-icon
+              settle_ms: 800
+
     Behaviour
     ---------
     * The standard HA settle delay is applied once at the start.
@@ -1135,6 +1271,10 @@ def capture_doc_animation(
     threshold: float = doc_animation.get("threshold", 0.0)
     scale: str = doc_animation.get("scale", "css")
     dither: bool = doc_animation.get("dither", True)
+    # Normalise: cursor: none (YAML null → Python None) and the string "none" both
+    # mean "no cursor".  Any other truthy string is a cursor type name.
+    _raw_cursor = doc_animation.get("cursor")
+    cursor_type: str | None = None if (_raw_cursor is None or _raw_cursor == "none") else _raw_cursor
 
     def _compute_clip() -> dict[str, float] | None:
         """Return the screenshot clip rect for the configured *root*, or None."""
@@ -1174,6 +1314,20 @@ def capture_doc_animation(
         # GIF is the same size, regardless of how later segments affect the DOM.
         if fixed_clip is None:
             fixed_clip = _compute_clip()
+        # Determine the effective cursor for this segment.  A "cursor" key on
+        # the segment overrides the top-level cursor_type.  Setting it to
+        # null (``cursor: none`` in YAML) or the string ``"none"`` explicitly
+        # hides the cursor for that segment even if a top-level cursor is set.
+        if "cursor" in seg:
+            seg_cursor = seg["cursor"]
+            if seg_cursor is None or seg_cursor == "none":
+                _remove_cursor(page)
+            else:
+                _inject_cursor(page, seg_cursor)
+        elif cursor_type:
+            # Re-inject after segment's interactions so the overlay tracks the
+            # new mouse position (e.g. after a hover in this segment).
+            _inject_cursor(page, cursor_type)
         n: int = seg.get("frames", 10)
         for i in range(n):
             frame_images.append(take_frame(fixed_clip))
@@ -1181,6 +1335,10 @@ def capture_doc_animation(
                 page.wait_for_timeout(interval_ms)
 
     page.wait_for_timeout(HA_SETTLE_MS)
+    # Install the mouse-position tracker before any segment interactions run.
+    # Hover interactions move the mouse before _inject_cursor is called; the
+    # tracker must already be listening so it captures those movements.
+    _ensure_mouse_tracker(page)
 
     # --- capture frames ---
     # Each frame is an Image.Image object (PIL dynamically imported above).
@@ -1200,10 +1358,17 @@ def capture_doc_animation(
         if "interactions" in doc_animation:
             run_interactions(page, doc_animation, ha=ha)
         clip = _compute_clip()
+        if cursor_type:
+            _inject_cursor(page, cursor_type)
         for i in range(frame_count):
             frame_images.append(take_frame(clip))
             if i < frame_count - 1:
                 page.wait_for_timeout(interval_ms)
+
+    # Always attempt cleanup: a segment may have injected a cursor even when
+    # the top-level cursor_type is unset.  _remove_cursor is a no-op when no
+    # overlay element exists.
+    _remove_cursor(page)
 
     # --- assemble GIF ---
     # Build a global palette by stacking all frames vertically into one image
@@ -1302,3 +1467,54 @@ def _get_doc_image_rect(page: Page, selector: str) -> dict[str, float]:
     if isinstance(rect, dict) and "error" in rect:
         raise AssertionError(f"Doc image element not found: {rect['error']}")
     return rect  # type: ignore[return-value]
+
+
+def _ensure_mouse_tracker(page: Page) -> None:
+    """Install a ``mousemove`` listener that stores the current pointer position.
+
+    Stores the position in ``window.__uix_cursor_pos`` as ``{x, y}`` in CSS
+    pixels.  Idempotent — safe to call multiple times on the same page.
+    """
+    page.evaluate(_MOUSE_TRACKER_JS)
+
+
+def _inject_cursor(page: Page, cursor_type: str) -> None:
+    """Inject a cursor SVG overlay at the current mouse position.
+
+    The overlay is a ``position:fixed`` element appended to
+    ``<html>`` with ``pointer-events:none`` and the highest possible
+    ``z-index`` so it floats above all page content without interfering with
+    events.  The element is positioned so that the cursor hotspot aligns
+    with the pointer's location.
+
+    Call :func:`_remove_cursor` after the screenshot to clean up.
+
+    Parameters
+    ----------
+    page:
+        Playwright page to inject the cursor into.
+    cursor_type:
+        Cursor shape to render.  Accepted values:
+
+        * ``"default"`` / ``"arrow"`` — standard arrow cursor.
+        * ``"pointer"`` / ``"hand"`` — pointing-hand cursor used over
+          clickable elements.
+
+        Pass ``None`` or ``"none"`` to callers that want no cursor — those
+        values are handled upstream and never reach this function.
+    """
+    entry = _CURSOR_SVGS.get(cursor_type)
+    if entry is None:
+        raise ValueError(
+            f"Invalid cursor type {cursor_type!r}. "
+            f"Valid values: {', '.join(sorted(_CURSOR_SVGS))} "
+            "(or 'none' to hide the cursor)."
+        )
+    svg_html, hotspot_x, hotspot_y = entry
+    _ensure_mouse_tracker(page)
+    page.evaluate(_CURSOR_INJECTION_JS, [svg_html, hotspot_x, hotspot_y, _CURSOR_OVERLAY_ID])
+
+
+def _remove_cursor(page: Page) -> None:
+    """Remove the cursor overlay element injected by :func:`_inject_cursor`."""
+    page.evaluate(_CURSOR_REMOVAL_JS, _CURSOR_OVERLAY_ID)
