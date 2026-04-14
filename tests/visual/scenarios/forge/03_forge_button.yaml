@@ -2,6 +2,13 @@ id: forge_button
 description: "Button spark inserts an ha-button labelled 'Toggle' after the tile icon"
 view_path: forge-button
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
 card:
   type: "custom:uix-forge"
   forge:

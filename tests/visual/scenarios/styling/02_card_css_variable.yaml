@@ -2,6 +2,13 @@ id: card_css_variable
 description: "UIX !important overrides HA's inline --tile-color on a tile card"
 view_path: card-css-variable
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
 card:
   type: tile
   entity: "light.bed_light"

@@ -2,6 +2,13 @@ id: forge_basic
 description: "UIX Forge wrapping a tile card renders a uix-forge element containing a hui-tile-card"
 view_path: forge-basic
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
 card:
   type: "custom:uix-forge"
   forge:

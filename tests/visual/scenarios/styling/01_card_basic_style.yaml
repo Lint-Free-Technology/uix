@@ -2,6 +2,13 @@ id: card_basic_style
 description: "UIX injects a uix-node and a background-color style onto an entities card"
 view_path: card-basic-style
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
 card:
   type: entities
   title: "UIX Red Background"

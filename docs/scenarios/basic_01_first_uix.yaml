@@ -1,0 +1,31 @@
+id: doc_basic_first_uix
+description: "Doc image: first UIX theme applied to an entities card (themes.md)"
+view_path: doc-basic-first-uix
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
+card:
+  type: tile
+  entity: light.bed_light
+  vertical: false
+  features_position: bottom
+  uix:
+    style: |
+      ha-card {
+        --ha-card-background: teal;
+        --ha-tile-info-primary-color: var(--yellow-color);
+        --ha-tile-info-secondary-color: var(--white-color);
+      }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/basic-first-uix.png
+  root: hui-tile-card
+  padding: 16
+  threshold: 0.02

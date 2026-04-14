@@ -8,6 +8,13 @@ theme: uix-test-theme
 
 view_path: theme-card-style
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
 # A plain entities card — no uix: key.  The styling comes entirely from the
 # active theme's uix-card variable.
 card:
