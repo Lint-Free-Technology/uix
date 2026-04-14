@@ -28,3 +28,4 @@ For a card contained by a `<hui-card>` element, which is almost every standard H
           color: var(--primary-color);
         }
     ```
+    ![Styling with CSS variables](../assets/page-assets/using/basic-first-uix.png)
