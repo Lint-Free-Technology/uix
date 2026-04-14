@@ -251,9 +251,12 @@ installed (``pip install Pillow``).
 ``click_circle`` *(segments only)*
     Render a circular overlay centred on the last click position in that
     segment's frames, providing visual feedback for animations that include a
-    ``click`` interaction.  The recommended pattern is a short segment that
-    performs the click and sets ``click_circle: true``, followed by a segment
-    that omits the key (or sets it to ``none``) to remove the overlay:
+    ``click`` interaction.  The circle does **not** persist between segments —
+    it is automatically removed at the start of each segment and only shown for
+    segments that explicitly set ``click_circle: true``.  The recommended
+    pattern is a short segment that performs the click and sets
+    ``click_circle: true``, followed by a segment that simply omits the key
+    (the circle is automatically hidden):
 
     .. code-block:: yaml
 
@@ -276,11 +279,11 @@ installed (``pip install Pillow``).
                   settle_ms: 800
               frames: 4           # short segment — circle visible while click settles
               click_circle: true
-            - frames: 8           # circle removed; show settled state
+            - frames: 8           # circle automatically removed; show settled state
               cursor: none
 
     Accepted values: ``true`` to show; ``false``, ``none`` (YAML null), or
-    ``"none"`` to hide.
+    ``"none"`` to explicitly hide (equivalent to omitting the key).
 
 Update workflow
 ---------------

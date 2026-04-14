@@ -324,20 +324,25 @@ animation:
 ``click_circle`` *(segments only)*
     Render a visible circular overlay centred on the last click position in
     each frame.  Use this to provide visual feedback in an animation that
-    includes a ``click`` interaction.  The recommended workflow is:
+    includes a ``click`` interaction.
+
+    The circle does **not** persist between segments — it is automatically
+    removed at the start of every segment and only shown for segments that
+    explicitly set ``click_circle: true``.  The recommended workflow is:
 
     1. A short segment that runs the ``click`` interaction and sets
        ``click_circle: true`` — the circle appears over the clicked element.
-    2. A following segment that omits ``click_circle`` (or sets it to ``none``)
-       to remove the circle.
+    2. A following segment that simply omits ``click_circle`` — the circle is
+       automatically hidden.
 
     The circle is a semi-transparent filled disc with a white border and a thin
     dark shadow ring, making it legible on both light and dark backgrounds.
 
     Accepted values:
 
-    * ``true`` — show the circle at the last click position.
-    * ``false`` / ``none`` (YAML null) / ``"none"`` — hide / remove the circle.
+    * ``true`` — show the circle at the last click position for this segment.
+    * ``false`` / ``none`` (YAML null) / ``"none"`` — explicitly hide / remove
+      the circle (equivalent to omitting the key).
 
     Example:
 
@@ -362,7 +367,7 @@ animation:
                   settle_ms: 800
               frames: 4           # short segment showing click circle
               click_circle: true
-            - frames: 8           # circle removed; show settled state
+            - frames: 8           # circle automatically removed; show settled state
               cursor: none
 """
 
@@ -1450,9 +1455,12 @@ def capture_doc_animation(
     In segmented mode each segment may include a ``click_circle`` key to render
     a visible circular overlay centred on the last click position in that
     segment's frames.  This provides visual feedback for animations that include
-    a ``click`` interaction.  The recommended workflow is a short segment that
-    runs the ``click`` and sets ``click_circle: true``, followed by a segment
-    that omits the key (or sets it to ``none``) to remove the overlay:
+    a ``click`` interaction.  The circle does **not** persist between segments —
+    it is automatically removed at the start of each segment and only shown when
+    the segment explicitly sets ``click_circle: true``.  The recommended
+    workflow is a short segment that runs the ``click`` and sets
+    ``click_circle: true``, followed by a segment that simply omits the key
+    (the circle is automatically hidden):
 
     .. code-block:: yaml
 
@@ -1475,7 +1483,7 @@ def capture_doc_animation(
                   settle_ms: 800
               frames: 4           # short segment — circle visible while click settles
               click_circle: true
-            - frames: 8           # circle removed; show settled state
+            - frames: 8           # circle automatically removed; show settled state
               cursor: none
 
     Behaviour
@@ -1571,15 +1579,14 @@ def capture_doc_animation(
             # Re-inject after segment's interactions so the overlay tracks the
             # new mouse position (e.g. after a hover in this segment).
             _inject_cursor(page, cursor_type)
-        # Determine whether to show a click-circle for this segment.  A
-        # ``click_circle: true`` (or any truthy non-"none" value) injects the
-        # circle at the position of the last click recorded by the tracker.
-        # ``click_circle: none`` (null in YAML), ``false``, or ``"none"`` removes it.
-        if "click_circle" in seg:
-            if _want_click_circle(seg["click_circle"]):
-                _inject_click_circle(page)
-            else:
-                _remove_click_circle(page)
+        # The click-circle does NOT persist between segments: remove any overlay
+        # left by the previous segment first, then re-inject if this segment
+        # explicitly requests it (``click_circle: true``).  This means
+        # ``click_circle`` must be set on every segment that wants the circle
+        # visible — omitting the key is equivalent to ``click_circle: false``.
+        _remove_click_circle(page)
+        if "click_circle" in seg and _want_click_circle(seg["click_circle"]):
+            _inject_click_circle(page)
         n: int = seg.get("frames", 10)
         for i in range(n):
             frame_images.append(take_frame(fixed_clip))
