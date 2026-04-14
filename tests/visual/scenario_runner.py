@@ -5,6 +5,21 @@ scenario.  This module provides helpers to load those files, push their
 Lovelace configuration to the running HA instance, navigate to the resulting
 view, and evaluate the assertions declared in the file.
 
+Dashboard configuration
+-----------------------
+Each scenario must declare exactly one of the following top-level keys to
+specify what Lovelace config is pushed:
+
+``card:``
+    A single card definition.  It is automatically wrapped in a ``sections``
+    view (containing a ``grid`` section) so the card is rendered in the same
+    layout as a real Lovelace dashboard.  ``view_path:`` is required.
+
+``dashboard:``
+    A complete Lovelace dashboard config dict (must include a ``views:``
+    list).  The config is pushed verbatim without any wrapping.  ``view_path:``
+    must still be declared so that the runner knows which view to navigate to.
+
 Interaction types
 -----------------
 Interactions are declared under the top-level ``interactions:`` key and are
@@ -324,21 +339,55 @@ def reset_theme(ha: HATestContainer) -> None:
 
 
 def push_scenario(ha: HATestContainer, url_path: str, scenario: dict[str, Any]) -> None:
-    """Push *scenario*'s card config to the named Lovelace dashboard."""
-    push_lovelace_config_to(
-        ha,
-        url_path,
-        {
+    """Push *scenario*'s config to the named Lovelace dashboard.
+
+    Two mutually exclusive keys control what is pushed:
+
+    ``card:``
+        A single card definition.  It is automatically wrapped in a
+        ``sections`` view (with a ``grid`` section) so that UIX renders it in
+        the same layout as a real Lovelace dashboard:
+
+        .. code-block:: yaml
+
+            views:
+              - type: sections
+                sections:
+                  - type: grid
+                    cards:
+                      - # scenario card here
+
+        ``view_path:`` must also be declared in the scenario; it becomes the
+        ``path`` of the generated view and is used by :func:`goto_scenario` to
+        navigate to that view after the push.
+
+    ``dashboard:``
+        A full Lovelace dashboard config dict (must include a ``views:`` list).
+        The value is pushed verbatim — no automatic wrapping is applied.
+
+        ``view_path:`` must still be declared in the scenario so that
+        :func:`goto_scenario` knows which view to navigate to after the push.
+    """
+    if "dashboard" in scenario:
+        config = scenario["dashboard"]
+    else:
+        config = {
             "title": f"UIX Scenario: {scenario['id']}",
             "views": [
                 {
                     "title": scenario.get("description", scenario["id"]),
                     "path": scenario["view_path"],
-                    "cards": [scenario["card"]],
+                    "type": "sections",
+                    "sections": [
+                        {
+                            "type": "grid",
+                            "cards": [scenario["card"]],
+                        }
+                    ],
                 }
             ],
-        },
-    )
+        }
+    push_lovelace_config_to(ha, url_path, config)
 
 
 def clear_scenario(ha: HATestContainer, url_path: str) -> None:
