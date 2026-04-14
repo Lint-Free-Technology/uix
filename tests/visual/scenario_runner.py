@@ -62,6 +62,17 @@ hover
             selector: ha-tile-icon
             settle_ms: 800
 
+hover_away
+    Move the mouse to the top-left corner of the page (0, 0) to dismiss
+    any active hover state — e.g. to hide a tooltip after it has been
+    captured.  Use ``settle_ms`` to wait for exit animations to finish:
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: hover_away
+            settle_ms: 500   # optional, default 500
+
 click
     Click an element.  Supports the same simple / shadow-root forms as
     ``hover``.  Use ``settle_ms`` to wait for state changes or animations
@@ -273,8 +284,8 @@ animation:
 ``interactions``
     Optional list of interactions to run **before** the first frame is
     captured (flat mode only).  Uses the same interaction types as the
-    top-level ``interactions:`` key (``hover``, ``click``, ``ha_service``,
-    ``wait``).
+    top-level ``interactions:`` key (``hover``, ``hover_away``, ``click``,
+    ``ha_service``, ``wait``).
 
 ``segments``
     Optional list of capture segments.  When present, ``frames:`` and
@@ -527,6 +538,8 @@ def run_interactions(
         itype = interaction["type"]
         if itype == "hover":
             _perform_hover(page, interaction)
+        elif itype == "hover_away":
+            _perform_hover_away(page, interaction)
         elif itype == "click":
             _perform_click(page, interaction)
         elif itype == "ha_service":
@@ -557,6 +570,17 @@ def _perform_hover(page: Page, interaction: dict[str, Any]) -> None:
     else:
         page.locator(interaction["selector"]).hover()
 
+    page.wait_for_timeout(settle_ms)
+
+
+def _perform_hover_away(page: Page, interaction: dict[str, Any]) -> None:
+    """Move the mouse to the top-left corner (0, 0) to dismiss any hover state.
+
+    Use this after a ``hover`` interaction to trigger tooltip-exit animations
+    or any other effect that fires when the pointer leaves an element.
+    """
+    settle_ms: int = interaction.get("settle_ms", 500)
+    page.mouse.move(0, 0)
     page.wait_for_timeout(settle_ms)
 
 
@@ -882,7 +906,8 @@ def capture_doc_image(
             padding: 8
 
     Interactions in each entry use the same types as the top-level
-    ``interactions:`` key (``hover``, ``click``, ``ha_service``, ``wait``).
+    ``interactions:`` key (``hover``, ``hover_away``, ``click``,
+    ``ha_service``, ``wait``).
     Pass the HA container as *ha* when any entry uses ``ha_service``
     interactions.
 
