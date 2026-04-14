@@ -192,6 +192,9 @@ Any scenario YAML may declare a ``doc_animation`` key to capture an animated
 GIF for documentation.  Frames are captured at *interval_ms* millisecond
 intervals from the live page.  Pillow is required.
 
+**Flat mode** — capture a single run of frames with an optional pre-capture
+``interactions:`` list:
+
 .. code-block:: yaml
 
     doc_animation:
@@ -207,9 +210,38 @@ intervals from the live page.  Pillow is required.
           selector: ha-tile-icon
           settle_ms: 800
 
+**Segmented mode** — interleave state changes with frame capture using a
+``segments:`` list.  Each segment runs optional ``interactions`` then captures
+``frames`` frames.  Useful for showing an entity toggle on and off across the
+animation:
+
+.. code-block:: yaml
+
+    doc_animation:
+      output: docs/source/assets/page-assets/using/my-feature.gif
+      root: hui-tile-card
+      interval_ms: 100
+      threshold: 0.02
+      segments:
+        - interactions:
+            - type: ha_service
+              service: input_boolean.turn_off
+              data:
+                entity_id: input_boolean.my_bool
+              settle_ms: 400
+          frames: 10
+        - interactions:
+            - type: ha_service
+              service: input_boolean.turn_on
+              data:
+                entity_id: input_boolean.my_bool
+              settle_ms: 400
+          frames: 10
+
 ``frames``
-    Number of screenshots to take.  The first frame is captured after the
-    normal HA settle delay; subsequent frames follow at *interval_ms* gaps.
+    Number of screenshots to take per segment (default 10).  In flat mode
+    this is the total frame count; in segmented mode it is the per-segment
+    frame count.
 
 ``interval_ms``
     Gap between consecutive frame captures **and** the per-frame display
@@ -222,10 +254,16 @@ intervals from the live page.  Pillow is required.
 
 ``interactions``
     Optional list of interactions to run **before** the first frame is
-    captured.  This is useful for triggering a hover effect, CSS animation,
-    or entity state change that should be visible throughout the recorded
-    frames.  Uses the same interaction types as the top-level
-    ``interactions:`` key (``hover``, ``click``, ``ha_service``, ``wait``).
+    captured (flat mode only).  Uses the same interaction types as the
+    top-level ``interactions:`` key (``hover``, ``click``, ``ha_service``,
+    ``wait``).
+
+``segments``
+    Optional list of capture segments.  When present, ``frames:`` and
+    ``interactions:`` at the top level are ignored.  Each segment may declare
+    its own ``interactions`` (run before that segment's frames) and ``frames``
+    count.  An *interval_ms* gap separates the last frame of one segment from
+    the start of the next segment's interactions.
 """
 
 from __future__ import annotations
@@ -930,7 +968,10 @@ def capture_doc_animation(
     """Capture an animated GIF for documentation if *doc_animation* is declared.
 
     The ``doc_animation`` key in a scenario YAML specifies how to record and
-    where to save the animation:
+    where to save the animation.
+
+    **Flat mode** — a single group of frames, with an optional ``interactions``
+    run before the first frame:
 
     .. code-block:: yaml
 
@@ -947,6 +988,38 @@ def capture_doc_animation(
               selector: ha-tile-icon
               settle_ms: 800
 
+    **Segmented mode** — multiple groups of frames, each with its own optional
+    ``interactions`` run immediately before that group starts.  Use this to
+    interleave state changes with capture, e.g. toggling an entity on and off:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          padding: 8
+          interval_ms: 100
+          threshold: 0.02
+          segments:
+            - interactions:
+                - type: ha_service
+                  service: input_boolean.turn_off
+                  data:
+                    entity_id: input_boolean.my_bool
+                  settle_ms: 400
+              frames: 10          # capture 10 frames with entity off
+            - interactions:
+                - type: ha_service
+                  service: input_boolean.turn_on
+                  data:
+                    entity_id: input_boolean.my_bool
+                  settle_ms: 400
+              frames: 10          # capture 10 frames with entity on
+
+    When ``segments:`` is present, the top-level ``frames:`` and
+    ``interactions:`` keys are ignored; each segment specifies its own
+    ``frames`` count (default 10) and optional ``interactions``.
+
     The ``output`` path is relative to the repository root.
 
     If the ``root`` key is omitted each frame covers the full viewport.
@@ -954,13 +1027,16 @@ def capture_doc_animation(
     **Pillow is required** — install it with ``pip install Pillow``.
 
     Pass the HA container as *ha* when any ``ha_service`` interactions are
-    present in the ``interactions`` list.
+    present.
 
     Behaviour
     ---------
-    * Any declared ``interactions`` are executed after the standard HA settle
-      delay and before the first frame is captured.
-    * Frames are captured at *interval_ms* millisecond intervals.
+    * The standard HA settle delay is applied once at the start.
+    * In flat mode: any declared ``interactions`` run, then all frames are
+      captured at *interval_ms* intervals.
+    * In segmented mode: for each segment, its ``interactions`` run (if any),
+      then its frames are captured.  An *interval_ms* gap separates the last
+      frame of one segment from the first interaction of the next.
     * The frames are assembled into an animated GIF with *interval_ms* as the
       per-frame display duration and an infinite loop.
     * If the output file does not yet exist it is created (first-run bootstrap).
@@ -985,19 +1061,11 @@ def capture_doc_animation(
 
     output_path = REPO_ROOT / doc_animation["output"]
     padding: int = doc_animation.get("padding", 0)
-    frame_count: int = doc_animation.get("frames", 10)
     interval_ms: int = doc_animation.get("interval_ms", 100)
     threshold: float = doc_animation.get("threshold", 0.0)
 
-    page.wait_for_timeout(HA_SETTLE_MS)
-
-    if "interactions" in doc_animation:
-        run_interactions(page, doc_animation, ha=ha)
-
-    # --- capture frames ---
-    # Each frame is an Image.Image object (PIL dynamically imported above).
-    frame_images: list[Any] = []
-    for i in range(frame_count):
+    def take_frame() -> Any:
+        """Capture one animation frame, optionally cropped to *root*."""
         if "root" in doc_animation:
             rect = _get_doc_image_rect(page, doc_animation["root"])
             clip = {
@@ -1009,14 +1077,44 @@ def capture_doc_animation(
             png_bytes = page.screenshot(clip=clip, full_page=False)
         else:
             png_bytes = page.screenshot(full_page=False)
-
         # RGBA gives Pillow's GIF encoder a full alpha channel for palette
         # selection; alpha is always opaque for browser screenshots, so this
         # does not affect visual output.
-        frame_images.append(Image.open(io.BytesIO(png_bytes)).convert("RGBA"))
+        return Image.open(io.BytesIO(png_bytes)).convert("RGBA")
 
-        if i < frame_count - 1:
-            page.wait_for_timeout(interval_ms)
+    def capture_segment(seg: dict[str, Any]) -> None:
+        """Run a segment's optional interactions then capture its frames."""
+        if "interactions" in seg:
+            run_interactions(page, seg, ha=ha)
+        n: int = seg.get("frames", 10)
+        for i in range(n):
+            frame_images.append(take_frame())
+            if i < n - 1:
+                page.wait_for_timeout(interval_ms)
+
+    page.wait_for_timeout(HA_SETTLE_MS)
+
+    # --- capture frames ---
+    # Each frame is an Image.Image object (PIL dynamically imported above).
+    frame_images: list[Any] = []
+
+    segments = doc_animation.get("segments")
+    if segments is not None:
+        # Segmented mode: interactions are interspersed between groups of frames.
+        # Each segment may declare its own ``interactions`` and ``frames`` count.
+        for idx, segment in enumerate(segments):
+            capture_segment(segment)
+            if idx < len(segments) - 1:
+                page.wait_for_timeout(interval_ms)
+    else:
+        # Flat mode: optional pre-capture interactions then a single run of frames.
+        frame_count: int = doc_animation.get("frames", 10)
+        if "interactions" in doc_animation:
+            run_interactions(page, doc_animation, ha=ha)
+        for i in range(frame_count):
+            frame_images.append(take_frame())
+            if i < frame_count - 1:
+                page.wait_for_timeout(interval_ms)
 
     # --- assemble GIF ---
     gif_buf = io.BytesIO()
