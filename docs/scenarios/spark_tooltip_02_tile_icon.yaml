@@ -1,0 +1,44 @@
+id: doc_spark_tooltip_tile_icon
+description: "Doc image: Forge Tooltip spark for tile icon (tooltip.md)"
+view_path: doc-spark-tooltip-tile-icon
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.kitchen_lights
+    brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: tooltip
+        for: hui-tile-card $ ha-tile-icon
+        content: Toggle the living room light
+  element:
+    type: tile
+    entity: light.kitchen_lights
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/tooltip-tile-icon.gif
+  root: hui-tile-card
+  padding: 32 16 16 60
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 7   # ~0.5 s with entity on
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 22   # ~1.5 s with entity off
+      cursor: pointer
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s with entity on
+      cursor: none

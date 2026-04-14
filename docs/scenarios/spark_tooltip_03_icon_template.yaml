@@ -1,0 +1,46 @@
+id: doc_spark_tooltip_icon_template
+description: "Doc image: Forge Tooltip spark for tile icon using template (tooltip.md)"
+view_path: doc-spark-tooltip-icon-template
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.kitchen_lights
+    brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: tooltip
+        for: "hui-tile-card $ ha-tile-icon"
+        content: >-
+          {{ state_attr(config.element.entity, 'friendly_name') }} are
+          {{ states(config.element.entity) }}
+  element:
+    type: tile
+    entity: light.kitchen_lights
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/tooltip-icon-template.gif
+  root: hui-tile-card
+  padding: 32 16 16 45
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 7   # ~0.5 s with entity on
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 22   # ~1.5 s with entity off
+      cursor: pointer
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s with entity on
+      cursor: none
