@@ -184,11 +184,11 @@ Example — targeting the **second** ``uix-forge`` on the page::
     ``uix-forge:nth-of-type(2)`` to work the two ``uix-forge`` elements must
     be **siblings** at the same DOM level (e.g. both direct children of the
     same grid section element).  In a standard sections/grid view each card
-    is wrapped in a ``div.card`` element, so target that instead::
+    is wrapped in a ``div.card`` element (which has no shadow root), so
+    combine it with the child element in a single selector entry::
 
         root:
-          - div.card:nth-of-type(2)
-          - uix-forge
+          - div.card:nth-of-type(2) uix-forge
           - hui-tile-card
         selector: ha-tile-icon
 

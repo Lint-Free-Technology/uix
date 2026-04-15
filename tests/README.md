@@ -170,12 +170,11 @@ interactions:
     selector: ha-tile-icon
 ```
 
-> **Caveat:** `:nth-of-type` (and similar pseudo-classes) evaluate among **siblings at the same DOM level** where the element is found — not globally across shadow-root boundaries.  If both `uix-forge` elements are siblings in the same container this works as expected.  In a standard sections/grid view each card is wrapped in a `div.card`, so target that instead:
+> **Caveat:** `:nth-of-type` (and similar pseudo-classes) evaluate among **siblings at the same DOM level** where the element is found — not globally across shadow-root boundaries.  If both `uix-forge` elements are siblings in the same container this works as expected.  In a standard sections/grid view each card is wrapped in a `div.card` (which has no shadow root), so combine it with the child element in a single selector entry:
 >
 > ```yaml
 > root:
->   - div.card:nth-of-type(2)
->   - uix-forge
+>   - div.card:nth-of-type(2) uix-forge
 >   - hui-tile-card
 > selector: ha-tile-icon
 > ```
