@@ -62,13 +62,15 @@ interface BgEntry {
 interface ViewBg {
   camera: BgEntry | null;
   image: BgEntry | null;
+  /** ResizeObserver watching ha-sidebar for width changes (view cover mode). */
+  sidebarObserver: ResizeObserver | null;
 }
 
 const _state = new WeakMap<HTMLElement, ViewBg>();
 
 function _get(view: HTMLElement): ViewBg {
   if (!_state.has(view)) {
-    _state.set(view, { camera: null, image: null });
+    _state.set(view, { camera: null, image: null, sidebarObserver: null });
   }
   return _state.get(view)!;
 }
@@ -116,6 +118,25 @@ function _applyCoverStyles(container: HTMLElement, drawer: HTMLElement): void {
     container.style.top = "var(--header-height, 0px)";
     container.style.left = `${_getSidebarWidth(drawer)}px`;
   }
+}
+
+/**
+ * Ensures a single `ResizeObserver` is watching `ha-sidebar` for the given
+ * drawer so that background containers are repositioned whenever the sidebar
+ * width changes (e.g. the user expands/collapses it or resizes the window).
+ *
+ * Safe to call repeatedly — it is a no-op if the observer is already active or
+ * if `ha-sidebar` is not yet present in the DOM.
+ */
+function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
+  if (bg.sidebarObserver) return;
+  const sidebar = drawer.querySelector("ha-sidebar") as HTMLElement | null;
+  if (!sidebar) return;
+  bg.sidebarObserver = new ResizeObserver(() => {
+    if (bg.camera) _applyCoverStyles(bg.camera.container, drawer);
+    if (bg.image) _applyCoverStyles(bg.image.container, drawer);
+  });
+  bg.sidebarObserver.observe(sidebar);
 }
 
 /**
@@ -192,6 +213,7 @@ export function cleanupViewBackground(element: HTMLElement): void {
   if (bg) {
     bg.camera?.container.remove();
     bg.image?.container.remove();
+    bg.sidebarObserver?.disconnect();
     _state.delete(element);
   }
 }
@@ -254,6 +276,10 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
     // Entity unchanged — keep cover positioning up to date.
     _applyCoverStyles(bg.image.container, element);
   }
+
+  // Keep the sidebar ResizeObserver active so cover positioning updates
+  // automatically whenever the sidebar is resized.
+  _ensureSidebarObserver(bg, element);
 }
 
 async function _setupCameraBackground(
