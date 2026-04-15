@@ -99,6 +99,26 @@ ha_service
             service: turn_off
             entity_id: light.bed_light   # shorthand for data.entity_id
 
+device_registry_update
+    Assign a device to an area in the HA device registry via the WebSocket
+    API.  Useful in ``setup:`` blocks for scenarios that require entities to
+    belong to a specific area.  Requires the ``ha`` container.
+
+    Accepts either ``entity_id`` **or** ``device_id`` to identify the device.
+    When ``entity_id`` is given the corresponding ``device_id`` is looked up
+    automatically via the entity registry.
+
+    ``area_id`` or ``area_name`` identifies the target area.  When
+    ``area_name`` is given the corresponding ``area_id`` is resolved
+    automatically via the area registry.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: device_registry_update
+            entity_id: light.bed_light   # OR device_id: abc123
+            area_name: Bedroom           # OR area_id: bedroom
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -809,6 +829,13 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _call_ha_service(ha, interaction)
+        elif itype == "device_registry_update":
+            if ha is None:
+                raise ValueError(
+                    "device_registry_update interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _update_device_registry(ha, interaction)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -895,6 +922,71 @@ def _call_ha_service(ha: HATestContainer, interaction: dict[str, Any]) -> None:
     if "entity_id" in interaction:
         data["entity_id"] = interaction["entity_id"]
     ha.api("POST", f"services/{domain}/{service}", json=data).raise_for_status()
+
+
+def _update_device_registry(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Assign a device to an area via the HA device registry WebSocket API.
+
+    Resolves ``entity_id`` → ``device_id`` and ``area_name`` → ``area_id``
+    automatically when the short-form keys are supplied.
+    """
+    __tracebackhide__ = True
+
+    # --- Resolve device_id ---
+    if "device_id" in interaction:
+        device_id: str = interaction["device_id"]
+    elif "entity_id" in interaction:
+        entity_id: str = interaction["entity_id"]
+        resp = ha._ws_call({"id": 1, "type": "config/entity_registry/list"})
+        entries: list[dict[str, Any]] = resp.get("result", [])
+        match = next((e for e in entries if e.get("entity_id") == entity_id), None)
+        if match is None:
+            raise ValueError(
+                f"device_registry_update: entity {entity_id!r} not found in entity registry"
+            )
+        device_id = match.get("device_id") or ""
+        if not device_id:
+            raise ValueError(
+                f"device_registry_update: entity {entity_id!r} has no associated device"
+            )
+    else:
+        raise ValueError(
+            "device_registry_update: must supply 'entity_id' or 'device_id'"
+        )
+
+    # --- Resolve area_id ---
+    if "area_id" in interaction:
+        area_id: str = interaction["area_id"]
+    elif "area_name" in interaction:
+        area_name: str = interaction["area_name"]
+        resp = ha._ws_call({"id": 2, "type": "config/area_registry/list"})
+        areas: list[dict[str, Any]] = resp.get("result", [])
+        match_area = next(
+            (a for a in areas if a.get("name", "").lower() == area_name.lower()), None
+        )
+        if match_area is None:
+            raise ValueError(
+                f"device_registry_update: area {area_name!r} not found in area registry"
+            )
+        area_id = match_area["area_id"]
+    else:
+        raise ValueError(
+            "device_registry_update: must supply 'area_id' or 'area_name'"
+        )
+
+    # --- Update the device ---
+    result = ha._ws_call(
+        {
+            "id": 3,
+            "type": "config/device_registry/update",
+            "device_id": device_id,
+            "area_id": area_id,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"device_registry/update failed for device {device_id!r} → area {area_id!r}: {result}"
+        )
 
 
 # ---------------------------------------------------------------------------
