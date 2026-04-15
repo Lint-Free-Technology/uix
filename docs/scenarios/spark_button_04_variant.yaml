@@ -54,7 +54,7 @@ doc_animation:
   root: hui-grid-section
   padding: 16
   interval_ms: 66
-  threshold: 0.04
+  threshold: 0.02
   cursor: pointer
   segments:
     - frames: 14   # ~1 s

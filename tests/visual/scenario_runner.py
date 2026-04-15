@@ -896,6 +896,7 @@ def _call_ha_service(ha: HATestContainer, interaction: dict[str, Any]) -> None:
 
 def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
     """Execute every assertion declared in *scenario*."""
+    __tracebackhide__ = True
     for assertion in scenario.get("assertions", []):
         atype = assertion["type"]
         if atype == "snapshot":
@@ -955,6 +956,7 @@ def _assert_snapshot_with_threshold(
         Optional ``{x, y, width, height}`` dict to crop the screenshot to a
         specific region.  When ``None`` the full viewport is captured.
     """
+    __tracebackhide__ = True
     SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     baseline = SNAPSHOTS_DIR / f"{name}.png"
     actual = SNAPSHOTS_DIR / f"{name}.actual.png"
@@ -1039,6 +1041,7 @@ def _build_root_js(roots: list[str]) -> str:
 
 def _run_dom_assertion(page: Page, assertion: dict[str, Any], atype: str) -> None:
     """Build and evaluate the JS for a single DOM-based assertion."""
+    __tracebackhide__ = True
     raw_root = assertion["root"]
     roots = [raw_root] if isinstance(raw_root, str) else list(raw_root)
     selector: str = assertion.get("selector", "")
@@ -1127,6 +1130,7 @@ def _run_dom_assertion(page: Page, assertion: dict[str, Any], atype: str) -> Non
 
 def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
     """Raise ``AssertionError`` if the JS returned a traversal error dict."""
+    __tracebackhide__ = True
     if isinstance(result, dict) and "error" in result:
         assertion_type = assertion.get("type", "?")
         root = assertion.get("root", "?")
@@ -1246,6 +1250,7 @@ def capture_doc_image(
       the images differ beyond *threshold*, prompting the author to run with
       ``DOC_IMAGE_UPDATE=1`` and commit the updated image.
     """
+    __tracebackhide__ = True
     raw = scenario.get("doc_image")
     if not raw:
         return
@@ -1539,6 +1544,7 @@ def capture_doc_animation(
       (recommended to handle minor GIF palette-quantisation differences across
       runs).  The test fails when any frame exceeds the threshold.
     """
+    __tracebackhide__ = True
     doc_animation = scenario.get("doc_animation")
     if not doc_animation:
         return
