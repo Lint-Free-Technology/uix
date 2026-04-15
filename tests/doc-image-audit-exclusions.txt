@@ -26,9 +26,6 @@ docs/source/assets/page-assets/developers/developers-1-dark.png
 # Forge — macro example animation (manually recorded)
 docs/source/assets/page-assets/forge/forge-macro-example.gif
 
-# Forge — button spark variant/appearance screenshot (manually captured)
-docs/source/assets/page-assets/forge/sparks/button-spark-variant-appearance.png
-
 # Forge — lock spark example animations (manually recorded)
 docs/source/assets/page-assets/forge/sparks/lock-spark-example-1.gif
 docs/source/assets/page-assets/forge/sparks/lock-spark-example-2.gif
