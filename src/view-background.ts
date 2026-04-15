@@ -1,5 +1,6 @@
 import { Unpromise } from "@watchable/unpromise";
 import { hass } from "./helpers/hass";
+import { apply_uix } from "./helpers/apply_uix";
 
 /**
  * How long (ms) to wait after a style-render event or `uix_update` before
@@ -19,6 +20,16 @@ const VAR_CAMERA = "--uix-view-background-camera-entity";
 
 /** CSS variable that selects any entity whose entity_picture is the background. */
 const VAR_IMAGE = "--uix-view-background-image-entity";
+
+/**
+ * CSS variable controlling how much of the viewport the background covers.
+ *
+ *   full  — the background fills the entire viewport, sitting behind the
+ *            topbar and sidebar.
+ *   view  — (default) the background fills only the content area, offset by
+ *            --header-height at the top and the sidebar width on the left.
+ */
+const VAR_COVER = "--uix-view-background-cover";
 
 const CAMERA_DOMAIN = "camera";
 
@@ -74,13 +85,60 @@ function _readVar(view: HTMLElement, name: string): string {
     .replace(/^['"]|['"]$/g, "");
 }
 
-function _createContainer(): HTMLDivElement {
+/**
+ * Returns the width (px) that the sidebar currently occupies.
+ *
+ * When `ha-drawer` is in modal mode the sidebar is an overlay and does not
+ * push content to the side, so the sidebar should not be subtracted from the
+ * background area.
+ */
+function _getSidebarWidth(drawer: HTMLElement): number {
+  if ((drawer as any).type === "modal") return 0;
+  return (
+    (drawer.querySelector("ha-sidebar") as HTMLElement | null)?.offsetWidth ?? 0
+  );
+}
+
+/**
+ * Updates the `top` and `left` positioning of `container` to reflect the
+ * current `--uix-view-background-cover` value read from `drawer`.
+ *
+ *   full  → top: 0; left: 0  (behind topbar and sidebar)
+ *   view  → top: --header-height; left: <sidebarWidth>px  (content area only, default)
+ */
+function _applyCoverStyles(container: HTMLElement, drawer: HTMLElement): void {
+  const cover = _readVar(drawer, VAR_COVER);
+  if (cover === "full") {
+    container.style.top = "0";
+    container.style.left = "0";
+  } else {
+    // Default: "view" — content area only.
+    container.style.top = "var(--header-height, 0px)";
+    container.style.left = `${_getSidebarWidth(drawer)}px`;
+  }
+}
+
+/**
+ * Creates the fixed-position shell element that acts as the background layer.
+ *
+ * The shell itself is a light-DOM child of `<body>` (for z-ordering) with
+ * `pointer-events: none`.  All actual content (camera stream, image) lives
+ * inside its shadow root so that `apply_uix` can target it with the
+ * `view-background` type, giving users full theme-based styling control
+ * (opacity, filter, grayscale, etc.).
+ */
+function _createContainer(drawer: HTMLElement): HTMLElement {
   const el = document.createElement("div");
   el.setAttribute("uix-view-background", "");
-  // Prepend to <body> so it sits behind all HA shadow-root content.
-  // `pointer-events: none` prevents the element blocking UI interactions.
+  // Use right:0/bottom:0 instead of width/height so top/left offsets
+  // automatically shrink the element in "view" cover mode.
   el.style.cssText =
-    "position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:none;";
+    "position:fixed;right:0;bottom:0;overflow:hidden;pointer-events:none;";
+  el.attachShadow({ mode: "open" });
+  _applyCoverStyles(el, drawer);
+  // Inject a uix-node into the shadow root so theme authors can style
+  // the background content with `uix-view-background` in their theme.
+  apply_uix(el as any, "view-background", undefined, {}, true);
   return el;
 }
 
@@ -168,13 +226,14 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
           `UIX: ${VAR_CAMERA} must be a camera entity (got '${cameraId}')`
         );
       } else {
-        await _setupCameraBackground(hs, bg, cameraId);
+        await _setupCameraBackground(hs, bg, cameraId, element);
       }
     }
   } else if (bg.camera) {
-    // Entity unchanged — keep hass and stateObj up to date for token
-    // refresh / reconnection and state changes.
-    const streamEl = bg.camera.container.querySelector(
+    // Entity unchanged — keep cover positioning, hass and stateObj up to date
+    // for token refresh / reconnection and state changes.
+    _applyCoverStyles(bg.camera.container, element);
+    const streamEl = bg.camera.container.shadowRoot?.querySelector(
       "ha-camera-stream"
     ) as HaCameraStreamElement | null;
     if (streamEl) {
@@ -189,15 +248,19 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
     bg.image = null;
 
     if (imageId) {
-      await _setupImageBackground(hs, bg, imageId);
+      await _setupImageBackground(hs, bg, imageId, element);
     }
+  } else if (bg.image) {
+    // Entity unchanged — keep cover positioning up to date.
+    _applyCoverStyles(bg.image.container, element);
   }
 }
 
 async function _setupCameraBackground(
   hs: any,
   bg: ViewBg,
-  entityId: string
+  entityId: string,
+  drawer: HTMLElement
 ): Promise<void> {
   // Wait for ha-camera-stream to be registered (it is loaded lazily by HA).
   const defined = await Unpromise.race([
@@ -214,7 +277,7 @@ async function _setupCameraBackground(
     return;
   }
 
-  const container = _createContainer();
+  const container = _createContainer(drawer);
 
   const streamEl = document.createElement(
     "ha-camera-stream"
@@ -225,7 +288,9 @@ async function _setupCameraBackground(
   streamEl.controls = false;
   // ha-camera-stream needs stateObj (full entity state) rather than entityId.
   streamEl.stateObj = hs.states[entityId];
-  container.appendChild(streamEl);
+  // Content lives in the shadow root so apply_uix can style it via the
+  // view-background theme key.
+  container.shadowRoot!.appendChild(streamEl);
 
   document.body.prepend(container);
   bg.camera = { entityId, container };
@@ -241,7 +306,8 @@ async function _setupCameraBackground(
 async function _setupImageBackground(
   hs: any,
   bg: ViewBg,
-  entityId: string
+  entityId: string,
+  drawer: HTMLElement
 ): Promise<void> {
   const entity = hs.states[entityId];
   const picturePath = entity?.attributes?.entity_picture as string | undefined;
@@ -255,11 +321,19 @@ async function _setupImageBackground(
 
   const signedUrl = await _signPath(hs, picturePath);
 
-  const container = _createContainer();
-  container.style.backgroundImage = `url('${signedUrl}')`;
-  container.style.backgroundSize = "cover";
-  container.style.backgroundPosition = "center";
-  container.style.backgroundRepeat = "no-repeat";
+  const container = _createContainer(drawer);
+
+  // The image fill div lives in the shadow root so apply_uix can target it.
+  const imgEl = document.createElement("div");
+  imgEl.style.cssText = [
+    "width:100%",
+    "height:100%",
+    `background-image:url('${signedUrl}')`,
+    "background-size:cover",
+    "background-position:center",
+    "background-repeat:no-repeat",
+  ].join(";");
+  container.shadowRoot!.appendChild(imgEl);
 
   document.body.prepend(container);
   bg.image = { entityId, container };

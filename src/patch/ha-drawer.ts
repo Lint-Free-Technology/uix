@@ -14,16 +14,22 @@ There is no style passed to apply_uix here, everything comes only from themes.
 ha-drawer wraps the entire HA content area (Lovelace views AND config panels),
 so backgrounds defined here are available everywhere, not just in Lovelace.
 
-Two optional CSS variables can be set in the theme's uix-drawer style to
-attach a background behind the content area:
+Three optional CSS variables can be set in the theme's uix-drawer style to
+control the background behind the content area:
 
   --uix-view-background-camera-entity
       A camera entity ID.  UIX will create a muted ha-camera-stream element
-      positioned as a full-screen background.
+      positioned as a background.
 
   --uix-view-background-image-entity
       Any entity with an entity_picture attribute.  UIX will sign the picture
       URL and render it as a cover-sized background image.
+
+  --uix-view-background-cover
+      Controls how much of the viewport the background covers.
+        view  (default) — content area only; offset below the topbar and to
+                          the right of the sidebar.
+        full            — entire viewport, sitting behind topbar and sidebar.
 
 Because ha-drawer persists across navigation, templates using the `panel`
 variable can select a different entity per panel/view without any teardown
@@ -37,7 +43,14 @@ overhead:
         {% endif %};
     }
 
-Note: variables must be set on :host so they are readable via
+Background containers have a shadow root; UIX injects a uix-node into that
+shadow root under the type "view-background".  Theme authors can style the
+background content (opacity, filter, etc.) with:
+
+  uix-view-background: |
+    :host { opacity: 0.5; }
+
+Note: variables must be set on :host in uix-drawer so they are readable via
 getComputedStyle(ha-drawer).
 
 */
