@@ -317,6 +317,58 @@ animation:
     interactions settle, so all frames share the same size even when the
     captured element changes dimensions between segments (e.g. a conditional
     card row appearing or disappearing).
+
+    Each segment also accepts a ``click_circle`` key (see below) to show or
+    hide the click-circle overlay for that segment's frames.
+
+``click_circle`` *(segments only)*
+    Render a visible circular overlay centred on the last click position in
+    each frame.  Use this to provide visual feedback in an animation that
+    includes a ``click`` interaction.
+
+    The circle does **not** persist between segments — it is automatically
+    removed at the start of every segment and only shown for segments that
+    explicitly set ``click_circle: true``.  The recommended workflow is:
+
+    1. A short segment that runs the ``click`` interaction and sets
+       ``click_circle: true`` — the circle appears over the clicked element.
+    2. A following segment that simply omits ``click_circle`` — the circle is
+       automatically hidden.
+
+    The circle is a semi-transparent filled disc with a white border and a thin
+    dark shadow ring, making it legible on both light and dark backgrounds.
+
+    Accepted values:
+
+    * ``true`` — show the circle at the last click position for this segment.
+    * ``false`` / ``none`` (YAML null) / ``"none"`` — explicitly hide / remove
+      the circle (equivalent to omitting the key).
+
+    Example:
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          interval_ms: 80
+          cursor: pointer
+          segments:
+            - interactions:
+                - type: hover
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 400
+              frames: 6           # show hover state
+            - interactions:
+                - type: click
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 800
+              frames: 4           # short segment showing click circle
+              click_circle: true
+            - frames: 8           # circle automatically removed; show settled state
+              cursor: none
 """
 
 from __future__ import annotations
@@ -432,6 +484,65 @@ _MOUSE_TRACKER_JS = """\
             window.__uix_cursor_pos = {x: e.clientX, y: e.clientY};
         }, {capture: true, passive: true});
     }
+}"""
+
+# ---------------------------------------------------------------------------
+# Click-circle overlay support for doc animations
+# ---------------------------------------------------------------------------
+
+# DOM id used for the injected click-circle overlay element.
+_CLICK_CIRCLE_OVERLAY_ID = "__uix_click_circle"
+
+# Default diameter of the click-circle overlay in CSS pixels.
+_CLICK_CIRCLE_SIZE = 40
+
+# JavaScript that installs a ``mousedown`` listener storing the last click
+# position in ``window.__uix_click_pos``.  Idempotent — safe to evaluate
+# multiple times on the same page.
+_CLICK_TRACKER_JS = """\
+() => {
+    if (!window.__uix_click_pos) {
+        window.__uix_click_pos = null;
+        document.addEventListener('mousedown', function(e) {
+            window.__uix_click_pos = {x: e.clientX, y: e.clientY};
+        }, {capture: true, passive: true});
+    }
+}"""
+
+# JavaScript that injects the click-circle overlay at the last click position.
+# Receives a 3-element array: [overlayId, size, cssColor].
+# The circle is centred on the click point and floats above all page content.
+# Uses a double border (white inner + dark shadow ring) so it is legible on
+# both light and dark screenshot backgrounds.
+_CLICK_CIRCLE_INJECTION_JS = """\
+([overlayId, size, cssColor]) => {
+    var existing = document.getElementById(overlayId);
+    if (existing) existing.remove();
+    var pos = window.__uix_click_pos;
+    if (!pos) return;
+    var el = document.createElement('div');
+    el.id = overlayId;
+    el.style.cssText = (
+        'position:fixed;'
+        + 'left:' + (pos.x - size / 2) + 'px;'
+        + 'top:' + (pos.y - size / 2) + 'px;'
+        + 'width:' + size + 'px;'
+        + 'height:' + size + 'px;'
+        + 'border-radius:50%;'
+        + 'background:' + cssColor + ';'
+        + 'border:2px solid rgba(255,255,255,0.9);'
+        + 'box-shadow:0 0 0 1px rgba(0,0,0,0.45);'
+        + 'pointer-events:none;'
+        + 'z-index:2147483647;'
+    );
+    document.documentElement.appendChild(el);
+}"""
+
+# JavaScript that removes the click-circle overlay element by id.
+_CLICK_CIRCLE_REMOVAL_JS = """\
+(overlayId) => {
+    var el = document.getElementById(overlayId);
+    if (el) el.remove();
 }"""
 
 # JavaScript that injects the cursor SVG overlay.  Receives a 4-element array:
@@ -1108,11 +1219,13 @@ def capture_doc_image(
     entries: list[dict[str, Any]] = raw if isinstance(raw, list) else [raw]
 
     page.wait_for_timeout(HA_SETTLE_MS)
-    # Install the mouse-position tracker before any per-entry interactions run.
-    # Interactions (e.g. hover) move the mouse via Playwright, which fires JS
-    # ``mousemove`` events.  The tracker must be in place to catch those events
-    # so ``_inject_cursor`` can read the correct position afterwards.
+    # Install the mouse-position and click-position trackers before any
+    # per-entry interactions run.  Interactions (e.g. hover, click) move the
+    # mouse via Playwright, which fires JS ``mousemove``/``mousedown`` events.
+    # The trackers must be in place to catch those events so ``_inject_cursor``
+    # and ``_inject_click_circle`` can read the correct positions afterwards.
     _ensure_mouse_tracker(page)
+    _ensure_click_tracker(page)
 
     for doc_image in entries:
         # Run any per-entry interactions to advance the page to the desired state.
@@ -1126,10 +1239,15 @@ def capture_doc_image(
         # Normalise: cursor: none (YAML null) and the string "none" both mean no cursor.
         _raw_cursor = doc_image.get("cursor")
         cursor_type: str | None = None if (_raw_cursor is None or _raw_cursor == "none") else _raw_cursor
+        # Normalise: click_circle: none (YAML null), false, or the string "none"
+        # means hide; any other truthy value means show.
+        show_click_circle: bool = _want_click_circle(doc_image.get("click_circle"))
 
         # --- capture ---
         if cursor_type:
             _inject_cursor(page, cursor_type)
+        if show_click_circle:
+            _inject_click_circle(page)
         try:
             if "root" in doc_image:
                 rect = _get_doc_image_rect(page, doc_image["root"])
@@ -1145,6 +1263,8 @@ def capture_doc_image(
         finally:
             if cursor_type:
                 _remove_cursor(page)
+            if show_click_circle:
+                _remove_click_circle(page)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1332,6 +1452,40 @@ def capture_doc_animation(
               selector: ha-tile-icon
               settle_ms: 800
 
+    In segmented mode each segment may include a ``click_circle`` key to render
+    a visible circular overlay centred on the last click position in that
+    segment's frames.  This provides visual feedback for animations that include
+    a ``click`` interaction.  The circle does **not** persist between segments —
+    it is automatically removed at the start of each segment and only shown when
+    the segment explicitly sets ``click_circle: true``.  The recommended
+    workflow is a short segment that runs the ``click`` and sets
+    ``click_circle: true``, followed by a segment that simply omits the key
+    (the circle is automatically hidden):
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          interval_ms: 80
+          cursor: pointer
+          segments:
+            - interactions:
+                - type: hover
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 400
+              frames: 6
+            - interactions:
+                - type: click
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 800
+              frames: 4           # short segment — circle visible while click settles
+              click_circle: true
+            - frames: 8           # circle automatically removed; show settled state
+              cursor: none
+
     Behaviour
     ---------
     * The standard HA settle delay is applied once at the start.
@@ -1425,6 +1579,14 @@ def capture_doc_animation(
             # Re-inject after segment's interactions so the overlay tracks the
             # new mouse position (e.g. after a hover in this segment).
             _inject_cursor(page, cursor_type)
+        # The click-circle does NOT persist between segments: remove any overlay
+        # left by the previous segment first, then re-inject if this segment
+        # explicitly requests it (``click_circle: true``).  This means
+        # ``click_circle`` must be set on every segment that wants the circle
+        # visible — omitting the key is equivalent to ``click_circle: false``.
+        _remove_click_circle(page)
+        if "click_circle" in seg and _want_click_circle(seg["click_circle"]):
+            _inject_click_circle(page)
         n: int = seg.get("frames", 10)
         for i in range(n):
             frame_images.append(take_frame(fixed_clip))
@@ -1432,10 +1594,12 @@ def capture_doc_animation(
                 page.wait_for_timeout(interval_ms)
 
     page.wait_for_timeout(HA_SETTLE_MS)
-    # Install the mouse-position tracker before any segment interactions run.
-    # Hover interactions move the mouse before _inject_cursor is called; the
-    # tracker must already be listening so it captures those movements.
+    # Install the mouse-position and click-position trackers before any segment
+    # interactions run.  Hover/click interactions move the mouse before
+    # _inject_cursor/_inject_click_circle are called; the trackers must already
+    # be listening so they capture those events.
     _ensure_mouse_tracker(page)
+    _ensure_click_tracker(page)
 
     # --- capture frames ---
     # Each frame is an Image.Image object (PIL dynamically imported above).
@@ -1462,10 +1626,11 @@ def capture_doc_animation(
             if i < frame_count - 1:
                 page.wait_for_timeout(interval_ms)
 
-    # Always attempt cleanup: a segment may have injected a cursor even when
-    # the top-level cursor_type is unset.  _remove_cursor is a no-op when no
-    # overlay element exists.
+    # Always attempt cleanup: a segment may have injected a cursor or click-circle
+    # even when the corresponding top-level key is unset.  The removal functions
+    # are no-ops when no overlay element exists.
     _remove_cursor(page)
+    _remove_click_circle(page)
 
     # --- assemble GIF ---
     # Build a global palette by stacking all frames vertically into one image
@@ -1615,3 +1780,49 @@ def _inject_cursor(page: Page, cursor_type: str) -> None:
 def _remove_cursor(page: Page) -> None:
     """Remove the cursor overlay element injected by :func:`_inject_cursor`."""
     page.evaluate(_CURSOR_REMOVAL_JS, _CURSOR_OVERLAY_ID)
+
+
+def _ensure_click_tracker(page: Page) -> None:
+    """Install a ``mousedown`` listener that stores the last click position.
+
+    Stores the position in ``window.__uix_click_pos`` as ``{x, y}`` in CSS
+    pixels.  Idempotent — safe to call multiple times on the same page.
+    """
+    page.evaluate(_CLICK_TRACKER_JS)
+
+
+def _inject_click_circle(page: Page) -> None:
+    """Inject a circular overlay centred on the last click position.
+
+    The overlay is a ``position:fixed`` ``<div>`` appended to ``<html>`` with
+    ``pointer-events:none`` and the highest possible ``z-index``.  It is
+    rendered as a semi-transparent filled circle with a white inner border and
+    a thin dark outer shadow ring so it remains legible on both light and dark
+    screenshot backgrounds.
+
+    The position is read from ``window.__uix_click_pos`` set by the
+    ``mousedown`` listener installed by :func:`_ensure_click_tracker`.  If no
+    click has been recorded yet (the listener has not fired) this function is a
+    no-op.
+
+    Call :func:`_remove_click_circle` to clean up after frame capture.
+    """
+    _ensure_click_tracker(page)
+    page.evaluate(
+        _CLICK_CIRCLE_INJECTION_JS,
+        [_CLICK_CIRCLE_OVERLAY_ID, _CLICK_CIRCLE_SIZE, "rgba(255,255,255,0.25)"],
+    )
+
+
+def _remove_click_circle(page: Page) -> None:
+    """Remove the click-circle overlay element injected by :func:`_inject_click_circle`."""
+    page.evaluate(_CLICK_CIRCLE_REMOVAL_JS, _CLICK_CIRCLE_OVERLAY_ID)
+
+
+def _want_click_circle(raw: Any) -> bool:
+    """Return ``True`` when *raw* represents a request to show the click circle.
+
+    ``False``, ``None`` (YAML null), and the string ``"none"`` all mean *hide*.
+    Any other truthy value means *show*.
+    """
+    return bool(raw) and raw != "none"

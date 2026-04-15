@@ -246,6 +246,45 @@ installed (``pip install Pillow``).
     ``frames`` count.  This enables interactions to be interleaved with frame
     capture — for example toggling an entity on and off across the animation.
 
+    Each segment also accepts a ``click_circle`` key (see below).
+
+``click_circle`` *(segments only)*
+    Render a circular overlay centred on the last click position in that
+    segment's frames, providing visual feedback for animations that include a
+    ``click`` interaction.  The circle does **not** persist between segments —
+    it is automatically removed at the start of each segment and only shown for
+    segments that explicitly set ``click_circle: true``.  The recommended
+    pattern is a short segment that performs the click and sets
+    ``click_circle: true``, followed by a segment that simply omits the key
+    (the circle is automatically hidden):
+
+    .. code-block:: yaml
+
+        doc_animation:
+          output: docs/source/assets/page-assets/using/my-feature.gif
+          root: hui-tile-card
+          interval_ms: 80
+          cursor: pointer
+          segments:
+            - interactions:
+                - type: hover
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 400
+              frames: 6
+            - interactions:
+                - type: click
+                  root: hui-tile-card
+                  selector: ha-tile-icon
+                  settle_ms: 800
+              frames: 4           # short segment — circle visible while click settles
+              click_circle: true
+            - frames: 8           # circle automatically removed; show settled state
+              cursor: none
+
+    Accepted values: ``true`` to show; ``false``, ``none`` (YAML null), or
+    ``"none"`` to explicitly hide (equivalent to omitting the key).
+
 Update workflow
 ---------------
 When a Home Assistant update (or a UIX change) causes a doc asset to look
