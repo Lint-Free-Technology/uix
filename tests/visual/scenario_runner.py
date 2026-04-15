@@ -1342,7 +1342,10 @@ def capture_doc_image(
                     )
 
                 diff = ImageChops.difference(img_existing, img_actual)
-                diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+                try:
+                    diff_pixels = sum(1 for p in diff.get_flattened_data() if any(c > 0 for c in p))
+                except AttributeError:
+                    diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))  # type: ignore[attr-defined]
                 total_pixels = img_existing.size[0] * img_existing.size[1]
                 diff_fraction = diff_pixels / total_pixels
 
@@ -1751,7 +1754,10 @@ def capture_doc_animation(
                 "Run with DOC_IMAGE_UPDATE=1 to regenerate."
             )
         diff = ImageChops.difference(ef, af)
-        diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))
+        try:
+            diff_pixels = sum(1 for p in diff.get_flattened_data() if any(c > 0 for c in p))
+        except AttributeError:
+            diff_pixels = sum(1 for p in diff.getdata() if any(c > 0 for c in p))  # type: ignore[attr-defined]
         total_pixels = ef.size[0] * ef.size[1]
         max_diff_fraction = max(max_diff_fraction, diff_pixels / total_pixels)
 
