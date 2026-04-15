@@ -23,6 +23,24 @@
     },
 
     // -------------------------------------------------------------------------
+    // Python — virtual environment setup
+    // -------------------------------------------------------------------------
+
+    // Creates .venv, installs all test dependencies, and installs the
+    // Playwright Chromium browser.  Run this once after cloning the repo.
+    {
+      "label": "Python: Set up virtual environment",
+      "type": "shell",
+      "command": "python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[test]' && playwright install chromium",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "group": "setup"
+      }
+    },
+
+    // -------------------------------------------------------------------------
     // Home Assistant — persistent dev server
     // -------------------------------------------------------------------------
 
@@ -30,7 +48,6 @@
     // can be re-run without waiting for HA to boot each time.
     // Writes HA_URL + HA_TOKEN to .ha_env; the pytest tasks below source it
     // automatically.  Press Ctrl-C in this panel to stop HA.
-    // Requires the virtual environment to be set up: python -m venv .venv && pip install -e ".[test]"
     {
       "label": "HA: Start persistent server",
       "type": "shell",
