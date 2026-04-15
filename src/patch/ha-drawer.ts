@@ -54,7 +54,6 @@ class HaDrawerPatch extends ModdedElement {
     if (this._uixBgController) return;
 
     this._uixBgController = new AbortController();
-    const { signal } = this._uixBgController;
 
     // Listen on the drawer's uix-node for style re-renders.
     // This fires on every template evaluation, so it covers:
@@ -67,11 +66,12 @@ class HaDrawerPatch extends ModdedElement {
     // (before Lit has re-rendered the <style> element), so we wait for
     // `updateComplete` before reading CSS variables via getComputedStyle().
     this._uixBgRetries = 0;
-    this._setupStylesUpdateListener(signal);
+    this._setupStylesUpdateListener();
   }
 
-  private _setupStylesUpdateListener(signal: AbortSignal) {
-    if (signal.aborted) return;
+  private _setupStylesUpdateListener() {
+    const signal = this._uixBgController?.signal;
+    if (!signal || signal.aborted) return;
     const drawerUixNode = this._uix?.find((u) => u.type === "drawer");
     if (drawerUixNode) {
       drawerUixNode.addEventListener(
@@ -89,7 +89,7 @@ class HaDrawerPatch extends ModdedElement {
     if (this._uixBgRetries < 5) {
       this._uixBgRetries++;
       window.setTimeout(
-        () => this._setupStylesUpdateListener(signal),
+        () => this._setupStylesUpdateListener(),
         250 * this._uixBgRetries
       );
     }
