@@ -105,32 +105,36 @@ async function _signPath(hs: any, path: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 /**
- * Remove all background containers associated with `view`.
- * Called from the `hui-view` patch `disconnectedCallback`.
+ * Remove all background containers associated with `element`.
+ * Called from the `ha-drawer` patch `disconnectedCallback`.
  */
-export function cleanupViewBackground(view: HTMLElement): void {
-  const bg = _state.get(view);
+export function cleanupViewBackground(element: HTMLElement): void {
+  const bg = _state.get(element);
   if (bg) {
     bg.camera?.container.remove();
     bg.image?.container.remove();
-    _state.delete(view);
+    _state.delete(element);
   }
 }
 
 /**
- * Read the two background CSS variables from the view's computed styles and
+ * Read the two background CSS variables from the element's computed styles and
  * create / update / remove the corresponding background elements.
+ *
+ * Called from the ha-drawer patch so that backgrounds work in both Lovelace
+ * views and config panels.  Variables must be set on the :host selector in the
+ * uix-drawer theme style so they are readable via getComputedStyle(element).
  *
  * Safe to call repeatedly — it reuses existing containers when the entity has
  * not changed, and tears down stale containers when it has.
  */
-export async function manageViewBackground(view: HTMLElement): Promise<void> {
+export async function manageViewBackground(element: HTMLElement): Promise<void> {
   const hs = await hass();
   if (!hs) return;
 
-  const cameraId = _readVar(view, VAR_CAMERA);
-  const imageId = _readVar(view, VAR_IMAGE);
-  const bg = _get(view);
+  const cameraId = _readVar(element, VAR_CAMERA);
+  const imageId = _readVar(element, VAR_IMAGE);
+  const bg = _get(element);
 
   // --- Camera background ---
   if (cameraId !== (bg.camera?.entityId ?? "")) {
@@ -164,10 +168,6 @@ export async function manageViewBackground(view: HTMLElement): Promise<void> {
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// Camera background
-// ---------------------------------------------------------------------------
 
 async function _setupCameraBackground(
   hs: any,
