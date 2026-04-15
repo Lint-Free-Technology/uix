@@ -1128,8 +1128,14 @@ def _run_dom_assertion(page: Page, assertion: dict[str, Any], atype: str) -> Non
 def _check_traversal(result: Any, assertion: dict[str, Any]) -> None:
     """Raise ``AssertionError`` if the JS returned a traversal error dict."""
     if isinstance(result, dict) and "error" in result:
+        atype = assertion.get("type", "?")
+        root = assertion.get("root", "?")
+        sel = assertion.get("selector", "")
+        detail = f"[{atype}] root={root!r}"
+        if sel:
+            detail += f" selector={sel!r}"
         raise AssertionError(
-            f"Shadow-DOM traversal failed for assertion {assertion}: {result['error']}"
+            f"Shadow-DOM traversal failed {detail}: {result['error']}"
         )
 
 
