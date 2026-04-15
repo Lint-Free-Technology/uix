@@ -106,6 +106,26 @@ async function _signPath(hs: any, path: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 /**
+ * Force-recreate the camera background element.
+ *
+ * Browsers may suspend or drop camera streams while a tab is backgrounded.
+ * Call this when `document.visibilityState` returns to `'visible'` to tear
+ * down the stale stream container and let `manageViewBackground` rebuild it
+ * from scratch, which re-negotiates the WebRTC / HLS connection.
+ *
+ * Image backgrounds are left untouched because they are static <div> elements
+ * that do not go stale on tab switch.
+ */
+export function refreshCameraBackground(element: HTMLElement): void {
+  const bg = _state.get(element);
+  if (bg?.camera) {
+    bg.camera.container.remove();
+    bg.camera = null;
+  }
+  manageViewBackground(element);
+}
+
+/**
  * Remove all background containers associated with `element`.
  * Called from the `ha-drawer` patch `disconnectedCallback`.
  */

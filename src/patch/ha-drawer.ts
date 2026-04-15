@@ -3,6 +3,7 @@ import { patch_element } from "../helpers/patch_function";
 import {
   cleanupViewBackground,
   manageViewBackground,
+  refreshCameraBackground,
 } from "../view-background";
 
 /*
@@ -78,6 +79,18 @@ class HaDrawerPatch extends ModdedElement {
         "uix-styles-update",
         () =>
           drawerUixNode.updateComplete.then(() => manageViewBackground(this)),
+        { signal }
+      );
+      // Recover stale/frozen camera streams when the user returns to this tab.
+      // Browsers may suspend or drop WebRTC/HLS streams while backgrounded;
+      // we force-recreate the stream element on every visibility-restored event.
+      document.addEventListener(
+        "visibilitychange",
+        () => {
+          if (document.visibilityState === "visible") {
+            refreshCameraBackground(this);
+          }
+        },
         { signal }
       );
       // Catch any styles that already rendered before the listener was attached.
