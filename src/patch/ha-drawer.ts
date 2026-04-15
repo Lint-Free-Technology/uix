@@ -5,7 +5,6 @@ import {
   cleanupViewBackground,
   manageViewBackground,
 } from "../view-background";
-import { themesReady } from "../theme-watcher";
 
 /*
 Patch ha-drawer for theme styling
@@ -46,6 +45,7 @@ getComputedStyle(ha-drawer).
 @patch_element("ha-drawer")
 class HaDrawerPatch extends ModdedElement {
   _uixBgController?: AbortController;
+  _uixBgRetries = 0;
 
   updated(_orig, ...args) {
     _orig?.(...args);
@@ -67,10 +67,8 @@ class HaDrawerPatch extends ModdedElement {
     // `uix-styles-update` fires synchronously when `_rendered_styles` is set
     // (before Lit has re-rendered the <style> element), so we wait for
     // `updateComplete` before reading CSS variables via getComputedStyle().
-    window.setTimeout(
-      () => this._setupStylesUpdateListener(signal),
-      BACKGROUND_REFRESH_DELAY_MS
-    );
+    this._uixBgRetries = 0;
+    this._setupStylesUpdateListener(signal);
 
     // Fallback trigger: theme-wide updates may not always produce a different
     // style string (so _style_rendered may be skipped and uix-styles-update
@@ -93,21 +91,27 @@ class HaDrawerPatch extends ModdedElement {
     );
   }
 
-  private async _setupStylesUpdateListener(signal: AbortSignal) {
-    if (signal.aborted) return;
-    // Wait for themes to be ready before looking up the uix-node; without
-    // this the drawer uix-node may not yet exist and the listener would be
-    // silently dropped.
-    await themesReady().catch(() => {});
+  private _setupStylesUpdateListener(signal: AbortSignal) {
     if (signal.aborted) return;
     const drawerUixNode = this._uix?.find((u) => u.type === "drawer");
-    if (!drawerUixNode) return;
-    drawerUixNode.addEventListener(
-      "uix-styles-update",
-      () =>
-        drawerUixNode.updateComplete.then(() => manageViewBackground(this)),
-      { signal }
-    );
+    if (drawerUixNode) {
+      drawerUixNode.addEventListener(
+        "uix-styles-update",
+        () =>
+          drawerUixNode.updateComplete.then(() => manageViewBackground(this)),
+        { signal }
+      );
+      return;
+    }
+    // uix-node may not exist yet (themes loading) — retry with backoff,
+    // matching the pattern used by the icon patch.
+    if (this._uixBgRetries < 5) {
+      this._uixBgRetries++;
+      window.setTimeout(
+        () => this._setupStylesUpdateListener(signal),
+        250 * this._uixBgRetries
+      );
+    }
   }
 
   disconnectedCallback(_orig?: () => void) {
