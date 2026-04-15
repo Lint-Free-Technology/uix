@@ -6,17 +6,20 @@ setup:
   - type: ha_service
     domain: light
     service: turn_on
-    entity_id: light.bed_light
-    brightness: 255
+    data:
+      entity_id: light.bed_light
+      brightness: 255
   - type: ha_service
     domain: light
     service: turn_on
-    entity_id: light.ceiling_lights
-    brightness: 255
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
   - type: ha_service
     domain: input_boolean
     service: turn_on
-    entity_id: input_boolean.test_boolean
+    data:
+      entity_id: input_boolean.test_boolean
 
 cards:
   - type: tile

@@ -1,0 +1,80 @@
+id: doc_spark_button_actions
+description: "Doc image: Forge Button spark action (button.md)"
+view_path: doc-spark-button-actions
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+
+cards:
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: button
+          after: hui-tile-card $ ha-tile-icon
+          label: Living Room
+          entity: light.living_room_rgbww_lights
+          tap_action:
+            action: toggle
+          hold_action:
+            action: more-info
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: tile
+    entity: light.living_room_rgbww_lights
+    name: Living Room
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/button-actions.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-button
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-button
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-button
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s

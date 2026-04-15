@@ -6,8 +6,9 @@ setup:
   - type: ha_service
     domain: light
     service: turn_on
-    entity_id: light.kitchen_lights
-    brightness: 255
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
 
 card:
   type: custom:uix-forge

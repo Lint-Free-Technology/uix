@@ -42,6 +42,8 @@ element:
   entity: light.living_room
 ```
 
+![Button spark basic](../../assets/page-assets/forge/sparks/button-basic.gif)
+
 !!! tip
     You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `after`/`before`.
 
@@ -85,7 +87,7 @@ forge:
     - type: button
       after: hui-tile-card $ ha-tile-icon
       label: Living Room
-      entity: light.living_room
+      entity: light.living_room_rgbww_lights
       tap_action:
         action: toggle
       hold_action:
@@ -95,28 +97,34 @@ element:
   entity: light.bed_light
 ```
 
+![Button spark actions](../../assets/page-assets/forge/sparks/button-actions.gif)
+
 !!! note
     When used inside a tile card the button's click events are isolated from the tile card's own action handler — only the button's configured actions fire.
 
 ## Examples
 
-??? example "Button after the tile icon with a toggle action and light icon"
+??? example "Button after the tile icon with a toggle action and fluorescent light icon"
     ```yaml
     type: custom:uix-forge
     forge:
       mold: card
+      grid_options:
+        columns: 9
       sparks:
         - type: button
           after: hui-tile-card $ ha-tile-icon
           label: Living Room
           end_icon: mdi:lightbulb-fluorescent-tube-outline
-          entity: light.living_room
+          entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
     element:
       type: tile
       entity: light.bed_light
     ```
+
+    ![Button spark icon](../../assets/page-assets/forge/sparks/button-icon.gif)
 
 ??? example "Button before the tile icon with a danger variant"
     ```yaml
@@ -139,6 +147,8 @@ element:
       type: tile
       entity: light.bed_light
     ```
+
+    ![Button spark variant](../../assets/page-assets/forge/sparks/button-variant.gif)
 
 ??? example "Button with start and end icons"
     ```yaml

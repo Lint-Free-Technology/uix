@@ -7,15 +7,18 @@ setup:
   - type: ha_service
     domain: light
     service: turn_on
-    entity_id: light.bed_light
+    data:
+      entity_id: light.bed_light
   - type: ha_service
     domain: light
     service: turn_off
-    entity_id: light.ceiling_lights
+    data:
+      entity_id: light.ceiling_lights
   - type: ha_service
     domain: light
     service: turn_off
-    entity_id: light.kitchen_lights
+    data:
+      entity_id: light.kitchen_lights
 
 card:
   type: entities
