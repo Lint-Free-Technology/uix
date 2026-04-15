@@ -501,12 +501,12 @@ _CLICK_CIRCLE_SIZE = 40
 # multiple times on the same page.
 _CLICK_TRACKER_JS = """\
 () => {
-    if (!window.__uix_click_pos) {
-        window.__uix_click_pos = null;
-        document.addEventListener('mousedown', function(e) {
-            window.__uix_click_pos = {x: e.clientX, y: e.clientY};
-        }, {capture: true, passive: true});
-    }
+    if (window.__uix_click_tracker_installed) return;
+    window.__uix_click_tracker_installed = true;
+    window.__uix_click_pos = null;
+    document.addEventListener('mousedown', function(e) {
+        window.__uix_click_pos = {x: e.clientX, y: e.clientY};
+    }, {capture: true, passive: true});
 }"""
 
 # JavaScript that injects the click-circle overlay at the last click position.
