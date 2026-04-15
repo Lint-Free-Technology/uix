@@ -154,6 +154,32 @@ interactions:
 
 **`click`** — click an element (same selector forms as `hover`):
 
+#### Shadow-root traversal
+
+The `root` field accepts a **full CSS selector string** (not just a tag name) or a **list of such strings** forming a chain.  Each entry is resolved with a depth-first, shadow-piercing search; the runner descends into that element's `shadowRoot` before resolving the next entry.
+
+This means pseudo-classes like `:nth-of-type(2)`, `:last-of-type`, and attribute selectors all work:
+
+```yaml
+interactions:
+  # Target the second uix-forge on the page:
+  - type: click
+    root:
+      - uix-forge:nth-of-type(2)
+      - hui-tile-card
+    selector: ha-tile-icon
+```
+
+> **Caveat:** `:nth-of-type` (and similar pseudo-classes) evaluate among **siblings at the same DOM level** where the element is found — not globally across shadow-root boundaries.  If both `uix-forge` elements are siblings in the same container this works as expected.  If they are each wrapped in a parent (e.g. `hui-card-container`) you may need to target the container instead:
+>
+> ```yaml
+> root:
+>   - hui-card-container:nth-of-type(2)
+>   - uix-forge
+>   - hui-tile-card
+> selector: ha-tile-icon
+> ```
+
 ```yaml
 interactions:
   - type: click

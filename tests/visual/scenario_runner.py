@@ -156,12 +156,42 @@ or a **list of strings** (a chain of selectors, each resolved inside the
 previous element's ``shadowRoot``).  The final element in the chain supplies
 the shadow root that *selector* is then searched in.
 
+Each entry in *root* is a **full CSS selector** — not just an element tag name.
+Pseudo-classes such as ``:nth-of-type(2)``, ``:last-of-type``, ``:nth-child``,
+and attribute selectors (``[name="x"]``) are all valid.
+
 Example — ``ha-button`` inside ``hui-tile-card`` inside ``uix-forge``::
 
     root:
       - uix-forge
       - hui-tile-card
     selector: ha-button
+
+Example — targeting the **second** ``uix-forge`` on the page::
+
+    root:
+      - uix-forge:nth-of-type(2)
+      - hui-tile-card
+    selector: ha-tile-icon
+
+.. note::
+
+    Each step in the chain is resolved by ``querySelectorDeep`` — a
+    depth-first, shadow-piercing search that returns the **first** matching
+    element globally.  Pseudo-classes such as ``:nth-of-type`` therefore
+    operate within whichever DOM level the element is found (i.e. among its
+    siblings there), **not** across shadow-root boundaries.  For
+    ``uix-forge:nth-of-type(2)`` to work the two ``uix-forge`` elements must
+    be **siblings** at the same DOM level (e.g. both direct children of the
+    same grid section element).  If the first target element is wrapped in a
+    container (e.g. ``hui-card-container``) you may need to target the
+    container instead::
+
+        root:
+          - hui-card-container:nth-of-type(2)
+          - uix-forge
+          - hui-tile-card
+        selector: ha-tile-icon
 
 Documentation images
 --------------------
