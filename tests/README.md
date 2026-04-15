@@ -69,6 +69,47 @@ HA_VERSION=2024.6.0 pytest tests/
 Accepted values for `HA_VERSION`: `stable` (default), `beta`, `dev`, or a
 pinned version string such as `2024.6.0`.
 
+### Fast iteration — keep HA running between pytest invocations
+
+By default every `pytest` run boots a fresh HA container (takes ~60–120 s) and
+tears it down when the session ends.  When you are tweaking a `doc_image` or
+`doc_animation` scenario and want to run pytest repeatedly without the boot
+overhead, start a **persistent** HA instance in a separate terminal:
+
+**Terminal 1** (keep this running):
+
+```bash
+make ha_up
+# or equivalently:
+python tests/ha_server.py
+```
+
+The script starts HA, sets up UIX, and writes `HA_URL` + `HA_TOKEN` to
+`.ha_env`.  It prints them to the console too:
+
+```
+export HA_URL=http://localhost:12345
+export HA_TOKEN=eyJ...
+```
+
+**Terminal 2** (iterate as many times as you like):
+
+```bash
+source .ha_env                                                   # set HA_URL / HA_TOKEN
+pytest tests/visual/test_doc_images.py -k my_scenario           # no boot wait!
+# tweak the YAML, then run again instantly:
+pytest tests/visual/test_doc_images.py -k my_scenario
+```
+
+When `HA_URL` and `HA_TOKEN` are set, the test suite skips Docker entirely and
+connects to the pre-running instance.  The container is **not** stopped at the
+end of the session — it keeps running until you press Ctrl-C in Terminal 1.
+
+> **Note:** The persistent container shares state across invocations (Lovelace
+> dashboards accumulate, entity state from previous tests persists, etc.).
+> This is fine for doc_image/doc_animation iteration.  For a clean-slate run,
+> press Ctrl-C to stop HA, then run `pytest` normally (without the env vars).
+
 ---
 
 ## Test structure

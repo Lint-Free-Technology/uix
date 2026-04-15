@@ -9,11 +9,19 @@
 #
 # Quick reference
 # ---------------
+#   make ha_up           Start a persistent HA container for fast iterative work
 #   make doc_images_gen      Generate any missing documentation images (first-run bootstrap)
 #   make doc_images_update   Regenerate ALL documentation images (use after HA/UIX visual changes)
 #   make doc_audit           Check that all doc images are scenario-generated or explicitly excluded
 
-.PHONY: doc_images_gen doc_images_update doc_audit
+.PHONY: ha_up doc_images_gen doc_images_update doc_audit
+
+# Start a persistent Home Assistant container and leave it running.
+# The script prints HA_URL and HA_TOKEN and writes them to .ha_env.
+# In a second terminal:  source .ha_env && pytest tests/visual/test_doc_images.py -k <id>
+# Press Ctrl-C here to stop HA.
+ha_up:
+	python tests/ha_server.py
 
 # Run the doc-image test suite.  Missing images are created automatically;
 # existing images are verified against the current rendered output.
