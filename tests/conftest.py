@@ -229,10 +229,16 @@ def _create_dashboard(ha, url_path: str, title: str) -> None:
         raise TimeoutError("lovelace/dashboards/create timed out after 30 seconds")
     if exc_holder:
         raise exc_holder[0]
-    # "success": false with code "url_path_already_in_use" means it exists — OK.
+    # "success": false is OK when the dashboard already exists.
+    # Older HA versions use code "url_path_already_in_use"; newer ones raise a
+    # generic "home_assistant_error" whose translation_key is "url_already_exists".
     if not result.get("success"):
-        error = (result.get("error") or {}).get("code", "")
-        if error != "url_path_already_in_use":
+        error = result.get("error") or {}
+        already_exists = error.get("code") == "url_path_already_in_use" or (
+            error.get("code") == "home_assistant_error"
+            and error.get("translation_key") == "url_already_exists"
+        )
+        if not already_exists:
             raise RuntimeError(f"lovelace/dashboards/create failed: {result}")
 
 
