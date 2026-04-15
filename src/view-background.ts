@@ -1,3 +1,4 @@
+import { Unpromise } from "@watchable/unpromise";
 import { hass } from "./helpers/hass";
 
 /**
@@ -32,7 +33,7 @@ const CAMERA_DOMAIN = "camera";
  */
 interface HaCameraStreamElement extends HTMLElement {
   hass: unknown;
-  entityId: string;
+  stateObj: unknown;
   muted: boolean;
   controls: boolean;
 }
@@ -151,11 +152,15 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
       }
     }
   } else if (bg.camera) {
-    // Entity unchanged — keep hass up to date for token refresh / reconnection.
+    // Entity unchanged — keep hass and stateObj up to date for token
+    // refresh / reconnection and state changes.
     const streamEl = bg.camera.container.querySelector(
       "ha-camera-stream"
     ) as HaCameraStreamElement | null;
-    if (streamEl) streamEl.hass = hs;
+    if (streamEl) {
+      streamEl.hass = hs;
+      streamEl.stateObj = hs.states[bg.camera.entityId];
+    }
   }
 
   // --- Image background ---
@@ -175,7 +180,7 @@ async function _setupCameraBackground(
   entityId: string
 ): Promise<void> {
   // Wait for ha-camera-stream to be registered (it is loaded lazily by HA).
-  const defined = await Promise.race([
+  const defined = await Unpromise.race([
     customElements.whenDefined("ha-camera-stream").then(() => true),
     new Promise<boolean>((resolve) =>
       setTimeout(() => resolve(false), CAMERA_ELEMENT_LOAD_TIMEOUT_MS)
@@ -198,7 +203,8 @@ async function _setupCameraBackground(
   streamEl.muted = true;
   streamEl.setAttribute("muted", "");
   streamEl.controls = false;
-  streamEl.entityId = entityId;
+  // ha-camera-stream needs stateObj (full entity state) rather than entityId.
+  streamEl.stateObj = hs.states[entityId];
   container.appendChild(streamEl);
 
   document.body.prepend(container);

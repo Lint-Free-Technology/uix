@@ -5,6 +5,7 @@ import {
   cleanupViewBackground,
   manageViewBackground,
 } from "../view-background";
+import { themesReady } from "../theme-watcher";
 
 /*
 Patch ha-drawer for theme styling
@@ -92,7 +93,12 @@ class HaDrawerPatch extends ModdedElement {
     );
   }
 
-  private _setupStylesUpdateListener(signal: AbortSignal) {
+  private async _setupStylesUpdateListener(signal: AbortSignal) {
+    if (signal.aborted) return;
+    // Wait for themes to be ready before looking up the uix-node; without
+    // this the drawer uix-node may not yet exist and the listener would be
+    // silently dropped.
+    await themesReady().catch(() => {});
     if (signal.aborted) return;
     const drawerUixNode = this._uix?.find((u) => u.type === "drawer");
     if (!drawerUixNode) return;
