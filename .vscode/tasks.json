@@ -30,10 +30,11 @@
     // can be re-run without waiting for HA to boot each time.
     // Writes HA_URL + HA_TOKEN to .ha_env; the pytest tasks below source it
     // automatically.  Press Ctrl-C in this panel to stop HA.
+    // Requires the virtual environment to be set up: python -m venv .venv && pip install -e ".[test]"
     {
       "label": "HA: Start persistent server",
       "type": "shell",
-      "command": "python tests/ha_server.py",
+      "command": "source .venv/bin/activate && python tests/ha_server.py",
       "isBackground": true,
       "problemMatcher": {
         "owner": "ha-server",
@@ -56,16 +57,17 @@
     // -------------------------------------------------------------------------
     // pytest — visual / integration tests
     //
-    // Each task sources .ha_env (if present) before running so that a
-    // pre-running HA instance started by "HA: Start persistent server" is
-    // used automatically — no Docker boot wait.  If .ha_env doesn't exist
-    // the source silently fails and pytest spins up a fresh container.
+    // Each task activates the .venv virtual environment and sources .ha_env
+    // (if present) before running so that a pre-running HA instance started by
+    // "HA: Start persistent server" is used automatically — no Docker boot
+    // wait.  If .ha_env doesn't exist the source silently fails and pytest
+    // spins up a fresh container.
     // -------------------------------------------------------------------------
 
     {
       "label": "pytest: All tests",
       "type": "shell",
-      "command": "source .ha_env 2>/dev/null; pytest tests/",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
@@ -76,7 +78,7 @@
     {
       "label": "pytest: Smoke tests (no scenarios)",
       "type": "shell",
-      "command": "source .ha_env 2>/dev/null; pytest tests/visual/test_uix_styling.py",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_uix_styling.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
@@ -87,7 +89,7 @@
     {
       "label": "pytest: All scenarios",
       "type": "shell",
-      "command": "source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
@@ -103,7 +105,7 @@
     {
       "label": "pytest: Doc images — generate / verify",
       "type": "shell",
-      "command": "source .ha_env 2>/dev/null; pytest tests/visual/test_doc_images.py",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_doc_images.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
@@ -114,7 +116,7 @@
     {
       "label": "pytest: Doc images — update all (overwrite)",
       "type": "shell",
-      "command": "source .ha_env 2>/dev/null; DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; DOC_IMAGE_UPDATE=1 pytest tests/visual/test_doc_images.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
@@ -127,7 +129,7 @@
     {
       "label": "pytest: Doc image audit",
       "type": "shell",
-      "command": "pytest tests/test_doc_audit.py",
+      "command": "source .venv/bin/activate && pytest tests/test_doc_audit.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {
