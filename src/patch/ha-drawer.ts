@@ -1,7 +1,6 @@
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
 import {
-  BACKGROUND_REFRESH_DELAY_MS,
   cleanupViewBackground,
   manageViewBackground,
 } from "../view-background";
@@ -57,38 +56,18 @@ class HaDrawerPatch extends ModdedElement {
     this._uixBgController = new AbortController();
     const { signal } = this._uixBgController;
 
-    // Primary trigger: listen on the drawer's uix-node for style re-renders.
+    // Listen on the drawer's uix-node for style re-renders.
     // This fires on every template evaluation, so it covers:
     //   - Initial style render on load.
     //   - Template re-renders driven by HA state changes (e.g. is_state(...)).
     //   - Template re-renders on navigation (panel variable changes).
-    //   - Re-renders after a uix_update (theme reload).
+    //   - Re-renders after a theme reload (uix_update always re-renders styles).
     //
     // `uix-styles-update` fires synchronously when `_rendered_styles` is set
     // (before Lit has re-rendered the <style> element), so we wait for
     // `updateComplete` before reading CSS variables via getComputedStyle().
     this._uixBgRetries = 0;
     this._setupStylesUpdateListener(signal);
-
-    // Fallback trigger: theme-wide updates may not always produce a different
-    // style string (so _style_rendered may be skipped and uix-styles-update
-    // may not fire). The uix_update listener ensures we still re-evaluate
-    // after a theme reload even when the CSS text is unchanged.
-    document.addEventListener(
-      "uix_update",
-      () =>
-        window.setTimeout(
-          () => manageViewBackground(this),
-          BACKGROUND_REFRESH_DELAY_MS
-        ),
-      { signal }
-    );
-
-    // Initial check after styles have had time to render.
-    window.setTimeout(
-      () => manageViewBackground(this),
-      BACKGROUND_REFRESH_DELAY_MS
-    );
   }
 
   private _setupStylesUpdateListener(signal: AbortSignal) {
@@ -101,9 +80,11 @@ class HaDrawerPatch extends ModdedElement {
           drawerUixNode.updateComplete.then(() => manageViewBackground(this)),
         { signal }
       );
+      // Catch any styles that already rendered before the listener was attached.
+      drawerUixNode.updateComplete.then(() => manageViewBackground(this));
       return;
     }
-    // uix-node may not exist yet (themes loading) — retry with backoff,
+    // uix-node may not exist yet (apply_uix is async) — retry with backoff,
     // matching the pattern used by the icon patch.
     if (this._uixBgRetries < 5) {
       this._uixBgRetries++;
