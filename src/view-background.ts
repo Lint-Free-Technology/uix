@@ -15,6 +15,12 @@ export const BACKGROUND_REFRESH_DELAY_MS = 500;
  */
 const CAMERA_ELEMENT_LOAD_TIMEOUT_MS = 15_000;
 
+/**
+ * How long (ms) to keep the spinner as a fallback before forcibly removing it.
+ * Covers error cases where the stream / video never fires a ready event.
+ */
+const SPINNER_FALLBACK_MS = 30_000;
+
 /** CSS variable that selects the camera entity for a view background stream. */
 const VAR_CAMERA = "--uix-view-background-camera-entity";
 
@@ -197,6 +203,85 @@ async function _signPath(hs: any, path: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// Spinner helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Appends a CSS-only loading spinner to `root` and returns the spinner element
+ * so the caller can remove it once the media is ready.
+ */
+function _addSpinner(root: ShadowRoot): HTMLElement {
+  const style = document.createElement("style");
+  style.textContent =
+    "@keyframes uix-bg-spin{to{transform:rotate(360deg)}}" +
+    ".uix-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .4s}" +
+    ".uix-spinner::after{content:'';width:48px;height:48px;border-radius:50%;" +
+    "border:3px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.7);" +
+    "animation:uix-bg-spin .8s linear infinite}";
+  root.appendChild(style);
+
+  const spinner = document.createElement("div");
+  spinner.className = "uix-spinner";
+  root.appendChild(spinner);
+  return spinner;
+}
+
+/** Fade the spinner out, then remove it from the DOM. */
+function _removeSpinner(spinner: HTMLElement): void {
+  spinner.style.opacity = "0";
+  spinner.addEventListener("transitionend", () => spinner.remove(), {
+    once: true,
+  });
+}
+
+/**
+ * Watches `streamEl` (an `ha-camera-stream` LitElement) for the first inner
+ * `<video>` element to fire `playing`, then fades the spinner out.
+ *
+ * Falls back to removing the spinner after `SPINNER_FALLBACK_MS` so that a
+ * broken / slow stream does not leave the spinner on screen indefinitely.
+ */
+function _removeSpinnerWhenCameraPlays(
+  streamEl: HTMLElement,
+  spinner: HTMLElement
+): void {
+  const fallback = setTimeout(
+    () => _removeSpinner(spinner),
+    SPINNER_FALLBACK_MS
+  );
+
+  const tryBind = (): boolean => {
+    const shadow = (streamEl as any).shadowRoot as ShadowRoot | null;
+    if (!shadow) return false;
+    const video = shadow.querySelector("video");
+    if (!video) return false;
+    video.addEventListener(
+      "playing",
+      () => {
+        clearTimeout(fallback);
+        _removeSpinner(spinner);
+      },
+      { once: true }
+    );
+    return true;
+  };
+
+  if (tryBind()) return;
+
+  // Shadow root is open (LitElement) but not yet populated — observe it.
+  const shadow = (streamEl as any).shadowRoot as ShadowRoot | null;
+  if (!shadow) return; // should never happen for a LitElement
+
+  const obs = new MutationObserver(() => {
+    if (tryBind()) obs.disconnect();
+  });
+  obs.observe(shadow, { childList: true, subtree: true });
+
+  // Disconnect the observer when the fallback fires too.
+  setTimeout(() => obs.disconnect(), SPINNER_FALLBACK_MS);
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -374,6 +459,10 @@ async function _setupCameraBackground(
 
   // Providing hass triggers stream negotiation inside ha-camera-stream.
   streamEl.hass = hs;
+
+  // Show a spinner until the inner video starts playing.
+  const spinner = _addSpinner(container.shadowRoot!);
+  _removeSpinnerWhenCameraPlays(streamEl, spinner);
 }
 
 // ---------------------------------------------------------------------------
@@ -414,6 +503,14 @@ async function _setupImageBackground(
 
   document.body.prepend(container);
   bg.image = { entityId, container };
+
+  // Spinner disappears once the image has loaded (or on error).
+  const spinner = _addSpinner(container.shadowRoot!);
+  const preload = new window.Image();
+  const done = () => _removeSpinner(spinner);
+  preload.onload = done;
+  preload.onerror = done;
+  preload.src = signedUrl;
 }
 
 // ---------------------------------------------------------------------------
@@ -439,6 +536,18 @@ function _setupVideoBackground(
 
   document.body.prepend(container);
   bg.video = { entityId: src, container };
+
+  // Spinner disappears when the video can start playing (or after fallback).
+  const spinner = _addSpinner(container.shadowRoot!);
+  const fallback = setTimeout(() => _removeSpinner(spinner), SPINNER_FALLBACK_MS);
+  videoEl.addEventListener(
+    "canplay",
+    () => {
+      clearTimeout(fallback);
+      _removeSpinner(spinner);
+    },
+    { once: true }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -465,4 +574,12 @@ function _setupPlainImageBackground(
 
   document.body.prepend(container);
   bg.plainImage = { entityId: src, container };
+
+  // Spinner disappears once the image has loaded (or on error).
+  const spinner = _addSpinner(container.shadowRoot!);
+  const preload = new window.Image();
+  const done = () => _removeSpinner(spinner);
+  preload.onload = done;
+  preload.onerror = done;
+  preload.src = src;
 }
