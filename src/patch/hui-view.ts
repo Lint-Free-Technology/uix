@@ -85,9 +85,7 @@ class HuiViewPatch extends ModdedElement {
 
   private _setupStylesUpdateListener(signal: AbortSignal) {
     if (signal.aborted) return;
-    const viewUixNode = (this as any)._uix?.find(
-      (u: any) => u.type === "view"
-    );
+    const viewUixNode = this._uix?.find((u) => u.type === "view");
     if (!viewUixNode) return;
     viewUixNode.addEventListener(
       "uix-styles-update",

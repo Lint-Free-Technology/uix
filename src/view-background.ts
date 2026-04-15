@@ -22,6 +22,22 @@ const VAR_IMAGE = "--uix-view-background-image-entity";
 const CAMERA_DOMAIN = "camera";
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/**
+ * Subset of the ha-camera-stream custom element's public interface that UIX
+ * accesses.  The full element is defined in the HA frontend and not available
+ * as a package dependency, so we declare only what we use.
+ */
+interface HaCameraStreamElement extends HTMLElement {
+  hass: unknown;
+  entityId: string;
+  muted: boolean;
+  controls: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Per-view state
 // ---------------------------------------------------------------------------
 
@@ -76,7 +92,10 @@ async function _signPath(hs: any, path: string): Promise<string> {
     });
     return result.path;
   } catch (e) {
-    console.warn(`UIX: Failed to sign path '${path}'; falling back to unsigned URL.`, e);
+    console.warn(
+      `UIX: Failed to sign path '${path}'; falling back to unsigned URL.`,
+      e
+    );
     return path;
   }
 }
@@ -131,7 +150,7 @@ export async function manageViewBackground(view: HTMLElement): Promise<void> {
     // Entity unchanged — keep hass up to date for token refresh / reconnection.
     const streamEl = bg.camera.container.querySelector(
       "ha-camera-stream"
-    ) as any;
+    ) as HaCameraStreamElement | null;
     if (streamEl) streamEl.hass = hs;
   }
 
@@ -172,7 +191,9 @@ async function _setupCameraBackground(
 
   const container = _createContainer();
 
-  const streamEl = document.createElement("ha-camera-stream") as any;
+  const streamEl = document.createElement(
+    "ha-camera-stream"
+  ) as HaCameraStreamElement;
   streamEl.style.cssText = "display:block;width:100%;height:100%;";
   streamEl.muted = true;
   streamEl.setAttribute("muted", "");
