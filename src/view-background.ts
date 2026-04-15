@@ -21,6 +21,12 @@ const VAR_CAMERA = "--uix-view-background-camera-entity";
 /** CSS variable that selects any entity whose entity_picture is the background. */
 const VAR_IMAGE = "--uix-view-background-image-entity";
 
+/** CSS variable for a plain video URL (standard <video> element). */
+const VAR_VIDEO = "--uix-view-background-video";
+
+/** CSS variable for a plain image URL (CSS background-image). */
+const VAR_PLAIN_IMAGE = "--uix-view-background-image";
+
 /**
  * CSS variable controlling how much of the viewport the background covers.
  *
@@ -62,6 +68,8 @@ interface BgEntry {
 interface ViewBg {
   camera: BgEntry | null;
   image: BgEntry | null;
+  video: BgEntry | null;
+  plainImage: BgEntry | null;
   /** ResizeObserver watching ha-sidebar for width changes (view cover mode). */
   sidebarObserver: ResizeObserver | null;
 }
@@ -70,7 +78,13 @@ const _state = new WeakMap<HTMLElement, ViewBg>();
 
 function _get(view: HTMLElement): ViewBg {
   if (!_state.has(view)) {
-    _state.set(view, { camera: null, image: null, sidebarObserver: null });
+    _state.set(view, {
+      camera: null,
+      image: null,
+      video: null,
+      plainImage: null,
+      sidebarObserver: null,
+    });
   }
   return _state.get(view)!;
 }
@@ -135,6 +149,8 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
   bg.sidebarObserver = new ResizeObserver(() => {
     if (bg.camera) _applyCoverStyles(bg.camera.container, drawer);
     if (bg.image) _applyCoverStyles(bg.image.container, drawer);
+    if (bg.video) _applyCoverStyles(bg.video.container, drawer);
+    if (bg.plainImage) _applyCoverStyles(bg.plainImage.container, drawer);
   });
   bg.sidebarObserver.observe(sidebar);
 }
@@ -185,21 +201,28 @@ async function _signPath(hs: any, path: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 /**
- * Force-recreate the camera background element.
+ * Force-recreate the camera and video background elements.
  *
- * Browsers may suspend or drop camera streams while a tab is backgrounded.
- * Call this when `document.visibilityState` returns to `'visible'` to tear
- * down the stale stream container and let `manageViewBackground` rebuild it
- * from scratch, which re-negotiates the WebRTC / HLS connection.
+ * Browsers may suspend or drop camera streams and video playback while a tab
+ * is backgrounded.  Call this when `document.visibilityState` returns to
+ * `'visible'` to tear down stale stream/video containers and let
+ * `manageViewBackground` rebuild them from scratch, which re-negotiates WebRTC
+ * / HLS connections and restarts autoplay.
  *
- * Image backgrounds are left untouched because they are static <div> elements
- * that do not go stale on tab switch.
+ * Entity-image and plain-image backgrounds are left untouched because they are
+ * static <div> elements that do not go stale on tab switch.
  */
 export function refreshCameraBackground(element: HTMLElement): void {
   const bg = _state.get(element);
-  if (bg?.camera) {
-    bg.camera.container.remove();
-    bg.camera = null;
+  if (bg) {
+    if (bg.camera) {
+      bg.camera.container.remove();
+      bg.camera = null;
+    }
+    if (bg.video) {
+      bg.video.container.remove();
+      bg.video = null;
+    }
   }
   manageViewBackground(element);
 }
@@ -213,6 +236,8 @@ export function cleanupViewBackground(element: HTMLElement): void {
   if (bg) {
     bg.camera?.container.remove();
     bg.image?.container.remove();
+    bg.video?.container.remove();
+    bg.plainImage?.container.remove();
     bg.sidebarObserver?.disconnect();
     _state.delete(element);
   }
@@ -235,6 +260,8 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
 
   const cameraId = _readVar(element, VAR_CAMERA);
   const imageId = _readVar(element, VAR_IMAGE);
+  const videoSrc = _readVar(element, VAR_VIDEO);
+  const plainImageSrc = _readVar(element, VAR_PLAIN_IMAGE);
   const bg = _get(element);
 
   // --- Camera background ---
@@ -275,6 +302,30 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
   } else if (bg.image) {
     // Entity unchanged — keep cover positioning up to date.
     _applyCoverStyles(bg.image.container, element);
+  }
+
+  // --- Video background (plain <video> URL) ---
+  if (videoSrc !== (bg.video?.entityId ?? "")) {
+    bg.video?.container.remove();
+    bg.video = null;
+
+    if (videoSrc) {
+      _setupVideoBackground(bg, videoSrc, element);
+    }
+  } else if (bg.video) {
+    _applyCoverStyles(bg.video.container, element);
+  }
+
+  // --- Plain image background (CSS background-image URL) ---
+  if (plainImageSrc !== (bg.plainImage?.entityId ?? "")) {
+    bg.plainImage?.container.remove();
+    bg.plainImage = null;
+
+    if (plainImageSrc) {
+      _setupPlainImageBackground(bg, plainImageSrc, element);
+    }
+  } else if (bg.plainImage) {
+    _applyCoverStyles(bg.plainImage.container, element);
   }
 
   // Keep the sidebar ResizeObserver active so cover positioning updates
@@ -363,4 +414,55 @@ async function _setupImageBackground(
 
   document.body.prepend(container);
   bg.image = { entityId, container };
+}
+
+// ---------------------------------------------------------------------------
+// Video background (plain URL)
+// ---------------------------------------------------------------------------
+
+function _setupVideoBackground(
+  bg: ViewBg,
+  src: string,
+  drawer: HTMLElement
+): void {
+  const container = _createContainer(drawer);
+
+  const videoEl = document.createElement("video");
+  videoEl.style.cssText =
+    "display:block;width:100%;height:100%;object-fit:cover;";
+  videoEl.autoplay = true;
+  videoEl.muted = true;
+  videoEl.loop = true;
+  videoEl.setAttribute("playsinline", "");
+  videoEl.src = src;
+  container.shadowRoot!.appendChild(videoEl);
+
+  document.body.prepend(container);
+  bg.video = { entityId: src, container };
+}
+
+// ---------------------------------------------------------------------------
+// Plain image background (URL)
+// ---------------------------------------------------------------------------
+
+function _setupPlainImageBackground(
+  bg: ViewBg,
+  src: string,
+  drawer: HTMLElement
+): void {
+  const container = _createContainer(drawer);
+
+  const imgEl = document.createElement("div");
+  imgEl.style.cssText = [
+    "width:100%",
+    "height:100%",
+    `background-image:url('${src}')`,
+    "background-size:cover",
+    "background-position:center",
+    "background-repeat:no-repeat",
+  ].join(";");
+  container.shadowRoot!.appendChild(imgEl);
+
+  document.body.prepend(container);
+  bg.plainImage = { entityId: src, container };
 }
