@@ -718,6 +718,7 @@ def push_scenario(ha: HATestContainer, url_path: str, scenario: dict[str, Any]) 
         ``view_path:`` must still be declared in the scenario so that
         :func:`goto_scenario` knows which view to navigate to after the push.
     """
+    __tracebackhide__ = True
     if "dashboard" in scenario:
         config = scenario["dashboard"]
     else:
@@ -757,6 +758,7 @@ def goto_scenario(page: Page, ha_url: str, url_path: str, view_path: str) -> Non
     UIX template evaluation is asynchronous — it finishes after network-idle —
     so we wait an additional ``2×HA_SETTLE_MS`` before running assertions.
     """
+    __tracebackhide__ = True
     page.goto(
         f"{ha_url}/{url_path}/{view_path}",
         wait_until="networkidle",
@@ -791,6 +793,7 @@ def run_interactions(
     ``"interactions"`` for actions taken after navigation.  Only ``ha_service``
     and ``wait`` interaction types are meaningful in a ``setup`` block.
     """
+    __tracebackhide__ = True
     for interaction in scenario.get(key, []):
         itype = interaction["type"]
         if itype == "hover":
@@ -819,6 +822,7 @@ def _perform_hover(page: Page, interaction: dict[str, Any]) -> None:
     using JS (``getBoundingClientRect`` + ``page.mouse.move``).  Otherwise
     a simple page-level Playwright locator hover is used.
     """
+    __tracebackhide__ = True
     settle_ms: int = interaction.get("settle_ms", 500)
 
     if "root" in interaction:
@@ -836,6 +840,7 @@ def _perform_hover_away(page: Page, interaction: dict[str, Any]) -> None:
     Use this after a ``hover`` interaction to trigger tooltip-exit animations
     or any other effect that fires when the pointer leaves an element.
     """
+    __tracebackhide__ = True
     settle_ms: int = interaction.get("settle_ms", 500)
     page.mouse.move(0, 0)
     page.wait_for_timeout(settle_ms)
@@ -851,6 +856,7 @@ def _perform_click(page: Page, interaction: dict[str, Any]) -> None:
     Use ``settle_ms`` to allow enough time for entity state changes and UIX
     template re-renders to propagate back to the browser after the click.
     """
+    __tracebackhide__ = True
     settle_ms: int = interaction.get("settle_ms", 500)
 
     if "root" in interaction:
@@ -864,6 +870,7 @@ def _perform_click(page: Page, interaction: dict[str, Any]) -> None:
 
 def _get_element_rect(page: Page, interaction: dict[str, Any]) -> dict[str, float]:
     """Return the ``{x, y, w, h}`` bounding rect for an element inside a shadow root."""
+    __tracebackhide__ = True
     raw_root = interaction["root"]
     roots = [raw_root] if isinstance(raw_root, str) else list(raw_root)
     selector: str = interaction.get("selector", "")
@@ -881,6 +888,7 @@ def _get_element_rect(page: Page, interaction: dict[str, Any]) -> dict[str, floa
 
 def _call_ha_service(ha: HATestContainer, interaction: dict[str, Any]) -> None:
     """Call a Home Assistant service via the REST API."""
+    __tracebackhide__ = True
     domain = interaction["domain"]
     service = interaction["service"]
     data: dict[str, Any] = dict(interaction.get("data", {}))
@@ -1570,6 +1578,7 @@ def capture_doc_animation(
 
     def _compute_clip() -> dict[str, float] | None:
         """Return the screenshot clip rect for the configured *root*, or None."""
+        __tracebackhide__ = True
         if "root" not in doc_animation:
             return None
         rect = _get_doc_image_rect(page, doc_animation["root"])
@@ -1582,6 +1591,7 @@ def capture_doc_animation(
 
     def take_frame(clip: dict[str, float] | None) -> Any:
         """Capture one animation frame using a pre-computed *clip* rect."""
+        __tracebackhide__ = True
         png_bytes = (
             page.screenshot(clip=clip, full_page=False, scale=scale)
             if clip is not None
@@ -1599,6 +1609,7 @@ def capture_doc_animation(
 
     def capture_segment(seg: dict[str, Any]) -> None:
         """Run a segment's optional interactions then capture its frames."""
+        __tracebackhide__ = True
         nonlocal fixed_clip
         if "interactions" in seg:
             run_interactions(page, seg, ha=ha)
@@ -1757,6 +1768,7 @@ def capture_doc_animation(
 
 def _get_doc_image_rect(page: Page, selector: str) -> dict[str, float]:
     """Find *selector* anywhere in the DOM (piercing shadow roots) and return its bounding rect."""
+    __tracebackhide__ = True
     rect = page.evaluate(
         f"""(selector) => {{
             {_QUERY_DEEP_JS}
