@@ -114,6 +114,32 @@
         "group": "pytest"
       }
     },
+    // Prompts for a scenario id (or -k expression) and runs just that test.
+    // Start "HA: Start persistent server" first for instant re-runs — no
+    // Docker boot wait.  Re-running is safe: the dashboard is created once
+    // and then overwritten per-scenario; there are no stale-state issues.
+    {
+      "label": "pytest: Run single scenario",
+      "type": "shell",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "group": "pytest"
+      }
+    },
+    {
+      "label": "pytest: Run single doc image",
+      "type": "shell",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_doc_images.py -k '${input:scenarioId}'",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "group": "pytest"
+      }
+    },
 
     // -------------------------------------------------------------------------
     // pytest — documentation images / animations
@@ -153,6 +179,13 @@
         "panel": "shared",
         "group": "pytest"
       }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "scenarioId",
+      "type": "promptString",
+      "description": "Scenario id or pytest -k expression (e.g. card_basic_style)"
     }
   ]
 }
