@@ -183,12 +183,11 @@ Example — targeting the **second** ``uix-forge`` on the page::
     siblings there), **not** across shadow-root boundaries.  For
     ``uix-forge:nth-of-type(2)`` to work the two ``uix-forge`` elements must
     be **siblings** at the same DOM level (e.g. both direct children of the
-    same grid section element).  If the first target element is wrapped in a
-    container (e.g. ``hui-card-container``) you may need to target the
-    container instead::
+    same grid section element).  In a standard sections/grid view each card
+    is wrapped in a ``div.card`` element, so target that instead::
 
         root:
-          - hui-card-container:nth-of-type(2)
+          - div.card:nth-of-type(2)
           - uix-forge
           - hui-tile-card
         selector: ha-tile-icon
