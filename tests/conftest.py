@@ -105,6 +105,9 @@ class _ExternalHA:
     def stop(self) -> None:
         """No-op — the caller (ha_server.py) is responsible for teardown."""
 
+    def __repr__(self) -> str:
+        return f"_ExternalHA({self._url!r})"
+
 
 # ---------------------------------------------------------------------------
 # Session-scoped HA container
