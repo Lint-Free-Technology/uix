@@ -228,9 +228,26 @@ function _addSpinner(root: ShadowRoot): HTMLElement {
 
 /** Fade the spinner out, then remove it from the DOM. */
 function _removeSpinner(spinner: HTMLElement): void {
-  spinner.style.opacity = "0";
-  spinner.addEventListener("transitionend", () => spinner.remove(), {
-    once: true,
+  // Defer to the next animation frame to guarantee the browser has painted
+  // the spinner at opacity 1 before we start the fade.  Without this, if the
+  // media-ready event fires in the same paint frame the spinner was added, the
+  // browser sees no computed-style delta and skips the transition entirely,
+  // making the spinner vanish instantly.
+  requestAnimationFrame(() => {
+    spinner.style.opacity = "0";
+    // Fallback: remove the spinner directly if transitionend never fires (e.g.
+    // the element leaves the render tree before the transition completes, or
+    // the browser decided not to run it).
+    const remove = () => spinner.remove();
+    const fallback = setTimeout(remove, 600); // safely after the 0.4 s fade
+    spinner.addEventListener(
+      "transitionend",
+      () => {
+        clearTimeout(fallback);
+        remove();
+      },
+      { once: true }
+    );
   });
 }
 
