@@ -1,3 +1,9 @@
+## [6.3.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.6...v6.3.0-beta.7) (2026-04-16)
+
+### ⭐ New Features
+
+* add `uix-bg-image` class to image view background divs + docs ([#239](https://github.com/Lint-Free-Technology/uix/issues/239)) ([820cd09](https://github.com/Lint-Free-Technology/uix/commit/820cd096b6a1e3d07256212a792b0c1d66e59ec4))
+
 ## [6.3.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.5...v6.3.0-beta.6) (2026-04-16)
 
 ### ⭐ New Features
