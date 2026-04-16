@@ -21,6 +21,7 @@ UIX can display a full-screen **camera stream**, **video**, or **image** as a ba
 | `--uix-view-background-image` | Plain image URL — UIX renders a cover-sized CSS `background-image` |
 | `--uix-view-background` | Full CSS `background` shorthand value — applied directly to the background div; user is responsible for `url()`, sizing, positioning, etc. |
 | `--uix-view-background-cover` | `view` (default) or `full` — controls viewport coverage (see [below](#coverage-modes)) |
+| `--uix-camera-position` | Camera background position keyword — `center` (default), `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right` |
 
 **Priority order**: `camera-entity` → `image-entity` → `video` → `image` → `background`.  All five slots can be active simultaneously as independent layers.
 
@@ -159,16 +160,25 @@ If you wish to adjust position or other attributes of the view background you ca
 | Image | `div.uix-bg-image` |
 | Background shorthand | `div.uix-bg-image` |
 
-Center a camera view vertically:
+Camera backgrounds are **centred by default** — the stream fills the container and any aspect-ratio overflow is clipped symmetrically on all sides.  Use `--uix-camera-position` to change where the stream is anchored when it overflows:
+
+| Value | Description |
+|---|---|
+| `center` *(default)* | Centred horizontally and vertically |
+| `top` | Anchored to the top edge |
+| `bottom` | Anchored to the bottom edge |
+| `left` | Anchored to the left edge |
+| `right` | Anchored to the right edge |
+| `top-left` | Anchored to the top-left corner |
+| `top-right` | Anchored to the top-right corner |
+| `bottom-left` | Anchored to the bottom-left corner |
+| `bottom-right` | Anchored to the bottom-right corner |
 
 ```yaml
-  uix-view-background: |
+  uix-drawer: |
     :host {
-      display: flex;
-      align-items: center;
-    }
-    ha-camera-stream {
-      height: unset !important;
+      --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-position: top;
     }
 ```
 
@@ -182,11 +192,9 @@ UIX injects a default transform rule into every camera background so that you ca
 | `--uix-camera-pan-x` | `0%` | Horizontal shift.  Accepts any CSS length or percentage. Positive values move the stream right (showing more of the left side of the camera). |
 | `--uix-camera-pan-y` | `0%` | Vertical shift.  Accepts any CSS length or percentage. Positive values move the stream down (showing more of the top of the camera). |
 
-**Centering**: By default the stream fills the container 100 × 100 % and `transform-origin: center` ensures zooming always scales from the centre — so the camera is centred at every zoom level.  The pan variables shift from that centred position in screen space, independently of the current zoom level (10% pan is always a 10% screen-space shift).
+**Centering**: `transform-origin: center` ensures zooming always scales from the centre of the stream — so the camera stays centred at every zoom level.  The pan variables shift from that centred position in screen space, independently of the current zoom level (10% pan is always a 10% screen-space shift).
 
-If the camera's aspect ratio differs from the viewport you may see letterboxing.  Use the vertical-centering example above to remove black bars.
-
-**Everything in one place (zoom + camera entity in `uix-drawer`):**
+**Everything in one place (position + zoom + camera entity in `uix-drawer`):**
 
 ```yaml
 my-theme:
@@ -194,6 +202,7 @@ my-theme:
   uix-drawer: |
     :host {
       --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-position: center;
       --uix-camera-zoom: 1.5;
       --uix-camera-pan-x: -10%;
     }

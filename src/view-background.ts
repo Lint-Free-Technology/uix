@@ -56,21 +56,71 @@ const CAMERA_ZOOM_VAR = "--uix-camera-zoom";
 const CAMERA_PAN_X_VAR = "--uix-camera-pan-x";
 const CAMERA_PAN_Y_VAR = "--uix-camera-pan-y";
 
+/** CSS custom property for camera position (e.g. center, top, bottom-right). */
+const CAMERA_POSITION_VAR = "--uix-camera-position";
+
 /**
- * CSS injected into every camera-background shadow root so that users can
- * control zoom and pan via CSS custom properties.
+ * Internal CSS custom property names written to the camera container as inline
+ * styles by `_syncCameraTransformVars`.  They drive the flex alignment in
+ * CAMERA_TRANSFORM_CSS and are not part of the public API.
+ */
+const CAMERA_ALIGN_ITEMS_VAR = "--_uix-cam-ai";
+const CAMERA_JUSTIFY_CONTENT_VAR = "--_uix-cam-jc";
+
+/**
+ * Maps `--uix-camera-position` keyword values to
+ * [align-items, justify-content] pairs for a `flex-direction: column` container.
+ *
+ * In column flex:
+ *   align-items     → cross-axis  → horizontal positioning
+ *   justify-content → main-axis   → vertical positioning
+ */
+const CAMERA_POSITION_MAP: Record<string, readonly [string, string]> = {
+  center:         ["center",     "center"],
+  top:            ["center",     "flex-start"],
+  bottom:         ["center",     "flex-end"],
+  left:           ["flex-start", "center"],
+  right:          ["flex-end",   "center"],
+  "top-left":     ["flex-start", "flex-start"],
+  "top-right":    ["flex-end",   "flex-start"],
+  "bottom-left":  ["flex-start", "flex-end"],
+  "bottom-right": ["flex-end",   "flex-end"],
+};
+
+/**
+ * CSS injected into every camera-background shadow root.
+ *
+ * Layout: the host is a column-flex container so alignment keywords map
+ * intuitively — `align-items` controls horizontal, `justify-content`
+ * controls vertical.  `--_uix-cam-ai` / `--_uix-cam-jc` are set by
+ * `_syncCameraTransformVars` when the user supplies `--uix-camera-position`.
+ * Both default to `center` so the camera is centred out of the box.
+ *
+ * `ha-camera-stream` fills the container via min-width/height so that the
+ * aspect ratio can overflow in one dimension; overflow is clipped by the
+ * container's own `overflow: hidden`.
  *
  * Transform order: translateX/Y first, then scale.  This keeps pan independent
  * of zoom — 10% pan is always a 10% screen-space shift regardless of the zoom
  * factor, and scaling always happens around the centre of the stream.
  *
  * Supported variables (set in `uix-drawer` or `uix-view-background`):
- *   --uix-camera-zoom    Scale factor (default 1).
- *   --uix-camera-pan-x   Horizontal translate, any CSS length / % (default 0%).
- *   --uix-camera-pan-y   Vertical translate, any CSS length / % (default 0%).
+ *   --uix-camera-position   Named position keyword (default "center").
+ *   --uix-camera-zoom       Scale factor (default 1).
+ *   --uix-camera-pan-x      Horizontal translate, any CSS length / % (default 0%).
+ *   --uix-camera-pan-y      Vertical translate, any CSS length / % (default 0%).
  */
 const CAMERA_TRANSFORM_CSS =
+  ":host{" +
+  "display:flex;" +
+  "flex-direction:column;" +
+  "align-items:var(--_uix-cam-ai,center);" +
+  "justify-content:var(--_uix-cam-jc,center);" +
+  "}" +
   "ha-camera-stream{" +
+  "min-width:100%;" +
+  "min-height:100%;" +
+  "flex-shrink:0;" +
   "transform-origin:center;" +
   "transform:" +
   "translateX(var(--uix-camera-pan-x,0%))" +
@@ -201,20 +251,26 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
 }
 
 /**
- * Reads camera zoom / pan variables from the drawer element and forwards any
- * non-empty values to the camera container as inline CSS custom properties.
+ * Reads camera transform / position variables from the drawer element and
+ * forwards non-empty values to the camera container as inline CSS custom
+ * properties.
  *
  * Because the camera container lives directly on `<body>` rather than inside
  * `<ha-drawer>`, CSS custom properties from `uix-drawer` don't reach it via
  * normal inheritance.  This function copies them explicitly, so users can
- * place `--uix-camera-zoom`, `--uix-camera-pan-x`, and `--uix-camera-pan-y`
- * alongside `--uix-view-background-camera-entity` in `uix-drawer` without
- * needing a separate `uix-view-background` entry.
+ * place all camera variables alongside `--uix-view-background-camera-entity`
+ * in `uix-drawer` without needing a separate `uix-view-background` entry.
+ *
+ * Zoom / pan variables are forwarded directly.
+ *
+ * `--uix-camera-position` is decomposed into the internal
+ * `--_uix-cam-ai` (align-items) and `--_uix-cam-jc` (justify-content)
+ * variables that drive the flex layout in CAMERA_TRANSFORM_CSS.  When the
+ * position variable is absent the internal vars are removed so CAMERA_TRANSFORM_CSS
+ * defaults (both `center`) take effect.
  *
  * Values forwarded as inline styles take precedence over author stylesheet
- * rules (e.g. `uix-view-background`).  When a variable is not set on the
- * drawer, it is removed from the container so the default in
- * CAMERA_TRANSFORM_CSS kicks in.
+ * rules (e.g. `uix-view-background`).
  *
  * Safe to call on every manageViewBackground tick — it is a no-op when no
  * camera background is active.
@@ -222,6 +278,8 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
 function _syncCameraTransformVars(drawer: HTMLElement, bg: ViewBg): void {
   const container = bg.camera?.container;
   if (!container) return;
+
+  // Zoom / pan vars: forward directly.
   for (const varName of [CAMERA_ZOOM_VAR, CAMERA_PAN_X_VAR, CAMERA_PAN_Y_VAR]) {
     const val = _readVar(drawer, varName);
     if (val) {
@@ -229,6 +287,17 @@ function _syncCameraTransformVars(drawer: HTMLElement, bg: ViewBg): void {
     } else {
       container.style.removeProperty(varName);
     }
+  }
+
+  // Position var: decompose into internal align-items / justify-content vars.
+  const pos = _readVar(drawer, CAMERA_POSITION_VAR);
+  const positioning = pos ? CAMERA_POSITION_MAP[pos] : undefined;
+  if (positioning) {
+    container.style.setProperty(CAMERA_ALIGN_ITEMS_VAR, positioning[0]);
+    container.style.setProperty(CAMERA_JUSTIFY_CONTENT_VAR, positioning[1]);
+  } else {
+    container.style.removeProperty(CAMERA_ALIGN_ITEMS_VAR);
+    container.style.removeProperty(CAMERA_JUSTIFY_CONTENT_VAR);
   }
 }
 
@@ -575,7 +644,7 @@ async function _setupCameraBackground(
   const streamEl = document.createElement(
     "ha-camera-stream"
   ) as HaCameraStreamElement;
-  streamEl.style.cssText = "display:block;width:100%;height:100%;";
+  streamEl.style.cssText = "display:block;width:100%;";
   streamEl.muted = true;
   streamEl.setAttribute("muted", "");
   streamEl.controls = false;
