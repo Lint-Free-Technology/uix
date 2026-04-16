@@ -466,7 +466,9 @@ export class UixForge extends LitElement {
       "card",
       this._mergeForgeMacros(this._resolvedUix),
       { config: 
-        { forge: this.forgeConfig, 
+        { 
+          entity: this.config?.entity,
+          forge: this.forgeConfig, 
           element: this.forgedElementConfig 
         }, 
         uixForge: this._sparkController.templateVariables() 
