@@ -1,3 +1,13 @@
+## [6.3.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.5...v6.3.0-beta.6) (2026-04-16)
+
+### ⭐ New Features
+
+* **styling:** view background camera stream, video, and image via theme UIX CSS variables ([#235](https://github.com/Lint-Free-Technology/uix/issues/235)) ([1990a62](https://github.com/Lint-Free-Technology/uix/commit/1990a6255b12dc44f5a8035987a54a47ea60b75a)), closes [#227](https://github.com/Lint-Free-Technology/uix/issues/227)
+
+### 🐞 Bug Fixes
+
+* **test-runner:** Correct custom-card-features asset filename and add dist/ fallback for plugins without release assets ([#238](https://github.com/Lint-Free-Technology/uix/issues/238)) ([1159ea6](https://github.com/Lint-Free-Technology/uix/commit/1159ea6c5274d5ddc1fb74a88c4cae49fda1e6b9))
+
 ## [6.3.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.4...v6.3.0-beta.5) (2026-04-16)
 
 ## [6.3.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.3...v6.3.0-beta.4) (2026-04-16)
