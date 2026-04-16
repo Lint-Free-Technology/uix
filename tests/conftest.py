@@ -35,7 +35,7 @@ import requests
 import websocket
 from ha_testcontainer import HATestContainer, HAVersion
 
-from plugins import download_lovelace_plugins
+from plugins import download_lovelace_plugins, load_plugins
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -293,12 +293,12 @@ def _register_lovelace_resource(ha, url: str, res_type: str = "module") -> None:
 def ha_lovelace_resources(ha) -> None:
     """Register third-party Lovelace plugins served from ``ha-config/www/``.
 
-    Called once per session.  Currently registers:
-
-    * ``auto-entities`` — LFT fork of lovelace-auto-entities (latest release),
-      served at ``/local/auto-entities.js``.
+    Called once per session.  Reads the plugin registry from
+    ``tests/plugins.yaml`` and registers each plugin's JS file as a Lovelace
+    module resource at ``/local/<filename>``.
     """
-    _register_lovelace_resource(ha, "/local/auto-entities.js", "module")
+    for plugin in load_plugins():
+        _register_lovelace_resource(ha, f"/local/{plugin['filename']}", "module")
 
 
 @pytest.fixture(scope="session")

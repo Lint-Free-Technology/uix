@@ -50,8 +50,12 @@ _TRUSTED_DOWNLOAD_HOSTS = frozenset(
 )
 
 
-def _load_plugins() -> list[dict[str, str]]:
-    """Load the plugin registry from ``plugins.yaml``."""
+def load_plugins() -> list[dict[str, str]]:
+    """Load and return the plugin registry from ``plugins.yaml``.
+
+    Each entry is a mapping with at least ``repo``, ``asset``, and
+    ``filename`` keys.
+    """
     with _PLUGINS_YAML.open() as fh:
         data = yaml.safe_load(fh)
     if not isinstance(data, list):
@@ -89,7 +93,7 @@ def download_lovelace_plugins(www_dir: Path) -> None:
         placed here are served at ``/local/<filename>`` by Home Assistant.
     """
     www_dir.mkdir(parents=True, exist_ok=True)
-    for plugin in _load_plugins():
+    for plugin in load_plugins():
         _download_plugin(www_dir, plugin)
 
 
