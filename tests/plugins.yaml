@@ -1,0 +1,10 @@
+# Third-party Lovelace plugins to download on every HA instance startup.
+#
+# Each entry requires:
+#   repo     - GitHub repository in "owner/name" format
+#   asset    - name of the JS asset to download from the latest release
+#   filename - filename to write inside www/ (usually the same as `asset`)
+
+- repo: Lint-Free-Technology/lovelace-auto-entities
+  asset: auto-entities.js
+  filename: auto-entities.js

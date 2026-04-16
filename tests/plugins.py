@@ -10,7 +10,7 @@ copied into a temporary directory, before the HA Docker container starts.
 
 Adding a new plugin
 -------------------
-Append an entry to :data:`LOVELACE_PLUGINS`.  Each entry is a dict with:
+Add an entry to ``tests/plugins.yaml``.  Each entry is a mapping with:
 
 ``repo``
     GitHub repository in ``owner/name`` format.
@@ -28,19 +28,13 @@ from pathlib import Path
 from typing import Any
 
 import requests
+import yaml
 
 # ---------------------------------------------------------------------------
-# Plugin registry
+# Plugin registry — loaded from plugins.yaml in the same directory
 # ---------------------------------------------------------------------------
 
-#: Third-party Lovelace plugins to download on every HA instance startup.
-LOVELACE_PLUGINS: list[dict[str, str]] = [
-    {
-        "repo": "Lint-Free-Technology/lovelace-auto-entities",
-        "asset": "auto-entities.js",
-        "filename": "auto-entities.js",
-    },
-]
+_PLUGINS_YAML = Path(__file__).parent / "plugins.yaml"
 
 _GITHUB_API = "https://api.github.com"
 _TIMEOUT = 30  # seconds
@@ -54,6 +48,15 @@ _TRUSTED_DOWNLOAD_HOSTS = frozenset(
         "githubusercontent.com",
     }
 )
+
+
+def _load_plugins() -> list[dict[str, str]]:
+    """Load the plugin registry from ``plugins.yaml``."""
+    with _PLUGINS_YAML.open() as fh:
+        data = yaml.safe_load(fh)
+    if not isinstance(data, list):
+        raise ValueError(f"{_PLUGINS_YAML} must contain a YAML list, got {type(data).__name__}")
+    return data
 
 
 def _github_headers() -> dict[str, str]:
@@ -73,6 +76,9 @@ def _github_headers() -> dict[str, str]:
 def download_lovelace_plugins(www_dir: Path) -> None:
     """Download the latest release of each registered plugin into *www_dir*.
 
+    The plugin list is read from ``tests/plugins.yaml`` on every call so that
+    changes to the registry are picked up without restarting the process.
+
     Creates *www_dir* if it does not exist.  Files are always overwritten so
     the latest version is guaranteed on every fresh container startup.
 
@@ -83,7 +89,7 @@ def download_lovelace_plugins(www_dir: Path) -> None:
         placed here are served at ``/local/<filename>`` by Home Assistant.
     """
     www_dir.mkdir(parents=True, exist_ok=True)
-    for plugin in LOVELACE_PLUGINS:
+    for plugin in _load_plugins():
         _download_plugin(www_dir, plugin)
 
 
@@ -154,3 +160,4 @@ def _stream_download(url: str, dest: Path) -> None:
     with dest.open("wb") as fh:
         for chunk in resp.iter_content(chunk_size=65536):
             fh.write(chunk)
+
