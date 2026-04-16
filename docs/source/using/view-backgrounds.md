@@ -151,6 +151,8 @@ Canter a camera view vertically
 
 You can use UIX styling on `uix-top-app-bar-fixed` to make the top app bar and sidebar transparent. Further config panels may have their own toolbars which you may also need to style via `uix-config`.
 
+[Example](https://github.com/ngocjohn/hass-config/blob/40288532f57eacbbf9dd38b14f20b31ea615a9f5/config/themes/graphite-auto.yaml#L758-L768) as shared by `@ngocjohn` on Home Assistant Community Forum.
+
 ```yaml
   uix-top-app-bar-fixed: |
     :host {
