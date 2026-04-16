@@ -12,5 +12,5 @@
   filename: auto-entities.js
 
 - repo: Nerwyn/custom-card-features
-  asset: custom-card-features.js
-  filename: custom-card-features.js
+  asset: custom-card-features.min.js
+  filename: custom-card-features.min.js
