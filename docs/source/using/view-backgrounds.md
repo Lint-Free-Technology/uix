@@ -130,11 +130,11 @@ If you wish to adjust position or other attributes of the view background you ca
 | Type | Element |
 | - | - |
 | Camera entity | `ha-camera-stream` |
-| Entity image | `div` |
+| Entity image | `div.uix-bg-image` |
 | Video | `video` |
-| Image | `div` |
+| Image | `div.uix-bg-image` |
 
-Canter a camera view vertically
+Center a camera view vertically:
 
 ```yaml
   uix-view-background: |
@@ -144,6 +144,28 @@ Canter a camera view vertically
     }
     ha-camera-stream {
       height: unset !important;
+    }
+```
+
+### Customising image background CSS properties
+
+Both **entity image** and **plain image** backgrounds render as a `<div class="uix-bg-image">`.  The div defaults to `background-size: cover; background-position: center; background-repeat: no-repeat`.  You can override any of these properties — or add new ones — via the `.uix-bg-image` selector:
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-image: /local/background.png;
+    }
+  uix-view-background: |
+    :host { opacity: 0.8; }
+
+    /* Tile the image instead of stretching it to cover */
+    .uix-bg-image {
+      background-size: 300px 300px;
+      background-repeat: repeat;
+      background-position: top left;
     }
 ```
 
