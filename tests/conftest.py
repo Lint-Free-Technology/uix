@@ -35,7 +35,7 @@ import requests
 import websocket
 from ha_testcontainer import HATestContainer, HAVersion
 
-from plugins import download_lovelace_plugins, load_plugins
+from plugins import download_lovelace_plugins
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -248,61 +248,8 @@ def _create_dashboard(ha, url_path: str, title: str) -> None:
             raise RuntimeError(f"lovelace/dashboards/create failed: {result}")
 
 
-def _register_lovelace_resource(ha, url: str, res_type: str = "module") -> None:
-    """Register a Lovelace resource via the WebSocket API.
-
-    Checks whether *url* is already registered before creating it, so the
-    fixture is idempotent and safe to call on a pre-running instance.
-    """
-    result: dict[str, Any] = {}
-    exc_holder: list[BaseException] = []
-
-    def _run() -> None:
-        try:
-            # List existing resources and skip if already present.
-            list_result = ha._ws_call({"id": 1, "type": "lovelace/resources"})
-            existing_urls = {r.get("url") for r in list_result.get("result", [])}
-            if url in existing_urls:
-                result["skipped"] = True
-                return
-            result.update(
-                ha._ws_call(
-                    {
-                        "id": 2,
-                        "type": "lovelace/resources/create",
-                        "res_type": res_type,
-                        "url": url,
-                    }
-                )
-            )
-        except BaseException as e:  # noqa: BLE001
-            exc_holder.append(e)
-
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    t.join(timeout=30)
-    if t.is_alive():
-        raise TimeoutError("lovelace/resources/create timed out after 30 seconds")
-    if exc_holder:
-        raise exc_holder[0]
-    if not result.get("skipped") and not result.get("success"):
-        raise RuntimeError(f"lovelace/resources/create failed for {url!r}: {result}")
-
-
 @pytest.fixture(scope="session")
-def ha_lovelace_resources(ha) -> None:
-    """Register third-party Lovelace plugins served from ``ha-config/www/``.
-
-    Called once per session.  Reads the plugin registry from
-    ``tests/plugins.yaml`` and registers each plugin's JS file as a Lovelace
-    module resource at ``/local/<filename>``.
-    """
-    for plugin in load_plugins():
-        _register_lovelace_resource(ha, f"/local/{plugin['filename']}", "module")
-
-
-@pytest.fixture(scope="session")
-def ha_lovelace_url_path(ha, ha_lovelace_resources) -> str:
+def ha_lovelace_url_path(ha) -> str:
     """URL path of the dedicated UIX test Lovelace dashboard.
 
     Creates the dashboard (once per session) and returns its ``url_path`` so
