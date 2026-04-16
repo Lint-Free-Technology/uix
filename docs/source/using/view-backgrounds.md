@@ -3,6 +3,9 @@ description: Learn how to display a full-screen camera stream, video, or image a
 ---
 # View Backgrounds
 
+!!! note
+    View backgrounds available in 6.3.0-beta.6
+
 UIX can display a full-screen **camera stream**, **video**, or **image** as a background behind your Home Assistant dashboard views and config panels.  The background is controlled entirely through CSS variables set in your theme and supports Jinja2 templates, so you can switch sources per view without any custom code.
 
 !!! info "How it works"
