@@ -80,20 +80,7 @@ export function buildBillets(billets: BilletConfig, usedIn?: string): string {
   if (entries.length === 0) return "";
   return (
     entries
-      .map(([name, value]) => {
-        if (value === null || value === undefined || typeof value === "string") {
-          // None and strings: simple set variable, used as {{ billet_name }}
-          return `{%- set ${name} = ${_toJinja2Repr(value)} -%}`;
-        }
-        // Numbers, booleans, lists and dicts: use do returns for proper typing,
-        // then store in a set variable so the billet is used as {{ billet_name }}
-        const helperName = `_uix_billet_fn_${name}`;
-        const repr = _toJinja2Repr(value);
-        return (
-          `{%- macro ${helperName}(returns) %}{%- do returns(${repr}) -%}{%- endmacro %}\n` +
-          `{%- set ${name} = (${helperName} | as_function)() -%}`
-        );
-      })
+      .map(([name, value]) => `{%- set ${name} = ${_toJinja2Repr(value)} -%}`)
       .join("\n") + "\n"
   );
 }

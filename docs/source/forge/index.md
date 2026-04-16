@@ -166,7 +166,7 @@ The YAML type of a billet determines how it is represented in templates:
 | List | `my_billet: [1, 2, 3]` | `list` | `{{ my_billet | join(', ') }}` |
 | Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
 
-Numbers, booleans, lists, and mappings are returned as their native Jinja2 types using the Home Assistant `do returns` format, so they behave correctly in comparisons and filters. Empty values and strings are injected as-is.
+Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
 
 #### Billets and foundries
 
