@@ -9,6 +9,7 @@ demo:
 
 lovelace:
   mode: storage
+  resource_mode: yaml
   resources: !include lovelace_resources.yaml
 
 frontend:
