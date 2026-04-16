@@ -174,17 +174,32 @@ Center a camera view vertically:
 
 ### Camera zoom and pan
 
-UIX injects a default transform rule into every camera background so that you can zoom and pan the stream by setting CSS custom properties in your `uix-view-background` style.  No extra CSS boilerplate needed — just set the variables on `:host`.
+UIX injects a default transform rule into every camera background so that you can zoom and pan the stream by setting CSS custom properties.  The variables can be set in **`uix-drawer`** (alongside `--uix-view-background-camera-entity`, for convenience) or in **`uix-view-background`** (for more targeted control).  When set in both places the `uix-drawer` value takes precedence.
 
 | Variable | Default | Description |
 |---|---|---|
 | `--uix-camera-zoom` | `1` | Scale factor — values greater than `1` zoom in, less than `1` zoom out. |
-| `--uix-camera-pan-x` | `0%` | Horizontal translate.  Accepts any CSS length or percentage (e.g. `-10%`, `20px`). |
-| `--uix-camera-pan-y` | `0%` | Vertical translate.  Accepts any CSS length or percentage. |
+| `--uix-camera-pan-x` | `0%` | Horizontal shift.  Accepts any CSS length or percentage. Positive values move the stream right (showing more of the left side of the camera). |
+| `--uix-camera-pan-y` | `0%` | Vertical shift.  Accepts any CSS length or percentage. Positive values move the stream down (showing more of the top of the camera). |
 
-All three variables are inherited so setting them on `:host` is sufficient.  You can also target `ha-camera-stream` directly for per-element overrides.
+**Centering**: By default the stream fills the container 100 × 100 % and `transform-origin: center` ensures zooming always scales from the centre — so the camera is centred at every zoom level.  The pan variables shift from that centred position in screen space, independently of the current zoom level (10% pan is always a 10% screen-space shift).
 
-**Zoom in 50% and pan left:**
+If the camera's aspect ratio differs from the viewport you may see letterboxing.  Use the vertical-centering example above to remove black bars.
+
+**Everything in one place (zoom + camera entity in `uix-drawer`):**
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-zoom: 1.5;
+      --uix-camera-pan-x: -10%;
+    }
+```
+
+**Separate zoom from entity (`uix-view-background` for overrides):**
 
 ```yaml
 my-theme:
@@ -201,14 +216,17 @@ my-theme:
     }
 ```
 
-**Zoom in and centre on the upper-left quadrant (pan right and down):**
+**Zoom in and centre on the upper-left quadrant:**
+
+At 2× zoom, the stream is twice the size of the container.  To bring the upper-left quadrant's centre into view, shift right and down by 50% of the container dimensions:
 
 ```yaml
-  uix-view-background: |
+  uix-drawer: |
     :host {
+      --uix-view-background-camera-entity: camera.garden;
       --uix-camera-zoom: 2;
-      --uix-camera-pan-x: 25%;
-      --uix-camera-pan-y: 25%;
+      --uix-camera-pan-x: 50%;
+      --uix-camera-pan-y: 50%;
     }
 ```
 
@@ -220,14 +238,9 @@ my-theme:
   uix-drawer: |
     :host {
       --uix-view-background-camera-entity: camera.garden;
-    }
-  uix-view-background: |
-    :host {
       {%- if panel.viewUrlPath == 'living-room' -%}
       --uix-camera-zoom: 1.8;
       --uix-camera-pan-x: -15%;
-      {%- else -%}
-      --uix-camera-zoom: 1;
       {%- endif %}
     }
 ```

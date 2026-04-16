@@ -51,11 +51,20 @@ const VAR_BACKGROUND = "--uix-view-background";
  */
 const VAR_COVER = "--uix-view-background-cover";
 
+/** CSS custom property names for camera zoom / pan. */
+const CAMERA_ZOOM_VAR = "--uix-camera-zoom";
+const CAMERA_PAN_X_VAR = "--uix-camera-pan-x";
+const CAMERA_PAN_Y_VAR = "--uix-camera-pan-y";
+
 /**
  * CSS injected into every camera-background shadow root so that users can
- * control zoom and pan via CSS custom properties set in `uix-view-background`.
+ * control zoom and pan via CSS custom properties.
  *
- * Supported variables (set on `:host` or `ha-camera-stream`):
+ * Transform order: translateX/Y first, then scale.  This keeps pan independent
+ * of zoom — 10% pan is always a 10% screen-space shift regardless of the zoom
+ * factor, and scaling always happens around the centre of the stream.
+ *
+ * Supported variables (set in `uix-drawer` or `uix-view-background`):
  *   --uix-camera-zoom    Scale factor (default 1).
  *   --uix-camera-pan-x   Horizontal translate, any CSS length / % (default 0%).
  *   --uix-camera-pan-y   Vertical translate, any CSS length / % (default 0%).
@@ -63,9 +72,10 @@ const VAR_COVER = "--uix-view-background-cover";
 const CAMERA_TRANSFORM_CSS =
   "ha-camera-stream{" +
   "transform-origin:center;" +
-  "transform:scale(var(--uix-camera-zoom,1))" +
-  " translateX(var(--uix-camera-pan-x,0%))" +
+  "transform:" +
+  "translateX(var(--uix-camera-pan-x,0%))" +
   " translateY(var(--uix-camera-pan-y,0%))" +
+  " scale(var(--uix-camera-zoom,1))" +
   "}";
 
 const CAMERA_DOMAIN = "camera";
@@ -188,6 +198,38 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
     if (bg.background) _applyCoverStyles(bg.background.container, drawer);
   });
   bg.sidebarObserver.observe(sidebar);
+}
+
+/**
+ * Reads camera zoom / pan variables from the drawer element and forwards any
+ * non-empty values to the camera container as inline CSS custom properties.
+ *
+ * Because the camera container lives directly on `<body>` rather than inside
+ * `<ha-drawer>`, CSS custom properties from `uix-drawer` don't reach it via
+ * normal inheritance.  This function copies them explicitly, so users can
+ * place `--uix-camera-zoom`, `--uix-camera-pan-x`, and `--uix-camera-pan-y`
+ * alongside `--uix-view-background-camera-entity` in `uix-drawer` without
+ * needing a separate `uix-view-background` entry.
+ *
+ * Values forwarded as inline styles take precedence over author stylesheet
+ * rules (e.g. `uix-view-background`).  When a variable is not set on the
+ * drawer, it is removed from the container so the default in
+ * CAMERA_TRANSFORM_CSS kicks in.
+ *
+ * Safe to call on every manageViewBackground tick — it is a no-op when no
+ * camera background is active.
+ */
+function _syncCameraTransformVars(drawer: HTMLElement, bg: ViewBg): void {
+  const container = bg.camera?.container;
+  if (!container) return;
+  for (const varName of [CAMERA_ZOOM_VAR, CAMERA_PAN_X_VAR, CAMERA_PAN_Y_VAR]) {
+    const val = _readVar(drawer, varName);
+    if (val) {
+      container.style.setProperty(varName, val);
+    } else {
+      container.style.removeProperty(varName);
+    }
+  }
 }
 
 /**
@@ -448,6 +490,10 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
       streamEl.stateObj = hs.states[bg.camera.entityId];
     }
   }
+
+  // Forward camera zoom / pan variables from uix-drawer to the container so
+  // users can keep everything in one place.  No-op when no camera is active.
+  _syncCameraTransformVars(element, bg);
 
   // --- Image background ---
   if (imageId !== (bg.image?.entityId ?? "")) {
