@@ -21,12 +21,12 @@ UIX can display a full-screen **camera stream**, **video**, or **image** as a ba
 | `--uix-view-background-image` | Plain image URL — UIX renders a cover-sized CSS `background-image` |
 | `--uix-view-background` | Full CSS `background` shorthand value — applied directly to the background div; user is responsible for `url()`, sizing, positioning, etc. |
 | `--uix-view-background-cover` | `view` (default) or `full` — controls viewport coverage (see [below](#coverage-modes)) |
-| :camera:  `--uix-camera-position`| Camera background position keyword — `center` (default), `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right` |
+| `--uix-camera-position`| Camera background position keyword — `center` (default), `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right` |
 | :camera:  `--uix-camera-zoom` | Scale factor — values greater than `1` zoom in, less than `1` zoom out. |
 | :camera:  `--uix-camera-pan-x` | Horizontal shift.  Accepts any CSS length or percentage. Positive values move the stream right (showing more of the left side of the camera). |
 | :camera:  `--uix-camera-pan-y` | Vertical shift.  Accepts any CSS length or percentage. Positive values move the stream down (showing more of the top of the camera). |
 
-:camera: The camera CSS variables can be set either on `:host` inside `uix-drawer` or inside `uix-view-background`. See [camera positioning](#camera-positioning) and [camera zoom and pan](#camera-zoom-and-pan).
+:camera: The camera CSS zoom and pan CSS variables can be set either on `:host` inside `uix-drawer` or inside `uix-view-background`. See [camera positioning](#camera-positioning) and [camera zoom and pan](#camera-zoom-and-pan).
 
 **Priority order**: `camera-entity` → `image-entity` → `video` → `image` → `background`.  All five slots can be active simultaneously as independent layers.
 
