@@ -51,6 +51,23 @@ const VAR_BACKGROUND = "--uix-view-background";
  */
 const VAR_COVER = "--uix-view-background-cover";
 
+/**
+ * CSS injected into every camera-background shadow root so that users can
+ * control zoom and pan via CSS custom properties set in `uix-view-background`.
+ *
+ * Supported variables (set on `:host` or `ha-camera-stream`):
+ *   --uix-camera-zoom    Scale factor (default 1).
+ *   --uix-camera-pan-x   Horizontal translate, any CSS length / % (default 0%).
+ *   --uix-camera-pan-y   Vertical translate, any CSS length / % (default 0%).
+ */
+const CAMERA_TRANSFORM_CSS =
+  "ha-camera-stream{" +
+  "transform-origin:center;" +
+  "transform:scale(var(--uix-camera-zoom,1))" +
+  " translateX(var(--uix-camera-pan-x,0%))" +
+  " translateY(var(--uix-camera-pan-y,0%))" +
+  "}";
+
 const CAMERA_DOMAIN = "camera";
 
 // ---------------------------------------------------------------------------
@@ -521,6 +538,13 @@ async function _setupCameraBackground(
   // Content lives in the shadow root so apply_uix can style it via the
   // view-background theme key.
   container.shadowRoot!.appendChild(streamEl);
+
+  // Inject the zoom/pan transform style so users can control it via CSS
+  // custom properties (--uix-camera-zoom, --uix-camera-pan-x/y) in their
+  // uix-view-background theme style.
+  const transformStyle = document.createElement("style");
+  transformStyle.textContent = CAMERA_TRANSFORM_CSS;
+  container.shadowRoot!.appendChild(transformStyle);
 
   document.body.prepend(container);
   bg.camera = { entityId, container };
