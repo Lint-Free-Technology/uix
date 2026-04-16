@@ -128,14 +128,17 @@ element:
 
 ### Template nesting
 
-When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
+If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required.
+
+??? warning "Read if you wish to create your own nesting sequence"
+    When using template nesting, the template nesting characters `<<>>` are replaced with Jinja `raw` directives before the template is rendered. he replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
 
 When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
 
 ??? example "Multiple nesting levels example"
-    The `entity_id` which is in the nested custom feature, which is within a forge, which itself is in a forge with the grid spark, has three levels of nesting applied: `<<< config.entity >>>` will in the end resolve to the template `{#uix#}{{ config.entity }}{#uix#}` in the custom feature.
     ```yaml
     type: custom:uix-forge
+    entity: media_player.kitchen # overall entity in global uix-forge config
     forge:
       mold: card
       sparks:
@@ -148,13 +151,15 @@ When there are multiple forge layers, each additional layer requires one extra `
       square: false
       cards:
         - type: custom:uix-forge
+          entity: "{{ config.entity }}" # use config.entity directly for nested forge
           forge:
             mold: card
           element:
+            entity: "{{ config.entity }}" # use config.entity directly for nested forge element
             type: tile
-            entity: media_player.dcd_browser
-            name: Kitchen
+            state_content: is_volume_muted
         - type: custom:uix-forge
+          entity: "{{ config.entity }}" # use config.entity directly for nested forge
           forge:
             mold: card
           element:
@@ -163,16 +168,20 @@ When there are multiple forge layers, each additional layer requires one extra `
               - type: custom:service-call
                 entries:
                   - type: button
-                    entity_id: input_boolean.test_boolean
+                    entity_id: << config.entity >> # use first level nesting
                     icon: mdi:volume-high
                     haptics: true
                     tap_action:
                       action: perform-action
-                      perform_action: input_boolean.toggle
+                      perform_action: media_player.volume_mute
                       target:
                         entity_id: |
-                          <<< config.entity >>>
+                          <<< config.entity >>> {# use second level nesting #}
+                      data:
+                        is_volume_muted: true
     ```
+
+    ![Nesting example](../assets/page-assets/forge/forge-nesting.gif)
 
 ### Using with auto-entities
 
@@ -229,6 +238,8 @@ element:
   entity: light.bed_light
 ```
 
+![Example using uix styling](../assets/page-assets/forge/uix-styling.png)
+
 ### Element styling
 
 UIX Styling can be applied to the element in the usual way. Only the usual `config` variable is available which is the standard variable resolved by UIX Styling for elements.
@@ -243,11 +254,11 @@ forge:
   uix:
     style: |
       :host {
-        --ha-card-border-radius: 20px;
+        --ha-card-border-radius: 50px;
       }
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
   uix:
     style: |
       span.primary::after {
@@ -255,7 +266,7 @@ element:
       }
 ```
 
-![Example using uix styling](../assets/page-assets/forge/uix-styling.png)
+![Example using uix element styling](../assets/page-assets/forge/uix-element-styling.png)
 
 ## Sections
 
