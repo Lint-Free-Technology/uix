@@ -254,6 +254,50 @@ my-theme:
     }
 ```
 
+**Responsive zoom with media queries:**
+
+CSS variables set inside a `@media` block apply only when that query matches, so you can zoom in on large screens while leaving the camera at natural size on smaller screens:
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+    }
+  uix-view-background: |
+    /* No zoom on small / mobile screens */
+    :host {
+      --uix-camera-zoom: 1;
+    }
+
+    /* Zoom in on large screens (≥ 1280 px wide) */
+    @media (min-width: 1280px) {
+      :host {
+        --uix-camera-zoom: 1.4;
+        --uix-camera-pan-y: -5%;
+      }
+    }
+```
+
+You can combine this with `--uix-camera-position` for screens of different proportions:
+
+```yaml
+  uix-view-background: |
+    /* Portrait / mobile: show the top of the feed */
+    :host {
+      --uix-camera-position: top;
+    }
+
+    /* Landscape / desktop: centre the feed and zoom in slightly */
+    @media (min-aspect-ratio: 16/9) {
+      :host {
+        --uix-camera-position: center;
+        --uix-camera-zoom: 1.3;
+      }
+    }
+```
+
 ### Customising image background CSS properties
 
 Both **entity image** and **plain image** backgrounds render as a `<div class="uix-bg-image">`.  The div defaults to `background-size: cover; background-position: center; background-repeat: no-repeat`.  You can override any of these properties — or add new ones — via the `.uix-bg-image` selector:
