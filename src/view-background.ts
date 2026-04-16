@@ -34,6 +34,14 @@ const VAR_VIDEO = "--uix-view-background-video";
 const VAR_PLAIN_IMAGE = "--uix-view-background-image";
 
 /**
+ * CSS variable for a full CSS `background` shorthand value.
+ * The user is responsible for URL handling, background-size, etc.
+ * The value is applied directly to the `background` property of the same div
+ * used for the plain-image variant.
+ */
+const VAR_BACKGROUND = "--uix-view-background";
+
+/**
  * CSS variable controlling how much of the viewport the background covers.
  *
  *   full  — the background fills the entire viewport, sitting behind the
@@ -76,6 +84,8 @@ interface ViewBg {
   image: BgEntry | null;
   video: BgEntry | null;
   plainImage: BgEntry | null;
+  /** Full CSS background shorthand variant. */
+  background: BgEntry | null;
   /** ResizeObserver watching ha-sidebar for width changes (view cover mode). */
   sidebarObserver: ResizeObserver | null;
 }
@@ -89,6 +99,7 @@ function _get(view: HTMLElement): ViewBg {
       image: null,
       video: null,
       plainImage: null,
+      background: null,
       sidebarObserver: null,
     });
   }
@@ -157,6 +168,7 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
     if (bg.image) _applyCoverStyles(bg.image.container, drawer);
     if (bg.video) _applyCoverStyles(bg.video.container, drawer);
     if (bg.plainImage) _applyCoverStyles(bg.plainImage.container, drawer);
+    if (bg.background) _applyCoverStyles(bg.background.container, drawer);
   });
   bg.sidebarObserver.observe(sidebar);
 }
@@ -365,6 +377,7 @@ export function cleanupViewBackground(element: HTMLElement): void {
     bg.image?.container.remove();
     bg.video?.container.remove();
     bg.plainImage?.container.remove();
+    bg.background?.container.remove();
     bg.sidebarObserver?.disconnect();
     _state.delete(element);
   }
@@ -389,6 +402,7 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
   const imageId = _readVar(element, VAR_IMAGE);
   const videoSrc = _readVar(element, VAR_VIDEO);
   const plainImageSrc = _readVar(element, VAR_PLAIN_IMAGE);
+  const backgroundValue = _readVar(element, VAR_BACKGROUND);
   const bg = _get(element);
 
   // --- Camera background ---
@@ -453,6 +467,18 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
     }
   } else if (bg.plainImage) {
     _applyCoverStyles(bg.plainImage.container, element);
+  }
+
+  // --- Full CSS background shorthand ---
+  if (backgroundValue !== (bg.background?.entityId ?? "")) {
+    bg.background?.container.remove();
+    bg.background = null;
+
+    if (backgroundValue) {
+      _setupBackgroundShorthand(bg, backgroundValue, element);
+    }
+  } else if (bg.background) {
+    _applyCoverStyles(bg.background.container, element);
   }
 
   // Keep the sidebar ResizeObserver active so cover positioning updates
@@ -633,4 +659,26 @@ function _setupPlainImageBackground(
   preload.onload = done;
   preload.onerror = done;
   preload.src = src;
+}
+
+// ---------------------------------------------------------------------------
+// Full CSS background shorthand
+// ---------------------------------------------------------------------------
+
+function _setupBackgroundShorthand(
+  bg: ViewBg,
+  value: string,
+  drawer: HTMLElement
+): void {
+  const container = _createContainer(drawer);
+
+  const imgEl = document.createElement("div");
+  imgEl.className = "uix-bg-image";
+  imgEl.style.cssText = ["width:100%", "height:100%", `background:${value}`].join(
+    ";"
+  );
+  container.shadowRoot!.appendChild(imgEl);
+
+  document.body.prepend(container);
+  bg.background = { entityId: value, container };
 }
