@@ -252,8 +252,12 @@ function _removeSpinner(spinner: HTMLElement): void {
 }
 
 /**
- * Watches `streamEl` (an `ha-camera-stream` LitElement) for the first inner
- * `<video>` element to fire `playing`, then fades the spinner out.
+ * Watches `streamEl` (an `ha-camera-stream` LitElement) for the media element
+ * inside its shadow root and removes the spinner once media is ready.
+ *
+ * `ha-camera-stream` renders either:
+ *   - `<video>` for streaming cameras (WebRTC / HLS) → listen for `playing`
+ *   - `<img>`   for still-image cameras              → listen for `load` / `error`
  *
  * Falls back to removing the spinner after `SPINNER_FALLBACK_MS` so that a
  * broken / slow stream does not leave the spinner on screen indefinitely.
@@ -267,20 +271,41 @@ function _removeSpinnerWhenCameraPlays(
     SPINNER_FALLBACK_MS
   );
 
+  const done = () => {
+    clearTimeout(fallback);
+    _removeSpinner(spinner);
+  };
+
   const tryBind = (): boolean => {
     const shadow = (streamEl as any).shadowRoot as ShadowRoot | null;
     if (!shadow) return false;
+
+    // Streaming camera → <video playing>
     const video = shadow.querySelector("video");
-    if (!video) return false;
-    video.addEventListener(
-      "playing",
-      () => {
-        clearTimeout(fallback);
-        _removeSpinner(spinner);
-      },
-      { once: true }
-    );
-    return true;
+    if (video) {
+      if (!video.paused && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        // Already playing (e.g. fast reconnect).
+        done();
+      } else {
+        video.addEventListener("playing", done, { once: true });
+      }
+      return true;
+    }
+
+    // Still-image camera → <img>
+    const img = shadow.querySelector("img");
+    if (img) {
+      if (img.complete && img.naturalWidth > 0) {
+        // Already loaded.
+        done();
+      } else {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      }
+      return true;
+    }
+
+    return false;
   };
 
   if (tryBind()) return;
