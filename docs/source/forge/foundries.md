@@ -247,15 +247,8 @@ forge:
     label: Kitchen ceiling
 ```
 
-!!! tip "Documenting your slots"
-    It is good practice to leave a comment in the foundry YAML explaining which billets are expected from instances, especially when the billet is `~` and provides no default:
-
-    ```yaml
-    forge:
-      billets:
-        accent: ~    # required — supply a CSS colour value
-        label: ~     # optional — falls back to friendly_name if omitted
-    ```
+!!! note "Comments are stripped"
+    Home Assistant stores foundry config as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances.
 
 ## UIX styling from a foundry
 
