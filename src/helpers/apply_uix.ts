@@ -71,8 +71,9 @@ export function buildBillets(billets: BilletConfig, usedIn?: string): string {
     entries = Object.entries(billets);
   } else {
     const billetNames = Object.keys(billets);
+    const billetRegexes = billetNames.map((name) => ({ name, re: new RegExp(`\\b${name}\\b`) }));
     const usedNames = new Set<string>(
-      billetNames.filter((name) => new RegExp(`\\b${name}\\b`).test(usedIn))
+      billetRegexes.filter(({ re }) => re.test(usedIn)).map(({ name }) => name)
     );
     entries = Object.entries(billets).filter(([name]) => usedNames.has(name));
   }
@@ -86,7 +87,7 @@ export function buildBillets(billets: BilletConfig, usedIn?: string): string {
         }
         // Numbers, booleans, lists and dicts: use do returns for proper typing,
         // then store in a set variable so the billet is used as {{ billet_name }}
-        const helperName = `_uix_bfn_${name}`;
+        const helperName = `_uix_billet_fn_${name}`;
         const repr = _toJinja2Repr(value);
         return (
           `{%- macro ${helperName}(returns) %}{%- do returns(${repr}) -%}{%- endmacro %}\n` +
