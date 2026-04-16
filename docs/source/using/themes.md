@@ -229,6 +229,8 @@ red-theme:
 - `uix-developer-tools`
 - `uix-grid-section`
 - `uix-calendar`
+- `uix-drawer`
+- `uix-view-background`
 
 Also `<any variable>-yaml`.
 
