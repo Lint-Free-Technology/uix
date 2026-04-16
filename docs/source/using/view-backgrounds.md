@@ -184,7 +184,7 @@ UIX injects a default transform rule into every camera background so that you ca
 
 All three variables are inherited so setting them on `:host` is sufficient.  You can also target `ha-camera-stream` directly for per-element overrides.
 
-**Zoom in 50 % and pan left:**
+**Zoom in 50% and pan left:**
 
 ```yaml
 my-theme:
@@ -228,7 +228,7 @@ my-theme:
       --uix-camera-pan-x: -15%;
       {%- else -%}
       --uix-camera-zoom: 1;
-      {%- endif -%};
+      {%- endif %}
     }
 ```
 
