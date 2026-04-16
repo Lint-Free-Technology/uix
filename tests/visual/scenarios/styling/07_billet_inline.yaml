@@ -6,8 +6,9 @@ setup:
   - type: ha_service
     domain: light
     service: turn_on
-    entity_id: light.bed_light
-    brightness: 181
+    data:
+      entity_id: light.bed_light
+      brightness: 181
 
 card:
   type: entities
