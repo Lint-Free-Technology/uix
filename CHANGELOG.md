@@ -1,3 +1,26 @@
+## [6.3.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.3...v6.3.0-beta.4) (2026-04-16)
+
+### 🐞 Bug Fixes
+
+* **forge:** Pass global entity config to forge uix styling ([bf49329](https://github.com/Lint-Free-Technology/uix/commit/bf493290043ad7fcab79544f383787d15390bac4))
+
+### 📔 Documentation
+
+* documentation image generation from scenario YAML files ([#218](https://github.com/Lint-Free-Technology/uix/issues/218)) ([411d165](https://github.com/Lint-Free-Technology/uix/commit/411d1655cd8608cb6b6df03405f8ac20bcea2897))
+* Update tooltip spark documentation with animations ([f6a9bb8](https://github.com/Lint-Free-Technology/uix/commit/f6a9bb8e3a499949afd48b4f16360acb56d7367e))
+
+### ⚙️ Miscellaneous
+
+* add click_circle overlay for visualising clicks in doc animations ([#229](https://github.com/Lint-Free-Technology/uix/issues/229)) ([2eb732e](https://github.com/Lint-Free-Technology/uix/commit/2eb732e6563f0c95160a4536633da1dfbb67fd12))
+* add cursor overlay support to doc_image and doc_animation ([#226](https://github.com/Lint-Free-Technology/uix/issues/226)) ([e045529](https://github.com/Lint-Free-Technology/uix/commit/e0455295b3ac695ec45fd00f5d1d63a569e359f6))
+* Add hover_away interaction type to scenario runner ([#225](https://github.com/Lint-Free-Technology/uix/issues/225)) ([ad93b76](https://github.com/Lint-Free-Technology/uix/commit/ad93b762784fea5c410e21a5b4ff16956a79390a))
+* add segments for interleaved interactions and frame capture ([#222](https://github.com/Lint-Free-Technology/uix/issues/222)) ([9e368ef](https://github.com/Lint-Free-Technology/uix/commit/9e368ef3b562fc9a040bbbcd89e7bbd4e24f4d24))
+* allow CSS-like multi-value padding for snapshot, doc_image, doc_animation ([#228](https://github.com/Lint-Free-Technology/uix/issues/228)) ([7b085b2](https://github.com/Lint-Free-Technology/uix/commit/7b085b23ee6eecacc251f9992ce70f4d1f070ed0))
+* doc_image stepped captures + doc_animation GIF support + doc image audit ([#219](https://github.com/Lint-Free-Technology/uix/issues/219)) ([cd50b2d](https://github.com/Lint-Free-Technology/uix/commit/cd50b2dd41f8801b5d5ae7840741306079979c3e))
+* persistent HA dev server + VS Code task integration ([#230](https://github.com/Lint-Free-Technology/uix/issues/230)) ([4450256](https://github.com/Lint-Free-Technology/uix/commit/44502566fcb53633f9c01cee62417e2644c3b05d))
+* support cards list in scenario runner alongside card ([#221](https://github.com/Lint-Free-Technology/uix/issues/221)) ([468a53a](https://github.com/Lint-Free-Technology/uix/commit/468a53a95a5c0454861d9f967003a2e9644867b8))
+* wrap card in sections view and support dashboard key in push_scenario ([#220](https://github.com/Lint-Free-Technology/uix/issues/220)) ([a3180e5](https://github.com/Lint-Free-Technology/uix/commit/a3180e56e28e87743fee96b6b5e9d146abc5bba9))
+
 ## [6.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.2...v6.3.0-beta.3) (2026-04-13)
 
 ### ⚙️ Miscellaneous
