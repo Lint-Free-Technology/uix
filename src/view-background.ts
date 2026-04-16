@@ -64,8 +64,8 @@ const CAMERA_POSITION_VAR = "--uix-camera-position";
  * styles by `_syncCameraTransformVars`.  They drive the flex alignment in
  * CAMERA_TRANSFORM_CSS and are not part of the public API.
  */
-const CAMERA_ALIGN_ITEMS_VAR = "--_uix-cam-ai";
-const CAMERA_JUSTIFY_CONTENT_VAR = "--_uix-cam-jc";
+const CAMERA_ALIGN_ITEMS_VAR = "--_uix-cam-flex-align";
+const CAMERA_JUSTIFY_CONTENT_VAR = "--_uix-cam-flex-justify";
 
 /**
  * Maps `--uix-camera-position` keyword values to
@@ -92,13 +92,16 @@ const CAMERA_POSITION_MAP: Record<string, readonly [string, string]> = {
  *
  * Layout: the host is a column-flex container so alignment keywords map
  * intuitively — `align-items` controls horizontal, `justify-content`
- * controls vertical.  `--_uix-cam-ai` / `--_uix-cam-jc` are set by
- * `_syncCameraTransformVars` when the user supplies `--uix-camera-position`.
- * Both default to `center` so the camera is centred out of the box.
+ * controls vertical.  `--_uix-cam-flex-align` / `--_uix-cam-flex-justify` are
+ * set by `_syncCameraTransformVars` when the user supplies
+ * `--uix-camera-position`.  Both default to `center` so the camera is centred
+ * out of the box.
  *
- * `ha-camera-stream` fills the container via min-width/height so that the
- * aspect ratio can overflow in one dimension; overflow is clipped by the
- * container's own `overflow: hidden`.
+ * `ha-camera-stream` is left at its natural intrinsic height (derived from the
+ * video's aspect ratio and the element's 100% width).  This allows the flex
+ * container to centre it — forcing `height:100%` causes the internal video
+ * content to anchor to the top of the element regardless of flex alignment.
+ * Any overflow is clipped by the container's `overflow:hidden`.
  *
  * Transform order: translateX/Y first, then scale.  This keeps pan independent
  * of zoom — 10% pan is always a 10% screen-space shift regardless of the zoom
@@ -114,12 +117,10 @@ const CAMERA_TRANSFORM_CSS =
   ":host{" +
   "display:flex;" +
   "flex-direction:column;" +
-  "align-items:var(--_uix-cam-ai,center);" +
-  "justify-content:var(--_uix-cam-jc,center);" +
+  "align-items:var(--_uix-cam-flex-align,center);" +
+  "justify-content:var(--_uix-cam-flex-justify,center);" +
   "}" +
   "ha-camera-stream{" +
-  "min-width:100%;" +
-  "min-height:100%;" +
   "flex-shrink:0;" +
   "transform-origin:center;" +
   "transform:" +
