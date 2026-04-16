@@ -34,6 +34,14 @@ const VAR_VIDEO = "--uix-view-background-video";
 const VAR_PLAIN_IMAGE = "--uix-view-background-image";
 
 /**
+ * CSS variable for a full CSS `background` shorthand value.
+ * The user is responsible for URL handling, background-size, etc.
+ * The value is applied directly to the `background` property of the same div
+ * used for the plain-image variant.
+ */
+const VAR_BACKGROUND = "--uix-view-background";
+
+/**
  * CSS variable controlling how much of the viewport the background covers.
  *
  *   full  — the background fills the entire viewport, sitting behind the
@@ -42,6 +50,84 @@ const VAR_PLAIN_IMAGE = "--uix-view-background-image";
  *            --header-height at the top and the sidebar width on the left.
  */
 const VAR_COVER = "--uix-view-background-cover";
+
+/** CSS custom property names for camera zoom / pan. */
+const CAMERA_ZOOM_VAR = "--uix-camera-zoom";
+const CAMERA_PAN_X_VAR = "--uix-camera-pan-x";
+const CAMERA_PAN_Y_VAR = "--uix-camera-pan-y";
+
+/** CSS custom property for camera position (e.g. center, top, bottom-right). */
+const CAMERA_POSITION_VAR = "--uix-camera-position";
+
+/**
+ * Internal CSS custom property names written to the camera container as inline
+ * styles by `_syncCameraTransformVars`.  They drive the flex alignment in
+ * CAMERA_TRANSFORM_CSS and are not part of the public API.
+ */
+const CAMERA_ALIGN_ITEMS_VAR = "--_uix-cam-flex-align";
+const CAMERA_JUSTIFY_CONTENT_VAR = "--_uix-cam-flex-justify";
+
+/**
+ * Maps `--uix-camera-position` keyword values to
+ * [align-items, justify-content] pairs for a `flex-direction: column` container.
+ *
+ * In column flex:
+ *   align-items     → cross-axis  → horizontal positioning
+ *   justify-content → main-axis   → vertical positioning
+ */
+const CAMERA_POSITION_MAP: Record<string, readonly [string, string]> = {
+  center:         ["center",     "center"],
+  top:            ["center",     "flex-start"],
+  bottom:         ["center",     "flex-end"],
+  left:           ["flex-start", "center"],
+  right:          ["flex-end",   "center"],
+  "top-left":     ["flex-start", "flex-start"],
+  "top-right":    ["flex-end",   "flex-start"],
+  "bottom-left":  ["flex-start", "flex-end"],
+  "bottom-right": ["flex-end",   "flex-end"],
+};
+
+/**
+ * CSS injected into every camera-background shadow root.
+ *
+ * Layout: the host is a column-flex container so alignment keywords map
+ * intuitively — `align-items` controls horizontal, `justify-content`
+ * controls vertical.  `--_uix-cam-flex-align` / `--_uix-cam-flex-justify` are
+ * set by `_syncCameraTransformVars` when the user supplies
+ * `--uix-camera-position`.  Both default to `center` so the camera is centred
+ * out of the box.
+ *
+ * `ha-camera-stream` is left at its natural intrinsic height (derived from the
+ * video's aspect ratio and the element's 100% width).  This allows the flex
+ * container to centre it — forcing `height:100%` causes the internal video
+ * content to anchor to the top of the element regardless of flex alignment.
+ * Any overflow is clipped by the container's `overflow:hidden`.
+ *
+ * Transform order: translateX/Y first, then scale.  This keeps pan independent
+ * of zoom — 10% pan is always a 10% screen-space shift regardless of the zoom
+ * factor, and scaling always happens around the centre of the stream.
+ *
+ * Supported variables (set in `uix-drawer` or `uix-view-background`):
+ *   --uix-camera-position   Named position keyword (default "center").
+ *   --uix-camera-zoom       Scale factor (default 1).
+ *   --uix-camera-pan-x      Horizontal translate, any CSS length / % (default 0%).
+ *   --uix-camera-pan-y      Vertical translate, any CSS length / % (default 0%).
+ */
+const CAMERA_TRANSFORM_CSS =
+  ":host{" +
+  "display:flex;" +
+  "flex-direction:column;" +
+  "align-items:var(--_uix-cam-flex-align,center);" +
+  "justify-content:var(--_uix-cam-flex-justify,center);" +
+  "}" +
+  "ha-camera-stream{" +
+  "flex-shrink:0;" +
+  "transform-origin:center;" +
+  "transform:" +
+  "translateX(var(--uix-camera-pan-x,0%))" +
+  " translateY(var(--uix-camera-pan-y,0%))" +
+  " scale(var(--uix-camera-zoom,1))" +
+  "}";
 
 const CAMERA_DOMAIN = "camera";
 
@@ -76,6 +162,8 @@ interface ViewBg {
   image: BgEntry | null;
   video: BgEntry | null;
   plainImage: BgEntry | null;
+  /** Full CSS background shorthand variant. */
+  background: BgEntry | null;
   /** ResizeObserver watching ha-sidebar for width changes (view cover mode). */
   sidebarObserver: ResizeObserver | null;
 }
@@ -89,6 +177,7 @@ function _get(view: HTMLElement): ViewBg {
       image: null,
       video: null,
       plainImage: null,
+      background: null,
       sidebarObserver: null,
     });
   }
@@ -157,8 +246,60 @@ function _ensureSidebarObserver(bg: ViewBg, drawer: HTMLElement): void {
     if (bg.image) _applyCoverStyles(bg.image.container, drawer);
     if (bg.video) _applyCoverStyles(bg.video.container, drawer);
     if (bg.plainImage) _applyCoverStyles(bg.plainImage.container, drawer);
+    if (bg.background) _applyCoverStyles(bg.background.container, drawer);
   });
   bg.sidebarObserver.observe(sidebar);
+}
+
+/**
+ * Reads camera transform / position variables from the drawer element and
+ * forwards non-empty values to the camera container as inline CSS custom
+ * properties.
+ *
+ * Because the camera container lives directly on `<body>` rather than inside
+ * `<ha-drawer>`, CSS custom properties from `uix-drawer` don't reach it via
+ * normal inheritance.  This function copies them explicitly, so users can
+ * place all camera variables alongside `--uix-view-background-camera-entity`
+ * in `uix-drawer` without needing a separate `uix-view-background` entry.
+ *
+ * Zoom / pan variables are forwarded directly.
+ *
+ * `--uix-camera-position` is decomposed into the internal
+ * `--_uix-cam-ai` (align-items) and `--_uix-cam-jc` (justify-content)
+ * variables that drive the flex layout in CAMERA_TRANSFORM_CSS.  When the
+ * position variable is absent the internal vars are removed so CAMERA_TRANSFORM_CSS
+ * defaults (both `center`) take effect.
+ *
+ * Values forwarded as inline styles take precedence over author stylesheet
+ * rules (e.g. `uix-view-background`).
+ *
+ * Safe to call on every manageViewBackground tick — it is a no-op when no
+ * camera background is active.
+ */
+function _syncCameraTransformVars(drawer: HTMLElement, bg: ViewBg): void {
+  const container = bg.camera?.container;
+  if (!container) return;
+
+  // Zoom / pan vars: forward directly.
+  for (const varName of [CAMERA_ZOOM_VAR, CAMERA_PAN_X_VAR, CAMERA_PAN_Y_VAR]) {
+    const val = _readVar(drawer, varName);
+    if (val) {
+      container.style.setProperty(varName, val);
+    } else {
+      container.style.removeProperty(varName);
+    }
+  }
+
+  // Position var: decompose into internal align-items / justify-content vars.
+  const pos = _readVar(drawer, CAMERA_POSITION_VAR);
+  const positioning = pos ? CAMERA_POSITION_MAP[pos] : undefined;
+  if (positioning) {
+    container.style.setProperty(CAMERA_ALIGN_ITEMS_VAR, positioning[0]);
+    container.style.setProperty(CAMERA_JUSTIFY_CONTENT_VAR, positioning[1]);
+  } else {
+    container.style.removeProperty(CAMERA_ALIGN_ITEMS_VAR);
+    container.style.removeProperty(CAMERA_JUSTIFY_CONTENT_VAR);
+  }
 }
 
 /**
@@ -365,6 +506,7 @@ export function cleanupViewBackground(element: HTMLElement): void {
     bg.image?.container.remove();
     bg.video?.container.remove();
     bg.plainImage?.container.remove();
+    bg.background?.container.remove();
     bg.sidebarObserver?.disconnect();
     _state.delete(element);
   }
@@ -389,6 +531,7 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
   const imageId = _readVar(element, VAR_IMAGE);
   const videoSrc = _readVar(element, VAR_VIDEO);
   const plainImageSrc = _readVar(element, VAR_PLAIN_IMAGE);
+  const backgroundValue = _readVar(element, VAR_BACKGROUND);
   const bg = _get(element);
 
   // --- Camera background ---
@@ -417,6 +560,10 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
       streamEl.stateObj = hs.states[bg.camera.entityId];
     }
   }
+
+  // Forward camera zoom / pan variables from uix-drawer to the container so
+  // users can keep everything in one place.  No-op when no camera is active.
+  _syncCameraTransformVars(element, bg);
 
   // --- Image background ---
   if (imageId !== (bg.image?.entityId ?? "")) {
@@ -455,6 +602,18 @@ export async function manageViewBackground(element: HTMLElement): Promise<void> 
     _applyCoverStyles(bg.plainImage.container, element);
   }
 
+  // --- Full CSS background shorthand ---
+  if (backgroundValue !== (bg.background?.entityId ?? "")) {
+    bg.background?.container.remove();
+    bg.background = null;
+
+    if (backgroundValue) {
+      _setupBackgroundShorthand(bg, backgroundValue, element);
+    }
+  } else if (bg.background) {
+    _applyCoverStyles(bg.background.container, element);
+  }
+
   // Keep the sidebar ResizeObserver active so cover positioning updates
   // automatically whenever the sidebar is resized.
   _ensureSidebarObserver(bg, element);
@@ -486,7 +645,7 @@ async function _setupCameraBackground(
   const streamEl = document.createElement(
     "ha-camera-stream"
   ) as HaCameraStreamElement;
-  streamEl.style.cssText = "display:block;width:100%;height:100%;";
+  streamEl.style.cssText = "display:block;width:100%;";
   streamEl.muted = true;
   streamEl.setAttribute("muted", "");
   streamEl.controls = false;
@@ -495,6 +654,13 @@ async function _setupCameraBackground(
   // Content lives in the shadow root so apply_uix can style it via the
   // view-background theme key.
   container.shadowRoot!.appendChild(streamEl);
+
+  // Inject the zoom/pan transform style so users can control it via CSS
+  // custom properties (--uix-camera-zoom, --uix-camera-pan-x/y) in their
+  // uix-view-background theme style.
+  const transformStyle = document.createElement("style");
+  transformStyle.textContent = CAMERA_TRANSFORM_CSS;
+  container.shadowRoot!.appendChild(transformStyle);
 
   document.body.prepend(container);
   bg.camera = { entityId, container };
@@ -633,4 +799,26 @@ function _setupPlainImageBackground(
   preload.onload = done;
   preload.onerror = done;
   preload.src = src;
+}
+
+// ---------------------------------------------------------------------------
+// Full CSS background shorthand
+// ---------------------------------------------------------------------------
+
+function _setupBackgroundShorthand(
+  bg: ViewBg,
+  value: string,
+  drawer: HTMLElement
+): void {
+  const container = _createContainer(drawer);
+
+  const imgEl = document.createElement("div");
+  imgEl.className = "uix-bg-image";
+  imgEl.style.cssText = ["width:100%", "height:100%", `background:${value}`].join(
+    ";"
+  );
+  container.shadowRoot!.appendChild(imgEl);
+
+  document.body.prepend(container);
+  bg.background = { entityId: value, container };
 }

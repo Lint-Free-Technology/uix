@@ -19,12 +19,19 @@ UIX can display a full-screen **camera stream**, **video**, or **image** as a ba
 | `--uix-view-background-image-entity` | Any entity with `entity_picture` — UIX manages any URL authentication and renders a cover-sized background image |
 | `--uix-view-background-video` | Plain video URL — UIX renders a `<video autoplay muted loop playsinline>` |
 | `--uix-view-background-image` | Plain image URL — UIX renders a cover-sized CSS `background-image` |
+| `--uix-view-background` | Full CSS `background` shorthand value — applied directly to the background div; user is responsible for `url()`, sizing, positioning, etc. |
 | `--uix-view-background-cover` | `view` (default) or `full` — controls viewport coverage (see [below](#coverage-modes)) |
+| :camera:  `--uix-camera-position`| Camera background position keyword — `center` (default), `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right` |
+| :camera:  `--uix-camera-zoom` | Scale factor — values greater than `1` zoom in, less than `1` zoom out. |
+| :camera:  `--uix-camera-pan-x` | Horizontal shift.  Accepts any CSS length or percentage. Positive values move the stream right (showing more of the left side of the camera). |
+| :camera:  `--uix-camera-pan-y` | Vertical shift.  Accepts any CSS length or percentage. Positive values move the stream down (showing more of the top of the camera). |
 
-**Priority order**: `camera-entity` → `image-entity` → `video` → `image`.  All four slots can be active simultaneously as independent layers.
+:camera: The camera CSS variables can be set either on `:host` inside `uix-drawer` or inside `uix-view-background`. See [camera positioning](#camera-positioning) and [camera zoom and pan](#camera-zoom-and-pan).
+
+**Priority order**: `camera-entity` → `image-entity` → `video` → `image` → `background`.  All five slots can be active simultaneously as independent layers.
 
 !!! tip
-    You don't need to include `url()` around any of the CSS variables to use view backgrounds. `url()` will be added if and when required.
+    You don't need to include `url()` around any of the camera entity, image entity, video or image CSS variables to use view backgrounds. `url()` will be added if and when required. You **DO** need to provide if you are using `--uix-view-background`.
 
 ## Coverage modes
 
@@ -74,6 +81,29 @@ my-theme:
     :host {
       --uix-view-background-image: /local/background.jpg;
       --uix-view-background-cover: view;
+    }
+```
+
+### Background shorthand
+
+Use `--uix-view-background` when you need the full CSS `background` shorthand — gradients, multiple images, `url()` with sizing and positioning all in one value.  You are responsible for the complete value.
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background: url('/local/background.jpg') center / cover no-repeat;
+      --uix-view-background-cover: full;
+    }
+```
+
+Gradients work equally well:
+
+```yaml
+  uix-drawer: |
+    :host {
+      --uix-view-background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
     }
 ```
 
@@ -133,17 +163,125 @@ If you wish to adjust position or other attributes of the view background you ca
 | Entity image | `div.uix-bg-image` |
 | Video | `video` |
 | Image | `div.uix-bg-image` |
+| Background shorthand | `div.uix-bg-image` |
 
-Center a camera view vertically:
+### Camera positioning
+
+Camera backgrounds are **centred by default** — the stream fills the container and any aspect-ratio overflow is clipped symmetrically on all sides.  Use `--uix-camera-position` to change where the stream is anchored when it overflows:
+
+| Value | Description |
+|---|---|
+| `center` *(default)* | Centred horizontally and vertically |
+| `top` | Anchored to the top edge |
+| `bottom` | Anchored to the bottom edge |
+| `left` | Anchored to the left edge |
+| `right` | Anchored to the right edge |
+| `top-left` | Anchored to the top-left corner |
+| `top-right` | Anchored to the top-right corner |
+| `bottom-left` | Anchored to the bottom-left corner |
+| `bottom-right` | Anchored to the bottom-right corner |
 
 ```yaml
-  uix-view-background: |
+  uix-drawer: |
     :host {
-      display: flex;
-      align-items: center;
+      --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-position: top;
     }
-    ha-camera-stream {
-      height: unset !important;
+```
+
+### Camera zoom and pan
+
+UIX injects a default transform rule into every camera background so that you can zoom and pan the stream by setting CSS custom properties.  The variables can be set in **`uix-drawer`** (alongside `--uix-view-background-camera-entity`, for convenience) or in **`uix-view-background`** (for more targeted control).  When set in both places the `uix-drawer` value takes precedence.
+
+| Variable | Default | Description |
+|---|---|---|
+| `--uix-camera-zoom` | `1` | Scale factor — values greater than `1` zoom in, less than `1` zoom out. |
+| `--uix-camera-pan-x` | `0%` | Horizontal shift.  Accepts any CSS length or percentage. Positive values move the stream right (showing more of the left side of the camera). |
+| `--uix-camera-pan-y` | `0%` | Vertical shift.  Accepts any CSS length or percentage. Positive values move the stream down (showing more of the top of the camera). |
+
+**Centering**: `--uix-camera-position: center;` ensures zooming always scales from the centre of the stream — so the camera stays centred at every zoom level.  The pan variables shift from that centred position in screen space, independently of the current zoom level (10% pan is always a 10% screen-space shift).
+
+**Everything in one place (position + zoom + camera entity in `uix-drawer`):**
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-position: center;
+      --uix-camera-zoom: 1.5;
+      --uix-camera-pan-x: -10%;
+    }
+```
+
+**Zoom in and centre on the upper-left quadrant:**
+
+At 2× zoom, the stream is twice the size of the container.  To bring the upper-left quadrant's centre into view, shift right and down by 50% of the container dimensions:
+
+```yaml
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      --uix-camera-zoom: 2;
+      --uix-camera-pan-x: 50%;
+      --uix-camera-pan-y: 50%;
+    }
+```
+
+**Per-view zoom with templates:**
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      {%- if panel.viewUrlPath == 'living-room' -%}
+      --uix-camera-zoom: 1.8;
+      --uix-camera-pan-x: -15%;
+      {%- endif %}
+    }
+```
+
+**Responsive zoom with media queries:**
+
+CSS variables set inside a `@media` block apply only when that query matches, so you can zoom in on large screens while leaving the camera at natural size on smaller screens:
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      /* No zoom on small / mobile screens */
+      --uix-camera-zoom: 1;
+    }
+    /* Zoom in on large screens (≥ 1280 px wide) */
+    @media (min-width: 1280px) {
+      :host {
+        --uix-camera-zoom: 1.4;
+        --uix-camera-pan-y: -5%;
+      }
+    }
+```
+
+You can combine this with `--uix-camera-position` for screens of different proportions:
+
+```yaml
+  uix-drawer: |
+    :host {
+      --uix-view-background-camera-entity: camera.garden;
+      /* Portrait / mobile: show the top of the feed */
+      --uix-camera-position: top;
+    }
+
+    /* Landscape / desktop: centre the feed and zoom in slightly */
+    @media (min-aspect-ratio: 16/9) {
+      :host {
+        --uix-camera-position: center;
+        --uix-camera-zoom: 1.3;
+      }
     }
 ```
 

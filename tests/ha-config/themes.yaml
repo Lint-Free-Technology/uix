@@ -49,6 +49,13 @@ uix-test-view-bg-image:
       --uix-view-background-image: /local/media/person-grey.png;
     }
 
+uix-test-view-bg-shorthand:
+  uix-theme: uix-test-view-bg-shorthand
+  uix-drawer: |
+    :host {
+      --uix-view-background: linear-gradient(135deg, teal 0%, purple 100%);
+    }
+
 uix-doc-red-classes:
   uix-theme: uix-doc-red-classes
   primary-color: red
