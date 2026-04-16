@@ -22,6 +22,8 @@ Append an entry to :data:`LOVELACE_PLUGINS`.  Each entry is a dict with:
 
 from __future__ import annotations
 
+import os
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +44,25 @@ LOVELACE_PLUGINS: list[dict[str, str]] = [
 
 _GITHUB_API = "https://api.github.com"
 _TIMEOUT = 30  # seconds
+
+# Trusted hostnames for plugin asset downloads.
+_TRUSTED_DOWNLOAD_HOSTS = frozenset(
+    {
+        "github.com",
+        "objects.githubusercontent.com",
+        "release-assets.githubusercontent.com",
+        "githubusercontent.com",
+    }
+)
+
+
+def _github_headers() -> dict[str, str]:
+    """Return request headers, adding Bearer auth when GITHUB_TOKEN is set."""
+    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +112,7 @@ def _get_latest_release(repo: str) -> dict[str, Any]:
     """Return the latest release metadata from the GitHub API."""
     url = f"{_GITHUB_API}/repos/{repo}/releases/latest"
     try:
-        resp = requests.get(url, timeout=_TIMEOUT, headers={"Accept": "application/vnd.github+json"})
+        resp = requests.get(url, timeout=_TIMEOUT, headers=_github_headers())
         resp.raise_for_status()
     except requests.RequestException as exc:
         raise RuntimeError(
@@ -113,7 +134,18 @@ def _find_asset_url(release: dict[str, Any], asset_name: str, repo: str) -> str:
 
 
 def _stream_download(url: str, dest: Path) -> None:
-    """Stream-download *url* and write to *dest*."""
+    """Stream-download *url* and write to *dest*.
+
+    Raises ``ValueError`` if *url* is not on a trusted GitHub domain to
+    prevent unexpected redirects to untrusted hosts.
+    """
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.hostname or ""
+    if not any(host == h or host.endswith(f".{h}") for h in _TRUSTED_DOWNLOAD_HOSTS):
+        raise ValueError(
+            f"Refusing to download plugin asset from untrusted host {host!r}. "
+            f"Expected one of: {sorted(_TRUSTED_DOWNLOAD_HOSTS)}"
+        )
     try:
         resp = requests.get(url, timeout=_TIMEOUT, stream=True)
         resp.raise_for_status()
