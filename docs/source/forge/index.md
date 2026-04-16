@@ -209,7 +209,7 @@ UIX Forge supports `custom:auto-entities` in two ways:
     card_param: cards
     ```
 
-    ![Example using auto-entites](../assets/page-assets/forge/config-entity.png)
+    ![Example using auto-entites](../assets/page-assets/forge/forge-auto-entities.gif)
 
 ## UIX styling
 

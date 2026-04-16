@@ -36,7 +36,7 @@ card:
 assertions: []
 
 doc_animation:
-  output: docs/source/assets/page-assets/using/forge-auto-entities.gif
+  output: docs/source/assets/page-assets/forge/forge-auto-entities.gif
   root: auto-entities
   padding: 32 16 16 16
   threshold: 0.02
