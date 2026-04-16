@@ -15,7 +15,11 @@ Add an entry to ``tests/plugins.yaml``.  Each entry is a mapping with:
 ``repo``
     GitHub repository in ``owner/name`` format.
 ``asset``
-    Name of the JS asset to download from the release.
+    Name of the JS file to download.  Resolved in this order:
+
+    1. As a release asset attached to the latest GitHub release.
+    2. As a raw file at the repo root for the release tag.
+    3. As a raw file inside the ``dist/`` sub-directory for the release tag.
 ``filename``
     Filename to write inside *www_dir* (usually the same as ``asset``).
 """
@@ -37,6 +41,7 @@ import yaml
 _PLUGINS_YAML = Path(__file__).parent / "plugins.yaml"
 
 _GITHUB_API = "https://api.github.com"
+_RAW_BASE = "https://raw.githubusercontent.com"
 _TIMEOUT = 30  # seconds
 
 # Trusted hostnames for plugin asset downloads.
@@ -44,6 +49,7 @@ _TRUSTED_DOWNLOAD_HOSTS = frozenset(
     {
         "github.com",
         "objects.githubusercontent.com",
+        "raw.githubusercontent.com",
         "release-assets.githubusercontent.com",
         "githubusercontent.com",
     }
@@ -128,7 +134,13 @@ def _write_lovelace_resources(config_dir: Path, plugins: list[dict[str, str]]) -
 
 
 def _download_plugin(www_dir: Path, plugin: dict[str, str]) -> None:
-    """Fetch *plugin*'s latest release asset and write it to *www_dir*."""
+    """Fetch *plugin*'s latest release asset and write it to *www_dir*.
+
+    Resolution order:
+    1. Release asset attached to the latest GitHub release.
+    2. Raw file at the repo root for the release tag.
+    3. Raw file in the ``dist/`` folder for the release tag.
+    """
     repo = plugin["repo"]
     asset_name = plugin["asset"]
     filename = plugin["filename"]
@@ -136,7 +148,9 @@ def _download_plugin(www_dir: Path, plugin: dict[str, str]) -> None:
     release = _get_latest_release(repo)
     tag = release.get("tag_name", "unknown")
 
-    asset_url = _find_asset_url(release, asset_name, repo)
+    asset_url = _find_asset_url(release, asset_name)
+    if asset_url is None:
+        asset_url = _find_raw_url(repo, tag, asset_name)
 
     dest = www_dir / filename
     _stream_download(asset_url, dest)
@@ -156,15 +170,36 @@ def _get_latest_release(repo: str) -> dict[str, Any]:
     return resp.json()
 
 
-def _find_asset_url(release: dict[str, Any], asset_name: str, repo: str) -> str:
-    """Return the browser_download_url for *asset_name* in *release*."""
+def _find_asset_url(release: dict[str, Any], asset_name: str) -> str | None:
+    """Return the browser_download_url for *asset_name* in *release*, or ``None``."""
     for asset in release.get("assets", []):
         if asset.get("name") == asset_name:
             return asset["browser_download_url"]
-    tag = release.get("tag_name", "?")
+    return None
+
+
+def _find_raw_url(repo: str, tag: str, asset_name: str) -> str:
+    """Return the raw GitHub URL for *asset_name* in *repo* at *tag*.
+
+    Tries the repo root first, then the ``dist/`` sub-directory.
+
+    Raises ``RuntimeError`` if the file cannot be found at either location.
+    """
+    candidates = [
+        f"{_RAW_BASE}/{repo}/{tag}/{asset_name}",
+        f"{_RAW_BASE}/{repo}/{tag}/dist/{asset_name}",
+    ]
+    headers = _github_headers()
+    for url in candidates:
+        try:
+            resp = requests.head(url, timeout=_TIMEOUT, headers=headers, allow_redirects=True)
+            if resp.status_code == 200:
+                return url
+        except requests.RequestException:
+            continue
     raise RuntimeError(
-        f"Asset {asset_name!r} not found in {repo}@{tag} release. "
-        f"Available assets: {[a.get('name') for a in release.get('assets', [])]}"
+        f"Could not find {asset_name!r} for {repo}@{tag} as a release asset, "
+        f"at the repo root, or in the dist/ folder."
     )
 
 
