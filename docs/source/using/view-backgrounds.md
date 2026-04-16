@@ -163,9 +163,9 @@ my-theme:
 
     /* Tile the image instead of stretching it to cover */
     .uix-bg-image {
-      background-size: 300px 300px;
-      background-repeat: repeat;
-      background-position: top left;
+      background-size: 300px 300px !important;
+      background-repeat: repeat !important;
+      background-position: top left !important;
     }
 ```
 
