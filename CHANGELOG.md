@@ -1,3 +1,9 @@
+## [6.3.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.7...v6.3.0-beta.8) (2026-04-16)
+
+### ⭐ New Features
+
+* add `--uix-view-background` shorthand variable and camera zoom/pan/position CSS variables ([#241](https://github.com/Lint-Free-Technology/uix/issues/241)) ([c26f892](https://github.com/Lint-Free-Technology/uix/commit/c26f892b4c6d5400d58ab435a18eb0bae06314e5))
+
 ## [6.3.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.6...v6.3.0-beta.7) (2026-04-16)
 
 ### ⭐ New Features
