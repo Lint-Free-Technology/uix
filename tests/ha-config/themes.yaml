@@ -42,6 +42,13 @@ uix-doc-red-template:
       border: 1px solid {% if is_state(config.entity, 'on') %} red {% else %} black {% endif %};
     }
 
+uix-test-view-bg-image:
+  uix-theme: uix-test-view-bg-image
+  uix-drawer: |
+    :host {
+      --uix-view-background-image: /local/media/person-grey.png;
+    }
+
 uix-doc-red-classes:
   uix-theme: uix-doc-red-classes
   primary-color: red

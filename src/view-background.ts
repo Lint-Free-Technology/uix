@@ -533,6 +533,7 @@ async function _setupImageBackground(
 
   // The image fill div lives in the shadow root so apply_uix can target it.
   const imgEl = document.createElement("div");
+  imgEl.className = "uix-bg-image";
   imgEl.style.cssText = [
     "width:100%",
     "height:100%",
@@ -611,6 +612,7 @@ function _setupPlainImageBackground(
   const container = _createContainer(drawer);
 
   const imgEl = document.createElement("div");
+  imgEl.className = "uix-bg-image";
   imgEl.style.cssText = [
     "width:100%",
     "height:100%",
