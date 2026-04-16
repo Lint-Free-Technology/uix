@@ -548,23 +548,30 @@ function _setupVideoBackground(
   videoEl.muted = true;
   videoEl.loop = true;
   videoEl.setAttribute("playsinline", "");
+
+  // Attach the canplay listener BEFORE setting src so we never miss the event
+  // even for cached / fast-loading local videos (e.g. /local/background.mp4).
+  const spinner = _addSpinner(container.shadowRoot!);
+  const fallback = setTimeout(() => _removeSpinner(spinner), SPINNER_FALLBACK_MS);
+  const onCanPlay = () => {
+    clearTimeout(fallback);
+    _removeSpinner(spinner);
+  };
+  videoEl.addEventListener("canplay", onCanPlay, { once: true });
+
   videoEl.src = src;
   container.shadowRoot!.appendChild(videoEl);
 
   document.body.prepend(container);
   bg.video = { entityId: src, container };
 
-  // Spinner disappears when the video can start playing (or after fallback).
-  const spinner = _addSpinner(container.shadowRoot!);
-  const fallback = setTimeout(() => _removeSpinner(spinner), SPINNER_FALLBACK_MS);
-  videoEl.addEventListener(
-    "canplay",
-    () => {
-      clearTimeout(fallback);
-      _removeSpinner(spinner);
-    },
-    { once: true }
-  );
+  // Belt-and-suspenders: if the browser already has enough data by the time
+  // we reach here (e.g. the video was preloaded by the browser), remove the
+  // spinner immediately instead of waiting for an event that already fired.
+  if (videoEl.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+    videoEl.removeEventListener("canplay", onCanPlay);
+    onCanPlay();
+  }
 }
 
 // ---------------------------------------------------------------------------
