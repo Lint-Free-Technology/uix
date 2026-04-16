@@ -3,7 +3,7 @@ import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
-import { apply_uix, buildMacros, UixConfig } from "../helpers/apply_uix";
+import { apply_uix, buildMacros, buildBillets, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
 
@@ -47,6 +47,7 @@ export class UixForge extends LitElement {
   @state() templatesReady: boolean;
   private _mold: UixForgeMold;
   private _macros: UixMacroConfig;
+  private _billets: Record<string, any>;
   private _templateNestingOpen: string;
   private _templateNestingClose: string;
   private _showError: boolean;
@@ -176,6 +177,9 @@ export class UixForge extends LitElement {
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
       throw new Error("uix-forge: forge macros must be an object");
     }
+    if (resolvedForge.billets && typeof resolvedForge.billets !== "object") {
+      throw new Error("uix-forge: forge billets must be an object");
+    }
     if (resolvedForge.template_nesting && typeof resolvedForge.template_nesting !== "string") {
       throw new Error("uix-forge: forge template_nesting must be a string");
     }
@@ -184,6 +188,7 @@ export class UixForge extends LitElement {
     }
     this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
     this._macros = resolvedForge.macros;
+    this._billets = resolvedForge.billets;
     this._showError = resolvedForge.show_error || false;
     this._delayedHass = resolvedForge.delayed_hass || false;
 
@@ -194,6 +199,7 @@ export class UixForge extends LitElement {
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
+    delete forgeConfig.billets;
     delete forgeConfig.show_error;
     delete forgeConfig.delayed_hass;
     delete forgeConfig.template_nesting;
@@ -301,6 +307,7 @@ export class UixForge extends LitElement {
       delete forgeConfig.type;
       delete forgeConfig.mold;
       delete forgeConfig.macros;
+      delete forgeConfig.billets;
       delete forgeConfig.show_error;
       delete forgeConfig.delayed_hass;
       delete forgeConfig.template_nesting;
@@ -403,6 +410,7 @@ export class UixForge extends LitElement {
           .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
           .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
         const macroStr = buildMacros(this._macros, template);
+        const billetStr = buildBillets(this._billets, template);
         const callback = (res: any) => {
           if (typeof res === "string") {
             res = translate(hs, res);
@@ -414,7 +422,7 @@ export class UixForge extends LitElement {
         };
         bind_template(
           callback,
-          `${macroStr}${template}`,
+          `${macroStr}${billetStr}${template}`,
           { config: this.config, uixForge: this._sparkController.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
@@ -432,11 +440,13 @@ export class UixForge extends LitElement {
     this._resolvedUix = resolved.forge?.uix;
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
+    this._billets = forgeConfig.billets;
     this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : "<<";
     this._templateNestingClose = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(2) : ">>";
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
+    delete forgeConfig.billets;
     delete forgeConfig.show_error;
     delete forgeConfig.delayed_hass;
     delete forgeConfig.template_nesting;

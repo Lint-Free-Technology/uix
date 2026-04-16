@@ -45,6 +45,58 @@ export interface UixConfig {
   macros?: Record<string, MacroConfig | string>;
 }
 
+export type BilletConfig = Record<string, any>;
+
+function _toJinja2Repr(value: any): string {
+  if (value === null || value === undefined) return "none";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") {
+    return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(_toJinja2Repr).join(", ")}]`;
+  }
+  if (typeof value === "object") {
+    const items = Object.entries(value).map(([k, v]) => `${_toJinja2Repr(k)}: ${_toJinja2Repr(v)}`);
+    return `{${items.join(", ")}}`;
+  }
+  return `"${String(value)}"`;
+}
+
+export function buildBillets(billets: BilletConfig, usedIn?: string): string {
+  if (!billets || Object.keys(billets).length === 0) return "";
+  let entries: [string, any][];
+  if (!usedIn) {
+    entries = Object.entries(billets);
+  } else {
+    const billetNames = Object.keys(billets);
+    const usedNames = new Set<string>(
+      billetNames.filter((name) => new RegExp(`\\b${name}\\b`).test(usedIn))
+    );
+    entries = Object.entries(billets).filter(([name]) => usedNames.has(name));
+  }
+  if (entries.length === 0) return "";
+  return (
+    entries
+      .map(([name, value]) => {
+        if (value === null || value === undefined || typeof value === "string") {
+          // None and strings: simple set variable, used as {{ billet_name }}
+          return `{%- set ${name} = ${_toJinja2Repr(value)} -%}`;
+        }
+        // Numbers, booleans, lists and dicts: use do returns for proper typing,
+        // then store in a set variable so the billet is used as {{ billet_name }}
+        const helperName = `_uix_bfn_${name}`;
+        const repr = _toJinja2Repr(value);
+        return (
+          `{%- macro ${helperName}(returns) %}{%- do returns(${repr}) -%}{%- endmacro %}\n` +
+          `{%- set ${name} = (${helperName} | as_function)() -%}`
+        );
+      })
+      .join("\n") + "\n"
+  );
+}
+
 export function buildMacros(macros: Record<string, MacroConfig | string>, usedIn?: string): string {
   if (!macros || Object.keys(macros).length === 0) return "";
   const renderParam = (p: MacroParam): string =>

@@ -31,6 +31,7 @@ element:
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"` or `"section"`. |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
+| `billets` | mapping | | — | [billets](#billets) — named YAML values available as template variables in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
@@ -125,6 +126,51 @@ element:
         color: {{ state_color(config.entity) }};
       }
 ```
+
+### Billets
+
+Billets are named YAML values defined under `forge.billets`. They are available as template variables in all forge templates and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+
+```yaml
+type: custom:uix-forge
+entity: light.bed_light
+forge:
+  mold: card
+  billets:
+    my_color: teal
+    max_brightness: 255
+    tags:
+      - living_room
+      - ambient
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ my_color }} light"  {# use billet directly, no parentheses #}
+  uix:
+    style: |
+      ha-card {
+        --tile-color: {{ my_color }};
+      }
+```
+
+#### Billet types
+
+The YAML type of a billet determines how it is represented in templates:
+
+| YAML type | Example | Jinja2 type | Template usage |
+| --------- | ------- | ----------- | -------------- |
+| Empty (`~` or `null`) | `my_billet: ~` | `none` | `{{ my_billet }}` → empty |
+| String | `my_billet: hello` | `str` | `{{ my_billet }}` → `hello` |
+| Number | `my_billet: 42` | `int` or `float` | `{{ my_billet + 1 }}` → `43` |
+| Boolean | `my_billet: true` | `bool` | `{% if my_billet %}…{% endif %}` |
+| List | `my_billet: [1, 2, 3]` | `list` | `{{ my_billet | join(', ') }}` |
+| Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
+
+Numbers, booleans, lists, and mappings are returned as their native Jinja2 types using the Home Assistant `do returns` format, so they behave correctly in comparisons and filters. Empty values and strings are injected as-is.
+
+#### Billets and foundries
+
+Billets follow the same override behaviour as macros: a foundry can define billets, and local forge config can override individual billet entries. Only the billets whose names are referenced in a template are included in that template's preamble.
 
 ### Template nesting
 

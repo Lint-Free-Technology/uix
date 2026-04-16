@@ -191,4 +191,27 @@ Inline and file-import macros can be freely mixed within the same card.
 Macros can also be defined in a theme so they are available to all cards that use it. See [Themes - Macros](themes.md#macros) for details.
 
 Card-level macros take precedence over theme macros of the same name, allowing individual cards to override theme-defined macros.
-  
+
+## Billets
+
+[UIX Forge](../forge/index.md#billets) supports **billets** — named YAML values that are available as template variables in forge templates without requiring parentheses. While macros are Jinja2 function definitions, billets are static typed values derived directly from YAML:
+
+```yaml
+forge:
+  billets:
+    accent_color: teal
+    max_level: 100
+    tags:
+      - living_room
+      - ambient
+```
+
+In templates, billets are used as plain variables:
+
+```jinja
+{{ accent_color }}         {# teal #}
+{{ max_level + 1 }}        {# 101 #}
+{{ tags | join(', ') }}    {# living_room, ambient #}
+```
+
+See [UIX Forge — Billets](../forge/index.md#billets) for the full reference including supported types and foundry override behaviour.
