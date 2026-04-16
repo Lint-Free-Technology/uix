@@ -213,7 +213,7 @@ UIX Forge supports `custom:auto-entities` in two ways:
 
 ## UIX styling
 
-Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables.
+Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables. `config.entity` will also be available if set in the global `uix-forge` config.
 
 ```yaml
 type: custom:uix-forge
@@ -222,11 +222,11 @@ forge:
   uix:
     style: |
       :host {
-        --ha-card-border-radius: 20px;
+        --ha-card-border-radius: 50px;
       }
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
 ```
 
 ### Element styling
@@ -254,6 +254,8 @@ element:
         content: ' - {{ state_translated(config.entity) }}';
       }
 ```
+
+![Example using uix styling](../assets/page-assets/forge/uix-styling.png)
 
 ## Sections
 
