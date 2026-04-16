@@ -1,0 +1,30 @@
+id: view_background_image_class
+description: "View background image div has uix-bg-image class and can be styled via it"
+
+# Theme sets --uix-view-background-image on the drawer, which creates a
+# background container whose shadow root contains a div.uix-bg-image element.
+theme: uix-test-view-bg-image
+
+view_path: view-bg-image-class
+
+card:
+  type: markdown
+  content: "View background test"
+
+interactions:
+  # Give UIX time to sign the path and create the background container.
+  - type: wait
+    ms: 2000
+
+assertions:
+  # The background container should exist in the document body.
+  - type: element_present
+    root: "div[uix-view-background]"
+    selector: ".uix-bg-image"
+
+  # The div.uix-bg-image should have background-image set.
+  - type: css_property
+    root: "div[uix-view-background]"
+    selector: ".uix-bg-image"
+    property: "backgroundSize"
+    expected: "cover"
