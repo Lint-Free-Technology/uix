@@ -10,6 +10,7 @@ export class ModdedElement extends LitElement {
     this._uix.forEach((uix) => {
       uix.variables = { config };
       uix.macros = config.uix?.macros || config.card_mod?.macros || {};
+      uix.billets = config.uix?.billets || {};
       uix.styles = config.uix?.style || config.card_mod?.style || {};
     });
   }
@@ -43,6 +44,7 @@ export interface UixConfig {
   debug?: boolean;
   prepend?: boolean;
   macros?: Record<string, MacroConfig | string>;
+  billets?: BilletConfig;
 }
 
 export type BilletConfig = Record<string, any>;
@@ -292,6 +294,7 @@ export async function apply_uix(
 
     uix.variables = variables;
     uix.macros = uix_config?.macros ?? {};
+    uix.billets = uix_config?.billets ?? {};
     uix.styles = uix_config?.style ?? "";
   }, 1);
 

@@ -238,10 +238,23 @@ export class UixForge extends LitElement {
     };
   }
 
+  private _mergeForgeBillets(uixConfig?: UixConfig): UixConfig | undefined {
+    if (!this._billets || Object.keys(this._billets).length === 0) return uixConfig;
+    if (!uixConfig) return uixConfig;
+    return {
+      ...uixConfig,
+      billets: { ...this._billets, ...(uixConfig.billets ?? {}) },
+    };
+  }
+
+  private _mergeForgeUix(uixConfig?: UixConfig): UixConfig | undefined {
+    return this._mergeForgeBillets(this._mergeForgeMacros(uixConfig));
+  }
+
   get forgedElementConfig() {
     const config = this._forgedElementConfig.config;
     if (!config?.uix) return config;
-    const mergedUix = this._mergeForgeMacros(config.uix);
+    const mergedUix = this._mergeForgeUix(config.uix);
     if (mergedUix === config.uix) return config;
     return { ...config, uix: mergedUix };
   }
@@ -474,7 +487,7 @@ export class UixForge extends LitElement {
     apply_uix(
       (this as any),
       "card",
-      this._mergeForgeMacros(this._resolvedUix),
+      this._mergeForgeUix(this._resolvedUix),
       { config: 
         { 
           entity: this.config?.entity,

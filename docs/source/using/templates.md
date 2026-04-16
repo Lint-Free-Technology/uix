@@ -194,16 +194,26 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
-[UIX Forge](../forge/index.md#billets) supports **billets** — named YAML values that are available as template variables in forge templates without requiring parentheses. While macros are Jinja2 function definitions, billets are static typed values derived directly from YAML:
+Billets are named YAML values that become plain template variables — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
+
+### Billets in UIX Styling
+
+Define billets under `uix.billets` on a card. Each billet is injected as a `{%- set name = value -%}` statement ahead of every style template on that card:
 
 ```yaml
-forge:
+type: tile
+entity: light.living_room
+uix:
   billets:
     accent_color: teal
     max_level: 100
     tags:
       - living_room
       - ambient
+  style: |
+    ha-card {
+      --tile-color: {{ accent_color }};
+    }
 ```
 
 In templates, billets are used as plain variables:
@@ -213,5 +223,9 @@ In templates, billets are used as plain variables:
 {{ max_level + 1 }}        {# 101 #}
 {{ tags | join(', ') }}    {# living_room, ambient #}
 ```
+
+### Billets in UIX Forge
+
+When using [UIX Forge](../forge/index.md), billets defined under `forge.billets` are available in all forge templates **and** in any `uix:` style on the forge card or the forged element. Forge billets are merged with any billets defined directly in the `uix:` config, with the local `uix:` billets taking precedence.
 
 See [UIX Forge — Billets](../forge/index.md#billets) for the full reference including supported types and foundry override behaviour.

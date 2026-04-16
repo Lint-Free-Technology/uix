@@ -129,7 +129,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template variables in all forge templates and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template variables in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
 
 ```yaml
 type: custom:uix-forge
