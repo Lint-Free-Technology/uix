@@ -1,0 +1,38 @@
+id: forge_billet
+description: "UIX Forge billet is available in forge templates and in the forged element's uix: style"
+view_path: forge-billet
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    entity_id: light.bed_light
+    brightness: 181
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    billets:
+      tile_bg: "rgb(0, 150, 100)"
+  element:
+    type: tile
+    entity: "light.bed_light"
+    uix:
+      # Billet defined in forge.billets is merged into the element's uix: config.
+      style: "ha-card { background: {{ tile_bg }} !important; }"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 150, 100)"
+
+  - type: snapshot
+    name: "11_forge_billet"
+    threshold: 0.02
