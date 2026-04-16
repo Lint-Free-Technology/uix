@@ -65,10 +65,16 @@ element:
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
 
-Templates will run in different contexts for forging and UIX styling the element. The table below summarizes the different contexts.
+Templates will run in different contexts for forging, UIX styling the forge and UIX styling the element. The table below summarizes the different contexts.
+
+| Context | Template variables |
+| - | - |
+| Templates in forge and element, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
 
 !!! tip
-    If you specify `entity` on global `uix-forge` config it will always be available no matter the context. You always need to specifically specify the element entity if it needs one - you can use a template to use `config.entity1`.
+    If you specify `entity` on global `uix-forge` config it will always be available no matter the context. You always need to specifically specify the element entity if it needs one - you can use a template to use `config.entity`.
     ```yaml
     type: custom:uix-forge
     entity: light.bed_light
@@ -87,11 +93,7 @@ Templates will run in different contexts for forging and UIX styling the element
 
     ![Example using config entity](../assets/page-assets/forge/config-entity.png)
 
-| Context | Template variables |
-| - | - |
-| Templates in forge and element, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
-| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
-| Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
+#### Full example including macro
 
 !!! example inline end "Full example including macro"
     ![Example output](../assets/page-assets/forge/config-entity-full.png)
