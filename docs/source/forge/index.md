@@ -44,17 +44,83 @@ Any valid Lovelace element configuration. Every string value in `element` is pro
 
 The `uix` key inside `element` is passed through as is to [UIX Styling](../using/index.md), with [UIX Styling](../using/index.md) rendering any templates. Use it to style the forged element as you would any other element:
 
+!!! example inline end "Forge example"
+    ![Example forge output](../assets/page-assets/forge/basic-element.png)
+
 ```yaml
 type: custom:uix-forge
 forge:
   mold: card
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
   uix:
     style: |
       ha-card {
         --tile-color: teal;
+      }
+```
+
+### Template variables and macros
+
+Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
+
+Templates will run in different contexts for forging and UIX styling the element. The table below summarizes the different contexts.
+
+!!! tip
+    If you specify `entity` on global `uix-forge` config it will always be available no matter the context. You always need to specifically specify the element entity if it needs one - you can use a template to use `config.entity1`.
+    ```yaml
+    type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: "{{ config.entity }}"
+      uix:
+        style: |
+          :host {
+            --ha-card-border-color: {{ 'green' if is_state(config.entity, 'on') else 'red' }};
+            --ha-card-border-width: 2px;
+          }
+    ```
+
+    ![Example using config entity](../assets/page-assets/forge/config-entity.png)
+
+| Context | Template variables |
+| - | - |
+| Templates in forge and element, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
+
+!!! example inline end "Full example including macro"
+    ![Example output](../assets/page-assets/forge/config-entity-full.png)
+
+```yaml
+type: custom:uix-forge
+entity: light.bed_light
+forge:
+  mold: card
+  macros:
+    state_color:
+      params:
+        - entity_id
+      template: "{{ 'red' if is_state(entity_id, 'on') else 'green' }}"
+  uix:
+    style: |
+      :host {
+        --ha-card-border-radius: 20px;
+        --ha-card-border-color: {{ state_color(config.entity) }};
+        --ha-card-border-width: 3px;
+      }
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ device_name(config.entity) }} - {{ state_translated(config.entity) }}"
+  uix:
+    style: |
+      span.primary {
+        color: {{ state_color(config.entity) }};
       }
 ```
 
@@ -185,91 +251,6 @@ element:
         content: ' - {{ state_translated(config.entity) }}';
       }
 ```
-
-### Variables and macros
-
-Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element. This is shown in the example below.
-
-!!! example inline end "Macro example"
-    ![Example output](../assets/page-assets/forge/forge-macro-example.gif)
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  macros:
-    state_color:
-      params:
-        - entity_id
-      template: "{{ 'red' if is_state(entity_id, 'on') else 'green' }}"
-  uix:
-    style: |
-      :host {
-        --ha-card-border-radius: 20px;
-        --ha-card-border-color: {{ state_color(config.element.entity) }};
-        --ha-card-border-width: 3px;
-      }
-element:
-  type: tile
-  entity: light.bed_light
-  name: "{{ entity_name(config.element.entity) }} - {{ state_translated(config.element.entity) }}"
-  uix:
-    style: |
-      span.primary {
-        color: {{ state_color(config.entity) }};
-      }
-```
-
-!!! tip
-    If you inspect this carefully, you will note that the forge UIX Styling passes the variable `config.element.entity` to `state_color()` macro, whereas the forged element UIX Styling passes the variable `config.entity` to `state_color()` macro as well as the `state_translated()` function. The `name` template for the element uses `config.element.entity` as this runs in the context of the forge.
-
-If you wish to have a standard macro to access the entity across forge macros, forge UIX styling and forged element UIX Styling you can use an `entity()` macro as shown in the following example.
-
-`entity()` macro template for easy copying
-
-```jinja
-{{ config.element.entity | default('') if 'element' in config else config.entity | default('') }}
-```
-
-The full example below provides for the same output as the previous example, but uses the `entity()` macro.
-
-!!! example inline end "Macro example using entity()"
-    ![Example output](../assets/page-assets/forge/forge-macro-example.gif)
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  macros:
-    entity:
-      template: >-
-        {{ config.element.entity | default('') if 'element' in config else
-        config.entity | default('') }}
-    state_color:
-      params:
-        - entity_id
-      template: "{{ 'red' if is_state(entity_id, 'on') else 'green' }}"
-  uix:
-    style: |
-      :host {
-        --ha-card-border-radius: 20px;
-        --ha-card-border-color: {{ state_color(entity()) }};
-        --ha-card-border-width: 3px;
-      }
-element:
-  type: tile
-  entity: light.bed_light
-  name: "{{ entity_name(entity()) }} - {{ state_translated(entity()) }}"
-  uix:
-    style: |
-      span.primary {
-        color: {{ state_color(entity()) }};
-      }
-```
-
-!!! note "For forged element config"
-    - the template for `name` is running in context of forge so the `entity()` macro will resolve to provide `config.element.entity`.
-    - the template used for CSS `color` in `uix` config is running in context of UIX Styling for the forged element so the `entity()` macro will resolve to provide `config.entity`.
 
 ## Sections
 
