@@ -35,6 +35,8 @@ import requests
 import websocket
 from ha_testcontainer import HATestContainer, HAVersion
 
+from plugins import download_lovelace_plugins
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -153,6 +155,7 @@ def ha(ha_version: str, tmp_path_factory):
     # so the source tree is never polluted by HA's runtime writes.
     ha_tmp = tmp_path_factory.mktemp("ha-state")
     shutil.copytree(str(HA_CONFIG_DIR), str(ha_tmp), dirs_exist_ok=True)
+    download_lovelace_plugins(ha_tmp / "www")
 
     container = HATestContainer(
         version=ha_version,

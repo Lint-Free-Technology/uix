@@ -49,6 +49,10 @@ _HA_CONFIG_DIR = _REPO_ROOT / "tests" / "ha-config"
 _CUSTOM_COMPONENTS_DIR = _REPO_ROOT / "custom_components"
 _ENV_FILE = _REPO_ROOT / ".ha_env"
 
+# Ensure tests/ is on the path so plugins.py can be imported even when this
+# script is run directly (i.e. not via pytest).
+sys.path.insert(0, str(Path(__file__).parent))
+
 
 def main() -> None:
     try:
@@ -71,6 +75,9 @@ def main() -> None:
 
     ha_tmp = Path(tempfile.mkdtemp(prefix="uix-ha-state-"))
     shutil.copytree(str(_HA_CONFIG_DIR), str(ha_tmp), dirs_exist_ok=True)
+
+    from plugins import download_lovelace_plugins
+    download_lovelace_plugins(ha_tmp / "www")
 
     container = HATestContainer(
         version=ha_version,
