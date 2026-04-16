@@ -179,9 +179,7 @@ When there are multiple forge layers, each additional layer requires one extra `
 UIX Forge supports `custom:auto-entities` in two ways:
 
 1. When UIX Forge is used as the main card for auto-entities, UIX Forge accepts and passes through `entities` to the element config, though will not be available on `config.element.entities`
-2. When using UIX Forge as an entity card via auto-entities include filter `options`, UIX Forge accepts `entity` that auto-entities passes through, but does not pass through to element config and won't be available on `config.element.entity`. 
-
-For both scenarios, if you wish to access `entity` in a template via `config.element.entity` you need to include `entity: this.entity_id` under `element` in your include options for auto auto-entities as per the example below which uses auto-entities for a tile card to give use a templated content for a tooltip spark.
+2. When using UIX Forge as an entity card via auto-entities include filter `options`, UIX Forge accepts `entity` that auto-entities passes through, but does not pass through to element config. It will be available in templates using `config.entity` and you can use `{{ config.entity }}` when you need to specify an entity for the card options.
 
 ??? example "auto-entities example"
     ```yaml
@@ -190,18 +188,19 @@ For both scenarios, if you wish to access `entity` in a template via `config.ele
       include:
         - options:
             type: custom:uix-forge
+            # auto-entities will populate entity in config, so we can use it in templates
             forge:
               mold: card
               sparks:
                 - type: tooltip
                   for: hui-tile-card $ ha-card
                   content: >-
-                    {{ state_attr(config.element.entity,
-                    'friendly_name') }} is {{ states(config.element.entity) }}
+                    {{ state_attr(config.entity,
+                    'friendly_name') }} is {{ states(config.entity) }}
             element:
-              entity: this.entity_id
+              entity: "{{ config.entity }}"
               type: tile
-          area: kitchen
+          area: bedroom
       exclude: []
     card:
       square: false
@@ -209,6 +208,8 @@ For both scenarios, if you wish to access `entity` in a template via `config.ele
     show_empty: true
     card_param: cards
     ```
+
+    ![Example using auto-entites](../assets/page-assets/forge/config-entity.png)
 
 ## UIX styling
 
