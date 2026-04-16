@@ -153,6 +153,110 @@ The resolved config merges all three layers: `base_tile` → `light_tile` → fo
 !!! warning "Circular references"
     If a chain of foundry references loops back to a foundry already in the chain, UIX detects the cycle and throws an error. Always ensure your foundry hierarchy is acyclic.
 
+## Billets in foundries
+
+Billets are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
+
+There are two complementary patterns:
+
+### Pattern 1 — define defaults in the foundry, override per instance
+
+Define the billet with a sensible default in the foundry. Each instance can leave it as-is or override it with a local value. Templates in the foundry use the billet directly without needing any fallback logic.
+
+Foundry `accent_tile`:
+
+```yaml
+forge:
+  mold: card
+  billets:
+    accent: teal
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  uix:
+    style: |
+      ha-card {
+        --tile-color: {{ accent }};
+      }
+```
+
+Instance — accepts the foundry default:
+
+```yaml
+type: custom:uix-forge
+foundry: accent_tile
+entity: light.bed_light
+```
+
+Instance — overrides the accent colour:
+
+```yaml
+type: custom:uix-forge
+foundry: accent_tile
+entity: light.kitchen
+forge:
+  billets:
+    accent: orange
+```
+
+### Pattern 2 — define empty billet slots in the foundry
+
+When the foundry should not impose any value and the billet is expected to be supplied by the instance, define the billet as `~` (null). The foundry templates must then handle the `none` case gracefully, either by providing a fallback using `or` or `default()`, or by guarding with `{% if %}`.
+
+Foundry `flexible_tile`:
+
+```yaml
+forge:
+  mold: card
+  billets:
+    accent: ~          # empty slot — instance is expected to override this
+    label: ~           # optional label, templates handle none gracefully
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ label or state_attr(config.entity, 'friendly_name') }}"
+  uix:
+    style: |
+      ha-card {
+        {%- if accent %}
+        --tile-color: {{ accent }};
+        {%- endif %}
+      }
+```
+
+Instance — supplies the accent, leaves label empty:
+
+```yaml
+type: custom:uix-forge
+foundry: flexible_tile
+entity: light.bed_light
+forge:
+  billets:
+    accent: teal
+```
+
+Instance — supplies both billets:
+
+```yaml
+type: custom:uix-forge
+foundry: flexible_tile
+entity: light.kitchen
+forge:
+  billets:
+    accent: orange
+    label: Kitchen ceiling
+```
+
+!!! tip "Documenting your slots"
+    It is good practice to leave a comment in the foundry YAML explaining which billets are expected from instances, especially when the billet is `~` and provides no default:
+
+    ```yaml
+    forge:
+      billets:
+        accent: ~    # required — supply a CSS colour value
+        label: ~     # optional — falls back to friendly_name if omitted
+    ```
+
 ## UIX styling from a foundry
 
 A foundry can include a `uix` key under `forge` that applies [UIX styling](../using/index.md) to the forged element wrapper. Foundry styles are merged with any `uix` key in the local `forge` config, with the local forge config taking precedence.
