@@ -176,7 +176,7 @@ element:
   uix:
     style: |
       ha-card {
-        --tile-color: {{ accent }};
+        --tile-color: {{ accent }} !important;
       }
 ```
 
@@ -219,7 +219,7 @@ element:
     style: |
       ha-card {
         {%- if accent %}
-        --tile-color: {{ accent }};
+        --tile-color: {{ accent }} !important;
         {%- endif %}
       }
 ```

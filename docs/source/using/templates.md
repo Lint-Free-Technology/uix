@@ -102,7 +102,7 @@ uix:
       template: "{%- do returns(is_state(entity_id, 'on')) -%}"
   style: |
     ha-card {
-      --tile-color: {{ 'yellow' if is_on(config.entity) else 'gray' }};
+      --tile-color: {{ 'yellow' if is_on(config.entity) else 'gray' }} !important;
     }
 ```
 
@@ -194,7 +194,7 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
-Billets are named YAML values that become plain template variables — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
+Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
 
 ### Billets in UIX Styling
 
@@ -212,11 +212,11 @@ uix:
       - ambient
   style: |
     ha-card {
-      --tile-color: {{ accent_color }};
+      --tile-color: {{ accent_color }} !important;
     }
 ```
 
-In templates, billets are used as plain variables:
+In templates, billets are used as plain constants:
 
 ```jinja
 {{ accent_color }}         {# teal #}

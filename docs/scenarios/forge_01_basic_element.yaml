@@ -19,7 +19,7 @@ card:
     uix:
       style: |
         ha-card {
-          --tile-color: teal;
+          --tile-color: teal !important;
         }
 
 assertions: []

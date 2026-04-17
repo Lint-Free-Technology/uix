@@ -31,7 +31,7 @@ element:
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"` or `"section"`. |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
-| `billets` | mapping | | — | [billets](#billets) — named YAML values available as template variables in all templates in the forge config. See [Billets](#billets) |
+| `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
@@ -58,7 +58,7 @@ element:
   uix:
     style: |
       ha-card {
-        --tile-color: teal;
+        --tile-color: teal !important;
       }
 ```
 
@@ -129,7 +129,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template variables in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
 
 ```yaml
 type: custom:uix-forge
@@ -145,11 +145,11 @@ forge:
 element:
   type: tile
   entity: "{{ config.entity }}"
-  name: "{{ my_color }} light"  {# use billet directly, no parentheses #}
+  name: "{{ my_color }} light"  # use billet directly, no parentheses
   uix:
     style: |
       ha-card {
-        --tile-color: {{ my_color }};
+        --tile-color: {{ my_color }} !important;
       }
 ```
 
