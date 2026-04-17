@@ -142,6 +142,8 @@ type: custom:uix-forge
 entity: light.bed_light
 forge:
   mold: card
+  grid_options:
+    columns: 7
   billets:
     my_color: teal
     max_brightness: 255
@@ -151,13 +153,30 @@ forge:
 element:
   type: tile
   entity: "{{ config.entity }}"
-  name: "{{ my_color }} light"  # use billet directly, no parentheses
+  name: "{{ my_color | capitalize }} light"
+  tap_action:
+    action: perform-action
+    perform_action: light.turn_on
+    target:
+      entity_id: "{{ config.entity }}"
+    data:
+      brightness: "{{ max_brightness }}"
   uix:
     style: |
       ha-card {
         --tile-color: {{ my_color }} !important;
       }
+      ha-tile-info span:nth-of-type(2):after {
+      {%- if is_state_attr(config.entity, 'brightness', max_brightness) -%}
+        content: ' - {{ tags | join(', ') }} - MAX';
+        font-weight: 900;
+      {%- else -%}
+        content: ' - {{ tags | join(', ') }}';
+      {% endif -%}
+      }
 ```
+
+![Example using billets](../assets/page-assets/forge/billets.gif)
 
 #### Billet types
 

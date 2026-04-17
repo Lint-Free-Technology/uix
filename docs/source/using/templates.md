@@ -204,20 +204,45 @@ Billets are named YAML values that become plain template constants — usable **
 Define billets under `uix.billets` on a card. Each billet is injected as a `{%- set name = value -%}` statement ahead of every style template on that card:
 
 ```yaml
-type: tile
-entity: light.living_room
-uix:
+type: custom:uix-forge
+entity: light.bed_light
+forge:
+  mold: card
+  grid_options:
+    columns: 7
   billets:
-    accent_color: teal
-    max_level: 100
+    my_color: teal
+    max_brightness: 255
     tags:
       - living_room
       - ambient
-  style: |
-    ha-card {
-      --tile-color: {{ accent_color }} !important;
-    }
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ my_color | capitalize }} light"
+  tap_action:
+    action: perform-action
+    perform_action: light.turn_on
+    target:
+      entity_id: "{{ config.entity }}"
+    data:
+      brightness: "{{ max_brightness }}"
+  uix:
+    style: |
+      ha-card {
+        --tile-color: {{ my_color }} !important;
+      }
+      ha-tile-info span:nth-of-type(2):after {
+      {%- if is_state_attr(config.entity, 'brightness', max_brightness) -%}
+        content: ' - {{ tags | join(', ') }} - MAX';
+        font-weight: 900;
+      {%- else -%}
+        content: ' - {{ tags | join(', ') }}';
+      {% endif -%}
+      }
 ```
+
+![Example using billets](../assets/page-assets/forge/billets.gif)
 
 In templates, billets are used as plain constants:
 

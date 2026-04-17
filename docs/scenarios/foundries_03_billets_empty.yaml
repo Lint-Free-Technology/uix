@@ -1,0 +1,49 @@
+id: doc_foundries_billets_empty
+description: "UIX Forge foundry with billets empty (foundries.md)"
+view_path: doc-foundries-billets-empty
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry
+    config:
+      forge:
+        mold: card
+        billets:
+          accent: ~          # empty slot — instance is expected to override this
+          label: ~           # optional label, templates handle none gracefully
+      element:
+        type: tile
+        entity: "{{ config.entity }}"
+        name: "{{ label or state_attr(config.entity, 'friendly_name') }}"
+        uix:
+          style: |
+            ha-card {
+              {%- if accent %}
+              --tile-color: {{ accent }} !important;
+              {%- endif %}
+            }
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry
+  entity: light.bed_light
+  forge:
+    billets:
+      accent: teal
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/foundries-billets-empty.png
+  root: uix-forge
+  padding: 16
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry

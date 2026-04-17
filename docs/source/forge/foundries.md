@@ -188,16 +188,20 @@ foundry: accent_tile
 entity: light.bed_light
 ```
 
-Instance — overrides the accent colour:
+![Foundry billets example](../assets/page-assets/forge/foundries-billets.png)
+
+Instance — overrides the accent color:
 
 ```yaml
 type: custom:uix-forge
 foundry: accent_tile
-entity: light.kitchen
+entity: light.bed_light
 forge:
   billets:
-    accent: orange
+    accent: blue
 ```
+
+![Foundry billets override example](../assets/page-assets/forge/foundries-billets-override.png)
 
 ### Pattern 2 — define empty billet slots in the foundry
 
@@ -235,17 +239,21 @@ forge:
     accent: teal
 ```
 
+![Foundry billets empty example](../assets/page-assets/forge/foundries-billets-empty.png)
+
 Instance — supplies both billets:
 
 ```yaml
 type: custom:uix-forge
 foundry: flexible_tile
-entity: light.kitchen
+entity: light.bed_light
 forge:
   billets:
-    accent: orange
-    label: Kitchen ceiling
+    accent: pink
+    label: Bed sconce
 ```
+
+![Foundry billets empty example](../assets/page-assets/forge/foundries-billets-empty2.png)
 
 !!! note "Comments are stripped"
     Home Assistant stores foundry config as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances.
@@ -283,5 +291,7 @@ forge:
           --ha-card-border-radius: 20px;
         }
 element:
-  entity: light.living_room
+  entity: light.bed_light
 ```
+
+![Foundry UIX styling](../assets/page-assets/forge/foundries-uix-styling.png)
