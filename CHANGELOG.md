@@ -1,3 +1,9 @@
+## [6.3.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.8...v6.3.0-beta.9) (2026-04-17)
+
+### ⭐ New Features
+
+* add billets — named YAML values as UIX Forge and UIX Styling template constants ([#240](https://github.com/Lint-Free-Technology/uix/issues/240)) ([35781bf](https://github.com/Lint-Free-Technology/uix/commit/35781bf01b19dbbf930274e747e623e540b5eea9))
+
 ## [6.3.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.7...v6.3.0-beta.8) (2026-04-16)
 
 ### ⭐ New Features
