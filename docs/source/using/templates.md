@@ -194,6 +194,9 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
+!!! info
+   Billets are available in 6.3.0-beta.9
+
 Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
 
 ### Billets in UIX Styling
@@ -225,6 +228,9 @@ In templates, billets are used as plain constants:
 ```
 
 ### Billets in UIX Forge
+
+!!! info
+   Billets are available in 6.3.0-beta.9
 
 When using [UIX Forge](../forge/index.md), billets defined under `forge.billets` are available in all forge templates **and** in any `uix:` style on the forge card or the forged element. Forge billets are merged with any billets defined directly in the `uix:` config, with the local `uix:` billets taking precedence.
 

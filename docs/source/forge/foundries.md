@@ -155,7 +155,7 @@ The resolved config merges all three layers: `base_tile` → `light_tile` → fo
 
 ## Billets in foundries
 
-Billets are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
+[Billets](../forge/index.md#billets) are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
 
 There are two complementary patterns:
 

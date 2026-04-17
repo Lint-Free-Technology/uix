@@ -4,6 +4,9 @@ description: Learn about UIX Forge, a powerful custom element that combines temp
 ---
 # UIX Forge
 
+!!! info
+   Billets are available in 6.3.0-beta.9
+
 UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines template-driven configuration with additional behaviours called **sparks**. Use it to:
 
 - **Forge** any standard Home Assistant element from templates, allowing the entire element config to react to entity states, user, browser and other template variables.
@@ -129,6 +132,9 @@ element:
 
 ### Billets
 
+!!! info
+   Billets are available in 6.3.0-beta.9
+
 Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
 
 ```yaml
@@ -169,6 +175,9 @@ The YAML type of a billet determines how it is represented in templates:
 Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
 
 #### Billets and foundries
+
+!!! info
+   Billets are available in 6.3.0-beta.9
 
 Billets follow the same override behaviour as macros: a foundry can define billets, and local forge config can override individual billet entries. Only the billets whose names are referenced in a template are included in that template's preamble.
 
