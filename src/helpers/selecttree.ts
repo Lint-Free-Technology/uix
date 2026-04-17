@@ -21,6 +21,11 @@ const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
  *
  * Combinations (e.g. ha-dialog.my-class[data-type="x"]) are supported; all
  * tokens must match. Spaces within the selector are not supported.
+ *
+ * Supported pseudo-classes:
+ *   :empty        — element has no child elements (light DOM is empty)
+ *   :shadow-empty — element has no shadow root, or its shadow root has no
+ *                   child elements
  */
 function pseudoMatches(element: Element, selector: string): boolean {
   let s = selector.trim();
@@ -35,8 +40,9 @@ function pseudoMatches(element: Element, selector: string): boolean {
     s = s.slice(tagMatch[1].length);
   }
 
-  // Strip attribute selectors before checking class/ID to avoid false matches
-  // on content inside attribute values (e.g. [attr='#id'] or [attr='foo.bar'])
+  // Strip attribute selectors before checking class/ID/pseudo to avoid false
+  // matches on content inside attribute values (e.g. [attr='#id'] or
+  // [attr='foo.bar'] or [attr=':empty'])
   const sForClassId = s.replace(/\[[^\]]*\]/g, "");
 
   // ID selector: #id
@@ -51,6 +57,26 @@ function pseudoMatches(element: Element, selector: string): boolean {
   let classM: RegExpExecArray | null;
   while ((classM = classRe.exec(sForClassId)) !== null) {
     if (!element.classList.contains(classM[1])) return false;
+  }
+
+  // Pseudo-class selectors: :empty, :shadow-empty
+  const pseudoRe = /:([a-zA-Z][a-zA-Z0-9-]*)/g;
+  let pseudoM: RegExpExecArray | null;
+  while ((pseudoM = pseudoRe.exec(sForClassId)) !== null) {
+    const pseudo = pseudoM[1];
+    if (pseudo === "empty") {
+      const meaningfulChildren = [...element.children].filter(
+        (c) => c.localName !== "uix-node"
+      );
+      if (meaningfulChildren.length !== 0) return false;
+    } else if (pseudo === "shadow-empty") {
+      if (element.shadowRoot) {
+        const meaningfulChildren = [...element.shadowRoot.children].filter(
+          (c) => c.localName !== "uix-node"
+        );
+        if (meaningfulChildren.length !== 0) return false;
+      }
+    }
   }
 
   // Attribute selectors: [attr], [attr=val], [attr^=val], etc.
