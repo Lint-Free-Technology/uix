@@ -111,8 +111,19 @@ Matching is done by directly inspecting the parent/host properties — not via C
 | `[attr*=val]` | value contains |
 | `[attr~=val]` | whitespace-separated word match |
 | `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
+| `:empty` | element has no meaningful light-DOM children (`uix-node` excluded) |
+| `:shadow-empty` | element has no shadow root, or its shadow root has no meaningful children (`uix-node` excluded) |
+| `{.prop}` | `element.prop` is not `null`/`undefined` |
+| `{.prop=val}` | `String(element.prop) === val` |
+| `{.prop^=val}` | stringified value starts with `val` |
+| `{.prop$=val}` | stringified value ends with `val` |
+| `{.prop*=val}` | stringified value contains `val` |
+| `{.prop~=val}` | whitespace-separated word match on stringified value |
+| `{.prop\|=val}` | value equals or is a `-`-prefixed sub-tag |
 
-Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Spaces **outside** attribute-selector brackets split the path and are therefore **not** supported in a `&` selector. Spaces and `$` inside `[…]` (including inside quoted values) are treated as literals, so operators such as `$=` (ends-with) and attribute values containing dots or spaces work correctly.
+Tokens may be combined — e.g. `&ha-dialog.my-class[data-type="video"]` — and all must match. Spaces **outside** attribute-selector brackets and property-selector braces split the path and are therefore **not** supported in a `&` selector. Spaces and `$` inside `[…]` and `{…}` (including inside quoted values) are treated as literals, so operators such as `$=` (ends-with) and values containing dots or spaces work correctly.
+
+Property selectors navigate actual JS element properties via a dot-separated path using optional chaining (e.g. `{.notification.notification_id='1234567'}` resolves `element.notification?.notification_id`). Plain integer path segments are treated as array indices when the current value is an `Array` (e.g. `{.items.0.name}` accesses `element.items[0].name`). Named keys on arrays also work, since arrays are objects in JavaScript. Values may be double-quoted, single-quoted, or bare.
 
 Class-based selectors may optionally be wrapped in parentheses for readability: `&(.my-class)` is equivalent to `&.my-class`.
 
@@ -170,6 +181,60 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
           border-width: 5px;
         }
     ```
+
+!!! example "Example `:empty` and `:shadow-empty`"
+    CSS's built-in `:empty` pseudo-class cannot detect an empty shadow root. Use `:shadow-empty` on the `&` selector to filter elements whose shadow root has no meaningful children:
+    ```yaml
+    uix:
+      style:
+        "&:shadow-empty":
+          ".": |
+            ha-card {
+              display: none;
+            }
+    ```
+
+    Use `:empty` to filter elements whose light DOM has no meaningful children:
+    ```yaml
+    uix:
+      style:
+        "&:empty":
+          ".": |
+            ha-card {
+              opacity: 0.5;
+            }
+    ```
+
+    Both pseudo-classes ignore UIX's own injected `uix-node` elements and HTML comment nodes so they do not falsely count as content.
+
+!!! example "Example property selectors `{.prop}`"
+    Property selectors read actual JS element properties (not HTML attributes). They are written with curly braces and a dot-prefixed path:
+
+    ```yaml
+    uix:
+      style:
+        # bare presence check — passes when element.notification is not null/undefined
+        "&{.notification}":
+          ".": |
+            ha-card { opacity: 0.5; }
+
+        # exact match on a nested property
+        "&{.notification.notification_id='1234567'}":
+          ".": |
+            ha-card { border: 2px solid red; }
+
+        # starts-with operator
+        "&{.type^=light}":
+          ".": |
+            ha-card { background: yellow; }
+
+        # array index access — resolves element.items[0].name
+        "&{.items.0.name='foo'}":
+          ".": |
+            ha-card { background: teal; }
+    ```
+
+    All the same operators as attribute selectors are supported (`=`, `~=`, `^=`, `$=`, `*=`, `|=`). Integer path segments are used as array indices when the current value is an `Array`; named (string) keys always use plain property access and work on both arrays and plain objects.
 
 ## DOM inspection helpers
 
