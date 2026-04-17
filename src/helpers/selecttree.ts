@@ -1,6 +1,7 @@
 import { Unpromise } from "@watchable/unpromise";
 
 const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
+const INTEGER_RE = /^\d+$/;
 
 /**
  * Checks whether an element matches a simple selector by directly inspecting
@@ -29,7 +30,8 @@ const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
  *
  * Property selectors  {.prop.path}  navigate actual JS element properties
  * (not HTML attributes).  Dot-separated paths are followed with optional
- * chaining; the resolved value is coerced to a string for comparisons.
+ * chaining; plain integers in the path are treated as array indices.
+ * The resolved value is coerced to a string for comparisons.
  *   {.prop}             — property exists (not null/undefined)
  *   {.prop=val}         — property (as string) equals val
  *   {.prop^=val}        — starts-with
@@ -38,7 +40,9 @@ const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
  *   {.prop~=val}        — whitespace-separated word match
  *   {.prop|=val}        — val or val- prefix
  * Values may be quoted ("val" or 'val') or bare.
- * Example: &{.notification.notification_id='1234567'}
+ * Examples:
+ *   &{.notification.notification_id='1234567'}
+ *   &{.items.0.name='foo'}
  */
 function pseudoMatches(element: Element, selector: string): boolean {
   let s = selector.trim();
@@ -125,11 +129,13 @@ function pseudoMatches(element: Element, selector: string): boolean {
     const inner = pm[1];
     const propOpMatch = inner.match(
       // Groups: 1=dotted-path, 2=op, 3=double-quoted val, 4=single-quoted val, 5=bare val
-      /^((?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)+)\s*(?:([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s}]*)))?$/
+      // Each path segment is either a plain integer (array index) or a JS identifier.
+      /^((?:\.(?:[0-9]+|[a-zA-Z_$][a-zA-Z0-9_$]*))+)\s*(?:([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s}]*)))?$/
     );
     if (propOpMatch) {
       const [, path, op, dqVal, sqVal, rawVal] = propOpMatch;
-      // Navigate the dot-separated property path with optional chaining
+      // Navigate the dot-separated property path with optional chaining.
+      // Pure-integer segments are used as array indices.
       const keys = path.slice(1).split(".");
       let propVal: unknown = element;
       for (const key of keys) {
@@ -137,7 +143,10 @@ function pseudoMatches(element: Element, selector: string): boolean {
           propVal = undefined;
           break;
         }
-        propVal = (propVal as Record<string, unknown>)[key];
+        const idx = INTEGER_RE.test(key) ? parseInt(key, 10) : key;
+        propVal = Array.isArray(propVal) && typeof idx === "number"
+          ? (propVal as unknown[])[idx]
+          : (propVal as Record<string | number, unknown>)[idx];
       }
       if (op) {
         const expected = dqVal ?? sqVal ?? rawVal ?? "";
