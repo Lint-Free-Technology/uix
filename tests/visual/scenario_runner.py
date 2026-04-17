@@ -34,9 +34,17 @@ any other action that must happen before assertions and snapshots.
 
 A ``setup:`` key (same structure as ``interactions:``) may also be declared.
 Setup interactions run **before** page navigation and are intended for
-``ha_service`` calls that create or pre-position entities so they exist when
-the page first loads.  Only ``ha_service`` and ``wait`` are meaningful in a
-``setup`` block.
+``ha_service``, ``add_foundry``, and other state-preparation calls that must
+complete before the page first loads.  Only ``ha_service``,
+``device_registry_update``, ``add_foundry``, ``delete_foundry``, and ``wait``
+are meaningful in a ``setup`` block.
+
+A ``teardown:`` key (same structure as ``interactions:``) may optionally be
+declared.  Teardown interactions run **after** all assertions and doc-image
+captures, inside the ``finally`` block, so they execute even when the test
+fails.  Use ``teardown:`` to delete foundries or undo other persistent state
+changes made in ``setup:``.  Only ``ha_service``, ``add_foundry``,
+``delete_foundry``, and ``wait`` are meaningful in a ``teardown`` block.
 
 hover
     Hover over an element using one of two forms:
@@ -118,6 +126,37 @@ device_registry_update
           - type: device_registry_update
             entity_id: light.bed_light   # OR device_id: abc123
             area_name: Bedroom           # OR area_id: bedroom
+
+add_foundry
+    Create or update a named UIX foundry via the WebSocket API.  The foundry
+    is persisted in the UIX config entry so it is immediately available to any
+    ``uix-forge`` card that references it by name.  Use in ``setup:`` to
+    register a foundry before the page loads.  Pair with ``delete_foundry``
+    in ``teardown:`` to remove it afterwards.  Requires the ``ha`` container.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: add_foundry
+            name: my-tile-foundry
+            config:
+              forge:
+                mold: card
+              element:
+                type: tile
+                entity: light.bed_light
+
+delete_foundry
+    Delete a named UIX foundry via the WebSocket API.  Raises an error if the
+    foundry does not exist.  Use in ``teardown:`` to clean up foundries added
+    by ``add_foundry`` so they do not persist across tests.  Requires the
+    ``ha`` container.
+
+    .. code-block:: yaml
+
+        teardown:
+          - type: delete_foundry
+            name: my-tile-foundry
 
 wait
     Wait for a fixed number of milliseconds (default 500):
@@ -804,14 +843,18 @@ def run_interactions(
     hover that reveals a tooltip, a click that changes entity state) before
     running assertions and snapshots.
 
-    Pass the HA container as *ha* when any ``ha_service`` interactions are
-    present in the scenario.
+    Pass the HA container as *ha* when any ``ha_service``, ``add_foundry``,
+    or ``delete_foundry`` interactions are present in the scenario.
 
     *key* selects which list to execute.  Use ``"setup"`` for interactions that
-    should run **before** page navigation (e.g. ``ha_service`` calls that
-    create entities so they exist when the page first loads); use the default
-    ``"interactions"`` for actions taken after navigation.  Only ``ha_service``
-    and ``wait`` interaction types are meaningful in a ``setup`` block.
+    should run **before** page navigation (e.g. ``ha_service`` and
+    ``add_foundry`` calls that create entities or foundries so they exist when
+    the page first loads); use the default ``"interactions"`` for actions taken
+    after navigation; use ``"teardown"`` for cleanup steps (e.g.
+    ``delete_foundry``) that must run after assertions even when the test fails.
+    Only ``ha_service``, ``device_registry_update``, ``add_foundry``,
+    ``delete_foundry``, and ``wait`` interaction types are meaningful in
+    ``setup`` and ``teardown`` blocks.
     """
     __tracebackhide__ = True
     for interaction in scenario.get(key, []):
@@ -836,6 +879,20 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _update_device_registry(ha, interaction)
+        elif itype == "add_foundry":
+            if ha is None:
+                raise ValueError(
+                    "add_foundry interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _set_foundry(ha, interaction)
+        elif itype == "delete_foundry":
+            if ha is None:
+                raise ValueError(
+                    "delete_foundry interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _delete_foundry(ha, interaction)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -986,6 +1043,42 @@ def _update_device_registry(ha: HATestContainer, interaction: dict[str, Any]) ->
     if not result.get("success"):
         raise RuntimeError(
             f"device_registry/update failed for device {device_id!r} → area {area_id!r}: {result}"
+        )
+
+
+def _set_foundry(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Create or update a UIX foundry via the WebSocket API (``uix/set_foundry``)."""
+    __tracebackhide__ = True
+    name: str = interaction["name"]
+    config: dict[str, Any] = dict(interaction["config"])
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/set_foundry",
+            "name": name,
+            "config": config,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/set_foundry failed for {name!r}: {result}"
+        )
+
+
+def _delete_foundry(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Delete a UIX foundry via the WebSocket API (``uix/delete_foundry``)."""
+    __tracebackhide__ = True
+    name: str = interaction["name"]
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/delete_foundry",
+            "name": name,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/delete_foundry failed for {name!r}: {result}"
         )
 
 
