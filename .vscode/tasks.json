@@ -93,6 +93,17 @@
       }
     },
     {
+      "label": "pytest: All tests (Update)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; SNAPSHOT_UPDATE=1 DOC_IMAGE_UPDATE=1 pytest tests/",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "group": "pytest"
+      }
+    },
+    {
       "label": "pytest: Smoke tests (no scenarios)",
       "type": "shell",
       "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_uix_styling.py",
@@ -107,6 +118,17 @@
       "label": "pytest: All scenarios",
       "type": "shell",
       "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "group": "pytest"
+      }
+    },
+    {
+      "label": "pytest: All scenarios (Update)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; SNAPSHOT_UPDATE=1 pytest tests/visual/test_scenarios.py",
       "group": "test",
       "problemMatcher": [],
       "presentation": {

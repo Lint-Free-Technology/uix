@@ -368,6 +368,7 @@ def test_doc_image(
         capture_doc_image(ha_page, scenario, ha=ha)
         capture_doc_animation(ha_page, scenario, ha=ha)
     finally:
+        run_interactions(ha_page, scenario, ha=ha, key="teardown")
         if theme:
             reset_theme(ha)
         clear_scenario(ha, ha_lovelace_url_path)
