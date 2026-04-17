@@ -31,6 +31,7 @@ element:
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"` or `"section"`. |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
+| `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
@@ -57,7 +58,7 @@ element:
   uix:
     style: |
       ha-card {
-        --tile-color: teal;
+        --tile-color: teal !important;
       }
 ```
 
@@ -125,6 +126,53 @@ element:
         color: {{ state_color(config.entity) }};
       }
 ```
+
+### Billets
+
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+
+```yaml
+type: custom:uix-forge
+entity: light.bed_light
+forge:
+  mold: card
+  billets:
+    my_color: teal
+    max_brightness: 255
+    tags:
+      - living_room
+      - ambient
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ my_color }} light"  # use billet directly, no parentheses
+  uix:
+    style: |
+      ha-card {
+        --tile-color: {{ my_color }} !important;
+      }
+```
+
+#### Billet types
+
+The YAML type of a billet determines how it is represented in templates:
+
+| YAML type | Example | Jinja2 type | Template usage |
+| --------- | ------- | ----------- | -------------- |
+| Empty (`~` or `null`) | `my_billet: ~` | `none` | `{{ my_billet }}` → empty |
+| String | `my_billet: hello` | `str` | `{{ my_billet }}` → `hello` |
+| Number | `my_billet: 42` | `int` or `float` | `{{ my_billet + 1 }}` → `43` |
+| Boolean | `my_billet: true` | `bool` | `{% if my_billet %}…{% endif %}` |
+| List | `my_billet: [1, 2, 3]` | `list` | `{{ my_billet | join(', ') }}` |
+| Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
+
+Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
+
+#### Billets and foundries
+
+Billets follow the same override behaviour as macros: a foundry can define billets, and local forge config can override individual billet entries. Only the billets whose names are referenced in a template are included in that template's preamble.
+
+See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on defining empty billet slots in a foundry and handling the `none` case in templates.
 
 ### Template nesting
 

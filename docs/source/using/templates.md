@@ -102,7 +102,7 @@ uix:
       template: "{%- do returns(is_state(entity_id, 'on')) -%}"
   style: |
     ha-card {
-      --tile-color: {{ 'yellow' if is_on(config.entity) else 'gray' }};
+      --tile-color: {{ 'yellow' if is_on(config.entity) else 'gray' }} !important;
     }
 ```
 
@@ -191,4 +191,41 @@ Inline and file-import macros can be freely mixed within the same card.
 Macros can also be defined in a theme so they are available to all cards that use it. See [Themes - Macros](themes.md#macros) for details.
 
 Card-level macros take precedence over theme macros of the same name, allowing individual cards to override theme-defined macros.
-  
+
+## Billets
+
+Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
+
+### Billets in UIX Styling
+
+Define billets under `uix.billets` on a card. Each billet is injected as a `{%- set name = value -%}` statement ahead of every style template on that card:
+
+```yaml
+type: tile
+entity: light.living_room
+uix:
+  billets:
+    accent_color: teal
+    max_level: 100
+    tags:
+      - living_room
+      - ambient
+  style: |
+    ha-card {
+      --tile-color: {{ accent_color }} !important;
+    }
+```
+
+In templates, billets are used as plain constants:
+
+```jinja
+{{ accent_color }}         {# teal #}
+{{ max_level + 1 }}        {# 101 #}
+{{ tags | join(', ') }}    {# living_room, ambient #}
+```
+
+### Billets in UIX Forge
+
+When using [UIX Forge](../forge/index.md), billets defined under `forge.billets` are available in all forge templates **and** in any `uix:` style on the forge card or the forged element. Forge billets are merged with any billets defined directly in the `uix:` config, with the local `uix:` billets taking precedence.
+
+See [UIX Forge — Billets](../forge/index.md#billets) for the full reference including supported types and foundry override behaviour.

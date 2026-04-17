@@ -10,6 +10,7 @@ export class ModdedElement extends LitElement {
     this._uix.forEach((uix) => {
       uix.variables = { config };
       uix.macros = config.uix?.macros || config.card_mod?.macros || {};
+      uix.billets = config.uix?.billets || {};
       uix.styles = config.uix?.style || config.card_mod?.style || {};
     });
   }
@@ -43,6 +44,47 @@ export interface UixConfig {
   debug?: boolean;
   prepend?: boolean;
   macros?: Record<string, MacroConfig | string>;
+  billets?: BilletConfig;
+}
+
+export type BilletConfig = Record<string, any>;
+
+function _toJinja2Repr(value: any): string {
+  if (value === null || value === undefined) return "none";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") {
+    return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(_toJinja2Repr).join(", ")}]`;
+  }
+  if (typeof value === "object") {
+    const items = Object.entries(value).map(([k, v]) => `${_toJinja2Repr(k)}: ${_toJinja2Repr(v)}`);
+    return `{${items.join(", ")}}`;
+  }
+  return `"${String(value)}"`;
+}
+
+export function buildBillets(billets: BilletConfig, usedIn?: string): string {
+  if (!billets || Object.keys(billets).length === 0) return "";
+  let entries: [string, any][];
+  if (!usedIn) {
+    entries = Object.entries(billets);
+  } else {
+    const billetNames = Object.keys(billets);
+    const billetRegexes = billetNames.map((name) => ({ name, re: new RegExp(`\\b${name}\\b`) }));
+    const usedNames = new Set<string>(
+      billetRegexes.filter(({ re }) => re.test(usedIn)).map(({ name }) => name)
+    );
+    entries = Object.entries(billets).filter(([name]) => usedNames.has(name));
+  }
+  if (entries.length === 0) return "";
+  return (
+    entries
+      .map(([name, value]) => `{%- set ${name} = ${_toJinja2Repr(value)} -%}`)
+      .join("\n") + "\n"
+  );
 }
 
 export function buildMacros(macros: Record<string, MacroConfig | string>, usedIn?: string): string {
@@ -252,6 +294,7 @@ export async function apply_uix(
 
     uix.variables = variables;
     uix.macros = uix_config?.macros ?? {};
+    uix.billets = uix_config?.billets ?? {};
     uix.styles = uix_config?.style ?? "";
   }, 1);
 

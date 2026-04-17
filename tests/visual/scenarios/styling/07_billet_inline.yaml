@@ -1,0 +1,37 @@
+id: billet_inline
+description: "UIX inline billet produces correct CSS background colour"
+view_path: billet-inline
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Billet Test"
+  entities:
+    - light.bed_light
+  uix:
+    billets:
+      card_bg: "rgb(0, 100, 200)"
+    # Billet is used as a plain Jinja2 variable — no call syntax needed.
+    style: "ha-card { background: {{ card_bg }} !important; }"
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "10_billet_inline"
+    threshold: 0.02

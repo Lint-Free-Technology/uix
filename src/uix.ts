@@ -12,6 +12,8 @@ import {
   apply_uix,
   apply_uix_compatible,
   buildMacros,
+  buildBillets,
+  BilletConfig,
   MacroConfig,
   UixStyle,
 } from "./helpers/apply_uix";
@@ -32,6 +34,7 @@ export class Uix extends LitElement {
   uix_class?: string = undefined;
   classes: string[] = [];
   macros: Record<string, MacroConfig | string> = {};
+  billets: BilletConfig = {};
 
   debug: boolean = false;
 
@@ -39,6 +42,7 @@ export class Uix extends LitElement {
   _fixed_styles: Record<string, UixStyle> = {};
   _fixed_macros: Record<string, MacroConfig | string> = {};
   _macro_string: string = "";
+  _billet_string: string = "";
   _styles: string = "";
   _processStylesOnConnect: boolean = false;
   @property() _rendered_styles: string = "";
@@ -190,7 +194,7 @@ export class Uix extends LitElement {
       const uix = await apply_uix(
         ch,
         `${this.type}-child`,
-        { style, debug: this.debug, macros: this._fixed_macros },
+        { style, debug: this.debug, macros: this._fixed_macros, billets: this.billets },
         this.variables,
         false
       );
@@ -284,14 +288,16 @@ export class Uix extends LitElement {
 
     // Process styles applicable to this card-mod element
     const macroStr = buildMacros(this._fixed_macros, thisStyle);
-    if (this._styles === thisStyle && !this.dynamicVariablesHaveChanged && this._macro_string === macroStr) return;
+    const billetStr = buildBillets(this.billets, thisStyle);
+    if (this._styles === thisStyle && !this.dynamicVariablesHaveChanged && this._macro_string === macroStr && this._billet_string === billetStr) return;
     this._styles = thisStyle;
     this._macro_string = macroStr;
+    this._billet_string = billetStr;
     this.dynamicVariablesHaveChanged = false;
 
     if (hasTemplate(this._styles)) {
       this._renderer = this._renderer || this._style_rendered.bind(this);
-      bind_template(this._renderer, `${macroStr}${this._styles}`, this.variables);
+      bind_template(this._renderer, `${macroStr}${billetStr}${this._styles}`, this.variables);
     } else {
       this._style_rendered(this._styles || "");
     }
