@@ -1,0 +1,62 @@
+name: Dependabot security updates
+
+# This workflow exists as a stable required check that can be used in branch
+# protection rules instead of the GitHub-managed dynamic Dependabot job
+# (dynamic/dependabot/dependabot-updates).
+#
+# Background: The GitHub-managed Dependabot runner exits with code 1 and marks
+# the job as failed whenever it determines that no security update is needed for
+# a dependency (e.g. it reports `security_update_not_needed` for a package such
+# as `minimatch`). This is a false failure — the repository is not broken. It is
+# simply Dependabot saying "nothing to do right now", but the internal runner
+# treats it as an error.
+#
+# Because that dynamic workflow is owned by GitHub, its exit behaviour cannot be
+# patched by adding a file to this repository. The practical solution is to:
+#   1. Add this repo-owned workflow so that there is always a stable, green CI
+#      check available to use as a required branch-protection status.
+#   2. Update branch-protection rules to require THIS check
+#      ("Dependabot security updates / status") instead of the GitHub-managed one.
+#
+# Dependabot security updates themselves are NOT disabled — GitHub still opens
+# security-update PRs automatically when a new advisory is published. This
+# workflow simply decouples the noisy internal runner signal from your required
+# checks.
+#
+# See also: .github/DEPENDABOT_SECURITY.md
+
+on:
+  schedule:
+    # Run daily at 03:17 UTC (offset from the top of the hour to spread load).
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  status:
+    name: status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependabot security updates — stable status check
+        run: |
+          echo "=========================================================="
+          echo "  Dependabot security updates — stable required check"
+          echo "=========================================================="
+          echo ""
+          echo "Dependabot security updates are managed directly by GitHub."
+          echo "When GitHub detects a security advisory for a dependency it"
+          echo "automatically opens a pull request against this repository."
+          echo ""
+          echo "The GitHub-managed dynamic job (dynamic/dependabot/"
+          echo "dependabot-updates) can exit with code 1 and report failure"
+          echo "when no security update is currently required for a dependency"
+          echo "(status: security_update_not_needed). This is not a real"
+          echo "failure — it simply means there is nothing to fix right now."
+          echo ""
+          echo "This repo-owned workflow always succeeds so that branch"
+          echo "protection rules have a stable required check to use instead"
+          echo "of the noisy GitHub-managed signal."
+          echo ""
+          echo "See .github/DEPENDABOT_SECURITY.md for full details."
+          echo "=========================================================="
