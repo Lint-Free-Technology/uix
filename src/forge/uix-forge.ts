@@ -402,8 +402,7 @@ export class UixForge extends LitElement {
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
-      }
-      if (typeof current[k] === "string" && current[k].includes(this._passthroughNestingOpen) && current[k].includes(this._passthroughNestingClose)) {
+      } else if (typeof current[k] === "string" && current[k].includes(this._passthroughNestingOpen) && current[k].includes(this._passthroughNestingClose)) {
         // Passthrough template: strip one nesting level and pass through to the inner forge
         const passthrough = current[k]
           .split(this._passthroughNestingOpen).join(this._templateNestingOpen)
