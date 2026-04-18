@@ -206,8 +206,29 @@ See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on 
 
 If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required.
 
-??? warning "Read if you wish to create your own nesting sequence"
-    When using template nesting, the template nesting characters `<<>>` are replaced with Jinja `raw` directives before the template is rendered. he replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
+!!! example "Single level template nesting"
+    Below is an example using `custom:template-entity-row` which itself supports templates. This requires any template that needs to be rendered by `custom:template-entity-row` to be nested in `<<>>` nesting characters.
+    ```yaml
+    type: custom:uix-forge
+    entity: input_boolean.test_boolean
+    forge:
+      mold: card
+    element:
+      type: entities
+      entities:
+        - type: custom:template-entity-row
+          entity: "{{ config.entity }}"
+          state: |
+            <<states(config.entity,with_unit=True)>>
+    ```
+    The rendered config for the `entities` card is below. You will see that the nested template gets rendered to a final template with `{#uix#}` template comments surrounding the template. This template will then be rendered in `custom:template-entity-row`, with `config.entity` being a reference to the rendered config entity, which is `input_boolean.test_boolean`.
+    ```yaml
+    type: entities
+    entities:
+      - type: 'custom:template-entity-row'
+        entity: input_boolean.test_boolean
+        state: '{#uix#}{{states(config.entity,with_unit=True)}}{#uix#}'
+    ```
 
 When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
 
@@ -258,6 +279,9 @@ When there are multiple forge layers, each additional layer requires one extra `
     ```
 
     ![Nesting example](../assets/page-assets/forge/forge-nesting.gif)
+
+??? warning "Read if you wish to create your own nesting sequence"
+    When using template nesting, the template nesting characters `<<>>` are replaced with Jinja `raw` directives before the template is rendered. he replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
 
 ### Using with auto-entities
 
@@ -371,4 +395,3 @@ When editing the dashboard in UI mode, the section will be surrounded by red das
 
 !!! warning
     Visibility in the main config is not supported. Though the Home Assistant visual editor will let you set visibility you will get an error as soon as you save the section. If you need Frontend visibility options not supported by template (screen) use a stack card as your element and set Frontend visibility on that element, templates supported.
-
