@@ -1,0 +1,43 @@
+id: forge_billet_in_macro
+description: "UIX Forge billet referenced only inside a forge macro (not in the template directly) is still injected"
+view_path: forge-billet-in-macro
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    billets:
+      forge_macro_bg: "rgb(80, 0, 200)"
+    macros:
+      get_forge_bg:
+        params: []
+        template: "{{ forge_macro_bg }}"
+  element:
+    type: tile
+    entity: "light.bed_light"
+    uix:
+      # forge_macro_bg is only referenced inside the forge macro, not directly in the style template.
+      style: "ha-card { background: {{ get_forge_bg() }} !important; }"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(80, 0, 200)"
+
+  - type: snapshot
+    name: "14_forge_billet_in_macro"
+    threshold: 0.02
