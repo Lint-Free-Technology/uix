@@ -1,6 +1,6 @@
-id: billet_in_macro
+id: styling_billet_in_macro
 description: "UIX billet referenced only inside a macro (not in the template directly) is still injected"
-view_path: billet-in-macro
+view_path: styling_billet-in-macro
 
 setup:
   - type: ha_service
@@ -37,5 +37,5 @@ assertions:
     expected: "rgb(0, 180, 90)"
 
   - type: snapshot
-    name: "13_billet_in_macro"
+    name: "13_styling_billet_in_macro"
     threshold: 0.02
