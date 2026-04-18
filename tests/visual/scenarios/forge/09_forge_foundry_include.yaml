@@ -17,8 +17,7 @@ setup:
       element:
         type: tile
         entity: "light.bed_light"
-        uix:
-          style: "!include uix/test_forge_style.yaml"
+        uix: "!include uix/test_forge_style.yaml"
 
 card:
   type: custom:uix-forge
