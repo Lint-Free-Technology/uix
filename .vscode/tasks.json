@@ -152,6 +152,17 @@
       }
     },
     {
+      "label": "pytest: Run single scenario - update (overwrite)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; SNAPSHOT_UPDATE=1 pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "group": "pytest"
+      }
+    },
+    {
       "label": "pytest: Run single doc image — generate / verify",
       "type": "shell",
       "command": "source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_doc_images.py -k '${input:scenarioId}'",
