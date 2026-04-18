@@ -40,6 +40,10 @@ assertions:
       - "ha-tile-container"
     selector: "uix-node"
 
+  - type: snapshot
+    name: "15_forge_foundry_include"
+    threshold: 0.02
+
 teardown:
   - type: delete_foundry
     name: uix-test-foundry-include
