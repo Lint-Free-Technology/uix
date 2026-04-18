@@ -422,7 +422,7 @@ export class UixForge extends LitElement {
           .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
           .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
         const macroStr = buildMacros(this._macros, template);
-        const billetStr = buildBillets(this._billets, template);
+        const billetStr = buildBillets(this._billets, macroStr + template);
         const callback = (res: any) => {
           if (typeof res === "string") {
             res = translate(hs, res);

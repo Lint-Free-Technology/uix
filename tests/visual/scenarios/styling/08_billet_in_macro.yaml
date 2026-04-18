@@ -1,0 +1,41 @@
+id: styling_billet_in_macro
+description: "UIX billet referenced only inside a macro (not in the template directly) is still injected"
+view_path: styling_billet-in-macro
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Billet in Macro Test"
+  entities:
+    - light.bed_light
+  uix:
+    billets:
+      macro_bg: "rgb(0, 180, 90)"
+    macros:
+      get_bg:
+        params: []
+        template: "{{ macro_bg }}"
+    # macro_bg is only referenced inside the macro, not directly in the style template.
+    style: "ha-card { background: {{ get_bg() }} !important; }"
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 180, 90)"
+
+  - type: snapshot
+    name: "13_styling_billet_in_macro"
+    threshold: 0.02
