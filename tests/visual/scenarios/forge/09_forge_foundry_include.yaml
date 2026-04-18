@@ -34,6 +34,12 @@ assertions:
     property: "backgroundColor"
     expected: "rgb(0, 100, 200)"
 
+  - type: element_present
+    root:
+      - "hui-tile-card"
+      - "ha-tile-container"
+    selector: "uix-node"
+
 teardown:
   - type: delete_foundry
     name: uix-test-foundry-include
