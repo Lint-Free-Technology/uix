@@ -1,6 +1,7 @@
 import { Unpromise } from "@watchable/unpromise";
 
 const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
+const INTEGER_RE = /^\d+$/;
 
 /**
  * Checks whether an element matches a simple selector by directly inspecting
@@ -21,6 +22,27 @@ const TIMEOUT_ERROR = "SELECTTREE-TIMEOUT";
  *
  * Combinations (e.g. ha-dialog.my-class[data-type="x"]) are supported; all
  * tokens must match. Spaces within the selector are not supported.
+ *
+ * Supported pseudo-classes:
+ *   :empty        — element has no child elements (light DOM is empty)
+ *   :shadow-empty — element has no shadow root, or its shadow root has no
+ *                   child elements
+ *
+ * Property selectors  {.prop.path}  navigate actual JS element properties
+ * (not HTML attributes).  Dot-separated paths are followed with optional
+ * chaining; plain integers in the path are treated as array indices.
+ * The resolved value is coerced to a string for comparisons.
+ *   {.prop}             — property exists (not null/undefined)
+ *   {.prop=val}         — property (as string) equals val
+ *   {.prop^=val}        — starts-with
+ *   {.prop$=val}        — ends-with
+ *   {.prop*=val}        — contains
+ *   {.prop~=val}        — whitespace-separated word match
+ *   {.prop|=val}        — val or val- prefix
+ * Values may be quoted ("val" or 'val') or bare.
+ * Examples:
+ *   &{.notification.notification_id='1234567'}
+ *   &{.items.0.name='foo'}
  */
 function pseudoMatches(element: Element, selector: string): boolean {
   let s = selector.trim();
@@ -35,9 +57,10 @@ function pseudoMatches(element: Element, selector: string): boolean {
     s = s.slice(tagMatch[1].length);
   }
 
-  // Strip attribute selectors before checking class/ID to avoid false matches
-  // on content inside attribute values (e.g. [attr='#id'] or [attr='foo.bar'])
-  const sForClassId = s.replace(/\[[^\]]*\]/g, "");
+  // Strip attribute and property selectors before checking class/ID/pseudo to
+  // avoid false matches on content inside their values (e.g. [attr='#id'],
+  // [attr=':empty'], or {.notification.id='foo.bar'})
+  const sForClassId = s.replace(/\[[^\]]*\]/g, "").replace(/\{[^}]*\}/g, "");
 
   // ID selector: #id
   const idRe = /#([a-zA-Z0-9_-]+)/g;
@@ -78,6 +101,54 @@ function pseudoMatches(element: Element, selector: string): boolean {
     }
   }
 
+  // Property selectors: {.prop.path}, {.prop.path=val}, etc.
+  // Navigates actual JS element properties via a dot-separated path.
+  const propRe = /\{([^}]+)\}/g;
+  let pm: RegExpExecArray | null;
+  while ((pm = propRe.exec(s)) !== null) {
+    const inner = pm[1];
+    const propOpMatch = inner.match(
+      // Groups: 1=dotted-path, 2=op, 3=double-quoted val, 4=single-quoted val, 5=bare val
+      // Each path segment is either a plain integer (array index) or a JS identifier.
+      /^((?:\.(?:[0-9]+|[a-zA-Z_$][a-zA-Z0-9_$]*))+)\s*(?:([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s}]*)))?$/
+    );
+    if (propOpMatch) {
+      const [, path, op, dqVal, sqVal, rawVal] = propOpMatch;
+      // Navigate the dot-separated property path with optional chaining.
+      // Pure-integer segments are used as array indices.
+      const keys = path.slice(1).split(".");
+      let propVal: unknown = element;
+      for (const key of keys) {
+        if (propVal == null || typeof propVal !== "object") {
+          propVal = undefined;
+          break;
+        }
+        const idx = INTEGER_RE.test(key) ? parseInt(key, 10) : key;
+        propVal = Array.isArray(propVal) && typeof idx === "number"
+          ? (propVal as unknown[])[idx]
+          : (propVal as Record<string | number, unknown>)[idx];
+      }
+      if (op) {
+        const expected = dqVal ?? sqVal ?? rawVal ?? "";
+        const actual = String(propVal ?? "");
+        if (op === "=" && actual !== expected) return false;
+        if (op === "~=" && !actual.split(/\s+/).filter(Boolean).includes(expected)) return false;
+        if (op === "^=" && !actual.startsWith(expected)) return false;
+        if (op === "$=" && !actual.endsWith(expected)) return false;
+        if (op === "*=" && !actual.includes(expected)) return false;
+        if (
+          op === "|=" &&
+          actual !== expected &&
+          !actual.startsWith(`${expected}-`)
+        )
+          return false;
+      } else {
+        // Bare {.prop} — presence check (not null/undefined)
+        if (propVal == null) return false;
+      }
+    }
+  }
+
   return true;
 }
 
@@ -97,10 +168,11 @@ export async function await_element(el, hard = false) {
 
 /**
  * Splits a UIX path string on `$` and space separators, but ignores any `$`
- * or space that appears inside an attribute-selector bracket `[...]` or inside
- * quoted strings within those brackets.  This preserves CSS attribute
- * selectors like `[attr$='value']` or `[attr='val with spaces']` as a single
- * token.
+ * or space that appears inside an attribute-selector bracket `[...]`, a
+ * property-selector brace `{...}`, or inside quoted strings within those
+ * delimiters.  This preserves CSS attribute selectors like
+ * `[attr$='value']` or `[attr='val with spaces']` and property selectors like
+ * `{.prop='val with spaces'}` as single tokens.
  */
 function splitPath(path: string): string[] {
   const tokens: string[] = [];
@@ -118,8 +190,8 @@ function splitPath(path: string): string[] {
       if (c === '"') inDoubleQuote = false;
       current += c;
     } else if (depth > 0) {
-      if (c === "[") depth++;
-      else if (c === "]") depth--;
+      if (c === "[" || c === "{") depth++;
+      else if (c === "]" || c === "}") depth--;
       else if (c === "'") inSingleQuote = true;
       else if (c === '"') inDoubleQuote = true;
       current += c;
@@ -128,7 +200,7 @@ function splitPath(path: string): string[] {
       tokens.push(c);
       current = "";
     } else {
-      if (c === "[") depth++;
+      if (c === "[" || c === "{") depth++;
       else if (c === "'") inSingleQuote = true;
       else if (c === '"') inDoubleQuote = true;
       current += c;
