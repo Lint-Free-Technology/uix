@@ -45,6 +45,11 @@ def resolve_foundries(hass: HomeAssistant, foundries: dict) -> dict:
         if isinstance(value, list):
             return [_resolve(item, foundry_name) for item in value]
         if isinstance(value, str) and value.startswith("!"):
+            # Wrap the YAML tag string in a StringIO and set its name to a
+            # path inside the config dir.  annotatedyaml's loader uses
+            # os.path.dirname(stream.name) as the base directory for
+            # !include resolution, so this makes relative !include paths
+            # resolve relative to the HA config directory.
             sio = StringIO(value)
             sio.name = base_path
             try:
