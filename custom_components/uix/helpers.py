@@ -4,6 +4,7 @@ from io import StringIO
 from pathlib import Path
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.yaml import parse_yaml, Secrets
 
 from .const import DOMAIN
@@ -39,6 +40,8 @@ def resolve_foundries(hass: HomeAssistant, foundries: dict) -> dict:
     # !include paths relative to the HA config directory.
     base_path = hass.config.path("configuration.yaml")
 
+    current_foundry: str = ""
+
     def _resolve(value):
         if isinstance(value, dict):
             return {k: _resolve(v) for k, v in value.items()}
@@ -49,13 +52,19 @@ def resolve_foundries(hass: HomeAssistant, foundries: dict) -> dict:
             sio.name = base_path
             try:
                 return parse_yaml(sio, secrets)
-            except Exception:
+            except HomeAssistantError:
                 _LOGGER.error(
-                    "Failed to resolve YAML constructor in foundry config — "
+                    "Failed to resolve %r in foundry %r — "
                     "check that any !include paths exist and are readable, "
-                    "and that any !secret names are defined in secrets.yaml"
+                    "and that any !secret names are defined in secrets.yaml",
+                    value,
+                    current_foundry,
                 )
                 return value
         return value
 
-    return {name: _resolve(config) for name, config in foundries.items()}
+    resolved: dict = {}
+    for name, config in foundries.items():
+        current_foundry = name
+        resolved[name] = _resolve(config)
+    return resolved
