@@ -1,0 +1,40 @@
+id: forge_foundry_include
+description: "UIX Forge foundry resolves !include string values at serve time"
+view_path: forge-foundry-include
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry-include
+    config:
+      forge:
+        mold: card
+      element:
+        type: tile
+        entity: "light.bed_light"
+        uix:
+          style: "!include uix/test_forge_style.yaml"
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry-include
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry-include

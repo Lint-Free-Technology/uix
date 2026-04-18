@@ -7,7 +7,7 @@ from homeassistant.components.websocket_api import (
 from homeassistant.components import websocket_api
 import voluptuous as vol
 
-from .helpers import get_version, load_secrets, resolve_secrets_in_config
+from .helpers import get_version, resolve_foundries
 from .const import (
     DOMAIN,
     WS_CONNECT,
@@ -47,8 +47,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     foundries = {}
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-                    secrets = await hass.async_add_executor_job(load_secrets, hass)
-                    send_update({CONF_FOUNDRIES: resolve_secrets_in_config(foundries, secrets)})
+                    send_update({CONF_FOUNDRIES: await hass.async_add_executor_job(resolve_foundries, hass, foundries)})
                 except Exception:
                     _LOGGER.exception("Error pushing foundry update to client")
             hass.async_create_task(_push())
@@ -86,8 +85,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         foundries = {}
         if entries:
             foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-        secrets = await hass.async_add_executor_job(load_secrets, hass)
-        connection.send_result(msg["id"], {CONF_FOUNDRIES: resolve_secrets_in_config(foundries, secrets)})
+        connection.send_result(msg["id"], {CONF_FOUNDRIES: await hass.async_add_executor_job(resolve_foundries, hass, foundries)})
 
     @websocket_api.websocket_command(
         {
