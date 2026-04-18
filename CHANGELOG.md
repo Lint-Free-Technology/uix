@@ -1,3 +1,13 @@
+## [6.3.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.9...v6.3.0-beta.10) (2026-04-18)
+
+### 🐞 Bug Fixes
+
+* **forge:** nothing rendered and console error when using templates in lists in forge or element config ([adc0a87](https://github.com/Lint-Free-Technology/uix/commit/adc0a875ace9e727667855649334a26e672645aa))
+
+### ⚙️ Miscellaneous
+
+* add `add_foundry` / `delete_foundry` scenario interactions + `teardown:` key ([#243](https://github.com/Lint-Free-Technology/uix/issues/243)) ([b4475ae](https://github.com/Lint-Free-Technology/uix/commit/b4475aeb774d9717fc8fea55d0ff73e448539402))
+
 ## [6.3.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.8...v6.3.0-beta.9) (2026-04-17)
 
 ### ⭐ New Features
