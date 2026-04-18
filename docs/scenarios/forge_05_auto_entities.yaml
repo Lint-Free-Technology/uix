@@ -1,0 +1,72 @@
+id: doc_forge_auto_entities
+description: "Doc image: UIX Forge with entities card (cards.md)"
+view_path: doc-forge-auto-entities
+
+setup:
+  - type: device_registry_update
+    entity_id: light.bed_light
+    area_name: bedroom
+
+card:
+  type: custom:auto-entities
+  filter:
+    include:
+      - options:
+          type: custom:uix-forge
+          # auto-entities will populate entity in config, so we can use it in templates
+          forge:
+            mold: card
+            sparks:
+              - type: tooltip
+                for: hui-tile-card $ ha-card
+                content: >-
+                  {{ state_attr(config.entity,
+                  'friendly_name') }} is {{ states(config.entity) }}
+          element:
+            entity: "{{ config.entity }}"
+            type: tile
+        area: bedroom
+    exclude: []
+  card:
+    square: false
+    type: grid
+  show_empty: true
+  card_param: cards
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/forge-auto-entities.gif
+  root: auto-entities
+  padding: 32 16 16 16
+  threshold: 0.02
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s

@@ -58,6 +58,7 @@ nav:
           - using/icons.md
           - using/images.md
           - using/section-backgrounds.md
+          - using/view-backgrounds.md
           - using/templates.md
           - using/themes.md
           - using/other.md
@@ -76,6 +77,7 @@ nav:
           - developers/themes.md
   - UIX Forge:
       - forge/index.md
+      - forge/forge.md
       - forge/foundries.md
       - Sparks:
           - forge/sparks/index.md

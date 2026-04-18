@@ -1,4 +1,4 @@
-import { ModdedElement } from "../helpers/apply_uix";
+import { apply_uix, ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
 import { Uix } from "../uix";
 
@@ -38,42 +38,85 @@ const getEntityId = (el: any): string | null => {
   }
 };
 
-const applyImage = (el: any, imageUrl: string): void => {
+const applyImage = (el: any, imageUrl: string | null): void => {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
-    case "ha-tile-icon":
-      el.imageUrl = imageUrl;
-      break;
-    case "state-badge":
-      el.overrideImage = imageUrl;
-      break;
-    case "ha-entity-marker":
-      el.entityPicture = imageUrl;
-      break;
-    case "ha-user-badge":
-      el._personPicture = imageUrl;
-      break;
-    case "ha-person-badge":
-      const pictureEl = el.shadowRoot?.querySelector(".picture");
-      if (pictureEl) {
-        pictureEl.style.backgroundImage = `url(${imageUrl})`;
+    case "ha-tile-icon": {
+      const haStateIcon = el.querySelector("ha-state-icon");
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.imageUrl ?? false;
+        el.imageUrl = imageUrl;
+        if (haStateIcon) {
+          haStateIcon.style.display = "none";
+          haStateIcon.style.visibility = "hidden";
+          haStateIcon.setAttribute("slot", "none");
+        }
+      } else if (el._uix_replaced_image !== undefined) {
+        el.imageUrl = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+        if (haStateIcon) {
+          haStateIcon.style.display = "";
+          haStateIcon.style.visibility = "";
+          haStateIcon.setAttribute("slot", "icon");
+        }
       }
       break;
+    }
+    case "state-badge":
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.overrideImage ?? false;
+        el.overrideImage = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el.overrideImage = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
+      break;
+    case "ha-entity-marker":
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el.entityPicture ?? false;
+        el.entityPicture = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
+      break;
+    case "ha-user-badge":
+      if (imageUrl) {
+        el._uix_replaced_image = el._uix_replaced_image ?? el._personPicture ?? false;
+        el._personPicture = imageUrl;
+      } else if (el._uix_replaced_image !== undefined) {
+        el._personPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+        delete el._uix_replaced_image;
+      }
+      break;
+    case "ha-person-badge": {
+      const pictureEl = el.shadowRoot?.querySelector(".picture");
+      if (pictureEl) {
+        if (imageUrl) {
+          el._uix_replaced_image = el._uix_replaced_image ?? pictureEl.style.backgroundImage ?? false;
+          pictureEl.style.backgroundImage = `url(${imageUrl})`;
+        } else if (el._uix_replaced_image !== undefined) {
+          pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
+          delete el._uix_replaced_image;
+        }
+      }
+      break;
+    }
   }
 };
 
 const updateImage = (el: any): void => {
-  const entityId = getEntityId(el);
-  if (!entityId) return;
-
-  const slug = entityId.replace(/\./g, "_");
   const styles = window.getComputedStyle(el);
-  const imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
-  const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
-
-  if (imageUrl) {
-    applyImage(el, imageUrl);
+  let imagePath = styles.getPropertyValue(`--uix-image`).trim();
+  if (!imagePath) {
+    const entityId = getEntityId(el);
+    if (entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
+    }
   }
+  const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
+  applyImage(el, imageUrl);
 };
 
 const bindUix = async (el: any) => {
@@ -100,11 +143,48 @@ const bindUix = async (el: any) => {
 
 @patch_element("ha-entity-marker")
 class HaEntityMarkerPatch extends ModdedElement {
+  entityId;
+  entityColor;
+  entityName;
+  entityUnit;
+  entityPicture;
   uix_image_retries = 0;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    this._applyUix().then(() => bindUix(this));
+  }
+  async _applyUix() {
+    const entityId = this.entityId;
+    if (!entityId) return;
+    const map = this.closest("#map");
+    if (!map || !map.parentNode) return;
+    const haMap = (map.parentNode as any)?.host;
+    if (!haMap || haMap.tagName.toLowerCase() !== "ha-map") return;
+    const huiMapCard = ((haMap.closest("ha-card") as Element)?.parentNode as any)?.host;
+    let entityConfig;
+    if (huiMapCard?.tagName.toLowerCase() === "hui-map-card") {
+       const config = (huiMapCard as any).config ?? (huiMapCard as any)._config;
+       entityConfig = config?.entities?.find((e) => {
+        if (typeof e === "string") return e === entityId;
+        return e.entity === entityId;
+      });
+    }
+    const variables = { marker: {} };
+    variables.marker['entityId'] = this.entityId;
+    variables.marker['entityColor'] = this.entityColor;
+    variables.marker['entityName'] = this.entityName;
+    variables.marker['entityUnit'] = this.entityUnit;
+    variables.marker['entityPicture'] = this.entityPicture;
+    if (entityConfig) variables['config'] = entityConfig;
+    await apply_uix(
+      this, 
+      "entity-marker", 
+      entityConfig ? (entityConfig?.uix ?? entityConfig?.card_mod) : undefined, 
+      variables, 
+      true,
+      "type-entity-marker"
+    );
   }
 }
 
@@ -152,9 +232,13 @@ function joinSet(dst: Set<any>, src: Set<any>) {
   for (const s of src) dst.add(s);
 }
 
+// Shadow-root crossings count as steps, so 20 is needed to reliably traverse
+// deeply nested shadow trees (e.g. map markers inside dialogs inside cards).
+const MAX_PARENT_STEPS = 20;
+
 async function findParentUix(node: any, step = 0): Promise<Set<Uix>> {
   let uixElements: Set<Uix> = new Set();
-  if (step === 10) return uixElements;
+  if (step === MAX_PARENT_STEPS) return uixElements;
   if (!node) return uixElements;
 
   if (node.updateComplete) await node.updateComplete;

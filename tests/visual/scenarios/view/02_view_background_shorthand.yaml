@@ -1,0 +1,30 @@
+id: view_background_shorthand
+description: "--uix-view-background sets full CSS background shorthand on the background div"
+
+# Theme sets --uix-view-background on the drawer, which creates a background
+# container whose shadow root contains a div.uix-bg-image element.
+theme: uix-test-view-bg-shorthand
+
+view_path: view-bg-shorthand
+
+card:
+  type: markdown
+  content: "View background shorthand test"
+
+interactions:
+  # Give UIX time to create the background container.
+  - type: wait
+    ms: 2000
+
+assertions:
+  # The background container should exist in the document body.
+  - type: element_present
+    root: "div[uix-view-background]"
+    selector: ".uix-bg-image"
+
+  # The div.uix-bg-image should have the gradient applied as the background-image.
+  - type: css_property
+    root: "div[uix-view-background]"
+    selector: ".uix-bg-image"
+    property: "backgroundImage"
+    expected: "linear-gradient(135deg, rgb(0, 128, 128) 0%, rgb(128, 0, 128) 100%)"

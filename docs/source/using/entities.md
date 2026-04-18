@@ -1,9 +1,9 @@
 ---
-description: Learn all about styling entities, badges and elements.
+description: Learn all about styling entities, badges, elements and entity markers.
 ---
-# Styling entities, badges and elements
+# Styling entities, badges, elements and entity markers
 
-In `entities` and `glance` cards, [each entity can have options](https://www.home-assistant.io/lovelace/entities/#options-for-entities). Those elements can be styled individually by adding a `uix` parameter to the entity configuration.
+In `entities`, `glance` and `map` cards, [each entity can have options](https://www.home-assistant.io/lovelace/entities/#options-for-entities). Those elements can be styled individually by adding a `uix` parameter to the entity configuration.
 
 For those cases, the styles are injected into a shadowRoot, and the bottommost element is thus accessed through `:host`.
 
@@ -32,6 +32,8 @@ entities:
         }
 ```
 
+![Entities row coloring](../assets/page-assets/using/entities-base.png)
+
 ## Styling entities conditional rows
 
 Rows in entities conditional rows can be styled directly. If you style the conditional config itself, you need to take care as the conditional row wrapper is not in a shadowRoot so styles may leak to other rows/elements.
@@ -42,14 +44,14 @@ Rows in entities conditional rows can be styled directly. If you style the condi
     type: entities
     state_color: true
     entities:
-    - type: conditional
-      conditions:
-        - condition: state
-          entity: input_boolean.test_boolean
-          state: "off"
+      - entity: light.ceiling_lights
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: input_boolean.test_boolean
+            state: 'on'
         row:
-          entity: sun.sun
-          name: Conditional Sun
+          entity: light.bed_light
           uix:
             style: |
               :host {
@@ -61,40 +63,45 @@ Rows in entities conditional rows can be styled directly. If you style the condi
     type: entities
     state_color: true
     entities:
+      - entity: light.ceiling_lights
       - type: conditional
         conditions:
           - condition: state
             entity: input_boolean.test_boolean
             state: "on"
         row:
-          entity: sun.sun
-          name: Conditional Sun
-          uix:
-            style:
-              hui-simple-entity-row $ hui-generic-entity-row $: |
-                .row {
-                  color: red;
-                }
+          entity: light.bed_light
+        uix:
+          style:
+            hui-toggle-entity-row $ hui-generic-entity-row $: |
+              .row {
+                color: red;
+              }
     ```
+    Both the above will give the following output.
+
+    ![Conditional row styling](../assets/page-assets/using/entities-conditional-regular.gif)
+
     Styling a conditional config where styles will 'leak' to all rows.
     ```yaml
     type: entities
     state_color: true
     entities:
+      - entity: light.ceiling_lights
       - type: conditional
         conditions:
           - condition: state
             entity: input_boolean.test_boolean
             state: "on"
         row:
-          entity: sun.sun
-          name: Conditional Sun
-          uix:
-            style: |
-              :host {
-                --primary-text-color: red;
-              }
+          entity: light.bed_light
+        uix:
+          style: |
+            :host {
+              --primary-text-color: red;
+            }
     ```
+    ![Conditional entities leakage](../assets/page-assets/using/entities-conditional-leakage.gif)
 
 ## Styling picture-elements conditional elements
 
@@ -105,47 +112,61 @@ The elements in a picture-elements conditional element can be styled directly. I
     ```yaml
     type: picture-elements
     image:
-      media_content_id: https://demo.home-assistant.io/stub_config/t-shirt-promo.png
+      media_content_id: https://picsum.photos/id/870/200/100?grayscale&blur=2
     elements:
+      - type: state-badge
+        entity: light.ceiling_lights
+        style:
+          left: 25%
+          top: 50%
       - type: conditional
         conditions:
           - entity: input_boolean.test_boolean
             state: "on"
         elements:
           - type: state-badge
-            entity: sun.sun
+            entity: light.bed_light
             style:
-              left: 25%
-              top: 25%
+              left: 75%
+              top: 50%
             uix:
               style: |
                 :host {
-                  color: green;
+                  color: white;
                 }
     ```
     Styling the conditional config. This method is available for legacy configurations.
     ```yaml
     type: picture-elements
     image:
-      media_content_id: https://demo.home-assistant.io/stub_config/t-shirt-promo.png
+      media_content_id: https://picsum.photos/id/870/200/100?grayscale&blur=2
     elements:
+      - type: state-badge
+        entity: light.ceiling_lights
+        style:
+          left: 25%
+          top: 50%
       - type: conditional
         conditions:
           - entity: input_boolean.test_boolean
             state: "on"
         elements:
           - type: state-badge
-            entity: sun.sun
+            entity: light.bed_light
             style:
-              left: 25%
-              top: 25%
+              left: 75%
+              top: 50%
         uix:
           style:
             hui-state-badge-element $ ha-state-label-badge $: |
               :host {
-                color: red;
+                color: white;
               }
     ```
+    Both the above will give the following output.
+
+    ![Conditional picture element styling](../assets/page-assets/using/elements-conditional-regular.gif)
+
     Styling the conditional config where styles will 'leak' to all elements.
     ```yaml
     type: picture-elements
@@ -168,3 +189,42 @@ The elements in a picture-elements conditional element can be styled directly. I
               --primary-text-color: purple;
             }
     ```
+    ![Conditional picture element styling leakage](../assets/page-assets/using/elements-conditional-leakage.gif)
+
+
+## Styling entity markers on a map
+
+Entity markers on a map can be styled individually by card config or by theme. In both examples the picture image is also styled.
+
+Styling by config.
+
+```yaml
+  type: map
+  entities:
+    - entity: device_tracker.uix_test_person
+      uix:
+        style: |
+          div.marker {
+            border-color: red !important;
+            border-width: 5px;
+          }
+  theme_mode: auto
+```
+
+Styling by theme. Here the `&` host selector is used to take advantage of the `ha-entity-marker` having the `entity-id` as an attribute.
+
+```yaml
+  uix-entity-marker-yaml: |
+    "&[entity-id='device_tracker.uix_test_person']": |
+      :host {
+        --uix-image: /local/media/person_grey.png
+      }
+      div.marker {
+        border-color: red !important;
+        border-width: 5px;
+      }
+```
+
+Both the above will give the following output
+
+![Entity marker styling](../assets/page-assets/using/entity-marker.png)

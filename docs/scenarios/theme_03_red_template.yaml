@@ -1,0 +1,37 @@
+id: doc_theme_red_template
+description: "Doc image: red theme with templated row borders — on=red, off=black (themes.md)"
+view_path: doc-theme-red-template
+theme: uix-doc-red-template
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.ceiling_lights
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.kitchen_lights
+
+card:
+  type: entities
+  title: Lights
+  entities:
+    - light.bed_light
+    - light.ceiling_lights
+    - light.kitchen_lights
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-red-red-rows-template.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02

@@ -1,0 +1,78 @@
+id: doc_forge_nesting
+description: "Doc image: UIX Forge with nesting (cards.md)"
+view_path: doc-forge-nesting
+
+card:
+  type: custom:uix-forge
+  entity: media_player.kitchen
+  forge:
+    mold: card
+    sparks:
+      - type: grid
+        for: "hui-grid-card $ #root"
+        columns: 40% auto
+        column_gap: 0px
+  element:
+    type: grid
+    square: false
+    cards:
+      - type: custom:uix-forge
+        entity: "{{ config.entity }}"
+        forge:
+          mold: card
+        element:
+          entity: "{{ config.entity }}"
+          type: tile
+          state_content: is_volume_muted
+      - type: custom:uix-forge
+        entity: "{{ config.entity }}"
+        forge:
+          mold: card
+        element:
+          type: custom:custom-features-card
+          features:
+            - type: custom:service-call
+              entries:
+                - type: button
+                  entity_id: << config.entity >>
+                  icon: mdi:volume-high
+                  haptics: true
+                  tap_action:
+                    action: perform-action
+                    perform_action: media_player.volume_mute
+                    target:
+                      entity_id: |
+                        <<< config.entity >>> {# use second level nesting #}
+                    data:
+                      is_volume_muted: true
+
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/forge-nesting.gif
+  root: hui-grid-section
+  padding: 16
+  threshold: 0.02
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: service-call
+          selector: custom-feature-button
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: service-call
+          selector: custom-feature-button
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s

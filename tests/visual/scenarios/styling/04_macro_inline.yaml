@@ -1,0 +1,39 @@
+id: macro_inline
+description: "UIX inline macro produces correct CSS background colour"
+view_path: macro-inline
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Macro Test"
+  entities:
+    - light.bed_light
+  uix:
+    macros:
+      orange_color:
+        params: []
+        template: "rgb(255, 165, 0)"
+    # Macro is called like a Jinja2 function; result is spliced into the CSS.
+    style: "ha-card { background: {{ orange_color() }} !important; }"
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 165, 0)"
+
+  - type: snapshot
+    name: "08_macro_inline"
+    threshold: 0.02

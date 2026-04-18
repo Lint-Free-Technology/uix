@@ -1,0 +1,35 @@
+id: doc_forge_uix_element_styling
+description: "Doc image: UIX Forge styling with UIX element styling (forge.md)"
+view_path: doc-forge-uix-element-styling
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    uix:
+      style: |
+        :host {
+          --ha-card-border-radius: 50px;
+        }
+  element:
+    type: tile
+    entity: light.bed_light
+    uix:
+      style: |
+        span.primary::after {
+          content: ' - {{ state_translated(config.entity) }}';
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/uix-element-styling.png
+  root: uix-forge
+  padding: 16

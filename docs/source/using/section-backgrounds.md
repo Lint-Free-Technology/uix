@@ -5,7 +5,7 @@ description: Learn all about styling section background color and opacity
 
 Section backgrounds are a sibling to a section element so cannot be targeted by section UI eXtension directly. Two options are available to style section backgrounds. One is a simple method using special UIX vars for color and opacity, building on from the options provided by Home Assistant. The second option allows for styling the background directly using UIX styling.
 
-## Option 1: use UIX CSS variables.
+## Option 1: use UIX CSS variables
 
 UIX can style a section background color and opacity using the CSS variables `--uix-section-background-color` and `--uix-section-background-opacity` as applied to the section or parent. As usual for UIX CSS styling, templates are supported.
 

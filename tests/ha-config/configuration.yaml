@@ -1,0 +1,21 @@
+homeassistant:
+  country: US
+  unit_system: metric
+  time_zone: UTC
+
+default_config:
+
+demo:
+
+lovelace:
+  mode: storage
+  resource_mode: yaml
+  resources: !include lovelace_resources.yaml
+
+frontend:
+  themes: !include themes.yaml
+
+input_boolean:
+  test_boolean:
+    name: Test Boolean
+    initial: off

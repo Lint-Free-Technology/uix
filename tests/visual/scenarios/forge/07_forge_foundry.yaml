@@ -1,0 +1,46 @@
+id: forge_foundry
+description: "UIX Forge foundry is resolved by name and its forge/element config is applied to the card"
+view_path: forge-foundry
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry
+    config:
+      forge:
+        mold: card
+        billets:
+          tile_bg: "rgb(0, 100, 200)"
+      element:
+        type: tile
+        entity: "light.bed_light"
+        uix:
+          style: "ha-card { background: {{ tile_bg }} !important; }"
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "12_forge_foundry"
+    threshold: 0.02
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry

@@ -17,11 +17,13 @@ forge:
   sparks:
     - type: tooltip
       for: hui-tile-card
-      content: "Turn on the lights"
+      content: Turn on the lights
 element:
   type: tile
-  entity: light.living_room
+  entity: light.kitchen_lights
 ```
+
+![Basic tooltip spark](../../assets/page-assets/forge/sparks/tooltip-basic.gif)
 
 The `for` value is a selector that locates the target element within the forged element. It supports the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
@@ -31,12 +33,14 @@ forge:
   mold: card
   sparks:
     - type: tooltip
-      for: "hui-tile-card $ ha-tile-icon"
-      content: "Toggle the living room light"
+      for: hui-tile-card $ ha-tile-icon
+      content: Toggle the living room light
 element:
   type: tile
-  entity: light.living_room
+  entity: light.kitchen_lights
 ```
+
+![Tooltip spark for tile icon](../../assets/page-assets/forge/sparks/tooltip-tile-icon.gif)
 
 Only the **first** element matched by `for` gets the tooltip.
 
@@ -73,8 +77,10 @@ forge:
         {{ states(config.element.entity) }}
 element:
   type: tile
-  entity: light.living_room
+  entity: light.kitchen_lights
 ```
+
+![Tooltip spark with template content](../../assets/page-assets/forge/sparks/tooltip-icon-template.gif)
 
 ## Customising tooltip appearance
 
@@ -90,10 +96,10 @@ forge:
   sparks:
     - type: tooltip
       for: hui-tile-card $ ha-card
-      content: "Custom styled tooltip"
+      content: Custom styled tooltip
 element:
   type: tile
-  entity: light.living_room
+  entity: light.kitchen_lights
   uix:
     style: |
       :host {
@@ -102,6 +108,8 @@ element:
         --uix-tooltip-border-radius: 999px;
       }
 ```
+
+![Tooltip spark with custom styling](../../assets/page-assets/forge/sparks/tooltip-customised.gif)
 
 ### CSS variables reference
 

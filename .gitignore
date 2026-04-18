@@ -4,3 +4,11 @@ __pycache__/
 .venv/
 docs/site/
 docs/.cache/
+*.egg-info/
+
+# Test artifacts — actual screenshots are transient; baselines are committed.
+tests/visual/snapshots/*.actual.png
+.pytest_cache/
+
+# Persistent HA dev server env vars (written by tests/ha_server.py / make ha_up).
+.ha_env

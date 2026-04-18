@@ -216,6 +216,7 @@ red-theme:
 - `uix-heading-badge`
 - `uix-assist-chip`
 - `uix-element`
+- `uix-entity-marker`
 - `uix-root`
 - `uix-view`
 - `uix-more-info`
@@ -228,6 +229,9 @@ red-theme:
 - `uix-developer-tools`
 - `uix-grid-section`
 - `uix-calendar`
+- `uix-drawer`
+- `uix-view-background`
+- `uix-persistent-notification-item`
 
 Also `<any variable>-yaml`.
 

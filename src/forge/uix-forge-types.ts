@@ -1,5 +1,5 @@
 import { LitElement } from "lit";
-import { UixConfig, MacroConfig } from "../helpers/apply_uix";
+import { UixConfig, MacroConfig, BilletConfig } from "../helpers/apply_uix";
 import { hasTemplate } from "../helpers/templates";
 
 export const UIX_FORGE_TYPE = "uix-forge";
@@ -51,6 +51,7 @@ export interface UixForgeForge {
     hidden?: string | boolean;
     grid_options?: Record<string, any>;
     macros?: UixMacroConfig;
+    billets?: BilletConfig;
     template_nesting?: string;
     sparks?: Record<string, any>[];
     uix?: UixConfig;

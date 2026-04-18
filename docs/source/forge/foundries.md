@@ -58,8 +58,58 @@ element:
 
 The same keys are valid here as on a normal `uix-forge` element. See the [UIX Forge](./index.md) for details on `forge` and `element` options.
 
-!!! tip "Secrets"
-    Secrets like `"!secret tile_lock_pin"` will be resolved from `secrets.yaml` in the main Home Assistant config directory. For more information see <https://www.home-assistant.io/docs/configuration/secrets/>
+## Including external files and secrets
+
+Foundry configs support HA YAML directives such as `!include` and `!secret`. Because foundries are entered as plain text in the UI editor (not loaded by HA's file-based YAML loader), these directives are stored as literal strings and resolved by UIX at serve time — just before the config is sent to the browser.
+
+!!! warning "Quoting required in the UI editor"
+    In the ObjectSelector / YAML editor in the HA UI, `!include` and `!secret` **must be quoted**. The browser's YAML parser does not understand these tags and will throw an error on an unquoted value. Write them as `"!include path/to/file.yaml"` or `"!secret my_key"`.
+
+    In regular HA YAML files on disk they are unquoted as usual.
+
+### `!include`
+
+Use `!include` to replace any value with the contents of an external YAML file. The path is relative to the HA config directory.
+
+```yaml
+# /config/uix/my_forge_styles.yaml
+style: "ha-card { background: teal; }"
+```
+
+```yaml
+# Foundry config (entered in the UI editor with quotes)
+forge:
+  mold: card
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  uix: "!include uix/my_forge_styles.yaml"
+```
+
+The included file must contain the full value for the key it replaces. In the example above `test_forge_styles.yaml` contains a `uix` config dict (with a `style` key), so the `uix:` key of the element ends up as that dict after resolution.
+
+### `!secret`
+
+Use `!secret` to pull a value from `secrets.yaml` in the HA config directory.
+
+```yaml
+# /config/secrets.yaml
+accent_colour: teal
+lock_pin: "1234"
+```
+
+```yaml
+# Foundry config
+forge:
+  mold: card
+  billets:
+    accent: "!secret accent_colour"
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+```
+
+For more information on HA secrets see <https://www.home-assistant.io/docs/configuration/secrets/>.
 
 ## Merge behaviour
 
@@ -153,6 +203,111 @@ The resolved config merges all three layers: `base_tile` → `light_tile` → fo
 !!! warning "Circular references"
     If a chain of foundry references loops back to a foundry already in the chain, UIX detects the cycle and throws an error. Always ensure your foundry hierarchy is acyclic.
 
+## Billets in foundries
+
+[Billets](../forge/index.md#billets) are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
+
+There are two complementary patterns:
+
+### Pattern 1 — define defaults in the foundry, override per instance
+
+Define the billet with a sensible default in the foundry. Each instance can leave it as-is or override it with a local value. Templates in the foundry use the billet directly without needing any fallback logic.
+
+Foundry `accent_tile`:
+
+```yaml
+forge:
+  mold: card
+  billets:
+    accent: teal
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  uix:
+    style: |
+      ha-card {
+        --tile-color: {{ accent }} !important;
+      }
+```
+
+Instance — accepts the foundry default:
+
+```yaml
+type: custom:uix-forge
+foundry: accent_tile
+entity: light.bed_light
+```
+
+![Foundry billets example](../assets/page-assets/forge/foundries-billets.png)
+
+Instance — overrides the accent color:
+
+```yaml
+type: custom:uix-forge
+foundry: accent_tile
+entity: light.bed_light
+forge:
+  billets:
+    accent: blue
+```
+
+![Foundry billets override example](../assets/page-assets/forge/foundries-billets-override.png)
+
+### Pattern 2 — define empty billet slots in the foundry
+
+When the foundry should not impose any value and the billet is expected to be supplied by the instance, define the billet as `~` (null). The foundry templates must then handle the `none` case gracefully, either by providing a fallback using `or` or `default()`, or by guarding with `{% if %}`.
+
+Foundry `flexible_tile`:
+
+```yaml
+forge:
+  mold: card
+  billets:
+    accent: ~          # empty slot — instance is expected to override this
+    label: ~           # optional label, templates handle none gracefully
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  name: "{{ label or state_attr(config.entity, 'friendly_name') }}"
+  uix:
+    style: |
+      ha-card {
+        {%- if accent %}
+        --tile-color: {{ accent }} !important;
+        {%- endif %}
+      }
+```
+
+Instance — supplies the accent, leaves label empty:
+
+```yaml
+type: custom:uix-forge
+foundry: flexible_tile
+entity: light.bed_light
+forge:
+  billets:
+    accent: teal
+```
+
+![Foundry billets empty example](../assets/page-assets/forge/foundries-billets-empty.png)
+
+Instance — supplies both billets:
+
+```yaml
+type: custom:uix-forge
+foundry: flexible_tile
+entity: light.bed_light
+forge:
+  billets:
+    accent: pink
+    label: Bed sconce
+```
+
+![Foundry billets empty example](../assets/page-assets/forge/foundries-billets-empty2.png)
+
+!!! note "Comments are stripped"
+    Home Assistant stores foundry config as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances.
+
 ## UIX styling from a foundry
 
 A foundry can include a `uix` key under `forge` that applies [UIX styling](../using/index.md) to the forged element wrapper. Foundry styles are merged with any `uix` key in the local `forge` config, with the local forge config taking precedence.
@@ -186,5 +341,7 @@ forge:
           --ha-card-border-radius: 20px;
         }
 element:
-  entity: light.living_room
+  entity: light.bed_light
 ```
+
+![Foundry UIX styling](../assets/page-assets/forge/foundries-uix-styling.png)

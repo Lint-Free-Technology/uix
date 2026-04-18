@@ -1,0 +1,47 @@
+id: forge_button
+description: "Button spark inserts an ha-button labelled 'Toggle' after the tile icon"
+view_path: forge-button
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: button
+        after: "hui-tile-card $ ha-tile-icon"
+        label: "Toggle"
+        entity: "light.bed_light"
+        tap_action:
+          action: toggle
+  element:
+    type: tile
+    entity: "light.bed_light"
+
+assertions:
+  # ha-button lives inside hui-tile-card's shadowRoot,
+  # which is itself inside uix-forge's shadowRoot.
+  # The root list traverses the shadow-root chain.
+  - type: element_present
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "ha-button"
+
+  - type: text_equals
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "ha-button"
+    expected: "Toggle"
+
+  - type: snapshot
+    name: "05_forge_button_spark"
+    threshold: 0.02

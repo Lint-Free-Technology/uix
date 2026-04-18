@@ -1,0 +1,69 @@
+id: doc_elements_conditional_leakage
+description: "Doc animation: conditional elements card leakage (entities.md)"
+view_path: doc-elements-conditional-leakage
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+  - type: ha_service
+    domain: input_boolean
+    service: turn_on
+    data:
+      entity_id: input_boolean.test_boolean
+
+cards:
+  - type: tile
+    entity: input_boolean.test_boolean
+  - type: picture-elements
+    image:
+      media_content_id: https://picsum.photos/id/870/200/100?grayscale&blur=2
+    elements:
+      - type: state-badge
+        entity: light.ceiling_lights
+        style:
+          left: 25%
+          top: 50%
+      - type: conditional
+        conditions:
+          - entity: input_boolean.test_boolean
+            state: "on"
+        elements:
+          - type: state-badge
+            entity: light.bed_light
+            style:
+              left: 75%
+              top: 50%
+        uix:
+          style: |
+            :host {
+              --primary-text-color: white;
+            }
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/using/elements-conditional-leakage.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 15   # ~1 s with entity on
+    - interactions:
+        - type: ha_service
+          domain: input_boolean
+          service: turn_off
+          data:
+            entity_id: input_boolean.test_boolean
+          settle_ms: 50
+      frames: 15   # ~1 s with entity off

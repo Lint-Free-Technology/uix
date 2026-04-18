@@ -1,0 +1,73 @@
+# HA theme definitions used by UIX visual tests.
+#
+# Each theme is available via the ``frontend.set_theme`` service call and
+# is referenced by the ``theme:`` key in a scenario YAML file.
+
+uix-test-theme:
+  uix-theme: uix-test-theme
+  uix-card: |
+    ha-card {
+      background: rgb(0, 0, 128) !important;
+      color: white !important;
+    }
+
+# ---------------------------------------------------------------------------
+# Documentation image themes — used by scenarios under
+# tests/visual/scenarios/doc-images/ to generate the page-asset PNGs
+# referenced in docs/source/using/themes.md.
+# ---------------------------------------------------------------------------
+
+uix-doc-red-basic:
+  uix-theme: uix-doc-red-basic
+  primary-color: red
+  ha-card-border-radius: 20px
+
+uix-doc-red-border:
+  uix-theme: uix-doc-red-border
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host {
+      display: block;
+      border: 1px solid black;
+    }
+
+uix-doc-red-template:
+  uix-theme: uix-doc-red-template
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host {
+      display: block;
+      border: 1px solid {% if is_state(config.entity, 'on') %} red {% else %} black {% endif %};
+    }
+
+uix-test-view-bg-image:
+  uix-theme: uix-test-view-bg-image
+  uix-drawer: |
+    :host {
+      --uix-view-background-image: /local/media/person-grey.png;
+    }
+
+uix-test-view-bg-shorthand:
+  uix-theme: uix-test-view-bg-shorthand
+  uix-drawer: |
+    :host {
+      --uix-view-background: linear-gradient(135deg, teal 0%, purple 100%);
+    }
+
+uix-doc-red-classes:
+  uix-theme: uix-doc-red-classes
+  primary-color: red
+  ha-card-border-radius: 20px
+  uix-row: |
+    :host {
+      display: block;
+      border: 1px solid {% if is_state(config.entity, 'on') %} red {% else %} black {% endif %};
+    }
+    :host(.teal) {
+      background: teal;
+    }
+    :host(.purple) {
+      background: purple;
+    }

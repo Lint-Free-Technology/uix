@@ -1,0 +1,57 @@
+id: doc_forge_config_entity
+description: "Doc image: UIX forge with config entity (forge.md)"
+view_path: doc-forge-config-entity
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+
+card:
+  type: custom:uix-forge
+  entity: light.bed_light
+  forge:
+    mold: card
+  element:
+    type: tile
+    entity: "{{ config.entity }}"
+    uix:
+      style: |
+        :host {
+          --ha-card-border-color: {{ 'green' if is_state(config.entity, 'on') else 'red' }};
+          --ha-card-border-width: 2px;
+        }
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/config-entity.png
+  root: uix-forge
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true

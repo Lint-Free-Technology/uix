@@ -1,0 +1,45 @@
+id: doc_foundries_billets_override
+description: "UIX Forge foundry with billets override (foundries.md)"
+view_path: doc-foundries-billets-override
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry
+    config:
+      forge:
+        mold: card
+        billets:
+          accent: teal
+      element:
+        type: tile
+        entity: "{{ config.entity }}"
+        uix:
+          style: |
+            ha-card {
+              --tile-color: {{ accent }} !important;
+            }
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry
+  entity: light.bed_light
+  forge:
+    billets:
+      accent: blue
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/foundries-billets-override.png
+  root: uix-forge
+  padding: 16
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry

@@ -42,6 +42,8 @@ element:
   entity: light.living_room
 ```
 
+![Button spark basic](../../assets/page-assets/forge/sparks/button-basic.gif)
+
 !!! tip
     You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `after`/`before`.
 
@@ -85,7 +87,7 @@ forge:
     - type: button
       after: hui-tile-card $ ha-tile-icon
       label: Living Room
-      entity: light.living_room
+      entity: light.living_room_rgbww_lights
       tap_action:
         action: toggle
       hold_action:
@@ -95,28 +97,34 @@ element:
   entity: light.bed_light
 ```
 
+![Button spark actions](../../assets/page-assets/forge/sparks/button-actions.gif)
+
 !!! note
     When used inside a tile card the button's click events are isolated from the tile card's own action handler — only the button's configured actions fire.
 
 ## Examples
 
-??? example "Button after the tile icon with a toggle action and light icon"
+??? example "Button after the tile icon with a toggle action and fluorescent light icon"
     ```yaml
     type: custom:uix-forge
     forge:
       mold: card
+      grid_options:
+        columns: 9
       sparks:
         - type: button
           after: hui-tile-card $ ha-tile-icon
           label: Living Room
           end_icon: mdi:lightbulb-fluorescent-tube-outline
-          entity: light.living_room
+          entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
     element:
       type: tile
       entity: light.bed_light
     ```
+
+    ![Button spark icon](../../assets/page-assets/forge/sparks/button-icon.gif)
 
 ??? example "Button before the tile icon with a danger variant"
     ```yaml
@@ -140,6 +148,8 @@ element:
       entity: light.bed_light
     ```
 
+    ![Button spark variant](../../assets/page-assets/forge/sparks/button-variant.gif)
+
 ??? example "Button with start and end icons"
     ```yaml
     type: custom:uix-forge
@@ -152,14 +162,19 @@ element:
           label: Scene
           end_icon: mdi:chevron-right
           tap_action:
-            action: navigate
-            navigation_path: /lovelace/scenes
+            action: perform-action
+            perform_action: light.turn_off
+            target:
+              entity_id: light.living_room_rgbww_lights
     element:
       type: tile
       entity: light.bed_light
     ```
 
+    ![Button spark icons start and end](../../assets/page-assets/forge/sparks/button-icons.gif)
+
 ??? example "Icon-only button"
+    Here we need to style the icon button size to match the tile icon size, which is 36px. The default icon button size is 48px.
     ```yaml
     type: custom:uix-forge
     forge:
@@ -168,14 +183,21 @@ element:
         - type: button
           before: hui-tile-card $ ha-tile-info
           icon: mdi:lightbulb
-          color: var(--warning-color)
-          entity: light.living_room
+          color: var(--red-color)
+          entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
     element:
       type: tile
       entity: light.bed_light
+      uix:
+        style: |
+          ha-button {
+            --ha-icon-button-size: 36px;
+          }
     ```
+
+    ![Button spark icons only](../../assets/page-assets/forge/sparks/button-icon-only.gif)
 
 ??? example "Button with tile card styling for spacing with flex css properties"
     Also included is a [:speech_balloon: Tooltip spark](tooltip.md)
@@ -217,6 +239,8 @@ element:
           }
     ```
 
+    ![Button spark styling](../../assets/page-assets/forge/sparks/button-styling.gif)
+
 ## Variant and appearance
 
 Button `variant` can be one of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used.
@@ -224,4 +248,4 @@ Button `variant` can be one of `brand`, `neutral`, `danger`, `warning`, `success
 Button `appearance` can be one of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used.
 
 !!! info "Button variant and appearance image"
-    ![Button variant and appearance image](../../assets/page-assets/forge/sparks/button-spark-variant-appearance.png)
+    ![Button variant and appearance image](../../assets/page-assets/forge/sparks/button-variant-appearance.gif)

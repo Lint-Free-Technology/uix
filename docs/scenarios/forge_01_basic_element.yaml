@@ -1,0 +1,30 @@
+id: doc_forge_basic_element
+description: "Doc image: basic element forging with UIX Forge (forge.md)"
+view_path: doc-forge-basic-element
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: tile
+    entity: light.bed_light
+    uix:
+      style: |
+        ha-card {
+          --tile-color: teal !important;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/basic-element.png
+  root: uix-forge
+  padding: 16

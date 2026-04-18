@@ -1,0 +1,48 @@
+id: doc_foundries_uix_styling
+description: "UIX Forge foundry with UIX styling (foundries.md)"
+view_path: doc-foundries-uix-styling
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry
+    config:
+      forge:
+        mold: card
+        uix:
+          style:
+            hui-tile-card $: |
+              ha-card {
+                --tile-color: red !important;
+              }
+      element:
+        type: tile
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry
+  forge:
+    uix:
+      style:
+        .: |
+          :host {
+            --ha-card-border-radius: 20px;
+          }
+  element:
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/foundries-uix-styling.png
+  root: uix-forge
+  padding: 16
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry

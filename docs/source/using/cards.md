@@ -21,10 +21,16 @@ For a card contained by a `<hui-card>` element, which is almost every standard H
 !!! tip
     Home Assistant themes make use of [CSS variables](https://www.w3schools.com/css/css3_variables.asp). Those can both be set and used in UIX - prepended by two dashes:
     ```yaml
+    type: tile
+    entity: light.bed_light
+    vertical: false
+    features_position: bottom
     uix:
       style: |
         ha-card {
           --ha-card-background: teal;
-          color: var(--primary-color);
+          --ha-tile-info-primary-color: var(--yellow-color);
+          --ha-tile-info-secondary-color: var(--white-color);
         }
     ```
+    ![Styling with CSS variables](../assets/page-assets/using/basic-first-uix.png)
