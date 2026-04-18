@@ -58,8 +58,58 @@ element:
 
 The same keys are valid here as on a normal `uix-forge` element. See the [UIX Forge](./index.md) for details on `forge` and `element` options.
 
-!!! tip "Secrets"
-    Secrets like `"!secret tile_lock_pin"` will be resolved from `secrets.yaml` in the main Home Assistant config directory. For more information see <https://www.home-assistant.io/docs/configuration/secrets/>
+## Including external files and secrets
+
+Foundry configs support HA YAML directives such as `!include` and `!secret`. Because foundries are entered as plain text in the UI editor (not loaded by HA's file-based YAML loader), these directives are stored as literal strings and resolved by UIX at serve time — just before the config is sent to the browser.
+
+!!! warning "Quoting required in the UI editor"
+    In the ObjectSelector / YAML editor in the HA UI, `!include` and `!secret` **must be quoted**. The browser's YAML parser does not understand these tags and will throw an error on an unquoted value. Write them as `"!include path/to/file.yaml"` or `"!secret my_key"`.
+
+    In regular HA YAML files on disk they are unquoted as usual.
+
+### `!include`
+
+Use `!include` to replace any value with the contents of an external YAML file. The path is relative to the HA config directory.
+
+```yaml
+# /config/uix/my_forge_styles.yaml
+style: "ha-card { background: teal; }"
+```
+
+```yaml
+# Foundry config (entered in the UI editor with quotes)
+forge:
+  mold: card
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+  uix: "!include uix/my_forge_styles.yaml"
+```
+
+The included file must contain the full value for the key it replaces. In the example above `test_forge_styles.yaml` contains a `uix` config dict (with a `style` key), so the `uix:` key of the element ends up as that dict after resolution.
+
+### `!secret`
+
+Use `!secret` to pull a value from `secrets.yaml` in the HA config directory.
+
+```yaml
+# /config/secrets.yaml
+accent_colour: teal
+lock_pin: "1234"
+```
+
+```yaml
+# Foundry config
+forge:
+  mold: card
+  billets:
+    accent: "!secret accent_colour"
+element:
+  type: tile
+  entity: "{{ config.entity }}"
+```
+
+For more information on HA secrets see <https://www.home-assistant.io/docs/configuration/secrets/>.
 
 ## Merge behaviour
 
