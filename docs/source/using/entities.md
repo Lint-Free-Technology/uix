@@ -194,9 +194,6 @@ The elements in a picture-elements conditional element can be styled directly. I
 
 ## Styling entity markers on a map
 
-!!! note
-    Styling entity markers available in 6.3.0-beta.2
-
 Entity markers on a map can be styled individually by card config or by theme. In both examples the picture image is also styled.
 
 Styling by config.

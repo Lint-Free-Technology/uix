@@ -35,9 +35,6 @@ uix:
 
 ## Specifying generic override
 
-!!! note
-    Image styling generic override available in 6.3.0-beta.1
-
 Define a generic CSS variable `--uix-image` in the context of the image you wish to override, for example on an element containing `ha-entity-marker` (e.g. map), `ha-tile-icon` (e.g. tile card), or `state-badge` (e.g. entities row).
 
 When a supported element is rendered within that context, the background image is replaced with the supplied URL regardless of entity ID.

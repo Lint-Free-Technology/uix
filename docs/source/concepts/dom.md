@@ -90,9 +90,6 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 ## Host/element path selection
 
-!!! info
-    `{.prop}` matching selectors for available in 6.3.0-beta.12
-
 A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:
 
 - If the initial element where UIX is applied is a **ShadowRoot** the filter is tested against the shadow root **host** element.

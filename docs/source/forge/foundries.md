@@ -60,9 +60,6 @@ The same keys are valid here as on a normal `uix-forge` element. See the [UIX Fo
 
 ## Including external files and secrets
 
-!!! info
-    `!include` and `!secret` resolving of Foundry config available in 6.3.0-beta.12
-
 Foundry configs support HA YAML directives such as `!include` and `!secret`. Because foundries are entered as plain text in the UI editor (not loaded by HA's file-based YAML loader), these directives are stored as literal strings and resolved by UIX at serve time — just before the config is sent to the browser.
 
 !!! warning "Quoting required in the UI editor"
