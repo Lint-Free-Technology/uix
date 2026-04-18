@@ -1,3 +1,9 @@
+## [6.3.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.10...v6.3.0-beta.11) (2026-04-18)
+
+### 🐞 Bug Fixes
+
+* **billets:** billets reference in macro only not included in template ([#249](https://github.com/Lint-Free-Technology/uix/issues/249)) ([ed76352](https://github.com/Lint-Free-Technology/uix/commit/ed76352da302c7420905c4cf60f344da7d8808d8))
+
 ## [6.3.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.9...v6.3.0-beta.10) (2026-04-18)
 
 ### 🐞 Bug Fixes
