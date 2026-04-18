@@ -231,6 +231,7 @@ red-theme:
 - `uix-calendar`
 - `uix-drawer`
 - `uix-view-background`
+- `uix-persistent-notification-item`
 
 Also `<any variable>-yaml`.
 
