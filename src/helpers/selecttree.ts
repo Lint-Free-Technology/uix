@@ -76,26 +76,6 @@ function pseudoMatches(element: Element, selector: string): boolean {
     if (!element.classList.contains(classM[1])) return false;
   }
 
-  // Pseudo-class selectors: :empty, :shadow-empty
-  const pseudoRe = /:([a-zA-Z][a-zA-Z0-9-]*)/g;
-  let pseudoM: RegExpExecArray | null;
-  while ((pseudoM = pseudoRe.exec(sForClassId)) !== null) {
-    const pseudo = pseudoM[1];
-    if (pseudo === "empty") {
-      const meaningfulChildren = [...element.children].filter(
-        (c) => c.localName !== "uix-node"
-      );
-      if (meaningfulChildren.length !== 0) return false;
-    } else if (pseudo === "shadow-empty") {
-      if (element.shadowRoot) {
-        const meaningfulChildren = [...element.shadowRoot.children].filter(
-          (c) => c.localName !== "uix-node"
-        );
-        if (meaningfulChildren.length !== 0) return false;
-      }
-    }
-  }
-
   // Attribute selectors: [attr], [attr=val], [attr^=val], etc.
   const attrRe = /\[([^\]]+)\]/g;
   let m: RegExpExecArray | null;

@@ -111,8 +111,6 @@ Matching is done by directly inspecting the parent/host properties — not via C
 | `[attr*=val]` | value contains |
 | `[attr~=val]` | whitespace-separated word match |
 | `[attr\|=val]` | value equals or is a `-`-prefixed sub-tag |
-| `:empty` | element has no meaningful light-DOM children (`uix-node` excluded) |
-| `:shadow-empty` | element has no shadow root, or its shadow root has no meaningful children (`uix-node` excluded) |
 | `{.prop}` | `element.prop` is not `null`/`undefined` |
 | `{.prop=val}` | `String(element.prop) === val` |
 | `{.prop^=val}` | stringified value starts with `val` |
@@ -181,31 +179,6 @@ Class-based selectors may optionally be wrapped in parentheses for readability: 
           border-width: 5px;
         }
     ```
-
-!!! example "Example `:empty` and `:shadow-empty`"
-    CSS's built-in `:empty` pseudo-class cannot detect an empty shadow root. Use `:shadow-empty` on the `&` selector to filter elements whose shadow root has no meaningful children:
-    ```yaml
-    uix:
-      style:
-        "&:shadow-empty":
-          ".": |
-            ha-card {
-              display: none;
-            }
-    ```
-
-    Use `:empty` to filter elements whose light DOM has no meaningful children:
-    ```yaml
-    uix:
-      style:
-        "&:empty":
-          ".": |
-            ha-card {
-              opacity: 0.5;
-            }
-    ```
-
-    Both pseudo-classes ignore UIX's own injected `uix-node` elements and HTML comment nodes so they do not falsely count as content.
 
 !!! example "Example property selectors `{.prop}`"
     Property selectors read actual JS element properties (not HTML attributes). They are written with curly braces and a dot-prefixed path:
