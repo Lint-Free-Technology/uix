@@ -1,3 +1,11 @@
+## [6.3.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.11...v6.3.0-beta.12) (2026-04-18)
+
+### ⭐ New Features
+
+* **foundry:** support `!include` and `!secret` in forge foundry config ([#250](https://github.com/Lint-Free-Technology/uix/issues/250)) ([d53d410](https://github.com/Lint-Free-Technology/uix/commit/d53d41057eb2295e63b511b199104a0c4ddcc393))
+* **selectors:** add {.prop} property-match with array index support to `&` path selector ([#242](https://github.com/Lint-Free-Technology/uix/issues/242)) ([01fa601](https://github.com/Lint-Free-Technology/uix/commit/01fa6015c6cea2563cbac585ff7b1403bc6b8f44))
+* **styling:** Support styling of `persistent-notification-item` allowing theme styling of persistent notifications. ([ea825d5](https://github.com/Lint-Free-Technology/uix/commit/ea825d57607a02289168f4c8d2a668206d02a822))
+
 ## [6.3.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0-beta.10...v6.3.0-beta.11) (2026-04-18)
 
 ### 🐞 Bug Fixes
