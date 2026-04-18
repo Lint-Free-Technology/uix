@@ -4,7 +4,6 @@ from io import StringIO
 from pathlib import Path
 
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.yaml import parse_yaml, Secrets
 
 from .const import DOMAIN
@@ -40,31 +39,25 @@ def resolve_foundries(hass: HomeAssistant, foundries: dict) -> dict:
     # !include paths relative to the HA config directory.
     base_path = hass.config.path("configuration.yaml")
 
-    current_foundry: str = ""
-
-    def _resolve(value):
+    def _resolve(value, foundry_name: str):
         if isinstance(value, dict):
-            return {k: _resolve(v) for k, v in value.items()}
+            return {k: _resolve(v, foundry_name) for k, v in value.items()}
         if isinstance(value, list):
-            return [_resolve(item) for item in value]
+            return [_resolve(item, foundry_name) for item in value]
         if isinstance(value, str) and value.startswith("!"):
             sio = StringIO(value)
             sio.name = base_path
             try:
                 return parse_yaml(sio, secrets)
-            except HomeAssistantError:
+            except Exception:
                 _LOGGER.error(
                     "Failed to resolve %r in foundry %r — "
                     "check that any !include paths exist and are readable, "
                     "and that any !secret names are defined in secrets.yaml",
                     value,
-                    current_foundry,
+                    foundry_name,
                 )
                 return value
         return value
 
-    resolved: dict = {}
-    for name, config in foundries.items():
-        current_foundry = name
-        resolved[name] = _resolve(config)
-    return resolved
+    return {name: _resolve(config, name) for name, config in foundries.items()}
