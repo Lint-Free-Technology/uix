@@ -49,7 +49,7 @@ export interface UixConfig {
 
 export type BilletConfig = Record<string, any>;
 
-const _BILLET_REF_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
+const _BILLET_INTERPOLATION_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
 
 function _resolveBilletString(
   value: string,
@@ -63,7 +63,7 @@ function _resolveBilletString(
     );
     return value;
   }
-  return value.replace(_BILLET_REF_RE, (match, name, indexStr) => {
+  return value.replace(_BILLET_INTERPOLATION_RE, (match, name, indexStr) => {
     if (!(name in resolvedSoFar)) {
       // Unknown billet reference — leave unchanged
       return match;
@@ -92,7 +92,7 @@ function _resolveBilletString(
         );
         return match;
       }
-      return String(item ?? "");
+      return item == null ? "" : String(item);
     } else {
       if (Array.isArray(resolved) || (resolved !== null && typeof resolved === "object")) {
         console.error(
@@ -101,7 +101,7 @@ function _resolveBilletString(
         );
         return match;
       }
-      return String(resolved ?? "");
+      return resolved == null ? "" : String(resolved);
     }
   });
 }
