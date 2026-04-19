@@ -202,6 +202,9 @@ Define billets under `uix.billets` on a card. Each billet is injected as a `{%- 
 
 #### Billet interpolation
 
+!!! note
+    Billet interpolation available in UIeXtension version 6.4.0-beta.1
+
 String billet values may reference other billets using `{name}` syntax — a simple substitution performed before the billets are turned into Jinja2 variables. Use `{name[N]}` to reference element `N` (0-indexed) from a list billet:
 
 ```yaml
