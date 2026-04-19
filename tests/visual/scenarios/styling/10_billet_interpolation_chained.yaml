@@ -1,0 +1,45 @@
+id: billet_interpolation_chained
+description: "UIX billet {}-interpolation supports chains: a billet references another which references another, resolved in dependency order regardless of declaration order"
+view_path: billet-interpolation-chained
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Chained Billet Interpolation Test"
+  entities:
+    - light.bed_light
+  uix:
+    billets:
+      # Step 3: references step 2 via {room} — declared BEFORE its dependencies to prove order-independence
+      label: "Room: {room}"
+      # Step 2: references step 1 via {channel}
+      room: "{channel}room"
+      # Step 1: plain scalar — declared LAST to prove out-of-order resolution works
+      channel: "bed"
+      bg: "rgb(0, 100, 200)"
+    style: |
+      ha-card {
+        background: {{ bg }} !important;
+      }
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "17_billet_interpolation_chained"
+    threshold: 0.02

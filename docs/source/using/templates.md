@@ -194,11 +194,40 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
-Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
+Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates. Billet string values may reference other billets via `{name}` substitution — declaration order does not matter.
 
 ### Billets in UIX Styling
 
 Define billets under `uix.billets` on a card. Each billet is injected as a `{%- set name = value -%}` statement ahead of every style template on that card:
+
+#### Billet interpolation
+
+String billet values may reference other billets using `{name}` syntax — a simple substitution performed before the billets are turned into Jinja2 variables. Use `{name[N]}` to reference element `N` (0-indexed) from a list billet:
+
+```yaml
+uix:
+  billets:
+    room: "bed"                         # plain string
+    entity_id: "light.{room}_light"     # → "light.bed_light"
+    scenes:
+      - bright
+      - dim
+    default_scene: "{scenes[0]}"        # → "bright"
+  style: |
+    ha-card { content: "{{ entity_id }} / {{ default_scene }}"; }
+```
+
+Billet references are resolved in dependency order, so declaration order does not matter:
+
+```yaml
+billets:
+  entity: "light.{room}_light" # → "light.bedroom_light"  (resolved after room)
+  room: "{base}room"           # → "bedroom"  (resolved after base)
+  base: "bed"
+```
+
+!!! note "Circular references"
+    If billets reference each other in a cycle (directly or through a chain), none of the cycle members can be resolved. UIX logs an error for each and leaves their values unchanged.
 
 ```yaml
 type: custom:uix-forge

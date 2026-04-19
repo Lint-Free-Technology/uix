@@ -49,6 +49,142 @@ export interface UixConfig {
 
 export type BilletConfig = Record<string, any>;
 
+// Matches {name} and {name[N]} — used for interpolation/replacement (captures index for array access)
+const _BILLET_INTERPOLATION_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
+// Same pattern without index capture — used only for dependency graph construction
+const _BILLET_DEP_RE = /\{(\w+)(?:\[\d+\])?\}/g;
+
+function _resolveBilletString(
+  value: string,
+  resolvedSoFar: BilletConfig,
+  billetName: string
+): string {
+  if (/\{\{|\}\}/.test(value)) {
+    console.error(
+      `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
+      `Billets do not support templates — use a macro instead. The value was kept unchanged.`
+    );
+    return value;
+  }
+  return value.replace(_BILLET_INTERPOLATION_RE, (match, name, indexStr) => {
+    if (!(name in resolvedSoFar)) {
+      // Unknown billet reference — leave unchanged
+      return match;
+    }
+    const resolved = resolvedSoFar[name];
+    if (indexStr !== undefined) {
+      const i = parseInt(indexStr, 10);
+      if (!Array.isArray(resolved)) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but "${name}" is not a list.`
+        );
+        return match;
+      }
+      if (i < 0 || i >= resolved.length) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but index ${i} is out of bounds ` +
+          `(list length ${resolved.length}).`
+        );
+        return match;
+      }
+      const item = resolved[i];
+      if (item !== null && typeof item === "object") {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but that element is an object/array ` +
+          `and cannot be used as a string replacement.`
+        );
+        return match;
+      }
+      return item == null ? "" : String(item);
+    } else {
+      if (Array.isArray(resolved) || (resolved !== null && typeof resolved === "object")) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}} but "${name}" is an object/array. ` +
+          `Only strings and numbers can be used as {}-replacements.`
+        );
+        return match;
+      }
+      return resolved == null ? "" : String(resolved);
+    }
+  });
+}
+
+function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName: string): any {
+  if (typeof value === "string") {
+    return _resolveBilletString(value, resolvedSoFar, billetName);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName));
+  }
+  return value;
+}
+
+function _getBilletDeps(value: any, allNames: Set<string>, deps: Set<string>): void {
+  if (typeof value === "string") {
+    _BILLET_DEP_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = _BILLET_DEP_RE.exec(value)) !== null) {
+      if (allNames.has(m[1])) deps.add(m[1]);
+    }
+  } else if (Array.isArray(value)) {
+    for (const item of value) _getBilletDeps(item, allNames, deps);
+  }
+}
+
+export function resolveBillets(billets: BilletConfig): BilletConfig {
+  const names = Object.keys(billets);
+  if (names.length === 0) return {};
+
+  const allNames = new Set<string>(names);
+
+  // Build per-billet dependency sets (which other billets does each billet reference?)
+  const deps: Record<string, Set<string>> = {};
+  for (const name of names) {
+    const d = new Set<string>();
+    _getBilletDeps(billets[name], allNames, d);
+    if (d.delete(name)) {
+      console.warn(`UIX: Billet "${name}" references itself via {${name}} — the self-reference is ignored.`);
+    }
+    deps[name] = d;
+  }
+
+  // Build reverse edges and in-degree for Kahn's topological sort
+  const inDegree: Record<string, number> = {};
+  const dependents: Record<string, string[]> = {};
+  for (const name of names) {
+    inDegree[name] = deps[name].size;
+    dependents[name] = [];
+  }
+  for (const name of names) {
+    for (const dep of deps[name]) dependents[dep].push(name);
+  }
+
+  // Process billets in topological order — no declaration-order constraint
+  const queue: string[] = names.filter((n) => inDegree[n] === 0);
+  const resolvedMap: BilletConfig = {};
+  while (queue.length > 0) {
+    const name = queue.shift()!;
+    resolvedMap[name] = _resolveBilletValue(billets[name], resolvedMap, name);
+    for (const dependent of dependents[name]) {
+      if (--inDegree[dependent] === 0) queue.push(dependent);
+    }
+  }
+
+  // Any remaining billets are part of a cycle — log an error and keep unresolved
+  const cycleMembers = names.filter((n) => !(n in resolvedMap));
+  if (cycleMembers.length > 0) {
+    console.error(
+      `UIX: The following billets form a circular reference and cannot be resolved: ${cycleMembers.join(", ")}.`
+    );
+    for (const name of cycleMembers) resolvedMap[name] = billets[name];
+  }
+
+  // Return in original declaration order
+  const result: BilletConfig = {};
+  for (const name of names) result[name] = resolvedMap[name];
+  return result;
+}
+
 function _toJinja2Repr(value: any): string {
   if (value === null || value === undefined) return "none";
   if (typeof value === "boolean") return value ? "true" : "false";
@@ -68,16 +204,17 @@ function _toJinja2Repr(value: any): string {
 
 export function buildBillets(billets: BilletConfig, usedIn?: string): string {
   if (!billets || Object.keys(billets).length === 0) return "";
+  const resolved = resolveBillets(billets);
   let entries: [string, any][];
   if (!usedIn) {
-    entries = Object.entries(billets);
+    entries = Object.entries(resolved);
   } else {
-    const billetNames = Object.keys(billets);
+    const billetNames = Object.keys(resolved);
     const billetRegexes = billetNames.map((name) => ({ name, re: new RegExp(`\\b${name}\\b`) }));
     const usedNames = new Set<string>(
       billetRegexes.filter(({ re }) => re.test(usedIn)).map(({ name }) => name)
     );
-    entries = Object.entries(billets).filter(([name]) => usedNames.has(name));
+    entries = Object.entries(resolved).filter(([name]) => usedNames.has(name));
   }
   if (entries.length === 0) return "";
   return (

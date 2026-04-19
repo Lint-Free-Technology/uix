@@ -1,0 +1,54 @@
+id: forge_foundry_billet_override_position
+description: >-
+  Foundry billets can reference local forge billets regardless of declaration order.
+  Here "entity_id" in the foundry uses {room} which is only defined in the local
+  forge config (not in the foundry). Because interpolation resolves in dependency
+  order, "room" is resolved first and "entity_id" receives the correct value.
+view_path: forge-foundry-billet-override-position
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry-billet-override
+    config:
+      forge:
+        mold: card
+        billets:
+          entity_id: "light.{room}_light"      # references "room" — defined only in local forge ✅
+          tile_bg: "rgb(0, 100, 200)"
+      element:
+        type: tile
+        entity: "{{ entity_id }}"
+        uix:
+          style: "ha-card { background: {{ tile_bg }} !important; }"
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry-billet-override
+  forge:
+    billets:
+      room: "bed"    # local billet referenced by foundry billet "entity_id" → "light.bed_light" ✅
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "18_forge_foundry_billet_override_position"
+    threshold: 0.02
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry-billet-override

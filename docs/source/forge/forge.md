@@ -129,7 +129,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves.
 
 ```yaml
 type: custom:uix-forge
@@ -186,6 +186,33 @@ The YAML type of a billet determines how it is represented in templates:
 | Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
 
 Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
+
+#### Billet interpolation
+
+String billet values may reference other billets using `{name}` syntax — a simple substitution performed before the billets are turned into Jinja2 variables. Use `{name[N]}` to reference element `N` (0-indexed) from a list billet:
+
+```yaml
+forge:
+  billets:
+    room: "bed"                         # plain string
+    entity_id: "light.{room}_light"     # → "light.bed_light"
+    scenes:
+      - bright
+      - dim
+    default_scene: "{scenes[0]}"        # → "bright"
+```
+
+Billet references are resolved in dependency order, so declaration order does not matter:
+
+```yaml
+billets:
+  entity: "light.{room}_light" # → "light.bedroom_light"  (resolved after room)
+  room: "{base}room"           # → "bedroom"  (resolved after base)
+  base: "bed"
+```
+
+!!! note "Circular references"
+    If billets reference each other in a cycle (directly or through a chain), none of the cycle members can be resolved. UIX logs an error for each and leaves their values unchanged.
 
 #### Billets and foundries
 
