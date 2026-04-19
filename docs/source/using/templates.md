@@ -194,11 +194,40 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
-Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates.
+Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates. Billet string values may reference other billets (declared earlier) via `{name}` substitution.
 
 ### Billets in UIX Styling
 
 Define billets under `uix.billets` on a card. Each billet is injected as a `{%- set name = value -%}` statement ahead of every style template on that card:
+
+#### Billet interpolation
+
+String billet values may reference other billets using `{name}` syntax — a simple substitution performed before the billets are turned into Jinja2 variables. Use `{name[N]}` to reference element `N` (0-indexed) from a list billet:
+
+```yaml
+uix:
+  billets:
+    room: "bed"                         # plain string
+    entity_id: "light.{room}_light"     # → "light.bed_light"
+    scenes:
+      - bright
+      - dim
+    default_scene: "{scenes[0]}"        # → "bright"
+  style: |
+    ha-card { content: "{{ entity_id }} / {{ default_scene }}"; }
+```
+
+Chains work as long as each billet is declared **before** the billet that references it:
+
+```yaml
+billets:
+  base: "bed"
+  room: "{base}room"           # → "bedroom"  (base is already resolved)
+  entity: "light.{room}_light" # → "light.bedroom_light"  (room is already resolved)
+```
+
+!!! warning "Declaration order matters"
+    Billets are resolved in the order they are declared. A billet can only reference billets that appear **earlier** in the list. References to billets declared later, or to unknown names, are left unchanged.
 
 ```yaml
 type: custom:uix-forge

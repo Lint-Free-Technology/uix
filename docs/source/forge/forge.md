@@ -129,7 +129,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billets are purely static values — they cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets (declared earlier) via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves.
 
 ```yaml
 type: custom:uix-forge
@@ -186,6 +186,33 @@ The YAML type of a billet determines how it is represented in templates:
 | Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
 
 Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
+
+#### Billet interpolation
+
+String billet values may reference other billets using `{name}` syntax — a simple substitution performed before the billets are turned into Jinja2 variables. Use `{name[N]}` to reference element `N` (0-indexed) from a list billet:
+
+```yaml
+forge:
+  billets:
+    room: "bed"                         # plain string
+    entity_id: "light.{room}_light"     # → "light.bed_light"
+    scenes:
+      - bright
+      - dim
+    default_scene: "{scenes[0]}"        # → "bright"
+```
+
+Chains work as long as each billet is declared **before** the billet that references it:
+
+```yaml
+billets:
+  base: "bed"
+  room: "{base}room"           # → "bedroom"  (base is already resolved)
+  entity: "light.{room}_light" # → "light.bedroom_light"  (room is already resolved)
+```
+
+!!! warning "Declaration order matters"
+    Billets are resolved in the order they are declared. A billet can only reference billets that appear **earlier** in the list. References to billets declared later, or to unknown names, are left unchanged.
 
 #### Billets and foundries
 
