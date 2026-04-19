@@ -47,7 +47,7 @@ assertions:
     expected: "rgb(0, 100, 200)"
 
   - type: snapshot
-    name: "17_forge_foundry_billet_override_position"
+    name: "18_forge_foundry_billet_override_position"
     threshold: 0.02
 
 teardown:

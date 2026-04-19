@@ -41,5 +41,5 @@ assertions:
     expected: "rgb(0, 100, 200)"
 
   - type: snapshot
-    name: "16_billet_interpolation_chained"
+    name: "17_billet_interpolation_chained"
     threshold: 0.02
