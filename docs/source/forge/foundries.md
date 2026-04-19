@@ -308,6 +308,37 @@ forge:
 !!! note "Comments are stripped"
     Home Assistant stores foundry config as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances.
 
+### Billet interpolation with foundries
+
+When [billet `{}`-interpolation](./index.md#billet-interpolation) is used alongside foundries, the resolution order after merging is:
+
+1. **Foundry billets** — resolved first, in the foundry's declaration order.
+2. **Local forge billets** — new keys appended after the foundry billets, resolved in their declaration order.
+
+This means:
+
+- A **foundry** billet **can** reference another foundry billet declared earlier in the foundry.
+- A **local forge** billet **can** reference any foundry billet (foundry billets are already resolved by the time local billets are processed).
+- A **foundry** billet **cannot** reference a local forge billet (local billets have not been resolved yet).
+
+```yaml
+# Foundry "room_light"
+forge:
+  billets:
+    room: "bed"                          # step 1 — plain string
+    entity_id: "light.{room}_light"      # step 2 — references "room" ✅
+```
+
+```yaml
+# Local forge instance
+type: custom:uix-forge
+foundry: room_light
+forge:
+  billets:
+    label: "{room} light"                # ✅ can reference foundry billet "room"
+    # entity_id: "light.{label}_light"  # ❌ "label" is a local billet — not yet resolved here
+```
+
 ## UIX styling from a foundry
 
 A foundry can include a `uix` key under `forge` that applies [UIX styling](../using/index.md) to the forged element wrapper. Foundry styles are merged with any `uix` key in the local `forge` config, with the local forge config taking precedence.
