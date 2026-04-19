@@ -310,33 +310,46 @@ forge:
 
 ### Billet interpolation with foundries
 
-When [billet `{}`-interpolation](./index.md#billet-interpolation) is used alongside foundries, the resolution order after merging is:
+When [billet `{}`-interpolation](./index.md#billet-interpolation) is used alongside foundries, `resolveBillets` runs on the merged billet object. The merge order is:
 
-1. **Foundry billets** — resolved first, in the foundry's declaration order.
-2. **Local forge billets** — new keys appended after the foundry billets, resolved in their declaration order.
+1. **Foundry billets** — spread first, in the foundry's declaration order.
+2. **New local billets** — keys that only exist locally are appended after.
+3. **Overridden billets** — if the local forge redefines a foundry billet key, the value is replaced **in-place** (the key keeps its original position from the foundry).
 
-This means:
+Rules for cross-billet references:
 
 - A **foundry** billet **can** reference another foundry billet declared earlier in the foundry.
-- A **local forge** billet **can** reference any foundry billet (foundry billets are already resolved by the time local billets are processed).
-- A **foundry** billet **cannot** reference a local forge billet (local billets have not been resolved yet).
+- When a local forge **overrides** a foundry billet key, that key keeps its position in the merged object, so later billets in the foundry that reference it will resolve to the **overridden** value — this is the intended behaviour.
+- A **new local** billet (a key not present in the foundry) **can** reference any foundry billet, because foundry billets are earlier in the merged order.
+- A **foundry** billet **cannot** reference a new local billet (new local keys are appended after all foundry keys).
 
 ```yaml
 # Foundry "room_light"
 forge:
   billets:
-    room: "bed"                          # step 1 — plain string
+    room: "bed"                          # step 1 — overrideable slot
     entity_id: "light.{room}_light"      # step 2 — references "room" ✅
 ```
 
 ```yaml
-# Local forge instance
+# Instance — overrides "room"; "entity_id" resolves using the overridden value
 type: custom:uix-forge
 foundry: room_light
 forge:
   billets:
-    label: "{room} light"                # ✅ can reference foundry billet "room"
-    # entity_id: "light.{label}_light"  # ❌ "label" is a local billet — not yet resolved here
+    room: "living"                       # overrides foundry "room" in-place
+    # entity_id resolves to "light.living_light" ✅
+```
+
+```yaml
+# Instance — adds a new local billet that references the foundry billet
+type: custom:uix-forge
+foundry: room_light
+forge:
+  billets:
+    label: "{room} light"                # ✅ new local billet references foundry "room"
+    # my_billet: "light.{label}_light"  # ❌ "label" is a new local billet appended after "room" and
+    #                                   #    "entity_id" — cannot be referenced by earlier foundry billets
 ```
 
 ## UIX styling from a foundry
