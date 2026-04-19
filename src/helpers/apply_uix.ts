@@ -49,6 +49,81 @@ export interface UixConfig {
 
 export type BilletConfig = Record<string, any>;
 
+const _BILLET_REF_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
+
+function _resolveBilletString(
+  value: string,
+  resolvedSoFar: BilletConfig,
+  billetName: string
+): string {
+  if (/\{\{|\}\}/.test(value)) {
+    console.error(
+      `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
+      `Billets do not support templates — use a macro instead. The value was kept unchanged.`
+    );
+    return value;
+  }
+  return value.replace(_BILLET_REF_RE, (match, name, indexStr) => {
+    if (!(name in resolvedSoFar)) {
+      // Unknown billet reference — leave unchanged
+      return match;
+    }
+    const resolved = resolvedSoFar[name];
+    if (indexStr !== undefined) {
+      const i = parseInt(indexStr, 10);
+      if (!Array.isArray(resolved)) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but "${name}" is not a list.`
+        );
+        return match;
+      }
+      if (i < 0 || i >= resolved.length) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but index ${i} is out of bounds ` +
+          `(list length ${resolved.length}).`
+        );
+        return match;
+      }
+      const item = resolved[i];
+      if (item !== null && typeof item === "object") {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but that element is an object/array ` +
+          `and cannot be used as a string replacement.`
+        );
+        return match;
+      }
+      return String(item ?? "");
+    } else {
+      if (Array.isArray(resolved) || (resolved !== null && typeof resolved === "object")) {
+        console.error(
+          `UIX: Billet "${billetName}" uses {${name}} but "${name}" is an object/array. ` +
+          `Only strings and numbers can be used as {}-replacements.`
+        );
+        return match;
+      }
+      return String(resolved ?? "");
+    }
+  });
+}
+
+function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName: string): any {
+  if (typeof value === "string") {
+    return _resolveBilletString(value, resolvedSoFar, billetName);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName));
+  }
+  return value;
+}
+
+export function resolveBillets(billets: BilletConfig): BilletConfig {
+  const resolved: BilletConfig = {};
+  for (const [name, value] of Object.entries(billets)) {
+    resolved[name] = _resolveBilletValue(value, resolved, name);
+  }
+  return resolved;
+}
+
 function _toJinja2Repr(value: any): string {
   if (value === null || value === undefined) return "none";
   if (typeof value === "boolean") return value ? "true" : "false";
@@ -68,16 +143,17 @@ function _toJinja2Repr(value: any): string {
 
 export function buildBillets(billets: BilletConfig, usedIn?: string): string {
   if (!billets || Object.keys(billets).length === 0) return "";
+  const resolved = resolveBillets(billets);
   let entries: [string, any][];
   if (!usedIn) {
-    entries = Object.entries(billets);
+    entries = Object.entries(resolved);
   } else {
-    const billetNames = Object.keys(billets);
+    const billetNames = Object.keys(resolved);
     const billetRegexes = billetNames.map((name) => ({ name, re: new RegExp(`\\b${name}\\b`) }));
     const usedNames = new Set<string>(
       billetRegexes.filter(({ re }) => re.test(usedIn)).map(({ name }) => name)
     );
-    entries = Object.entries(billets).filter(([name]) => usedNames.has(name));
+    entries = Object.entries(resolved).filter(([name]) => usedNames.has(name));
   }
   if (entries.length === 0) return "";
   return (
