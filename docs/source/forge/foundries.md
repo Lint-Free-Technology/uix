@@ -310,29 +310,60 @@ forge:
 
 ### Billet interpolation with foundries
 
-When [billet `{}`-interpolation](./index.md#billet-interpolation) is used alongside foundries, `resolveBillets` runs on the merged billet object. The merge order is:
+When [billet `{}`-interpolation](./index.md#billet-interpolation) is used alongside foundries, `resolveBillets` runs on the merged billet object. Billets are merged as follows:
 
 1. **Foundry billets** — spread first, in the foundry's declaration order.
 2. **New local billets** — keys that only exist locally are appended after.
 3. **Overridden billets** — if the local forge redefines a foundry billet key, the value is replaced **in-place** (the key keeps its original position from the foundry).
 
-Rules for cross-billet references:
+Because interpolation is resolved in dependency order rather than declaration order, **any billet can reference any other billet** — foundry billets can reference local billets, and vice versa, as long as there are no circular references.
 
-- A **foundry** billet **can** reference another foundry billet declared earlier in the foundry.
-- When a local forge **overrides** a foundry billet key, that key keeps its position in the merged object, so later billets in the foundry that reference it will resolve to the **overridden** value — this is the intended behaviour.
-- A **new local** billet (a key not present in the foundry) **can** reference any foundry billet, because foundry billets are earlier in the merged order.
-- A **foundry** billet **cannot** reference a new local billet (new local keys are appended after all foundry keys).
+```yaml
+# Foundry "room_light"
+forge:
+  billets:
+    entity_id: "light.{room}_light"      # ✅ references "room", even if "room" is only defined locally
+```
+
+```yaml
+# Local forge instance — "entity_id" resolves using the local "room" value
+type: custom:uix-forge
+foundry: room_light
+forge:
+  billets:
+    room: "bed"                           # ✅ referenced by foundry billet "entity_id"
+    label: "{room} light"                 # ✅ references "room" from the same local config
+```
+
+When a local forge **overrides** a foundry billet key, the value is replaced in-place, so other billets that reference that key receive the overridden value:
+
+```yaml
+# Foundry "room_light"
+forge:
+  billets:
+    room: "bed"
+    entity_id: "light.{room}_light"      # foundry default → "light.bed_light"
+```
+
+```yaml
+# Local forge instance — overrides "room"
+type: custom:uix-forge
+foundry: room_light
+forge:
+  billets:
+    room: "living"                        # overrides "room" → entity_id = "light.living_light" ✅
+```
 
 ### Declaring overrideable billet slots in a foundry
 
-To let forge instances supply a value that other foundry billets can reference, declare the billet **first** in the foundry — even as an empty string placeholder. The forge instance's override replaces the value in-place, keeping the key at its original position, so later foundry billets still resolve against it correctly.
+When a foundry billet is designed to be overridden by forge instances, it is good practice to declare it explicitly in the foundry — even as an empty-string placeholder. This documents the intended interface and provides a sensible default value. The forge instance's override replaces the value in-place.
 
 ```yaml
-# Foundry "room_light" — "room" is declared first so it can be overridden by each instance
+# Foundry "room_light" — "room" is documented as an overrideable slot
 forge:
   billets:
-    room: ""                             # step 1 — placeholder; forge instance overrides this
-    entity_id: "light.{room}_light"      # step 2 — references "room" ✅
+    room: ""                             # placeholder; forge instance overrides this
+    entity_id: "light.{room}_light"      # references "room" ✅
 ```
 
 ```yaml
@@ -341,21 +372,7 @@ type: custom:uix-forge
 foundry: room_light
 forge:
   billets:
-    room: "bed"                          # overrides placeholder in-place → entity_id = "light.bed_light" ✅
-```
-
-!!! warning "Declare placeholder billets first in the foundry"
-    If a foundry billet is meant to be customised by forge instances **and** referenced by other billets in the same foundry, it **must** be declared before those billets in the foundry. Declaring it only in the local forge would append it at the end, after the foundry billets, so foundry billets referencing it would not yet see the value.
-
-```yaml
-# Instance — adds a new local billet that references the foundry billet
-type: custom:uix-forge
-foundry: room_light
-forge:
-  billets:
-    label: "{room} light"                # ✅ new local billet references foundry "room"
-    # my_billet: "light.{label}_light"  # ❌ "label" is a new local billet appended after "room" and
-    #                                   #    "entity_id" — cannot be referenced by earlier foundry billets
+    room: "bed"                          # → entity_id = "light.bed_light" ✅
 ```
 
 ## UIX styling from a foundry

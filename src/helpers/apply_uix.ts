@@ -49,7 +49,10 @@ export interface UixConfig {
 
 export type BilletConfig = Record<string, any>;
 
+// Matches {name} and {name[N]} — used for interpolation/replacement (captures index for array access)
 const _BILLET_INTERPOLATION_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
+// Same pattern without index capture — used only for dependency graph construction
+const _BILLET_DEP_RE = /\{(\w+)(?:\[\d+\])?\}/g;
 
 function _resolveBilletString(
   value: string,
@@ -116,12 +119,70 @@ function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName
   return value;
 }
 
-export function resolveBillets(billets: BilletConfig): BilletConfig {
-  const resolved: BilletConfig = {};
-  for (const [name, value] of Object.entries(billets)) {
-    resolved[name] = _resolveBilletValue(value, resolved, name);
+function _getBilletDeps(value: any, allNames: Set<string>, deps: Set<string>): void {
+  if (typeof value === "string") {
+    _BILLET_DEP_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = _BILLET_DEP_RE.exec(value)) !== null) {
+      if (allNames.has(m[1])) deps.add(m[1]);
+    }
+  } else if (Array.isArray(value)) {
+    for (const item of value) _getBilletDeps(item, allNames, deps);
   }
-  return resolved;
+}
+
+export function resolveBillets(billets: BilletConfig): BilletConfig {
+  const names = Object.keys(billets);
+  if (names.length === 0) return {};
+
+  const allNames = new Set<string>(names);
+
+  // Build per-billet dependency sets (which other billets does each billet reference?)
+  const deps: Record<string, Set<string>> = {};
+  for (const name of names) {
+    const d = new Set<string>();
+    _getBilletDeps(billets[name], allNames, d);
+    if (d.delete(name)) {
+      console.warn(`UIX: Billet "${name}" references itself via {${name}} — the self-reference is ignored.`);
+    }
+    deps[name] = d;
+  }
+
+  // Build reverse edges and in-degree for Kahn's topological sort
+  const inDegree: Record<string, number> = {};
+  const dependents: Record<string, string[]> = {};
+  for (const name of names) {
+    inDegree[name] = deps[name].size;
+    dependents[name] = [];
+  }
+  for (const name of names) {
+    for (const dep of deps[name]) dependents[dep].push(name);
+  }
+
+  // Process billets in topological order — no declaration-order constraint
+  const queue: string[] = names.filter((n) => inDegree[n] === 0);
+  const resolvedMap: BilletConfig = {};
+  while (queue.length > 0) {
+    const name = queue.shift()!;
+    resolvedMap[name] = _resolveBilletValue(billets[name], resolvedMap, name);
+    for (const dependent of dependents[name]) {
+      if (--inDegree[dependent] === 0) queue.push(dependent);
+    }
+  }
+
+  // Any remaining billets are part of a cycle — log an error and keep unresolved
+  const cycleMembers = names.filter((n) => !(n in resolvedMap));
+  if (cycleMembers.length > 0) {
+    console.error(
+      `UIX: The following billets form a circular reference and cannot be resolved: ${cycleMembers.join(", ")}.`
+    );
+    for (const name of cycleMembers) resolvedMap[name] = billets[name];
+  }
+
+  // Return in original declaration order
+  const result: BilletConfig = {};
+  for (const name of names) result[name] = resolvedMap[name];
+  return result;
 }
 
 function _toJinja2Repr(value: any): string {

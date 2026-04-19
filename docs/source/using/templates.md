@@ -194,7 +194,7 @@ Card-level macros take precedence over theme macros of the same name, allowing i
 
 ## Billets
 
-Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates. Billet string values may reference other billets (declared earlier) via `{name}` substitution.
+Billets are named YAML values that become plain template constants — usable **without parentheses**, unlike macros. They are available in both UIX Styling and UIX Forge templates. Billet string values may reference other billets via `{name}` substitution — declaration order does not matter.
 
 ### Billets in UIX Styling
 
@@ -217,17 +217,17 @@ uix:
     ha-card { content: "{{ entity_id }} / {{ default_scene }}"; }
 ```
 
-Chains work as long as each billet is declared **before** the billet that references it:
+Billet references are resolved in dependency order, so declaration order does not matter:
 
 ```yaml
 billets:
+  entity: "light.{room}_light" # → "light.bedroom_light"  (resolved after room)
+  room: "{base}room"           # → "bedroom"  (resolved after base)
   base: "bed"
-  room: "{base}room"           # → "bedroom"  (base is already resolved)
-  entity: "light.{room}_light" # → "light.bedroom_light"  (room is already resolved)
 ```
 
-!!! warning "Declaration order matters"
-    Billets are resolved in the order they are declared. A billet can only reference billets that appear **earlier** in the list. References to billets declared later, or to unknown names, are left unchanged.
+!!! note "Circular references"
+    If billets reference each other in a cycle (directly or through a chain), none of the cycle members can be resolved. UIX logs an error for each and leaves their values unchanged.
 
 ```yaml
 type: custom:uix-forge

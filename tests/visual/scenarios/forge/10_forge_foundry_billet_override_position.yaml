@@ -1,9 +1,9 @@
 id: forge_foundry_billet_override_position
 description: >-
-  A foundry billet declared as a placeholder (empty string) is overridden by the
-  forge instance. Because the override replaces the value in-place, the key keeps
-  its original position in the merged object, so later foundry billets that
-  reference it resolve against the overridden value.
+  Foundry billets can reference local forge billets regardless of declaration order.
+  Here "entity_id" in the foundry uses {room} which is only defined in the local
+  forge config (not in the foundry). Because interpolation resolves in dependency
+  order, "room" is resolved first and "entity_id" receives the correct value.
 view_path: forge-foundry-billet-override-position
 
 setup:
@@ -19,8 +19,7 @@ setup:
       forge:
         mold: card
         billets:
-          room: ""                             # step 1 — placeholder; overridden by each forge instance
-          entity_id: "light.{room}_light"      # step 2 — references "room" ✅
+          entity_id: "light.{room}_light"      # references "room" — defined only in local forge ✅
           tile_bg: "rgb(0, 100, 200)"
       element:
         type: tile
@@ -33,7 +32,7 @@ card:
   foundry: uix-test-foundry-billet-override
   forge:
     billets:
-      room: "bed"    # overrides placeholder in-place → entity_id resolves to "light.bed_light"
+      room: "bed"    # local billet referenced by foundry billet "entity_id" → "light.bed_light" ✅
 
 assertions:
   - type: element_present

@@ -1,5 +1,5 @@
 id: billet_interpolation_chained
-description: "UIX billet {}-interpolation supports chains: a billet references another which references another, all resolved in declaration order"
+description: "UIX billet {}-interpolation supports chains: a billet references another which references another, resolved in dependency order regardless of declaration order"
 view_path: billet-interpolation-chained
 
 setup:
@@ -17,13 +17,13 @@ card:
     - light.bed_light
   uix:
     billets:
-      # Step 1: plain scalar
-      channel: "bed"
+      # Step 3: references step 2 via {room} — declared BEFORE its dependencies to prove order-independence
+      label: "Room: {room}"
       # Step 2: references step 1 via {channel}
       room: "{channel}room"
-      # Step 3: references step 2 via {room} — chained through two billets
+      # Step 1: plain scalar — declared LAST to prove out-of-order resolution works
+      channel: "bed"
       bg: "rgb(0, 100, 200)"
-      label: "Room: {room}"
     style: |
       ha-card {
         background: {{ bg }} !important;

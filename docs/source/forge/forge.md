@@ -129,7 +129,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets (declared earlier) via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves.
 
 ```yaml
 type: custom:uix-forge
@@ -202,17 +202,17 @@ forge:
     default_scene: "{scenes[0]}"        # → "bright"
 ```
 
-Chains work as long as each billet is declared **before** the billet that references it:
+Billet references are resolved in dependency order, so declaration order does not matter:
 
 ```yaml
 billets:
+  entity: "light.{room}_light" # → "light.bedroom_light"  (resolved after room)
+  room: "{base}room"           # → "bedroom"  (resolved after base)
   base: "bed"
-  room: "{base}room"           # → "bedroom"  (base is already resolved)
-  entity: "light.{room}_light" # → "light.bedroom_light"  (room is already resolved)
 ```
 
-!!! warning "Declaration order matters"
-    Billets are resolved in the order they are declared. A billet can only reference billets that appear **earlier** in the list. References to billets declared later, or to unknown names, are left unchanged.
+!!! note "Circular references"
+    If billets reference each other in a cycle (directly or through a chain), none of the cycle members can be resolved. UIX logs an error for each and leaves their values unchanged.
 
 #### Billets and foundries
 
