@@ -1,3 +1,9 @@
+## [6.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0...v6.4.0-beta.1) (2026-04-19)
+
+### ⭐ New Features
+
+* add {}-interpolation between billets (order-independent) ([#253](https://github.com/Lint-Free-Technology/uix/issues/253)) ([d0fbbae](https://github.com/Lint-Free-Technology/uix/commit/d0fbbae4a5ab007db3f2b821cd4d97d3539fd896))
+
 ## [6.3.0](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0...v6.3.0) (2026-04-18)
 
 ### ⭐ New Features
