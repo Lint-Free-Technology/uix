@@ -1,0 +1,55 @@
+id: forge_foundry_billet_override_position
+description: >-
+  A foundry billet declared as a placeholder (empty string) is overridden by the
+  forge instance. Because the override replaces the value in-place, the key keeps
+  its original position in the merged object, so later foundry billets that
+  reference it resolve against the overridden value.
+view_path: forge-foundry-billet-override-position
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry-billet-override
+    config:
+      forge:
+        mold: card
+        billets:
+          room: ""                             # step 1 — placeholder; overridden by each forge instance
+          entity_id: "light.{room}_light"      # step 2 — references "room" ✅
+          tile_bg: "rgb(0, 100, 200)"
+      element:
+        type: tile
+        entity: "{{ entity_id }}"
+        uix:
+          style: "ha-card { background: {{ tile_bg }} !important; }"
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry-billet-override
+  forge:
+    billets:
+      room: "bed"    # overrides placeholder in-place → entity_id resolves to "light.bed_light"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "17_forge_foundry_billet_override_position"
+    threshold: 0.02
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry-billet-override

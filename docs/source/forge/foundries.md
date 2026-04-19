@@ -323,11 +323,15 @@ Rules for cross-billet references:
 - A **new local** billet (a key not present in the foundry) **can** reference any foundry billet, because foundry billets are earlier in the merged order.
 - A **foundry** billet **cannot** reference a new local billet (new local keys are appended after all foundry keys).
 
+### Declaring overrideable billet slots in a foundry
+
+To let forge instances supply a value that other foundry billets can reference, declare the billet **first** in the foundry — even as an empty string placeholder. The forge instance's override replaces the value in-place, keeping the key at its original position, so later foundry billets still resolve against it correctly.
+
 ```yaml
-# Foundry "room_light"
+# Foundry "room_light" — "room" is declared first so it can be overridden by each instance
 forge:
   billets:
-    room: "bed"                          # step 1 — overrideable slot
+    room: ""                             # step 1 — placeholder; forge instance overrides this
     entity_id: "light.{room}_light"      # step 2 — references "room" ✅
 ```
 
@@ -337,9 +341,11 @@ type: custom:uix-forge
 foundry: room_light
 forge:
   billets:
-    room: "living"                       # overrides foundry "room" in-place
-    # entity_id resolves to "light.living_light" ✅
+    room: "bed"                          # overrides placeholder in-place → entity_id = "light.bed_light" ✅
 ```
+
+!!! warning "Declare placeholder billets first in the foundry"
+    If a foundry billet is meant to be customised by forge instances **and** referenced by other billets in the same foundry, it **must** be declared before those billets in the foundry. Declaring it only in the local forge would append it at the end, after the foundry billets, so foundry billets referencing it would not yet see the value.
 
 ```yaml
 # Instance — adds a new local billet that references the foundry billet
