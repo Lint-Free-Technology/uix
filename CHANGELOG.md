@@ -1,3 +1,5 @@
+## [6.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.2...v6.4.0-beta.3) (2026-04-20)
+
 ## [6.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.1...v6.4.0-beta.2) (2026-04-20)
 
 ### 🐞 Bug Fixes
