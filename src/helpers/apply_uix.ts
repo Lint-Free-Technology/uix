@@ -116,6 +116,13 @@ function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName
   if (Array.isArray(value)) {
     return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName));
   }
+  if (value !== null && typeof value === "object") {
+    const result: Record<string, any> = {};
+    for (const k of Object.keys(value)) {
+      result[k] = _resolveBilletValue(value[k], resolvedSoFar, billetName);
+    }
+    return result;
+  }
   return value;
 }
 
@@ -128,6 +135,8 @@ function _getBilletDeps(value: any, allNames: Set<string>, deps: Set<string>): v
     }
   } else if (Array.isArray(value)) {
     for (const item of value) _getBilletDeps(item, allNames, deps);
+  } else if (value !== null && typeof value === "object") {
+    for (const item of Object.values(value)) _getBilletDeps(item, allNames, deps);
   }
 }
 

@@ -1,0 +1,23 @@
+id: forge_billet_object_in_list
+description: "UIX Forge billet {}-interpolation descends into objects nested inside lists"
+view_path: forge-billet-object-in-list
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    billets:
+      id: bed
+      entities:
+        - "sensor.{id}_light"
+        - entity: "sensor.{id}_downlight"
+  element:
+    type: markdown
+    content: |
+      Entities: {{ entities }}
+
+assertions:
+  - type: text_startswith
+    root: "hui-markdown-card"
+    selector: "p"
+    expected: "Entities: ['sensor.bed_light', {'entity': 'sensor.bed_downlight'}]"
