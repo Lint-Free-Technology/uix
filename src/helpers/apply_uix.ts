@@ -66,7 +66,7 @@ function _resolveBilletString(
   if (/\{\{|\}\}/.test(value)) {
     reportError(
       `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
-      `Billets do not support templates — use a macro instead. The value was kept unchanged.`
+      `Billets do not support templates — use a macro instead.`
     );
     return value;
   }
