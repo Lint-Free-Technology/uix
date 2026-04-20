@@ -1,3 +1,9 @@
+## [6.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.1...v6.4.0-beta.2) (2026-04-20)
+
+### 🐞 Bug Fixes
+
+* billet interpolation does not descend into objects inside lists ([#254](https://github.com/Lint-Free-Technology/uix/issues/254)) ([2895fd4](https://github.com/Lint-Free-Technology/uix/commit/2895fd4d4773bfea3962312b805005cc120988c5))
+
 ## [6.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0...v6.4.0-beta.1) (2026-04-19)
 
 ### ⭐ New Features
