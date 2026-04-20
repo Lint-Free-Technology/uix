@@ -57,12 +57,16 @@ const _BILLET_DEP_RE = /\{(\w+)(?:\[\d+\])?\}/g;
 function _resolveBilletString(
   value: string,
   resolvedSoFar: BilletConfig,
-  billetName: string
+  billetName: string,
+  throwOnError?: boolean
 ): string {
+  const reportError = throwOnError
+    ? (msg: string) => { throw new Error(msg); }
+    : (msg: string) => console.error(msg);
   if (/\{\{|\}\}/.test(value)) {
-    console.error(
+    reportError(
       `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
-      `Billets do not support templates — use a macro instead. The value was kept unchanged.`
+      `Billets do not support templates — use a macro instead.`
     );
     return value;
   }
@@ -75,13 +79,13 @@ function _resolveBilletString(
     if (indexStr !== undefined) {
       const i = parseInt(indexStr, 10);
       if (!Array.isArray(resolved)) {
-        console.error(
+        reportError(
           `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but "${name}" is not a list.`
         );
         return match;
       }
       if (i < 0 || i >= resolved.length) {
-        console.error(
+        reportError(
           `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but index ${i} is out of bounds ` +
           `(list length ${resolved.length}).`
         );
@@ -89,7 +93,7 @@ function _resolveBilletString(
       }
       const item = resolved[i];
       if (item !== null && typeof item === "object") {
-        console.error(
+        reportError(
           `UIX: Billet "${billetName}" uses {${name}[${indexStr}]} but that element is an object/array ` +
           `and cannot be used as a string replacement.`
         );
@@ -98,7 +102,7 @@ function _resolveBilletString(
       return item == null ? "" : String(item);
     } else {
       if (Array.isArray(resolved) || (resolved !== null && typeof resolved === "object")) {
-        console.error(
+        reportError(
           `UIX: Billet "${billetName}" uses {${name}} but "${name}" is an object/array. ` +
           `Only strings and numbers can be used as {}-replacements.`
         );
@@ -109,17 +113,17 @@ function _resolveBilletString(
   });
 }
 
-function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName: string): any {
+function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName: string, throwOnError?: boolean): any {
   if (typeof value === "string") {
-    return _resolveBilletString(value, resolvedSoFar, billetName);
+    return _resolveBilletString(value, resolvedSoFar, billetName, throwOnError);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName));
+    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName, throwOnError));
   }
   if (value !== null && typeof value === "object") {
     const result: Record<string, any> = {};
     for (const k of Object.keys(value)) {
-      result[k] = _resolveBilletValue(value[k], resolvedSoFar, billetName);
+      result[k] = _resolveBilletValue(value[k], resolvedSoFar, billetName, throwOnError);
     }
     return result;
   }
@@ -140,7 +144,7 @@ function _getBilletDeps(value: any, allNames: Set<string>, deps: Set<string>): v
   }
 }
 
-export function resolveBillets(billets: BilletConfig): BilletConfig {
+export function resolveBillets(billets: BilletConfig, throwOnError?: boolean): BilletConfig {
   const names = Object.keys(billets);
   if (names.length === 0) return {};
 
@@ -173,7 +177,7 @@ export function resolveBillets(billets: BilletConfig): BilletConfig {
   const resolvedMap: BilletConfig = {};
   while (queue.length > 0) {
     const name = queue.shift()!;
-    resolvedMap[name] = _resolveBilletValue(billets[name], resolvedMap, name);
+    resolvedMap[name] = _resolveBilletValue(billets[name], resolvedMap, name, throwOnError);
     for (const dependent of dependents[name]) {
       if (--inDegree[dependent] === 0) queue.push(dependent);
     }
@@ -182,9 +186,9 @@ export function resolveBillets(billets: BilletConfig): BilletConfig {
   // Any remaining billets are part of a cycle — log an error and keep unresolved
   const cycleMembers = names.filter((n) => !(n in resolvedMap));
   if (cycleMembers.length > 0) {
-    console.error(
-      `UIX: The following billets form a circular reference and cannot be resolved: ${cycleMembers.join(", ")}.`
-    );
+    const msg = `UIX: The following billets form a circular reference and cannot be resolved: ${cycleMembers.join(", ")}.`;
+    if (throwOnError) throw new Error(msg);
+    console.error(msg);
     for (const name of cycleMembers) resolvedMap[name] = billets[name];
   }
 
@@ -211,9 +215,9 @@ function _toJinja2Repr(value: any): string {
   return `"${String(value)}"`;
 }
 
-export function buildBillets(billets: BilletConfig, usedIn?: string): string {
+export function buildBillets(billets: BilletConfig, usedIn?: string, throwOnError?: boolean): string {
   if (!billets || Object.keys(billets).length === 0) return "";
-  const resolved = resolveBillets(billets);
+  const resolved = resolveBillets(billets, throwOnError);
   let entries: [string, any][];
   if (!usedIn) {
     entries = Object.entries(resolved);
