@@ -18,6 +18,6 @@ card:
 
 assertions:
   - type: text_startswith
-    root: "hui-markdown-card"
+    root: "ha-markdown"
     selector: "p"
     expected: "Entities: ['sensor.bed_light', {'entity': 'sensor.bed_downlight'}]"
