@@ -1,3 +1,9 @@
+## [6.4.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.4...v6.4.0-beta.5) (2026-04-21)
+
+### ⭐ New Features
+
+* Add foundry file loading: manage foundries via YAML files in Home Assistant config dir ([#264](https://github.com/Lint-Free-Technology/uix/issues/264)) ([966e5d7](https://github.com/Lint-Free-Technology/uix/commit/966e5d74b6e134a469918961ccecfe210ee51e37)), closes [#263](https://github.com/Lint-Free-Technology/uix/issues/263)
+
 ## [6.4.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.3...v6.4.0-beta.4) (2026-04-21)
 
 ### ⚙️ Miscellaneous
