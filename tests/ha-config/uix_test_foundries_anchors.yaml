@@ -1,0 +1,22 @@
+# YAML anchors are a standard feature that users expect to work in foundry files.
+#
+# This file demonstrates the most common usage pattern: defining a base foundry
+# configuration with an anchor (&) and deriving other foundries from it using
+# the YAML merge key (<<: *anchor).  This avoids repetition when many foundries
+# share the same forge / element structure.
+
+uix_foundries:
+  # Base foundry: anchored so other foundries can inherit from it.
+  uix-test-anchor-base: &anchor_base
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: "light.bed_light"
+      uix:
+        style: "ha-card { background: rgb(0, 150, 255) !important; }"
+
+  # Derived foundry: merges all keys from *anchor_base using the YAML merge key.
+  # After YAML parsing this is equivalent to a full copy of uix-test-anchor-base.
+  uix-test-anchor-derived:
+    <<: *anchor_base
