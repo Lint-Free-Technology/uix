@@ -186,6 +186,18 @@ remove_foundry_file
           - type: remove_foundry_file
             file_path: uix_test_foundries.yaml
 
+reload_foundry_files
+    Trigger a re-read of all registered foundry files via the
+    ``uix/reload_foundry_files`` WebSocket API.  Fires the
+    foundries-updated event so all connected clients receive the latest
+    file contents.  Useful when file content changes between setup steps.
+    Requires the ``ha`` container.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: reload_foundry_files
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -872,8 +884,8 @@ def run_interactions(
     running assertions and snapshots.
 
     Pass the HA container as *ha* when any ``ha_service``, ``add_foundry``,
-    ``delete_foundry``, ``add_foundry_file``, or ``remove_foundry_file``
-    interactions are present in the scenario.
+    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``, or
+    ``reload_foundry_files`` interactions are present in the scenario.
 
     *key* selects which list to execute.  Use ``"setup"`` for interactions that
     should run **before** page navigation (e.g. ``ha_service``,
@@ -883,8 +895,9 @@ def run_interactions(
     for cleanup steps (e.g. ``delete_foundry``, ``remove_foundry_file``) that
     must run after assertions even when the test fails.  Only ``ha_service``,
     ``device_registry_update``, ``add_foundry``, ``delete_foundry``,
-    ``add_foundry_file``, ``remove_foundry_file``, and ``wait`` interaction
-    types are meaningful in ``setup`` and ``teardown`` blocks.
+    ``add_foundry_file``, ``remove_foundry_file``, ``reload_foundry_files``,
+    and ``wait`` interaction types are meaningful in ``setup`` and ``teardown``
+    blocks.
     """
     __tracebackhide__ = True
     for interaction in scenario.get(key, []):
@@ -937,6 +950,13 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _remove_foundry_file(ha, interaction)
+        elif itype == "reload_foundry_files":
+            if ha is None:
+                raise ValueError(
+                    "reload_foundry_files interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _reload_foundry_files(ha)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -1167,6 +1187,28 @@ def _remove_foundry_file(ha: HATestContainer, interaction: dict[str, Any]) -> No
     if not result.get("success"):
         raise RuntimeError(
             f"uix/remove_foundry_file failed for {file_path!r}: {result}"
+        )
+
+
+def _reload_foundry_files(ha: HATestContainer) -> None:
+    """Trigger a re-read of all registered foundry files via the WebSocket API
+    (``uix/reload_foundry_files``).
+
+    Fires the foundries-updated event on the server so all connected clients
+    receive the latest file contents.  Useful when file content has changed
+    between setup steps and you want those changes to propagate before the
+    page loads.
+    """
+    __tracebackhide__ = True
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/reload_foundry_files",
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/reload_foundry_files failed: {result}"
         )
 
 
