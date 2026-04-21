@@ -1,3 +1,9 @@
+## [6.4.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.3...v6.4.0-beta.4) (2026-04-21)
+
+### ⚙️ Miscellaneous
+
+* Differentiate reload (all users) vs. restart needed (admins) notification on UIX version mismatch ([#258](https://github.com/Lint-Free-Technology/uix/issues/258)) ([e4a197a](https://github.com/Lint-Free-Technology/uix/commit/e4a197abee9eb7708e164c6d8b17815ab329b8cc)), closes [#256](https://github.com/Lint-Free-Technology/uix/issues/256)
+
 ## [6.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.2...v6.4.0-beta.3) (2026-04-20)
 
 ## [6.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.1...v6.4.0-beta.2) (2026-04-20)
