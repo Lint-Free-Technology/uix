@@ -94,6 +94,8 @@ File contents are read when foundries are first requested by the browser and whe
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose **Reload foundry files**.
 
+If your dashboard is in **YAML mode**, you can also use the dashboard's built-in **Refresh** button — UIX listens for the `config-refresh` event that the refresh button dispatches and automatically re-reads all registered foundry files.
+
 #### Removing a file registration
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
