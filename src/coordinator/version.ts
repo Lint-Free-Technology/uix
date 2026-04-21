@@ -50,11 +50,10 @@ export const VersionMixin = (SuperClass) => {
     }
 
     async _restartNotification() {
+      await this._waitForNoToast();
       const hassInstance = await hass();
       // Only show to admins — non-admins cannot restart HA
       if (!hassInstance?.user?.is_admin) return;
-
-      await this._waitForNoToast();
 
       const message =
         "Restart of Home Assistant is required to finish download/update of UIX";
