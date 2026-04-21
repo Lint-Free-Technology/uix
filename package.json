@@ -31,6 +31,7 @@
   "dependencies": {
     "@watchable/unpromise": "^1.0.2",
     "color-name": "^2.1.0",
+    "compare-versions": "^6.1.1",
     "lit": "^3.3.2",
     "memoize-one": "^6.0.0",
     "parse-duration": "^2.1.6",
