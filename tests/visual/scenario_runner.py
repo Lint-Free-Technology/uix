@@ -158,6 +158,34 @@ delete_foundry
           - type: delete_foundry
             name: my-tile-foundry
 
+add_foundry_file
+    Register a foundry YAML file with UIX via the ``uix/add_foundry_file``
+    WebSocket API.  The file must already exist in the HA config directory.
+    Use in ``setup:`` so that file-based foundries are available before the
+    page loads.  Pair with ``remove_foundry_file`` in ``teardown:`` to
+    deregister the file afterwards.  Requires the ``ha`` container.
+
+    The YAML file must have a top-level ``uix_foundries`` key that is a
+    mapping of foundry names to their configurations.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: add_foundry_file
+            file_path: uix_test_foundries.yaml
+
+remove_foundry_file
+    Deregister a foundry YAML file from UIX via the
+    ``uix/remove_foundry_file`` WebSocket API.  The file itself is not
+    deleted.  Use in ``teardown:`` to clean up a file path added by
+    ``add_foundry_file``.  Requires the ``ha`` container.
+
+    .. code-block:: yaml
+
+        teardown:
+          - type: remove_foundry_file
+            file_path: uix_test_foundries.yaml
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -844,17 +872,19 @@ def run_interactions(
     running assertions and snapshots.
 
     Pass the HA container as *ha* when any ``ha_service``, ``add_foundry``,
-    or ``delete_foundry`` interactions are present in the scenario.
+    ``delete_foundry``, ``add_foundry_file``, or ``remove_foundry_file``
+    interactions are present in the scenario.
 
     *key* selects which list to execute.  Use ``"setup"`` for interactions that
-    should run **before** page navigation (e.g. ``ha_service`` and
-    ``add_foundry`` calls that create entities or foundries so they exist when
-    the page first loads); use the default ``"interactions"`` for actions taken
-    after navigation; use ``"teardown"`` for cleanup steps (e.g.
-    ``delete_foundry``) that must run after assertions even when the test fails.
-    Only ``ha_service``, ``device_registry_update``, ``add_foundry``,
-    ``delete_foundry``, and ``wait`` interaction types are meaningful in
-    ``setup`` and ``teardown`` blocks.
+    should run **before** page navigation (e.g. ``ha_service``,
+    ``add_foundry``, and ``add_foundry_file`` calls that create entities or
+    foundries so they exist when the page first loads); use the default
+    ``"interactions"`` for actions taken after navigation; use ``"teardown"``
+    for cleanup steps (e.g. ``delete_foundry``, ``remove_foundry_file``) that
+    must run after assertions even when the test fails.  Only ``ha_service``,
+    ``device_registry_update``, ``add_foundry``, ``delete_foundry``,
+    ``add_foundry_file``, ``remove_foundry_file``, and ``wait`` interaction
+    types are meaningful in ``setup`` and ``teardown`` blocks.
     """
     __tracebackhide__ = True
     for interaction in scenario.get(key, []):
@@ -893,6 +923,20 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _delete_foundry(ha, interaction)
+        elif itype == "add_foundry_file":
+            if ha is None:
+                raise ValueError(
+                    "add_foundry_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _add_foundry_file(ha, interaction)
+        elif itype == "remove_foundry_file":
+            if ha is None:
+                raise ValueError(
+                    "remove_foundry_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _remove_foundry_file(ha, interaction)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -1079,6 +1123,50 @@ def _delete_foundry(ha: HATestContainer, interaction: dict[str, Any]) -> None:
     if not result.get("success"):
         raise RuntimeError(
             f"uix/delete_foundry failed for {name!r}: {result}"
+        )
+
+
+def _add_foundry_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Register a foundry YAML file via the WebSocket API (``uix/add_foundry_file``).
+
+    The file must already exist in the HA config directory.  Use in ``setup:``
+    to make file-based foundries available before the page loads.  Pair with
+    ``remove_foundry_file`` in ``teardown:`` to deregister it afterwards.
+    """
+    __tracebackhide__ = True
+    file_path: str = interaction["file_path"]
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/add_foundry_file",
+            "file_path": file_path,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/add_foundry_file failed for {file_path!r}: {result}"
+        )
+
+
+def _remove_foundry_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Deregister a foundry YAML file via the WebSocket API (``uix/remove_foundry_file``).
+
+    Removes the file path from the UIX config entry so it is no longer loaded.
+    The file itself is not deleted.  Use in ``teardown:`` to clean up after an
+    ``add_foundry_file`` setup step.
+    """
+    __tracebackhide__ = True
+    file_path: str = interaction["file_path"]
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/remove_foundry_file",
+            "file_path": file_path,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/remove_foundry_file failed for {file_path!r}: {result}"
         )
 
 
