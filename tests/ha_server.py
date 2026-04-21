@@ -95,7 +95,7 @@ def main() -> None:
     url = container.get_url()
     token = container.get_token()
 
-    env_content = f"export HA_URL={url}\nexport HA_TOKEN={token}\n"
+    env_content = f"export HA_URL={url}\nexport HA_TOKEN={token}\nexport HA_CONFIG_DIR={ha_tmp}\n"
 
     _ENV_FILE.write_text(env_content)
 

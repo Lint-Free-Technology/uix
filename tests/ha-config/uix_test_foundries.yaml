@@ -1,0 +1,9 @@
+uix_foundries:
+  uix-test-file-foundry:
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: "light.bed_light"
+      uix:
+        style: "ha-card { background: rgb(200, 0, 100) !important; }"

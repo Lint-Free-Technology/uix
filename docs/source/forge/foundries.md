@@ -8,15 +8,107 @@ A **foundry** is a named UIX Forge configuration stored in Home Assistant. It ac
 
 ## Managing foundries
 
-Foundries are managed through the **UI eXtension** integration options in Home Assistant.
+Foundries can be managed in two ways: through the **UI** (suitable for small numbers of foundries) or through **YAML files on disk** (better for larger sets, bulk authoring, and version control).
+
+### Via the UI
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
-2. Choose one of the three menu options:
+2. Choose one of the options:
    - **Add a foundry** — enter a name and a YAML config object.
    - **Edit a foundry** — select an existing foundry from the dropdown, then update its config.
    - **Delete a foundry** — select an existing foundry from the dropdown and confirm.
 
 The foundry name must be unique. It is used as the `foundry:` key in your element config.
+
+### Via YAML files
+
+!!! note
+    Foundries via YAML files available in UIeXtension version 6.4.0-beta.5
+
+You can store foundries in ordinary YAML files anywhere inside (or accessible from) your HA config directory and register those files with UIX. This approach:
+
+- supports version control (git, etc.)
+- lets you use any text editor
+- supports YAML anchors (`&`) and merge keys (`<<: *`) for DRY configurations
+- supports `!include` and `!secret` directives (no quoting required — the file is loaded by HA's native YAML loader)
+
+#### File format
+
+Each file must have a top-level `uix_foundries` key whose value is a mapping of foundry names to foundry configs:
+
+```yaml
+uix_foundries:
+  light_tile:
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: light.bed_light
+
+  switch_tile:
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: switch.living_room
+```
+
+#### YAML anchors
+
+YAML anchors and merge keys work as expected, making it easy to share a common base config across multiple foundries:
+
+```yaml
+uix_foundries:
+  _base_tile: &base_tile        # anchor — not used as a foundry directly
+    forge:
+      mold: card
+    element:
+      type: tile
+      uix:
+        style: |
+          ha-card { border-radius: 20px; }
+
+  light_tile:
+    <<: *base_tile              # merge all keys from _base_tile
+    element:
+      entity: light.bed_light
+
+  switch_tile:
+    <<: *base_tile
+    element:
+      entity: switch.living_room
+```
+
+!!! note "Anchor-only entries"
+    Foundry names beginning with `_` (e.g. `_base_tile` above) are valid foundry names. If you don't want an anchor entry to be used as a real foundry, simply avoid referencing it with `foundry:` in your cards.
+
+#### Registering a file
+
+1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
+2. Choose **Add a foundry file**.
+3. Enter the path to the file — either absolute or relative to the HA config directory (e.g. `uix/my_foundries.yaml`).
+
+UIX validates the file before saving the registration. If the file cannot be found, fails to parse, or is missing the required `uix_foundries` key, an error is shown.
+
+#### Reloading files
+
+File contents are read when foundries are first requested by the browser and whenever foundries are updated. To force all connected browser sessions to reload the latest file contents without restarting HA:
+
+1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
+2. Choose **Reload foundry files**.
+
+If your dashboard is in **YAML mode**, you can also use the dashboard's built-in **Refresh** button — UIX listens for the `config-refresh` event that the refresh button dispatches and automatically re-reads all registered foundry files.
+
+#### Removing a file registration
+
+1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
+2. Choose **Remove a foundry file** and select the file from the dropdown.
+
+This removes the registration only — the file itself is not deleted.
+
+#### Precedence
+
+When a foundry name appears in both a YAML file and a UI-configured foundry, the **UI-configured foundry takes precedence**. When the same name appears in multiple files, the **last registered file wins**.
 
 ## Using a foundry
 
@@ -60,12 +152,15 @@ The same keys are valid here as on a normal `uix-forge` element. See the [UIX Fo
 
 ## Including external files and secrets
 
-Foundry configs support HA YAML directives such as `!include` and `!secret`. Because foundries are entered as plain text in the UI editor (not loaded by HA's file-based YAML loader), these directives are stored as literal strings and resolved by UIX at serve time — just before the config is sent to the browser.
+Foundry configs support HA YAML directives such as `!include` and `!secret`. The behaviour differs slightly depending on whether the foundry is defined in the UI or in a YAML file.
+
+- **In a foundry YAML file** — the file is loaded by HA's native YAML loader, so `!include` and `!secret` work exactly as they do in `configuration.yaml`. No quoting is required.
+- **In the UI editor** — foundries are entered as plain text in the browser. The browser's YAML parser does not understand `!` tags, so they must be quoted as string literals and are resolved by UIX at serve time.
 
 !!! warning "Quoting required in the UI editor"
-    In the ObjectSelector / YAML editor in the HA UI, `!include` and `!secret` **must be quoted**. The browser's YAML parser does not understand these tags and will throw an error on an unquoted value. Write them as `"!include path/to/file.yaml"` or `"!secret my_key"`.
+    In the ObjectSelector / YAML editor in the HA UI, `!include` and `!secret` **must be quoted**. Write them as `"!include path/to/file.yaml"` or `"!secret my_key"`.
 
-    In regular HA YAML files on disk they are unquoted as usual.
+    In foundry YAML files on disk they are unquoted, as in any other HA YAML file.
 
 ### `!include`
 
@@ -77,7 +172,19 @@ style: "ha-card { background: teal; }"
 ```
 
 ```yaml
-# Foundry config (entered in the UI editor with quotes)
+# In a foundry YAML file — no quoting needed
+uix_foundries:
+  my_tile:
+    forge:
+      mold: card
+    element:
+      type: tile
+      entity: "{{ config.entity }}"
+      uix: !include uix/my_forge_styles.yaml
+```
+
+```yaml
+# In the UI editor — must be quoted
 forge:
   mold: card
 element:
@@ -86,7 +193,7 @@ element:
   uix: "!include uix/my_forge_styles.yaml"
 ```
 
-The included file must contain the full value for the key it replaces. In the example above `test_forge_styles.yaml` contains a `uix` config dict (with a `style` key), so the `uix:` key of the element ends up as that dict after resolution.
+The included file must contain the full value for the key it replaces. In the example above `my_forge_styles.yaml` contains a `uix` config dict (with a `style` key), so the `uix:` key of the element ends up as that dict after resolution.
 
 ### `!secret`
 
@@ -99,7 +206,20 @@ lock_pin: "1234"
 ```
 
 ```yaml
-# Foundry config
+# In a foundry YAML file — no quoting needed
+uix_foundries:
+  my_tile:
+    forge:
+      mold: card
+      billets:
+        accent: !secret accent_colour
+    element:
+      type: tile
+      entity: "{{ config.entity }}"
+```
+
+```yaml
+# In the UI editor — must be quoted
 forge:
   mold: card
   billets:
@@ -305,8 +425,8 @@ forge:
 
 ![Foundry billets empty example](../assets/page-assets/forge/foundries-billets-empty2.png)
 
-!!! note "Comments are stripped"
-    Home Assistant stores foundry config as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances.
+!!! note "UI-managed foundries: comments are stripped"
+    Home Assistant stores UI-configured foundry configs as JSON, so YAML comments are not preserved. Use descriptive billet names (e.g. `accent_color`, `card_label`) to make the purpose of each slot self-evident to anyone editing instances. Foundries stored in YAML files on disk are not affected — comments in those files are preserved as usual.
 
 ## UIX styling from a foundry
 

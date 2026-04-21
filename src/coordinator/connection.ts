@@ -194,6 +194,10 @@ export const ConnectionMixin = (SuperClass) => {
         }
       });
 
+      window.addEventListener("config-refresh", () => {
+        this.fetchFoundries();
+      });
+
       provideHass(this);
     }
 
