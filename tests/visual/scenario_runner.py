@@ -213,6 +213,37 @@ dispatch_window_event
             event: config-refresh
             settle_ms: 1000
 
+write_config_file
+    Write (or overwrite) a file inside the HA config directory.  The file
+    is written directly into the running container so that subsequent
+    ``dispatch_window_event: config-refresh`` interactions (or any other
+    reload trigger) cause UIX to read the new contents.  Useful for
+    testing that foundry files are genuinely re-read from disk rather than
+    served from a cache.
+
+    ``path`` is a path relative to the HA config root (``/config/``).
+    ``content`` is the UTF-8 text to write.
+
+    In **Docker mode** (default CI and ``make ha_up``) the file is written
+    into the running container via the Docker ``put_archive`` API.  In
+    **external mode** (``HA_URL``/``HA_TOKEN`` env vars) the
+    ``HA_CONFIG_DIR`` env var must point to the config directory on the
+    host.
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: write_config_file
+            path: uix_test_foundries.yaml
+            content: |
+              uix_foundries:
+                my-foundry:
+                  forge:
+                    mold: card
+                  element:
+                    type: tile
+                    entity: "light.bed_light"
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -519,6 +550,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
+import tarfile
 from pathlib import Path
 from typing import Any
 
@@ -899,20 +931,21 @@ def run_interactions(
     running assertions and snapshots.
 
     Pass the HA container as *ha* when any ``ha_service``, ``add_foundry``,
-    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``, or
-    ``reload_foundry_files`` interactions are present in the scenario.
+    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``,
+    ``reload_foundry_files``, or ``write_config_file`` interactions are present
+    in the scenario.
 
     *key* selects which list to execute.  Use ``"setup"`` for interactions that
     should run **before** page navigation (e.g. ``ha_service``,
     ``add_foundry``, and ``add_foundry_file`` calls that create entities or
     foundries so they exist when the page first loads); use the default
     ``"interactions"`` for actions taken after navigation; use ``"teardown"``
-    for cleanup steps (e.g. ``delete_foundry``, ``remove_foundry_file``) that
-    must run after assertions even when the test fails.  Only ``ha_service``,
-    ``device_registry_update``, ``add_foundry``, ``delete_foundry``,
-    ``add_foundry_file``, ``remove_foundry_file``, ``reload_foundry_files``,
-    and ``wait`` interaction types are meaningful in ``setup`` and ``teardown``
-    blocks.
+    for cleanup steps (e.g. ``delete_foundry``, ``remove_foundry_file``,
+    ``write_config_file``) that must run after assertions even when the test
+    fails.  Only ``ha_service``, ``device_registry_update``, ``add_foundry``,
+    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``,
+    ``reload_foundry_files``, ``write_config_file``, and ``wait`` interaction
+    types are meaningful in ``setup`` and ``teardown`` blocks.
     """
     __tracebackhide__ = True
     for interaction in scenario.get(key, []):
@@ -980,6 +1013,13 @@ def run_interactions(
                 [event],
             )
             page.wait_for_timeout(settle_ms)
+        elif itype == "write_config_file":
+            if ha is None:
+                raise ValueError(
+                    "write_config_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _write_config_file(ha, interaction)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -1233,6 +1273,46 @@ def _reload_foundry_files(ha: HATestContainer) -> None:
         raise RuntimeError(
             f"uix/reload_foundry_files failed: {result}"
         )
+
+
+def _write_config_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Write (or overwrite) a file inside the HA config directory.
+
+    In Docker mode the file is written directly into the running container via
+    the Docker SDK ``put_archive`` API, so changes are immediately visible
+    inside the container without restarting it.
+
+    In external mode (``_ExternalHA``) the ``HA_CONFIG_DIR`` environment
+    variable must point to the config directory on the host.
+    """
+    __tracebackhide__ = True
+    path: str = interaction["path"]
+    content: str = interaction["content"]
+    data = content.encode("utf-8")
+
+    if hasattr(ha, "get_wrapped_container"):
+        # Docker mode — write directly into /config/ via Docker API
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w") as tar:
+            info = tarfile.TarInfo(name=path)
+            info.size = len(data)
+            info.mode = 0o644
+            tar.addfile(info, io.BytesIO(data))
+        buf.seek(0)
+        ha.get_wrapped_container().put_archive("/config/", buf.getvalue())
+    else:
+        # External mode — write to the host config dir
+        config_dir = os.environ.get("HA_CONFIG_DIR")
+        if not config_dir:
+            raise RuntimeError(
+                "write_config_file requires either a Docker container (HATestContainer) "
+                "or the HA_CONFIG_DIR environment variable set to the host path of the "
+                "HA config directory (e.g. export HA_CONFIG_DIR=/path/to/ha-config). "
+                "When using 'make ha_up' / ha_server.py, HA_CONFIG_DIR is exported automatically."
+            )
+        dest = Path(config_dir) / path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
 
 
 # ---------------------------------------------------------------------------
