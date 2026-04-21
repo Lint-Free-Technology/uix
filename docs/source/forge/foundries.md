@@ -22,6 +22,9 @@ The foundry name must be unique. It is used as the `foundry:` key in your elemen
 
 ### Via YAML files
 
+!!! note
+    Foundries via YAML files available in UIeXtension version 6.4.0-beta.5
+
 You can store foundries in ordinary YAML files anywhere inside (or accessible from) your HA config directory and register those files with UIX. This approach:
 
 - supports version control (git, etc.)
