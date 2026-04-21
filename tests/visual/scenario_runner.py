@@ -198,6 +198,21 @@ reload_foundry_files
         setup:
           - type: reload_foundry_files
 
+dispatch_window_event
+    Dispatch a ``CustomEvent`` on ``window`` from inside the browser.
+    Useful for simulating browser-level events such as ``config-refresh``
+    (fired by the HA YAML-mode dashboard refresh button).  ``settle_ms``
+    (default 1000) is the number of milliseconds to wait after dispatching
+    so that any async reactions (e.g. a ``fetchFoundries`` round-trip) can
+    complete before the next interaction or assertion runs.
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: dispatch_window_event
+            event: config-refresh
+            settle_ms: 1000
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -957,6 +972,14 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _reload_foundry_files(ha)
+        elif itype == "dispatch_window_event":
+            event = interaction["event"]
+            settle_ms = interaction.get("settle_ms", 1000)
+            page.evaluate(
+                "([event]) => window.dispatchEvent(new CustomEvent(event, {bubbles: true}))",
+                [event],
+            )
+            page.wait_for_timeout(settle_ms)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
