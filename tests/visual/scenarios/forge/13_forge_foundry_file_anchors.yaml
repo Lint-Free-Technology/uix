@@ -28,7 +28,7 @@ assertions:
     expected: "rgb(0, 150, 255)"
 
   - type: snapshot
-    name: "19_forge_foundry_file_anchors"
+    name: "20_forge_foundry_file_anchors"
     threshold: 0.02
 
 teardown:
