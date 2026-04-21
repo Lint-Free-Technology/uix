@@ -13,6 +13,7 @@ import { UixForgeSparkSearch } from "./uix-spark-search";
 import { UixForgeSparkButton } from "./uix-spark-button";
 import { UixForgeSparkMap } from "./uix-spark-map";
 import { UixForgeSparkLock } from "./uix-spark-lock";
+import { UixForgeSparkBackground } from "./uix-spark-background";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -26,6 +27,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "button": UixForgeSparkButton,
     "map": UixForgeSparkMap,
     "lock": UixForgeSparkLock,
+    "background": UixForgeSparkBackground,
 };
 
 export class UixForgeSparkController {
