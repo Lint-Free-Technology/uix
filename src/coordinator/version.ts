@@ -1,48 +1,8 @@
 import pjson from "../../package.json";
+import { compareVersions } from "compare-versions";
 import { hass_base_el, hass } from "../helpers/hass";
 import { selectTree } from "../helpers/selecttree";
 import { Actions } from "../ll-custom-actions";
-
-/**
- * Compare two version strings (semver-like, awesomeversion semantics).
- * Pre-release versions sort lower than the corresponding release:
- *   6.3.0-beta.1 < 6.3.0
- * Returns negative if a < b, 0 if equal, positive if a > b.
- *
- * Note: when both versions have a pre-release label the labels are compared
- * lexicographically, which is sufficient for UIX version strings.
- */
-function compareVersions(a: string, b: string): number {
-  const parse = (v: string): [number[], string | null] => {
-    const dashIdx = v.indexOf("-");
-    const main = dashIdx >= 0 ? v.slice(0, dashIdx) : v;
-    const pre = dashIdx >= 0 ? v.slice(dashIdx + 1) : null;
-    const parts = main.split(".").map((s) => {
-      const n = Number(s);
-      return isNaN(n) ? 0 : n;
-    });
-    return [parts, pre];
-  };
-
-  const [partsA, preA] = parse(a);
-  const [partsB, preB] = parse(b);
-
-  const len = Math.max(partsA.length, partsB.length);
-  for (let i = 0; i < len; i++) {
-    const pa = partsA[i] ?? 0;
-    const pb = partsB[i] ?? 0;
-    if (pa !== pb) return pa - pb;
-  }
-
-  // Pre-release < release (e.g. 6.3.0-beta.7 < 6.3.0)
-  if (preA !== null && preB === null) return -1;
-  if (preA === null && preB !== null) return 1;
-  if (preA !== null && preB !== null) {
-    return preA < preB ? -1 : preA > preB ? 1 : 0;
-  }
-
-  return 0;
-}
 
 export const VersionMixin = (SuperClass) => {
   return class VersionMixinClass extends SuperClass {
@@ -105,10 +65,9 @@ export const VersionMixin = (SuperClass) => {
           const helpers = await (window as any).loadCardHelpers?.();
           if (helpers?.showConfirmationDialog) {
             const confirmed = await helpers.showConfirmationDialog(base, {
-              title: "Restart Home Assistant?",
-              text: "This will interrupt all running automations and scripts.",
-              confirmText: "Restart",
-              dismissText: "Cancel",
+              title: hassInstance.localize("ui.dialogs.restart.restart.confirm_title"),
+              text: hassInstance.localize("ui.dialogs.restart.restart.confirm_description"),
+              confirmText: hassInstance.localize("ui.dialogs.restart.restart.confirm_action"),
               destructive: true,
             });
             if (!confirmed) return;
