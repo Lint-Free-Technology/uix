@@ -15,6 +15,7 @@
         "step": {
             "init": {
                 "title": "Manage UIX Forge Foundries",
+                "description": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
                 "menu_options": {
                     "foundry_menu": "Manage config foundries",
                     "foundry_file_menu": "Manage foundry files"
