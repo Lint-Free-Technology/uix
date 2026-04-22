@@ -56,6 +56,7 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `camera_pan_y` | string or number | — | CSS translate Y applied to the stream. |
 | `camera_position` | string | `center` | Alignment of the stream inside the container. One of `center`, `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right`. |
 | `camera_stream_cache_ms` | number | `20000` | How long (ms) to keep a `ha-camera-stream` element in the cache after it is removed from the background container. While cached, the element remains **connected** to an off-screen holder so its internal stream (MPEG/HLS/WebRTC session and auth tokens) stays alive. On the next rebuild with the same entity at the same dimensions the cached element is moved directly into the new background container without re-negotiating the stream. |
+| `opacity` | number | — | CSS `opacity` applied to the background container (0–1). Use this to dim the background without affecting the foreground element. |
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
 

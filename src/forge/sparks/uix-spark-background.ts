@@ -206,6 +206,10 @@ interface HaCameraStreamElement extends HTMLElement {
  * Class:
  *   `class` assigns additional CSS class(es) to the background container so
  *   users can target it with UIX styling.
+ *
+ * Opacity:
+ *   `opacity` sets the CSS `opacity` on the background container (0–1).
+ *   Useful for dimming the background without touching the foreground element.
  */
 export class UixForgeSparkBackground extends UixForgeSparkBase {
   type = "background";
@@ -223,6 +227,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   private _cameraPosition: string = "";
   private _dissolveTarget: string | Record<string, string>[] | null = null;
   private _class: string = "";
+  /** CSS opacity (0–1) applied to the background container. Empty string = no override. */
+  private _opacity: string = "";
   /** How long (ms) to keep a cached `ha-camera-stream` element after removal. */
   private _cameraCacheMs: number = 20_000;
 
@@ -301,6 +307,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._cameraPosition = config.camera_position || "";
     this._dissolveTarget = config.dissolve_target ?? null;
     this._class = config.class || "";
+    this._opacity = config.opacity != null ? String(config.opacity) : "";
     this._cameraCacheMs = config.camera_stream_cache_ms ?? 20_000;
   }
 
@@ -428,7 +435,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       if (bgType === "none") return;
       await this._buildContainer(forEl, bgType, bgKey, generation);
     } else {
-      // Container already exists — update camera state and transform.
+      // Container already exists — update camera state, transform, and opacity.
+      this._containerEl.style.opacity = this._opacity !== "" ? this._opacity : "";
       if (bgType === "camera" && this._streamEl) {
         // Only re-assign hass/stateObj when the hass object itself changed
         // (i.e. a genuine HA state update).  Setting hass on ha-camera-stream
@@ -527,6 +535,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       for (const cls of this._class.trim().split(/\s+/)) {
         if (cls) container.classList.add(cls);
       }
+    }
+
+    if (this._opacity !== "") {
+      container.style.opacity = this._opacity;
     }
 
     // Let the target-element adapter apply element-type-specific styles before
