@@ -17,17 +17,17 @@
                 "title": "Manage UIX Forge Foundries",
                 "description": "{foundries_docs_link}",
                 "menu_options": {
-                    "foundry_menu": "Manage config foundries",
+                    "foundry_menu": "Manage UI foundries",
                     "foundry_file_menu": "Manage foundry files"
                 }
             },
             "foundry_menu": {
-                "title": "Config Foundries",
-                "description": "{foundries_docs_link}\n\n**Loaded foundries:**\n{foundries_list}",
+                "title": "UI Foundries",
+                "description": "{foundries_docs_link}\n\n**Loaded UI foundries:**\n{foundries_list}",
                 "menu_options": {
-                    "add_foundry": "Add a foundry",
-                    "edit_foundry": "Edit a foundry",
-                    "delete_foundry": "Delete a foundry"
+                    "add_foundry": "Add a UI foundry",
+                    "edit_foundry": "Edit a UI foundry",
+                    "delete_foundry": "Delete a UI foundry"
                 }
             },
             "foundry_file_menu": {
@@ -40,29 +40,29 @@
                 }
             },
             "add_foundry": {
-                "title": "Add a foundry",
-                "description": "Enter a name and configuration for the new foundry. The config should be a mapping that may include 'forge', 'element', and/or 'uix' keys.",
+                "title": "Add a UI foundry",
+                "description": "Enter a name and configuration for the new UI foundry. The config should be a mapping that may include 'forge', 'element', and/or 'uix' keys.",
                 "data": {
                     "name": "Foundry name",
                     "config": "Foundry configuration"
                 }
             },
             "edit_foundry": {
-                "title": "Edit a foundry",
-                "description": "Select the foundry you want to edit.",
+                "title": "Edit a UI foundry",
+                "description": "Select the UI foundry you want to edit.",
                 "data": {
                     "name": "Foundry to edit"
                 }
             },
             "edit_foundry_config": {
-                "title": "Edit foundry \"{name}\"",
-                "description": "Update the configuration for this foundry.",
+                "title": "Edit UI foundry \"{name}\"",
+                "description": "Update the configuration for this UI foundry.",
                 "data": {
                     "config": "Foundry configuration"
                 }
             },
             "delete_foundry": {
-                "title": "Delete a foundry",
+                "title": "Delete a UI foundry",
                 "data": {
                     "name": "Foundry to delete"
                 }
@@ -83,7 +83,7 @@
             }
         },
         "abort": {
-            "no_foundries": "No foundries are configured yet. Add one first.",
+            "no_foundries": "No UI foundries are configured yet. Add one first.",
             "no_foundry_files": "No foundry files are registered yet. Register one first."
         },
         "error": {
