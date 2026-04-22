@@ -52,8 +52,6 @@ interface HaCameraStreamElement extends HTMLElement {
   stateObj: unknown;
   muted: boolean;
   controls: boolean;
-  /** LitElement method — queues an asynchronous re-render. */
-  requestUpdate(): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -553,16 +551,6 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         if (hass) {
           this._streamEl.hass = hass;
           this._streamEl.stateObj = hass.states[this._cameraEntity];
-          // ha-camera-stream's LitElement updated() fires as a microtask —
-          // before the browser completes a layout pass, so offsetHeight is
-          // still 0 even though the container has been inserted with
-          // position:absolute;inset:0 and ha-camera-stream has min-height:100%.
-          // A requestAnimationFrame fires after the browser has laid out the
-          // DOM, at which point offsetHeight is the full card height.  Calling
-          // requestUpdate() there triggers a second render cycle that reads the
-          // correct dimensions and generates the poster URL with real height.
-          const streamEl = this._streamEl;
-          requestAnimationFrame(() => streamEl.requestUpdate());
         }
         const spinner = this._addSpinner(container);
         this._removeSpinnerWhenCameraPlays(this._streamEl, spinner);
@@ -633,25 +621,12 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         this._cachedStreamEntityId = "";
       }
       streamEl = document.createElement("ha-camera-stream") as HaCameraStreamElement;
-      // min-height:100% ensures the element is at least as tall as the
-      // background container (position:absolute;inset:0 = card height) even
-      // before any poster/video content loads.  Without it, clientHeight = 0
-      // on the first render, causing ha-camera-stream to call
-      // _getPosterUrl(hass, id, w, 0) which caches a 0-height (or broken)
-      // thumbnail URL — making the <img> render at 0 height permanently until
-      // the page is reloaded.
       streamEl.style.cssText =
-        "display:block;width:100%;min-height:100%;flex-shrink:0;transform-origin:center;";
+        "display:block;width:100%;flex-shrink:0;transform-origin:center;";
       streamEl.muted = true;
       streamEl.setAttribute("muted", "");
       streamEl.controls = false;
       isNew = true;
-    }
-
-    // Ensure reused (cached) stream elements also carry min-height:100% so
-    // the guarantee holds after a container rebuild.
-    if (!streamEl.style.getPropertyValue("min-height")) {
-      streamEl.style.setProperty("min-height", "100%");
     }
 
     // Apply flex layout on container for camera positioning.
