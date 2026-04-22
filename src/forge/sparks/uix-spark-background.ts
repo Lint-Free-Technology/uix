@@ -213,16 +213,18 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
    */
   beforeForgedElementRefresh(): void {
     if (!this._containerEl) return;
-    // Remove any stale off-screen holder before creating a new one.
-    if (this._parkedOffscreen) {
-      this._parkedOffscreen.remove();
-    }
+    // If the container is already parked from a previous rapid forge refresh,
+    // leave it where it is.  Re-parking would call `_parkedOffscreen.remove()`
+    // which removes the container (a child of the holder) from the DOM,
+    // triggering `ha-camera-stream.disconnectedCallback()` and a full stream
+    // tear-down before a new holder is even created.
+    if (this._parkedOffscreen) return;
     // Capture the container's current dimensions *before* moving it so the
     // holder preserves them.  The background container uses
     // `position:absolute;inset:0`, so inside a 0×0 holder it would collapse
-    // to 0 width/height.  A 0×0 ha-camera-stream causes `_getPosterUrl()` to
-    // call `fetchThumbnailUrlWithCache(..., 0, 0)`, caching a bad thumbnail
-    // that later renders the img at 0 height — visible as a camera disconnect.
+    // to 0 width/height.  If ha-camera-stream._getPosterUrl() fires during the
+    // park window (e.g. HA restarts) it would call
+    // `fetchThumbnailUrlWithCache(..., 0, 0)`, caching a bad thumbnail.
     const w = this._containerEl.offsetWidth;
     const h = this._containerEl.offsetHeight;
     const holder = document.createElement("div");
@@ -327,6 +329,13 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   }
 
   private async _attach(generation: number, changedProperties?: PropertyValues): Promise<void> {
+    // uix-forge hides itself (display:none via hui-card) while templates are
+    // being evaluated, meaning all clientWidth/clientHeight values are 0.
+    // Building the camera background now would cause ha-camera-stream to call
+    // _getPosterUrl() with 0×0 dimensions, caching a bad thumbnail URL that
+    // later renders the <img> at 0 height.  updated() fires again once
+    // templatesReady flips to true (forge becomes visible), so we simply defer.
+    if (this.controller.forge.hidden) return;
     const elements = await this.controller.target(this._for, this._cancel);
     const forEl = elements?.[0];
     if (!forEl) return;
