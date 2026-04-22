@@ -155,11 +155,22 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
     this._applyConfig(config);
-    // Apply camera transform immediately for config-only changes (e.g.
-    // camera_zoom, camera_pan_x/y, camera_position) without waiting for the
-    // Lit updated() cycle.  This avoids any accidental hass re-assignment that
-    // could occur if a concurrent hass update is batched with the config update.
+    // Apply the camera transform immediately so zoom/pan/position config
+    // changes are visible without waiting for the async _attach() below.
     this._updateCameraTransform();
+    // Start a fresh attach cycle, treating this as a config-only update:
+    //   • _beginUpdate() cancels any in-flight _attach() from a prior
+    //     updated() call.  Without this, a stale _attach() that already
+    //     resolved forEl against the old _for selector would use the wrong
+    //     element, causing a spurious _removeContainer() / stream-park /
+    //     rebuild cycle and a visible camera disconnect.
+    //   • Passing an empty PropertyValues map keeps hassChanged = false, so
+    //     _attach() will NOT re-assign hass/stateObj to ha-camera-stream.
+    //     Re-assigning hass triggers stream re-negotiation; skipping it here
+    //     is safe because the normal updated() → _attach() path handles hass
+    //     updates via changedProperties.has("hass").
+    const gen = this._beginUpdate();
+    this._attach(gen, new Map() as PropertyValues);
   }
 
   private _applyConfig(config: Record<string, any>): void {
