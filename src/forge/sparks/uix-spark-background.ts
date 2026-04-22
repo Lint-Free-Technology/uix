@@ -155,6 +155,11 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
     this._applyConfig(config);
+    // Apply camera transform immediately for config-only changes (e.g.
+    // camera_zoom, camera_pan_x/y, camera_position) without waiting for the
+    // Lit updated() cycle.  This avoids any accidental hass re-assignment that
+    // could occur if a concurrent hass update is batched with the config update.
+    this._updateCameraTransform();
   }
 
   private _applyConfig(config: Record<string, any>): void {
@@ -435,23 +440,27 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._activeBgKey = bgKey;
 
     if (bgType === "camera" && this._streamEl) {
-      // Set hass and stateObj AFTER the container is in the DOM.  This matches
-      // the pattern in view-background.ts and ensures ha-camera-stream is
-      // already connected when stream negotiation begins, which prevents the
-      // loading spinner from getting stuck.
-      const hass = this.controller.forge.hass;
-      if (hass) {
-        this._streamEl.hass = hass;
-        this._streamEl.stateObj = hass.states[this._cameraEntity];
-      }
-      this._updateCameraTransform();
-      // Only show the loading spinner when a brand-new stream element was
-      // created.  A reused (cached) stream is already playing and needs no
-      // spinner.
+      // For a brand-new stream element, set hass and stateObj AFTER the
+      // container is in the DOM.  This matches the pattern in
+      // view-background.ts and ensures ha-camera-stream is connected when
+      // stream negotiation begins, which prevents the loading spinner from
+      // getting stuck.
+      //
+      // For a reused (cached) stream element, do NOT re-assign hass — the
+      // stream is already authenticated and playing.  Re-assigning hass forces
+      // a full stream re-negotiation, causing the visible disconnect that
+      // occurs when any config property (e.g. camera_zoom) changes and the
+      // forge rebuilds its forged element.
       if (isNewCameraStream) {
+        const hass = this.controller.forge.hass;
+        if (hass) {
+          this._streamEl.hass = hass;
+          this._streamEl.stateObj = hass.states[this._cameraEntity];
+        }
         const spinner = this._addSpinner(container);
         this._removeSpinnerWhenCameraPlays(this._streamEl, spinner);
       }
+      this._updateCameraTransform();
     }
   }
 
