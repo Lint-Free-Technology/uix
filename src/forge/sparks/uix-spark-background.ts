@@ -621,12 +621,25 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         this._cachedStreamEntityId = "";
       }
       streamEl = document.createElement("ha-camera-stream") as HaCameraStreamElement;
+      // min-height:100% ensures the element is at least as tall as the
+      // background container (position:absolute;inset:0 = card height) even
+      // before any poster/video content loads.  Without it, clientHeight = 0
+      // on the first render, causing ha-camera-stream to call
+      // _getPosterUrl(hass, id, w, 0) which caches a 0-height (or broken)
+      // thumbnail URL — making the <img> render at 0 height permanently until
+      // the page is reloaded.
       streamEl.style.cssText =
-        "display:block;width:100%;flex-shrink:0;transform-origin:center;";
+        "display:block;width:100%;min-height:100%;flex-shrink:0;transform-origin:center;";
       streamEl.muted = true;
       streamEl.setAttribute("muted", "");
       streamEl.controls = false;
       isNew = true;
+    }
+
+    // Ensure reused (cached) stream elements also carry min-height:100% so
+    // the guarantee holds after a container rebuild.
+    if (!streamEl.style.getPropertyValue("min-height")) {
+      streamEl.style.setProperty("min-height", "100%");
     }
 
     // Apply flex layout on container for camera positioning.
