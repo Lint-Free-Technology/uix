@@ -25,9 +25,9 @@
                 "title": "UI Foundries",
                 "description": "{foundries_docs_link}\n\n**Loaded UI foundries:**\n{foundries_list}",
                 "menu_options": {
-                    "add_foundry": "Add a UI foundry",
-                    "edit_foundry": "Edit a UI foundry",
-                    "delete_foundry": "Delete a UI foundry"
+                    "add_foundry": "Add a foundry",
+                    "edit_foundry": "Edit a foundry",
+                    "delete_foundry": "Delete a foundry"
                 }
             },
             "foundry_file_menu": {

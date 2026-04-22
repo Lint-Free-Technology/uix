@@ -12,7 +12,7 @@ Foundries can be managed in two ways: as **UI Foundries** configured directly in
 
 ### UI Foundries
 
-UI Foundries are configured directly through the Home Assistant integration UI and stored in the config entry.
+UI Foundries are configured directly through the Home Assistant integration UI and managed by the integration.
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose **Manage UI foundries**, then one of the options:
