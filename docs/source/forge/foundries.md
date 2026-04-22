@@ -16,9 +16,9 @@ UI Foundries are configured directly through the Home Assistant integration UI a
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose **Manage UI foundries**, then one of the options:
-   - **Add a UI foundry** — enter a name and a YAML config object.
-   - **Edit a UI foundry** — select an existing foundry from the dropdown, then update its config.
-   - **Delete a UI foundry** — select an existing foundry from the dropdown and confirm.
+   - **Add a foundry** — enter a name and a YAML config object.
+   - **Edit a foundry** — select an existing foundry from the dropdown, then update its config.
+   - **Delete a foundry** — select an existing foundry from the dropdown and confirm.
 
 The foundry name must be unique. It is used as the `foundry:` key in your element config.
 
