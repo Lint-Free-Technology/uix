@@ -28,6 +28,71 @@ const CAMERA_POSITION_MAP: Record<string, readonly [string, string]> = {
   "bottom-right": ["flex-end",   "flex-end"],
 };
 
+// ---------------------------------------------------------------------------
+// Module-level stream element cache
+// ---------------------------------------------------------------------------
+
+interface _StreamCacheEntry {
+  el: HaCameraStreamElement;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+/**
+ * Persistent cache of `ha-camera-stream` elements keyed by
+ * `"entityId:WxH"`.  Shared across all `UixForgeSparkBackground` instances.
+ *
+ * Caching the element (even after it is disconnected from the DOM) lets the
+ * spark reuse the same custom-element instance on a rapid rebuild.  When
+ * re-inserted, `connectedCallback` fires and the stream reconnects — which is
+ * faster and more reliable than negotiating a brand-new MPEG/HLS/WebRTC
+ * session from scratch.
+ *
+ * Entries expire automatically after the per-spark TTL (default 20 s).
+ */
+const _streamElementCache = new Map<string, _StreamCacheEntry>();
+
+function _cacheStreamEl(
+  entityId: string,
+  w: number,
+  h: number,
+  el: HaCameraStreamElement,
+  ttlMs: number
+): void {
+  if (w <= 0 || h <= 0) {
+    // Cannot form a valid cache key — discard the element.
+    el.remove();
+    return;
+  }
+  const key = `${entityId}:${w}x${h}`;
+  const existing = _streamElementCache.get(key);
+  if (existing) {
+    clearTimeout(existing.timer);
+    if (existing.el !== el) existing.el.remove();
+  }
+  const timer = setTimeout(() => {
+    const entry = _streamElementCache.get(key);
+    if (entry?.el === el) {
+      el.remove();
+      _streamElementCache.delete(key);
+    }
+  }, ttlMs);
+  _streamElementCache.set(key, { el, timer });
+}
+
+function _popCachedStreamEl(
+  entityId: string,
+  w: number,
+  h: number
+): HaCameraStreamElement | null {
+  if (w <= 0 || h <= 0) return null;
+  const key = `${entityId}:${w}x${h}`;
+  const entry = _streamElementCache.get(key);
+  if (!entry) return null;
+  clearTimeout(entry.timer);
+  _streamElementCache.delete(key);
+  return entry.el;
+}
+
 /**
  * Background sub-property shorthand keys to CSS property names.
  * Used when `background` config value is a mapping object.
@@ -108,6 +173,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   private _cameraPosition: string = "";
   private _dissolveTarget: string | Record<string, string>[] | null = null;
   private _class: string = "";
+  /** How long (ms) to keep a cached `ha-camera-stream` element after removal. */
+  private _cameraCacheMs: number = 20_000;
 
   // ── Runtime state ──────────────────────────────────────────────────────────
   private readonly _id: string;
@@ -120,14 +187,13 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   /** Live camera stream element (updated on hass changes). */
   private _streamEl: HaCameraStreamElement | null = null;
   /**
-   * Parked `ha-camera-stream` element saved when the container is rebuilt so
-   * it can be reattached to the new container without re-authenticating.
-   * Keyed by `_cachedStreamEntityId` so a stale entry for a different entity
-   * is discarded in `_buildCameraContent`.
+   * Last known non-zero container dimensions.  Stored immediately after a
+   * successful camera container build so the cache key remains valid even if
+   * `_containerEl` has been detached (offsetWidth/Height → 0) by the time
+   * `_removeContainer()` is called.
    */
-  private _cachedStreamEl: HaCameraStreamElement | null = null;
-  /** Camera entity ID the parked stream was created for. */
-  private _cachedStreamEntityId: string = "";
+  private _lastKnownW: number = 0;
+  private _lastKnownH: number = 0;
   /**
    * Active background key — entity ID, URL, or `"bg"` for the `background`
    * shorthand. Used to detect when the background source changes and the
@@ -145,13 +211,6 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
    * (`position`, `isolation`) are applied.  Restored on disconnect.
    */
   private _savedLayoutStyles: Map<string, string> = new Map();
-  /**
-   * Temporary off-screen holder element created by `beforeForgedElementRefresh`
-   * to keep the background container connected to the document while the forge
-   * element is being replaced or reloaded.  Null when the container is in its
-   * normal position.
-   */
-  private _parkedOffscreen: HTMLElement | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -169,8 +228,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     //   • _beginUpdate() cancels any in-flight _attach() from a prior
     //     updated() call.  Without this, a stale _attach() that already
     //     resolved forEl against the old _for selector would use the wrong
-    //     element, causing a spurious _removeContainer() / stream-park /
-    //     rebuild cycle and a visible camera disconnect.
+    //     element.
     //   • Passing an empty PropertyValues map keeps hassChanged = false, so
     //     _attach() will NOT re-assign hass/stateObj to ha-camera-stream.
     //     Re-assigning hass triggers stream re-negotiation; skipping it here
@@ -193,47 +251,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._cameraPosition = config.camera_position || "";
     this._dissolveTarget = config.dissolve_target ?? null;
     this._class = config.class || "";
+    this._cameraCacheMs = config.camera_stream_cache_ms ?? 20_000;
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
-
-  /**
-   * Called synchronously by the forge controller immediately before
-   * `refreshForgedElement()` modifies the forged element (e.g. `hui-card.load()`
-   * for a card-type change, or `replaceWith()` for a row mold).
-   *
-   * By moving the background container into an off-screen holder on
-   * `document.body` at this point, we ensure that `ha-camera-stream` (and any
-   * other media element in the container) remains connected to the document
-   * throughout the refresh.  This prevents `ha-camera-stream.disconnectedCallback()`
-   * from being called — which would otherwise tear down the WebRTC/HLS session.
-   *
-   * `_attach()` then re-inserts the container into the (possibly new) target
-   * element once the forge has settled.
-   */
-  beforeForgedElementRefresh(): void {
-    if (!this._containerEl) return;
-    // If the container is already parked from a previous rapid forge refresh,
-    // leave it where it is.  Re-parking would call `_parkedOffscreen.remove()`
-    // which removes the container (a child of the holder) from the DOM,
-    // triggering `ha-camera-stream.disconnectedCallback()` and a full stream
-    // tear-down before a new holder is even created.
-    if (this._parkedOffscreen) return;
-    // Capture the container's current dimensions *before* moving it so the
-    // holder preserves them.  The background container uses
-    // `position:absolute;inset:0`, so inside a 0×0 holder it would collapse
-    // to 0 width/height.  If ha-camera-stream._getPosterUrl() fires during the
-    // park window (e.g. HA restarts) it would call
-    // `fetchThumbnailUrlWithCache(..., 0, 0)`, caching a bad thumbnail.
-    const w = this._containerEl.offsetWidth;
-    const h = this._containerEl.offsetHeight;
-    const holder = document.createElement("div");
-    holder.style.cssText =
-      `position:fixed;left:-9999px;top:0;width:${w}px;height:${h}px;overflow:hidden;`;
-    document.body.appendChild(holder);
-    holder.appendChild(this._containerEl);
-    this._parkedOffscreen = holder;
-  }
 
   updated(changedProperties: PropertyValues): void {
     const gen = this._beginUpdate();
@@ -253,17 +274,9 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private _cleanup(): void {
-    // Full teardown — destroy stream without caching it.
-    this._removeContainer(/* parkStream */ false);
-    if (this._cachedStreamEl) {
-      this._cachedStreamEl.remove();
-      this._cachedStreamEl = null;
-      this._cachedStreamEntityId = "";
-    }
-    if (this._parkedOffscreen) {
-      this._parkedOffscreen.remove();
-      this._parkedOffscreen = null;
-    }
+    // Full teardown — stream is cached to the module-level cache so it can be
+    // reused if the spark is reconnected within the TTL window.
+    this._removeContainer();
     this._restoreDissolve();
     this._restoreLayout();
     this._forEl = null;
@@ -273,29 +286,21 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   /**
    * Remove the background container from the DOM and clear active state.
    *
-   * @param parkStream When `true` (the default, used during a rebuild), the
-   *   `ha-camera-stream` element is detached from the container before removal
-   *   and saved in `_cachedStreamEl` so that `_buildCameraContent` can reuse
-   *   it in the new container, avoiding a full re-authentication round-trip.
-   *   Pass `false` during full teardown (`disconnectedCallback`) to destroy
-   *   the element rather than cache it.
+   * The `ha-camera-stream` element (if any) is detached from the container
+   * before removal and placed in the module-level `_streamElementCache` keyed
+   * by `"entityId:WxH"`.  `_buildCameraContent` can then pop the element from
+   * the cache and reuse it — avoiding a full re-negotiation — provided the
+   * entity and rendered dimensions are unchanged and the TTL has not expired.
    */
-  private _removeContainer(parkStream = true): void {
+  private _removeContainer(): void {
     if (this._containerEl) {
       if (this._streamEl) {
-        if (parkStream) {
-          // Detach the stream from the container (keeps the element alive so
-          // the WebRTC/HLS connection is preserved across the rebuild).
-          if (this._cachedStreamEl) {
-            // Discard any stale parked stream before overwriting.
-            this._cachedStreamEl.remove();
-          }
-          this._streamEl.remove();
-          this._cachedStreamEl = this._streamEl;
-          this._cachedStreamEntityId = this._activeBgKey;
-        } else {
-          this._streamEl.remove();
-        }
+        // Use the last-known dimensions (stored at build time) in case the
+        // container has already been detached (offsetWidth/Height would be 0).
+        const w = this._containerEl.offsetWidth || this._lastKnownW;
+        const h = this._containerEl.offsetHeight || this._lastKnownH;
+        this._streamEl.remove();
+        _cacheStreamEl(this._activeBgKey, w, h, this._streamEl, this._cameraCacheMs);
         this._streamEl = null;
       }
       this._containerEl.remove();
@@ -342,48 +347,22 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     if (generation !== this._callGeneration) return;
 
     const { bgType, bgKey } = this._getActiveBg();
+    const targetChanged = forEl !== this._forEl;
 
-    // Tear down the background container when the source entity/URL changed.
-    // Do this before the forEl check so that _containerEl is already null if
-    // both changed at once; the re-insert block below will then be skipped and
-    // _buildContainer will create a fresh container in the right place.
-    if (bgKey !== this._activeBgKey) {
+    // Tear down the background container when the source entity/URL changed or
+    // the target element changed.  Stream is placed in the module-level cache
+    // by _removeContainer() so it can be reused if rebuilt within the TTL.
+    if (bgKey !== this._activeBgKey || targetChanged) {
       this._removeContainer();
-      if (this._parkedOffscreen) {
-        this._parkedOffscreen.remove();
-        this._parkedOffscreen = null;
-      }
     }
 
     // If the target element changed, update layout refs.
-    const targetChanged = forEl !== this._forEl;
     if (targetChanged) {
       this._restoreDissolve();
       this._restoreLayout();
       this._forEl = forEl;
       this._targetAdapter = getBackgroundTargetAdapter(forEl);
       this._setupLayout(forEl);
-    }
-
-    // Re-insert the container when:
-    //   • it was parked off-screen by beforeForgedElementRefresh() — forge
-    //     element was replaced/reloaded, container must return to the live DOM; or
-    //   • the target element changed while the container still exists — move it
-    //     to the new target without ever removing the stream from the container,
-    //     so ha-camera-stream.disconnectedCallback() is never triggered.
-    if (this._containerEl && (this._parkedOffscreen !== null || targetChanged)) {
-      this._targetAdapter?.applyStyles(this._containerEl);
-      const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
-      if (insertionParent.firstChild) {
-        insertionParent.insertBefore(this._containerEl, insertionParent.firstChild);
-      } else {
-        insertionParent.appendChild(this._containerEl);
-      }
-      if (this._parkedOffscreen) {
-        this._parkedOffscreen.remove();
-        this._parkedOffscreen = null;
-      }
-      if (bgType === "camera") this._updateCameraTransform();
     }
 
     // Apply / re-apply dissolve styles (always restore then reapply so config
@@ -499,10 +478,9 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     // inserting (e.g. border-radius and margin for ha-card targets).
     this._targetAdapter?.applyStyles(container);
 
-    let isNewCameraStream = false;
     switch (bgType) {
       case "camera":
-        isNewCameraStream = await this._buildCameraContent(container, generation);
+        await this._buildCameraContent(container, generation, forEl);
         break;
       case "image_entity":
         await this._buildImageEntityContent(container, generation);
@@ -535,27 +513,27 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._activeBgKey = bgKey;
 
     if (bgType === "camera" && this._streamEl) {
-      // For a brand-new stream element, set hass and stateObj AFTER the
-      // container is in the DOM.  This matches the pattern in
-      // view-background.ts and ensures ha-camera-stream is connected when
-      // stream negotiation begins, which prevents the loading spinner from
-      // getting stuck.
-      //
-      // For a reused (cached) stream element, do NOT re-assign hass — the
-      // stream is already authenticated and playing.  Re-assigning hass forces
-      // a full stream re-negotiation, causing the visible disconnect that
-      // occurs when any config property (e.g. camera_zoom) changes and the
-      // forge rebuilds its forged element.
-      if (isNewCameraStream) {
-        const hass = this.controller.forge.hass;
-        if (hass) {
-          this._streamEl.hass = hass;
-          this._streamEl.stateObj = hass.states[this._cameraEntity];
-        }
-        const spinner = this._addSpinner(container);
-        this._removeSpinnerWhenCameraPlays(this._streamEl, spinner);
+      // Set hass and stateObj AFTER the container is in the DOM.  This matches
+      // the pattern in view-background.ts and ensures ha-camera-stream is
+      // connected when stream negotiation begins, which prevents the loading
+      // spinner from getting stuck.
+      const hass = this.controller.forge.hass;
+      if (hass) {
+        this._streamEl.hass = hass;
+        this._streamEl.stateObj = hass.states[this._cameraEntity];
       }
+      const spinner = this._addSpinner(container);
+      this._removeSpinnerWhenCameraPlays(this._streamEl, spinner);
       this._updateCameraTransform();
+      // Store dimensions now that the container is live in the DOM so that
+      // _removeContainer() can form a valid cache key even if the element is
+      // later detached before offsetWidth/Height can be read.
+      // Only update when non-zero to avoid overwriting valid prior values if
+      // the browser has not yet completed layout for this frame.
+      const liveW = container.offsetWidth;
+      const liveH = container.offsetHeight;
+      if (liveW > 0) this._lastKnownW = liveW;
+      if (liveH > 0) this._lastKnownH = liveH;
     }
   }
 
@@ -564,21 +542,21 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   /**
    * Build the camera stream content and append it to `container`.
    *
-   * Hass assignment and the loading spinner are intentionally handled by the
-   * caller (`_buildContainer`) AFTER the container has been inserted into the
-   * DOM.  This matches the pattern in `view-background.ts` and ensures
-   * `ha-camera-stream` is connected when stream negotiation starts, which is
-   * required for the spinner's MutationObserver to receive the `<video>` /
-   * `<img>` element creation event reliably.
+   * Attempts to pop a matching element from the module-level
+   * `_streamElementCache` (keyed by entity + dimensions).  If found, the
+   * cached element is reused so that its internal state (negotiated stream
+   * URL, auth tokens, etc.) is preserved across rapid rebuilds.  If not found,
+   * a fresh `ha-camera-stream` element is created.
    *
-   * @returns `true` if a brand-new stream element was created (caller should
-   *   add the loading spinner); `false` if a cached stream was reused (stream
-   *   is already playing, no spinner needed).
+   * Hass assignment and the loading spinner are handled by the caller
+   * (`_buildContainer`) AFTER the container has been inserted into the DOM,
+   * ensuring `ha-camera-stream` is connected when stream negotiation starts.
    */
   private async _buildCameraContent(
     container: HTMLElement,
-    generation: number
-  ): Promise<boolean> {
+    generation: number,
+    forEl: HTMLElement
+  ): Promise<void> {
     // Wait for ha-camera-stream to be registered (loaded lazily by HA).
     const defined = await Promise.race([
       customElements.whenDefined("ha-camera-stream").then(() => true),
@@ -587,46 +565,44 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       ),
     ]);
 
-    if (generation !== this._callGeneration) return false;
+    if (generation !== this._callGeneration) return;
 
     if (!defined) {
       console.warn(
         "UIX Forge background spark: ha-camera-stream is not available; camera background skipped."
       );
-      return false;
+      return;
     }
 
     if (this._cameraEntity.split(".")[0] !== CAMERA_DOMAIN) {
       console.warn(
         `UIX Forge background spark: camera_entity must be a camera domain entity (got '${this._cameraEntity}').`
       );
-      return false;
+      return;
     }
 
-    // Reuse the cached stream element if it was created for the same entity.
-    // This avoids re-authentication when the container is rebuilt due to a
-    // forge re-render (e.g. editing the card config in the UI).
+    // Attempt to reuse a recently-cached stream element (same entity + same
+    // rendered dimensions).  Reusing the element avoids re-authentication and
+    // speeds up reconnection compared to starting fresh.  If no cached entry
+    // is found, a new element is created.
+    //
+    // Prefer the last-known container dimensions (stored after the previous
+    // build when the container was live in the DOM) over forEl dimensions;
+    // forEl measurements are a reliable fallback when the spark is being
+    // built for the first time or after a card-size change.
+    const w = this._lastKnownW || forEl.offsetWidth;
+    const h = this._lastKnownH || forEl.offsetHeight;
+    const cachedEl = _popCachedStreamEl(this._cameraEntity, w, h);
     let streamEl: HaCameraStreamElement;
-    let isNew: boolean;
-    if (this._cachedStreamEl && this._cachedStreamEntityId === this._cameraEntity) {
-      streamEl = this._cachedStreamEl;
-      this._cachedStreamEl = null;
-      this._cachedStreamEntityId = "";
-      isNew = false;
+    if (cachedEl) {
+      streamEl = cachedEl;
     } else {
-      // Destroy any stale cached stream for a different entity.
-      if (this._cachedStreamEl) {
-        this._cachedStreamEl.remove();
-        this._cachedStreamEl = null;
-        this._cachedStreamEntityId = "";
-      }
       streamEl = document.createElement("ha-camera-stream") as HaCameraStreamElement;
       streamEl.style.cssText =
         "display:block;width:100%;flex-shrink:0;transform-origin:center;";
       streamEl.muted = true;
       streamEl.setAttribute("muted", "");
       streamEl.controls = false;
-      isNew = true;
     }
 
     // Apply flex layout on container for camera positioning.
@@ -648,8 +624,6 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
     container.appendChild(streamEl);
     this._streamEl = streamEl;
-
-    return isNew;
   }
 
   private async _buildImageEntityContent(

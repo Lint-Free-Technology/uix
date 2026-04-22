@@ -55,6 +55,7 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `camera_pan_x` | string or number | — | CSS translate X applied to the stream (e.g. `"10%"`, `"-20px"`). |
 | `camera_pan_y` | string or number | — | CSS translate Y applied to the stream. |
 | `camera_position` | string | `center` | Alignment of the stream inside the container. One of `center`, `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right`. |
+| `camera_stream_cache_ms` | number | `20000` | How long (ms) to keep a `ha-camera-stream` element alive in the module-level cache after it is removed. A cached element is reused on the next rebuild of the same entity at the same dimensions, avoiding a full stream re-negotiation. |
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
 
