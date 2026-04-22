@@ -533,6 +533,25 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     // inserting (e.g. border-radius and margin for ha-card targets).
     this._targetAdapter?.applyStyles(container);
 
+    // Insert the container into the DOM BEFORE building content.  This is
+    // required for the camera case: _buildCameraContent calls
+    // container.appendChild(streamEl) to move the cached stream element from
+    // its off-screen parking wrapper into the container.  If the container is
+    // not yet in the DOM at that point, streamEl leaves a connected parent and
+    // enters a disconnected one — triggering ha-camera-stream.disconnectedCallback
+    // which invalidates the auth token and produces a 403 on the next poster
+    // fetch.  By inserting first we guarantee the transfer is always
+    // connected → connected.
+    // When an adapter is present, it may redirect insertion into the element's
+    // shadow root (e.g. for ha-card) so the container participates in the
+    // correct stacking context.
+    const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
+    if (insertionParent.firstChild) {
+      insertionParent.insertBefore(container, insertionParent.firstChild);
+    } else {
+      insertionParent.appendChild(container);
+    }
+
     switch (bgType) {
       case "camera":
         await this._buildCameraContent(container, generation, forEl);
@@ -551,17 +570,11 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         break;
     }
 
-    if (generation !== this._callGeneration) return;
-
-    // Insert as first child so it renders behind all existing content.
-    // When an adapter is present, it may redirect insertion into the element's
-    // shadow root (e.g. for ha-card) so the container participates in the
-    // correct stacking context.
-    const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
-    if (insertionParent.firstChild) {
-      insertionParent.insertBefore(container, insertionParent.firstChild);
-    } else {
-      insertionParent.appendChild(container);
+    if (generation !== this._callGeneration) {
+      // A newer build was started while we were doing async work.  Remove the
+      // container we already inserted so the newer build can take its place.
+      container.remove();
+      return;
     }
 
     this._containerEl = container;
