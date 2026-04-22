@@ -10,11 +10,11 @@ Supported background sources (first non-empty value wins):
 
 | Source | Key | Description |
 | ------ | --- | ----------- |
-| Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
-| Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. |
+| Camera | `camera_entity` | Live `ha-camera-stream` stream. Supports zoom, pan, and position. Shows a spinner while loading. |
 | Entity picture | `image_entity` | Reads `entity_picture` from any entity and signs the URL. Shows a spinner while loading. |
 | Video | `video_url` | `<video>` element (autoplay, muted, loop). |
-| Camera | `camera_entity` | Live `ha-camera-stream` stream. Supports zoom, pan, and position. Shows a spinner while loading. |
+| Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. |
+| Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
 
 ---
 
@@ -46,16 +46,16 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | --- | ---- | ------- | ----------- |
 | `type` | string | — | Must be `background`. |
 | `for` | string | `element` | UIX selector for the target element. |
-| `background` | string or object | — | CSS `background` shorthand string, or a mapping of sub-properties (see below). |
-| `image_url` | string | — | URL of a static background image. |
-| `image_entity` | string | — | Entity ID whose `entity_picture` attribute provides the background image. |
-| `video_url` | string | — | URL of a video to autoplay muted as the background. |
 | `camera_entity` | string | — | Entity ID of a `camera.*` entity to stream live as the background. |
 | `camera_zoom` | string or number | — | CSS zoom/scale value applied to the stream (e.g. `1.5`, `"150%"`). |
 | `camera_pan_x` | string or number | — | CSS translate X applied to the stream (e.g. `"10%"`, `"-20px"`). |
 | `camera_pan_y` | string or number | — | CSS translate Y applied to the stream. |
 | `camera_position` | string | `center` | Alignment of the stream inside the container. One of `center`, `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right`. |
 | `camera_stream_cache_ms` | number | `20000` | How long (ms) to keep a `ha-camera-stream` element in the cache after it is removed from the background container. While cached, the element remains **connected** to an off-screen holder so its internal stream (MPEG/HLS/WebRTC session and auth tokens) stays alive. On the next rebuild with the same entity at the same dimensions the cached element is moved directly into the new background container without re-negotiating the stream. |
+| `image_entity` | string | — | Entity ID whose `entity_picture` attribute provides the background image. |
+| `video_url` | string | — | URL of a video to autoplay muted as the background. |
+| `image_url` | string | — | URL of a static background image. |
+| `background` | string or object | — | CSS `background` shorthand string, or a mapping of sub-properties (see below). |
 | `opacity` | number | — | CSS `opacity` applied to the background container (0–1). Use this to dim the background without affecting the foreground element. |
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
@@ -107,7 +107,7 @@ No extra configuration is needed — the adapter activates automatically when th
 
 ## Examples
 
-### Solid colour background
+### Live camera background
 
 ```yaml
 type: custom:uix-forge
@@ -116,30 +116,14 @@ forge:
   sparks:
     - type: background
       for: hui-tile-card $ ha-card
-      background:
-        color: "rgba(0, 100, 200, 0.4)"
+      camera_entity: camera.front_door
+      camera_zoom: 1.2
+      camera_position: top
       dissolve_target:
         - background: "none"
 element:
   type: tile
-  entity: light.bed_light
-```
-
-### Static image background
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: background
-      for: hui-tile-card $ ha-card
-      image_url: /local/images/bedroom.jpg
-      dissolve_target:
-        - background: "none"
-element:
-  type: tile
-  entity: light.bed_light
+  entity: camera.front_door
 ```
 
 ### Entity picture as background
@@ -176,7 +160,7 @@ element:
   entity: light.bed_light
 ```
 
-### Live camera background
+### Static image background
 
 ```yaml
 type: custom:uix-forge
@@ -185,14 +169,30 @@ forge:
   sparks:
     - type: background
       for: hui-tile-card $ ha-card
-      camera_entity: camera.front_door
-      camera_zoom: 1.2
-      camera_position: top
+      image_url: /local/images/bedroom.jpg
       dissolve_target:
         - background: "none"
 element:
   type: tile
-  entity: camera.front_door
+  entity: light.bed_light
+```
+
+### Solid colour background
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
+      for: hui-tile-card $ ha-card
+      background:
+        color: "rgba(0, 100, 200, 0.4)"
+      dissolve_target:
+        - background: "none"
+element:
+  type: tile
+  entity: light.bed_light
 ```
 
 ### State-driven background colour using a template
