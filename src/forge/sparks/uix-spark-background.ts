@@ -120,6 +120,15 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   /** Live camera stream element (updated on hass changes). */
   private _streamEl: HaCameraStreamElement | null = null;
   /**
+   * Parked `ha-camera-stream` element saved when the container is rebuilt so
+   * it can be reattached to the new container without re-authenticating.
+   * Keyed by `_cachedStreamEntityId` so a stale entry for a different entity
+   * is discarded in `_buildCameraContent`.
+   */
+  private _cachedStreamEl: HaCameraStreamElement | null = null;
+  /** Camera entity ID the parked stream was created for. */
+  private _cachedStreamEntityId: string = "";
+  /**
    * Active background key — entity ID, URL, or `"bg"` for the `background`
    * shorthand. Used to detect when the background source changes and the
    * container must be rebuilt.
@@ -183,16 +192,47 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private _cleanup(): void {
-    this._removeContainer();
+    // Full teardown — destroy stream without caching it.
+    this._removeContainer(/* parkStream */ false);
+    if (this._cachedStreamEl) {
+      this._cachedStreamEl.remove();
+      this._cachedStreamEl = null;
+      this._cachedStreamEntityId = "";
+    }
     this._restoreDissolve();
     this._restoreLayout();
     this._forEl = null;
     this._targetAdapter = null;
-    this._streamEl = null;
   }
 
-  private _removeContainer(): void {
+  /**
+   * Remove the background container from the DOM and clear active state.
+   *
+   * @param parkStream When `true` (the default, used during a rebuild), the
+   *   `ha-camera-stream` element is detached from the container before removal
+   *   and saved in `_cachedStreamEl` so that `_buildCameraContent` can reuse
+   *   it in the new container, avoiding a full re-authentication round-trip.
+   *   Pass `false` during full teardown (`disconnectedCallback`) to destroy
+   *   the element rather than cache it.
+   */
+  private _removeContainer(parkStream = true): void {
     if (this._containerEl) {
+      if (this._streamEl) {
+        if (parkStream) {
+          // Detach the stream from the container (keeps the element alive so
+          // the WebRTC/HLS connection is preserved across the rebuild).
+          if (this._cachedStreamEl) {
+            // Discard any stale parked stream before overwriting.
+            this._cachedStreamEl.remove();
+          }
+          this._streamEl.remove();
+          this._cachedStreamEl = this._streamEl;
+          this._cachedStreamEntityId = this._activeBgKey;
+        } else {
+          this._streamEl.remove();
+        }
+        this._streamEl = null;
+      }
       this._containerEl.remove();
       this._containerEl = null;
     }
@@ -351,9 +391,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     // inserting (e.g. border-radius and margin for ha-card targets).
     this._targetAdapter?.applyStyles(container);
 
+    let isNewCameraStream = false;
     switch (bgType) {
       case "camera":
-        await this._buildCameraContent(container, generation);
+        isNewCameraStream = await this._buildCameraContent(container, generation);
         break;
       case "image_entity":
         await this._buildImageEntityContent(container, generation);
@@ -385,17 +426,47 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._containerEl = container;
     this._activeBgKey = bgKey;
 
-    if (bgType === "camera") {
+    if (bgType === "camera" && this._streamEl) {
+      // Set hass and stateObj AFTER the container is in the DOM.  This matches
+      // the pattern in view-background.ts and ensures ha-camera-stream is
+      // already connected when stream negotiation begins, which prevents the
+      // loading spinner from getting stuck.
+      const hass = this.controller.forge.hass;
+      if (hass) {
+        this._streamEl.hass = hass;
+        this._streamEl.stateObj = hass.states[this._cameraEntity];
+      }
       this._updateCameraTransform();
+      // Only show the loading spinner when a brand-new stream element was
+      // created.  A reused (cached) stream is already playing and needs no
+      // spinner.
+      if (isNewCameraStream) {
+        const spinner = this._addSpinner(container);
+        this._removeSpinnerWhenCameraPlays(this._streamEl, spinner);
+      }
     }
   }
 
   // ── Background type builders ───────────────────────────────────────────────
 
+  /**
+   * Build the camera stream content and append it to `container`.
+   *
+   * Hass assignment and the loading spinner are intentionally handled by the
+   * caller (`_buildContainer`) AFTER the container has been inserted into the
+   * DOM.  This matches the pattern in `view-background.ts` and ensures
+   * `ha-camera-stream` is connected when stream negotiation starts, which is
+   * required for the spinner's MutationObserver to receive the `<video>` /
+   * `<img>` element creation event reliably.
+   *
+   * @returns `true` if a brand-new stream element was created (caller should
+   *   add the loading spinner); `false` if a cached stream was reused (stream
+   *   is already playing, no spinner needed).
+   */
   private async _buildCameraContent(
     container: HTMLElement,
     generation: number
-  ): Promise<void> {
+  ): Promise<boolean> {
     // Wait for ha-camera-stream to be registered (loaded lazily by HA).
     const defined = await Promise.race([
       customElements.whenDefined("ha-camera-stream").then(() => true),
@@ -404,23 +475,47 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       ),
     ]);
 
-    if (generation !== this._callGeneration) return;
+    if (generation !== this._callGeneration) return false;
 
     if (!defined) {
       console.warn(
         "UIX Forge background spark: ha-camera-stream is not available; camera background skipped."
       );
-      return;
+      return false;
     }
 
     if (this._cameraEntity.split(".")[0] !== CAMERA_DOMAIN) {
       console.warn(
         `UIX Forge background spark: camera_entity must be a camera domain entity (got '${this._cameraEntity}').`
       );
-      return;
+      return false;
     }
 
-    const hass = this.controller.forge.hass;
+    // Reuse the cached stream element if it was created for the same entity.
+    // This avoids re-authentication when the container is rebuilt due to a
+    // forge re-render (e.g. editing the card config in the UI).
+    let streamEl: HaCameraStreamElement;
+    let isNew: boolean;
+    if (this._cachedStreamEl && this._cachedStreamEntityId === this._cameraEntity) {
+      streamEl = this._cachedStreamEl;
+      this._cachedStreamEl = null;
+      this._cachedStreamEntityId = "";
+      isNew = false;
+    } else {
+      // Destroy any stale cached stream for a different entity.
+      if (this._cachedStreamEl) {
+        this._cachedStreamEl.remove();
+        this._cachedStreamEl = null;
+        this._cachedStreamEntityId = "";
+      }
+      streamEl = document.createElement("ha-camera-stream") as HaCameraStreamElement;
+      streamEl.style.cssText =
+        "display:block;width:100%;flex-shrink:0;transform-origin:center;";
+      streamEl.muted = true;
+      streamEl.setAttribute("muted", "");
+      streamEl.controls = false;
+      isNew = true;
+    }
 
     // Apply flex layout on container for camera positioning.
     const [alignItems, justifyContent] =
@@ -430,31 +525,19 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     container.style.setProperty("align-items", alignItems);
     container.style.setProperty("justify-content", justifyContent);
 
-    const streamEl = document.createElement(
-      "ha-camera-stream"
-    ) as HaCameraStreamElement;
-    streamEl.style.cssText =
-      "display:block;width:100%;flex-shrink:0;transform-origin:center;";
-    streamEl.muted = true;
-    streamEl.setAttribute("muted", "");
-    streamEl.controls = false;
-
+    // stateObj can be set before insertion — it does not trigger stream
+    // negotiation on its own.  hass is set by _buildContainer after the
+    // container is in the DOM so that ha-camera-stream is connected when
+    // negotiation starts.
+    const hass = this.controller.forge.hass;
     if (hass) {
       streamEl.stateObj = hass.states[this._cameraEntity];
     }
 
     container.appendChild(streamEl);
-
-    // Show a spinner until the stream begins playing.
-    const spinner = this._addSpinner(container);
-    this._removeSpinnerWhenCameraPlays(streamEl, spinner);
-
     this._streamEl = streamEl;
 
-    // Providing hass triggers stream negotiation inside ha-camera-stream.
-    if (hass) {
-      streamEl.hass = hass;
-    }
+    return isNew;
   }
 
   private async _buildImageEntityContent(
