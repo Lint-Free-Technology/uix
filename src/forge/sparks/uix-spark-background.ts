@@ -99,10 +99,15 @@ function _cacheStreamEl(
 
   // Park the element connected inside a sized wrapper so ha-camera-stream
   // keeps its internal stream alive while waiting for the next reuse.
+  // The wrapper is inserted into the parking holder BEFORE el is moved into
+  // it so that the transfer is a single connected→connected DOM move.  A
+  // direct move fires disconnectedCallback + connectedCallback synchronously
+  // in one operation; any async updates scheduled inside disconnectedCallback
+  // therefore see the element already in its new parent when they run.
   const wrapper = document.createElement("div") as HTMLDivElement;
   wrapper.style.cssText = `width:${w}px;height:${h}px;overflow:hidden;`;
-  wrapper.appendChild(el);
   _getParkingHolder().appendChild(wrapper);
+  wrapper.appendChild(el);
 
   const timer = setTimeout(() => {
     const entry = _streamElementCache.get(key);
@@ -126,10 +131,15 @@ function _popCachedStreamEl(
   if (!entry) return null;
   clearTimeout(entry.timer);
   _streamElementCache.delete(key);
-  // Detach from parking wrapper before returning so the caller can
-  // re-insert it wherever it is needed.
-  entry.el.remove();
-  entry.wrapper.remove();
+  // Do NOT call entry.el.remove() — leave el connected in its parking wrapper
+  // so the caller can perform a direct DOM move (container.appendChild(el))
+  // without an intermediate disconnected state.  A direct move fires
+  // disconnectedCallback + connectedCallback synchronously in one operation,
+  // so any async updates scheduled by disconnectedCallback already see the
+  // element connected to its new parent when they execute.
+  // Schedule the now-empty wrapper for removal in the next microtask.
+  const wrapper = entry.wrapper;
+  Promise.resolve().then(() => wrapper.remove());
   return entry.el;
 }
 
@@ -341,7 +351,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         // container has already been detached (offsetWidth/Height would be 0).
         const w = this._containerEl.offsetWidth || this._lastKnownW;
         const h = this._containerEl.offsetHeight || this._lastKnownH;
-        this._streamEl.remove();
+        // Move directly from container to parking wrapper — do NOT call
+        // this._streamEl.remove() first.  _cacheStreamEl inserts the wrapper
+        // into the parking holder before moving el into it, so the transfer is
+        // a single connected→connected DOM move with no mid-air disconnect.
         _cacheStreamEl(this._activeBgKey, w, h, this._streamEl, this._cameraCacheMs);
         this._streamEl = null;
       }
