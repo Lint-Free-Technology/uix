@@ -145,6 +145,13 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
    * (`position`, `isolation`) are applied.  Restored on disconnect.
    */
   private _savedLayoutStyles: Map<string, string> = new Map();
+  /**
+   * Temporary off-screen holder element created by `beforeForgedElementRefresh`
+   * to keep the background container connected to the document while the forge
+   * element is being replaced or reloaded.  Null when the container is in its
+   * normal position.
+   */
+  private _parkedOffscreen: HTMLElement | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -190,6 +197,34 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
+  /**
+   * Called synchronously by the forge controller immediately before
+   * `refreshForgedElement()` modifies the forged element (e.g. `hui-card.load()`
+   * for a card-type change, or `replaceWith()` for a row mold).
+   *
+   * By moving the background container into an off-screen holder on
+   * `document.body` at this point, we ensure that `ha-camera-stream` (and any
+   * other media element in the container) remains connected to the document
+   * throughout the refresh.  This prevents `ha-camera-stream.disconnectedCallback()`
+   * from being called — which would otherwise tear down the WebRTC/HLS session.
+   *
+   * `_attach()` then re-inserts the container into the (possibly new) target
+   * element once the forge has settled.
+   */
+  beforeForgedElementRefresh(): void {
+    if (!this._containerEl) return;
+    // Remove any stale off-screen holder before creating a new one.
+    if (this._parkedOffscreen) {
+      this._parkedOffscreen.remove();
+    }
+    const holder = document.createElement("div");
+    holder.style.cssText =
+      "position:fixed;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;";
+    document.body.appendChild(holder);
+    holder.appendChild(this._containerEl);
+    this._parkedOffscreen = holder;
+  }
+
   updated(changedProperties: PropertyValues): void {
     const gen = this._beginUpdate();
     this._attach(gen, changedProperties);
@@ -214,6 +249,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       this._cachedStreamEl.remove();
       this._cachedStreamEl = null;
       this._cachedStreamEntityId = "";
+    }
+    if (this._parkedOffscreen) {
+      this._parkedOffscreen.remove();
+      this._parkedOffscreen = null;
     }
     this._restoreDissolve();
     this._restoreLayout();
@@ -289,38 +328,45 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
     // Tear down the background container when the source entity/URL changed.
     // Do this before the forEl check so that _containerEl is already null if
-    // both changed at once; the forEl branch below will then skip the move and
-    // let _buildContainer create a fresh container in the right place.
+    // both changed at once; the re-insert block below will then be skipped and
+    // _buildContainer will create a fresh container in the right place.
     if (bgKey !== this._activeBgKey) {
       this._removeContainer();
+      if (this._parkedOffscreen) {
+        this._parkedOffscreen.remove();
+        this._parkedOffscreen = null;
+      }
     }
 
-    // If the target element changed, update layout refs and either:
-    //   • move the existing container (with the stream still inside) to the
-    //     new element — the stream element is never removed from its parent,
-    //     so ha-camera-stream.disconnectedCallback() is never called and the
-    //     WebRTC/HLS session stays alive; or
-    //   • just update the refs when there is no container yet (first attach,
-    //     or the container was just torn down above).
-    if (forEl !== this._forEl) {
+    // If the target element changed, update layout refs.
+    const targetChanged = forEl !== this._forEl;
+    if (targetChanged) {
       this._restoreDissolve();
       this._restoreLayout();
       this._forEl = forEl;
       this._targetAdapter = getBackgroundTargetAdapter(forEl);
       this._setupLayout(forEl);
+    }
 
-      if (this._containerEl) {
-        // Re-apply adapter styles (e.g. border-radius / margin for ha-card
-        // targets) because the adapter may have changed.
-        this._targetAdapter?.applyStyles(this._containerEl);
-        const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
-        if (insertionParent.firstChild) {
-          insertionParent.insertBefore(this._containerEl, insertionParent.firstChild);
-        } else {
-          insertionParent.appendChild(this._containerEl);
-        }
-        if (bgType === "camera") this._updateCameraTransform();
+    // Re-insert the container when:
+    //   • it was parked off-screen by beforeForgedElementRefresh() — forge
+    //     element was replaced/reloaded, container must return to the live DOM; or
+    //   • the target element changed while the container still exists — move it
+    //     to the new target without ever removing the stream from the container,
+    //     so ha-camera-stream.disconnectedCallback() is never triggered.
+    if (this._containerEl && (this._parkedOffscreen !== null || targetChanged)) {
+      this._targetAdapter?.applyStyles(this._containerEl);
+      const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
+      if (insertionParent.firstChild) {
+        insertionParent.insertBefore(this._containerEl, insertionParent.firstChild);
+      } else {
+        insertionParent.appendChild(this._containerEl);
       }
+      if (this._parkedOffscreen) {
+        this._parkedOffscreen.remove();
+        this._parkedOffscreen = null;
+      }
+      if (bgType === "camera") this._updateCameraTransform();
     }
 
     // Apply / re-apply dissolve styles (always restore then reapply so config
