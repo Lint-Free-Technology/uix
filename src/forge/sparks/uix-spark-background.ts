@@ -217,9 +217,17 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     if (this._parkedOffscreen) {
       this._parkedOffscreen.remove();
     }
+    // Capture the container's current dimensions *before* moving it so the
+    // holder preserves them.  The background container uses
+    // `position:absolute;inset:0`, so inside a 0×0 holder it would collapse
+    // to 0 width/height.  A 0×0 ha-camera-stream causes `_getPosterUrl()` to
+    // call `fetchThumbnailUrlWithCache(..., 0, 0)`, caching a bad thumbnail
+    // that later renders the img at 0 height — visible as a camera disconnect.
+    const w = this._containerEl.offsetWidth;
+    const h = this._containerEl.offsetHeight;
     const holder = document.createElement("div");
     holder.style.cssText =
-      "position:fixed;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;";
+      `position:fixed;left:-9999px;top:0;width:${w}px;height:${h}px;overflow:hidden;`;
     document.body.appendChild(holder);
     holder.appendChild(this._containerEl);
     this._parkedOffscreen = holder;
