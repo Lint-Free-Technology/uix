@@ -76,25 +76,49 @@ class UixOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the foundry management menu."""
+        """Show the top-level foundry management menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=[
+                "foundry_menu",
+                "foundry_file_menu",
+            ],
+        )
+
+    async def async_step_foundry_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the config-foundry sub-menu with the loaded foundries list."""
         foundries_list = "\n".join(
             f"- {name}" for name in self._foundries
         ) or "_None_"
-        foundry_files_list = "\n".join(
-            f"- {f}" for f in self._foundry_files
-        ) or "_None_"
         return self.async_show_menu(
-            step_id="init",
+            step_id="foundry_menu",
             menu_options=[
                 "add_foundry",
                 "edit_foundry",
                 "delete_foundry",
+            ],
+            description_placeholders={
+                "foundries_list": foundries_list,
+            },
+        )
+
+    async def async_step_foundry_file_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the foundry-file sub-menu with the registered files list."""
+        foundry_files_list = "\n".join(
+            f"- {f}" for f in self._foundry_files
+        ) or "_None_"
+        return self.async_show_menu(
+            step_id="foundry_file_menu",
+            menu_options=[
                 "register_foundry_file",
                 "deregister_foundry_file",
                 "reload_foundry_files",
             ],
             description_placeholders={
-                "foundries_list": foundries_list,
                 "foundry_files_list": foundry_files_list,
             },
         )
