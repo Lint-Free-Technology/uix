@@ -15,7 +15,7 @@
         "step": {
             "init": {
                 "title": "Manage UIX Forge Foundries",
-                "description": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
+                "description": "{foundries_docs_link}",
                 "menu_options": {
                     "foundry_menu": "Manage config foundries",
                     "foundry_file_menu": "Manage foundry files"
@@ -23,7 +23,7 @@
             },
             "foundry_menu": {
                 "title": "Config Foundries",
-                "description": "[Foundries documentation](https://uix.lf.technology/forge/foundries)\n\n**Loaded foundries:**\n{foundries_list}",
+                "description": "{foundries_docs_link}\n\n**Loaded foundries:**\n{foundries_list}",
                 "menu_options": {
                     "add_foundry": "Add a foundry",
                     "edit_foundry": "Edit a foundry",
@@ -32,7 +32,7 @@
             },
             "foundry_file_menu": {
                 "title": "Foundry Files",
-                "description": "[Foundries documentation](https://uix.lf.technology/forge/foundries)\n\n**Registered foundry files:**\n{foundry_files_list}",
+                "description": "{foundries_docs_link}\n\n**Registered foundry files:**\n{foundry_files_list}",
                 "menu_options": {
                     "register_foundry_file": "Register a foundry file",
                     "deregister_foundry_file": "Deregister a foundry file",

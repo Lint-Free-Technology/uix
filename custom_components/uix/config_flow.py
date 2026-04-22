@@ -83,6 +83,9 @@ class UixOptionsFlow(OptionsFlow):
                 "foundry_menu",
                 "foundry_file_menu",
             ],
+            description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
+            },
         )
 
     async def async_step_foundry_menu(
@@ -100,6 +103,7 @@ class UixOptionsFlow(OptionsFlow):
                 "delete_foundry",
             ],
             description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
                 "foundries_list": foundries_list,
             },
         )
@@ -119,6 +123,7 @@ class UixOptionsFlow(OptionsFlow):
                 "reload_foundry_files",
             ],
             description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
                 "foundry_files_list": foundry_files_list,
             },
         )
