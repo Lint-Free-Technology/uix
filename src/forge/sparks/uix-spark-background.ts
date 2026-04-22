@@ -29,23 +29,46 @@ const CAMERA_POSITION_MAP: Record<string, readonly [string, string]> = {
 };
 
 // ---------------------------------------------------------------------------
-// Module-level stream element cache
+// Module-level stream element cache with connected-parking
 // ---------------------------------------------------------------------------
 
 interface _StreamCacheEntry {
   el: HaCameraStreamElement;
+  /** Sized wrapper div that hosts `el` inside the parking holder. */
+  wrapper: HTMLDivElement;
   timer: ReturnType<typeof setTimeout>;
+}
+
+/**
+ * Off-screen holder that keeps cached `ha-camera-stream` elements *connected*
+ * to the DOM while they are between uses.  Staying connected ensures the
+ * element's internal stream (MPEG/HLS/WebRTC) is not torn down, which
+ * prevents "forbidden" token-expiry errors when the element is re-used.
+ *
+ * Created lazily and re-created if it is ever detached.
+ */
+let _streamParkingHolder: HTMLDivElement | null = null;
+
+function _getParkingHolder(): HTMLDivElement {
+  if (!_streamParkingHolder || !_streamParkingHolder.isConnected) {
+    _streamParkingHolder = document.createElement("div");
+    _streamParkingHolder.style.cssText =
+      "position:fixed;left:-9999px;top:-9999px;width:0;height:0;" +
+      "overflow:hidden;opacity:0;pointer-events:none;visibility:hidden;";
+    _streamParkingHolder.setAttribute("aria-hidden", "true");
+    document.body.appendChild(_streamParkingHolder);
+  }
+  return _streamParkingHolder;
 }
 
 /**
  * Persistent cache of `ha-camera-stream` elements keyed by
  * `"entityId:WxH"`.  Shared across all `UixForgeSparkBackground` instances.
  *
- * Caching the element (even after it is disconnected from the DOM) lets the
- * spark reuse the same custom-element instance on a rapid rebuild.  When
- * re-inserted, `connectedCallback` fires and the stream reconnects — which is
- * faster and more reliable than negotiating a brand-new MPEG/HLS/WebRTC
- * session from scratch.
+ * While cached, each element is **parked connected** inside a sized off-screen
+ * wrapper so its internal stream negotiation stays alive.  On re-use the
+ * element is detached from the parking wrapper and re-inserted into the live
+ * background container.
  *
  * Entries expire automatically after the per-spark TTL (default 20 s).
  */
@@ -67,16 +90,29 @@ function _cacheStreamEl(
   const existing = _streamElementCache.get(key);
   if (existing) {
     clearTimeout(existing.timer);
-    if (existing.el !== el) existing.el.remove();
+    if (existing.el !== el) {
+      // Different element for same key — evict the old one.
+      existing.el.remove();
+      existing.wrapper.remove();
+    }
   }
+
+  // Park the element connected inside a sized wrapper so ha-camera-stream
+  // keeps its internal stream alive while waiting for the next reuse.
+  const wrapper = document.createElement("div") as HTMLDivElement;
+  wrapper.style.cssText = `width:${w}px;height:${h}px;overflow:hidden;flex-shrink:0;`;
+  wrapper.appendChild(el);
+  _getParkingHolder().appendChild(wrapper);
+
   const timer = setTimeout(() => {
     const entry = _streamElementCache.get(key);
     if (entry?.el === el) {
-      el.remove();
+      entry.el.remove();
+      entry.wrapper.remove();
       _streamElementCache.delete(key);
     }
   }, ttlMs);
-  _streamElementCache.set(key, { el, timer });
+  _streamElementCache.set(key, { el, timer, wrapper });
 }
 
 function _popCachedStreamEl(
@@ -90,6 +126,10 @@ function _popCachedStreamEl(
   if (!entry) return null;
   clearTimeout(entry.timer);
   _streamElementCache.delete(key);
+  // Detach from parking wrapper before returning so the caller can
+  // re-insert it wherever it is needed.
+  entry.el.remove();
+  entry.wrapper.remove();
   return entry.el;
 }
 
@@ -274,8 +314,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private _cleanup(): void {
-    // Full teardown — stream is cached to the module-level cache so it can be
-    // reused if the spark is reconnected within the TTL window.
+    // Full teardown — stream is parked connected in the module-level cache so
+    // it can be reused if the spark is reconnected within the TTL window.
     this._removeContainer();
     this._restoreDissolve();
     this._restoreLayout();
@@ -287,10 +327,12 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
    * Remove the background container from the DOM and clear active state.
    *
    * The `ha-camera-stream` element (if any) is detached from the container
-   * before removal and placed in the module-level `_streamElementCache` keyed
-   * by `"entityId:WxH"`.  `_buildCameraContent` can then pop the element from
-   * the cache and reuse it — avoiding a full re-negotiation — provided the
-   * entity and rendered dimensions are unchanged and the TTL has not expired.
+   * before removal and **parked connected** inside the module-level off-screen
+   * holder (keyed by `"entityId:WxH"` in `_streamElementCache`).  Keeping the
+   * element connected ensures the internal stream stays alive while waiting for
+   * a rapid rebuild.  `_buildCameraContent` can then pop the element from the
+   * cache and reuse it — avoiding a full re-negotiation — provided the entity
+   * and rendered dimensions are unchanged and the TTL has not expired.
    */
   private _removeContainer(): void {
     if (this._containerEl) {
@@ -544,9 +586,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
    *
    * Attempts to pop a matching element from the module-level
    * `_streamElementCache` (keyed by entity + dimensions).  If found, the
-   * cached element is reused so that its internal state (negotiated stream
-   * URL, auth tokens, etc.) is preserved across rapid rebuilds.  If not found,
-   * a fresh `ha-camera-stream` element is created.
+   * cached element is detached from its off-screen parking wrapper and
+   * re-inserted here; its internal stream (auth tokens, negotiated URL, etc.)
+   * has remained alive while parked connected.  If not found, a fresh
+   * `ha-camera-stream` element is created.
    *
    * Hass assignment and the loading spinner are handled by the caller
    * (`_buildContainer`) AFTER the container has been inserted into the DOM,
