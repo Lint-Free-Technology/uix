@@ -18,3 +18,4 @@ Available sparks:
 - :mag: [Search](search.md) — find elements within a container by CSS selector and optional text filter, then apply class, attribute, or text mutations to all matches.
 - :material-map: [Map](map.md) — preserve the zoom level and centre of a map card across Home Assistant state updates.
 - :material-lock: [Lock](lock.md) — overlay a lock icon on any element to block interaction until the user passes a PIN, passphrase, or confirmation challenge.
+- :material-image-outline: [Background](background.md) — inject a background layer (colour, image, video, or live camera) behind any element within the forged element.

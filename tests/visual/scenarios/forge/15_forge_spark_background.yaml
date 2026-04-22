@@ -8,7 +8,7 @@ card:
     mold: card
     sparks:
       - type: background
-        for: element
+        for: hui-tile-card $ ha-card
         background:
           color: "rgb(220, 53, 69)"
         dissolve_target:
@@ -20,23 +20,23 @@ card:
     name: "Background spark"
 
 assertions:
-  # Background container must exist inside the forged element
+  # Background container must exist inside ha-card's shadow root
   - type: element_present
-    root: "uix-forge"
+    root: "ha-card"
     selector: "[data-uix-spark-bg-id]"
 
   # The injected container must carry the user-supplied class
   - type: element_present
-    root: "uix-forge"
+    root: "ha-card"
     selector: "[data-uix-spark-bg-id].uix-test-background"
 
   # The fill div inside the container must have the configured background colour
   - type: css_property
-    root: "uix-forge"
+    root: "ha-card"
     selector: "[data-uix-spark-bg-id] div"
     property: "backgroundColor"
     expected: "rgb(220, 53, 69)"
 
   - type: snapshot
-    name: "19_forge_spark_background"
+    name: "22_forge_spark_background"
     threshold: 0.02

@@ -1,5 +1,6 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
+import { BackgroundTargetAdapter, getBackgroundTargetAdapter } from "./background-target-adapters";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -114,6 +115,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   private _containerEl: HTMLElement | null = null;
   /** The `for` element we are currently attached to. */
   private _forEl: HTMLElement | null = null;
+  /** Target-element-type adapter (e.g. ha-card), or null for generic targets. */
+  private _targetAdapter: BackgroundTargetAdapter | null = null;
   /** Live camera stream element (updated on hass changes). */
   private _streamEl: HaCameraStreamElement | null = null;
   /**
@@ -184,6 +187,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._restoreDissolve();
     this._restoreLayout();
     this._forEl = null;
+    this._targetAdapter = null;
     this._streamEl = null;
   }
 
@@ -233,6 +237,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       this._restoreDissolve();
       this._restoreLayout();
       this._forEl = forEl;
+      this._targetAdapter = getBackgroundTargetAdapter(forEl);
       this._setupLayout(forEl);
     }
 
@@ -342,6 +347,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       }
     }
 
+    // Let the target-element adapter apply element-type-specific styles before
+    // inserting (e.g. border-radius and margin for ha-card targets).
+    this._targetAdapter?.applyStyles(container);
+
     switch (bgType) {
       case "camera":
         await this._buildCameraContent(container, generation);
@@ -363,10 +372,14 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     if (generation !== this._callGeneration) return;
 
     // Insert as first child so it renders behind all existing content.
-    if (forEl.firstChild) {
-      forEl.insertBefore(container, forEl.firstChild);
+    // When an adapter is present, it may redirect insertion into the element's
+    // shadow root (e.g. for ha-card) so the container participates in the
+    // correct stacking context.
+    const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
+    if (insertionParent.firstChild) {
+      insertionParent.insertBefore(container, insertionParent.firstChild);
     } else {
-      forEl.appendChild(container);
+      insertionParent.appendChild(container);
     }
 
     this._containerEl = container;
