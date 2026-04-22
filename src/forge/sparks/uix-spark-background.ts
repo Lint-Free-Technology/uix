@@ -287,24 +287,45 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
     const { bgType, bgKey } = this._getActiveBg();
 
-    // If the target element changed, fully clean up the previous attachment.
-    if (forEl !== this._forEl) {
+    // Tear down the background container when the source entity/URL changed.
+    // Do this before the forEl check so that _containerEl is already null if
+    // both changed at once; the forEl branch below will then skip the move and
+    // let _buildContainer create a fresh container in the right place.
+    if (bgKey !== this._activeBgKey) {
       this._removeContainer();
+    }
+
+    // If the target element changed, update layout refs and either:
+    //   • move the existing container (with the stream still inside) to the
+    //     new element — the stream element is never removed from its parent,
+    //     so ha-camera-stream.disconnectedCallback() is never called and the
+    //     WebRTC/HLS session stays alive; or
+    //   • just update the refs when there is no container yet (first attach,
+    //     or the container was just torn down above).
+    if (forEl !== this._forEl) {
       this._restoreDissolve();
       this._restoreLayout();
       this._forEl = forEl;
       this._targetAdapter = getBackgroundTargetAdapter(forEl);
       this._setupLayout(forEl);
+
+      if (this._containerEl) {
+        // Re-apply adapter styles (e.g. border-radius / margin for ha-card
+        // targets) because the adapter may have changed.
+        this._targetAdapter?.applyStyles(this._containerEl);
+        const insertionParent = this._targetAdapter?.getInsertionParent(forEl) ?? forEl;
+        if (insertionParent.firstChild) {
+          insertionParent.insertBefore(this._containerEl, insertionParent.firstChild);
+        } else {
+          insertionParent.appendChild(this._containerEl);
+        }
+        if (bgType === "camera") this._updateCameraTransform();
+      }
     }
 
     // Apply / re-apply dissolve styles (always restore then reapply so config
     // changes take effect immediately).
     this._applyDissolveTarget(forEl);
-
-    // Rebuild the background container when the source changed.
-    if (bgKey !== this._activeBgKey) {
-      this._removeContainer();
-    }
 
     if (!this._containerEl) {
       if (bgType === "none") return;
