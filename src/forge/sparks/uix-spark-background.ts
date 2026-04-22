@@ -174,9 +174,9 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
-  updated(_changedProperties: PropertyValues): void {
+  updated(changedProperties: PropertyValues): void {
     const gen = this._beginUpdate();
-    this._attach(gen);
+    this._attach(gen, changedProperties);
   }
 
   connectedCallback(): void {
@@ -263,7 +263,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._savedLayoutStyles.clear();
   }
 
-  private async _attach(generation: number): Promise<void> {
+  private async _attach(generation: number, changedProperties?: PropertyValues): Promise<void> {
     const elements = await this.controller.target(this._for, this._cancel);
     const forEl = elements?.[0];
     if (!forEl) return;
@@ -296,10 +296,18 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     } else {
       // Container already exists — update camera state and transform.
       if (bgType === "camera" && this._streamEl) {
-        const hass = this.controller.forge.hass;
-        if (hass) {
-          this._streamEl.hass = hass;
-          this._streamEl.stateObj = hass.states[this._cameraEntity];
+        // Only re-assign hass/stateObj when the hass object itself changed
+        // (i.e. a genuine HA state update).  Setting hass on ha-camera-stream
+        // triggers stream re-negotiation; doing it on every config change
+        // (e.g. camera_zoom edit) causes unnecessary disconnects.
+        // When changedProperties is absent (connectedCallback) we always set.
+        const hassChanged = !changedProperties || changedProperties.has("hass");
+        if (hassChanged) {
+          const hass = this.controller.forge.hass;
+          if (hass) {
+            this._streamEl.hass = hass;
+            this._streamEl.stateObj = hass.states[this._cameraEntity];
+          }
         }
         this._updateCameraTransform();
       }
