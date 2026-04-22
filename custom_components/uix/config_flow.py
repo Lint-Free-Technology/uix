@@ -77,16 +77,26 @@ class UixOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Show the foundry management menu."""
+        foundries_list = "\n".join(
+            f"- {name}" for name in self._foundries
+        ) or "_None_"
+        foundry_files_list = "\n".join(
+            f"- {f}" for f in self._foundry_files
+        ) or "_None_"
         return self.async_show_menu(
             step_id="init",
             menu_options=[
                 "add_foundry",
                 "edit_foundry",
                 "delete_foundry",
-                "add_foundry_file",
-                "remove_foundry_file",
+                "register_foundry_file",
+                "deregister_foundry_file",
                 "reload_foundry_files",
             ],
+            description_placeholders={
+                "foundries_list": foundries_list,
+                "foundry_files_list": foundry_files_list,
+            },
         )
 
     async def async_step_add_foundry(
@@ -195,10 +205,10 @@ class UixOptionsFlow(OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_add_foundry_file(
+    async def async_step_register_foundry_file(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Add a foundry YAML file path."""
+        """Register a foundry YAML file path."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -222,7 +232,7 @@ class UixOptionsFlow(OptionsFlow):
                     )
 
         return self.async_show_form(
-            step_id="add_foundry_file",
+            step_id="register_foundry_file",
             data_schema=vol.Schema(
                 {
                     vol.Required("file_path"): cv.string,
@@ -231,10 +241,10 @@ class UixOptionsFlow(OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_remove_foundry_file(
+    async def async_step_deregister_foundry_file(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove a foundry YAML file path."""
+        """Deregister a foundry YAML file path."""
         if not self._foundry_files:
             return self.async_abort(reason="no_foundry_files")
 
@@ -251,7 +261,7 @@ class UixOptionsFlow(OptionsFlow):
             )
 
         return self.async_show_form(
-            step_id="remove_foundry_file",
+            step_id="deregister_foundry_file",
             data_schema=vol.Schema(
                 {
                     vol.Required("file_path"): vol.In(self._foundry_files),
