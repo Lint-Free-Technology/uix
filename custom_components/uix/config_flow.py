@@ -91,7 +91,7 @@ class UixOptionsFlow(OptionsFlow):
     async def async_step_foundry_menu(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the config-foundry sub-menu with the loaded foundries list."""
+        """Show the UI foundry sub-menu with the loaded foundries list."""
         foundries_list = "\n".join(
             f"- {name}" for name in self._foundries
         ) or "_None_"
