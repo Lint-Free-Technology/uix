@@ -100,7 +100,7 @@ function _cacheStreamEl(
   // Park the element connected inside a sized wrapper so ha-camera-stream
   // keeps its internal stream alive while waiting for the next reuse.
   const wrapper = document.createElement("div") as HTMLDivElement;
-  wrapper.style.cssText = `width:${w}px;height:${h}px;overflow:hidden;flex-shrink:0;`;
+  wrapper.style.cssText = `width:${w}px;height:${h}px;overflow:hidden;`;
   wrapper.appendChild(el);
   _getParkingHolder().appendChild(wrapper);
 
