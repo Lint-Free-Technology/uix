@@ -1,3 +1,9 @@
+## [6.4.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.5...v6.4.0-beta.6) (2026-04-22)
+
+### ⚙️ Miscellaneous
+
+* Update Foundry config UI: split menus, show loaded lists, rename to Register/Deregister, and add Foundries docs links ([#265](https://github.com/Lint-Free-Technology/uix/issues/265)) ([7a5245d](https://github.com/Lint-Free-Technology/uix/commit/7a5245dca9c77a14e155d787ff57085998badb9c))
+
 ## [6.4.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.4...v6.4.0-beta.5) (2026-04-21)
 
 ### ⭐ New Features
