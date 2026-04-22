@@ -15,12 +15,27 @@
         "step": {
             "init": {
                 "title": "Manage UIX Forge Foundries",
+                "description": "{foundries_docs_link}",
+                "menu_options": {
+                    "foundry_menu": "Manage config foundries",
+                    "foundry_file_menu": "Manage foundry files"
+                }
+            },
+            "foundry_menu": {
+                "title": "Config Foundries",
+                "description": "{foundries_docs_link}\n\n**Loaded foundries:**\n{foundries_list}",
                 "menu_options": {
                     "add_foundry": "Add a foundry",
                     "edit_foundry": "Edit a foundry",
-                    "delete_foundry": "Delete a foundry",
-                    "add_foundry_file": "Add a foundry file",
-                    "remove_foundry_file": "Remove a foundry file",
+                    "delete_foundry": "Delete a foundry"
+                }
+            },
+            "foundry_file_menu": {
+                "title": "Foundry Files",
+                "description": "{foundries_docs_link}\n\n**Registered foundry files:**\n{foundry_files_list}",
+                "menu_options": {
+                    "register_foundry_file": "Register a foundry file",
+                    "deregister_foundry_file": "Deregister a foundry file",
                     "reload_foundry_files": "Reload foundry files"
                 }
             },
@@ -52,24 +67,24 @@
                     "name": "Foundry to delete"
                 }
             },
-            "add_foundry_file": {
-                "title": "Add a foundry file",
+            "register_foundry_file": {
+                "title": "Register a foundry file",
                 "description": "Enter the path to a YAML file that contains foundries under a top-level 'uix_foundries' key. The path may be absolute or relative to the Home Assistant config directory.",
                 "data": {
                     "file_path": "File path"
                 }
             },
-            "remove_foundry_file": {
-                "title": "Remove a foundry file",
-                "description": "Select the foundry file to remove. The file itself is not deleted — only its registration with UIX is removed.",
+            "deregister_foundry_file": {
+                "title": "Deregister a foundry file",
+                "description": "Select the foundry file to deregister. The file itself is not deleted — only its registration with UIX is removed.",
                 "data": {
-                    "file_path": "File to remove"
+                    "file_path": "File to deregister"
                 }
             }
         },
         "abort": {
             "no_foundries": "No foundries are configured yet. Add one first.",
-            "no_foundry_files": "No foundry files are registered yet. Add one first."
+            "no_foundry_files": "No foundry files are registered yet. Register one first."
         },
         "error": {
             "invalid_config": "The configuration must be a YAML mapping.",
