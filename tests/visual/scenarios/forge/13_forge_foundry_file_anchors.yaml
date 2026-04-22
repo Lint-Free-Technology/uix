@@ -1,0 +1,36 @@
+id: forge_foundry_file_anchors
+description: "UIX Forge foundry file supports YAML anchors — a derived foundry using <<: *anchor resolves correctly"
+view_path: forge-foundry-file-anchors
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry_file
+    file_path: uix_test_foundries_anchors.yaml
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-anchor-derived
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 150, 255)"
+
+  - type: snapshot
+    name: "20_forge_foundry_file_anchors"
+    threshold: 0.02
+
+teardown:
+  - type: remove_foundry_file
+    file_path: uix_test_foundries_anchors.yaml

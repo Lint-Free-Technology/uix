@@ -18,7 +18,10 @@
                 "menu_options": {
                     "add_foundry": "Add a foundry",
                     "edit_foundry": "Edit a foundry",
-                    "delete_foundry": "Delete a foundry"
+                    "delete_foundry": "Delete a foundry",
+                    "add_foundry_file": "Add a foundry file",
+                    "remove_foundry_file": "Remove a foundry file",
+                    "reload_foundry_files": "Reload foundry files"
                 }
             },
             "add_foundry": {
@@ -48,13 +51,34 @@
                 "data": {
                     "name": "Foundry to delete"
                 }
+            },
+            "add_foundry_file": {
+                "title": "Add a foundry file",
+                "description": "Enter the path to a YAML file that contains foundries under a top-level 'uix_foundries' key. The path may be absolute or relative to the Home Assistant config directory.",
+                "data": {
+                    "file_path": "File path"
+                }
+            },
+            "remove_foundry_file": {
+                "title": "Remove a foundry file",
+                "description": "Select the foundry file to remove. The file itself is not deleted — only its registration with UIX is removed.",
+                "data": {
+                    "file_path": "File to remove"
+                }
             }
         },
         "abort": {
-            "no_foundries": "No foundries are configured yet. Add one first."
+            "no_foundries": "No foundries are configured yet. Add one first.",
+            "no_foundry_files": "No foundry files are registered yet. Add one first."
         },
         "error": {
-            "invalid_config": "The configuration must be a YAML mapping."
+            "invalid_config": "The configuration must be a YAML mapping.",
+            "file_already_added": "This file path is already registered.",
+            "file_not_found": "The file was not found. Check the path and try again.",
+            "file_parse_error": "The file could not be parsed as YAML. Check the file for syntax errors.",
+            "file_invalid_structure": "The file must be a YAML mapping.",
+            "file_missing_key": "The file must have a top-level 'uix_foundries' key.",
+            "file_invalid_foundries": "The 'uix_foundries' key must be a YAML mapping of foundry names to configurations."
         }
     }
 }
