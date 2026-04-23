@@ -21,6 +21,18 @@ export interface BackgroundTargetAdapter {
    * that test assertions via `root: "ha-card"` can reach it.
    */
   getInsertionParent(forEl: HTMLElement): Element | ShadowRoot;
+  /**
+   * Optionally apply element-type-specific CSS properties directly to the
+   * target element itself (e.g. CSS custom properties that cascade to
+   * descendant elements).  Implementations **must** record any property they
+   * set in `savedStyles` (previous value, or `""` if the property was unset)
+   * so the spark can restore the original values when the target element
+   * changes or the spark disconnects.
+   *
+   * Called from `_setupLayout` after position/isolation are saved, so entries
+   * written here are automatically restored by `_restoreLayout`.
+   */
+  applyForElStyles?(forEl: HTMLElement, savedStyles: Map<string, string>): void;
 }
 
 /**
@@ -32,6 +44,8 @@ export function getBackgroundTargetAdapter(element: HTMLElement | null): Backgro
   switch (element.tagName.toLowerCase()) {
     case "ha-card":
       return new HaCardBackgroundAdapter();
+    case "hui-section":
+      return new HuiSectionBackgroundAdapter();
     default:
       return null;
   }
@@ -66,5 +80,42 @@ class HaCardBackgroundAdapter implements BackgroundTargetAdapter {
   getInsertionParent(forEl: HTMLElement): Element | ShadowRoot {
     const shadowRoot = forEl.shadowRoot;
     return shadowRoot ?? forEl;
+  }
+}
+
+/**
+ * Adapter for `hui-section` targets.
+ *
+ * When `hui-section` is the background target (typically when `mold: section`
+ * with no explicit `for` value):
+ *  - `padding` is set to `var(--ha-space-2)` to inset the background from the
+ *    section container edges, matching the visual padding of the section.
+ *  - `border-radius` is matched to the section's own border radius via
+ *    `var(--ha-section-border-radius, var(--ha-border-radius-xl))` so the
+ *    background follows the section's rounded corners.
+ *  - `--ha-card-background: none` is applied to the section element itself
+ *    so that all cards within the section inherit a transparent card background,
+ *    allowing the section background to show through.
+ */
+class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
+  private static readonly CARD_BG_PROP = "--ha-card-background";
+
+  applyStyles(container: HTMLElement): void {
+    container.style.setProperty("padding", "var(--ha-space-2)");
+    container.style.setProperty(
+      "border-radius",
+      "var(--ha-section-border-radius, var(--ha-border-radius-xl))"
+    );
+  }
+
+  getInsertionParent(forEl: HTMLElement): Element | ShadowRoot {
+    return forEl;
+  }
+
+  applyForElStyles(forEl: HTMLElement, savedStyles: Map<string, string>): void {
+    const prop = HuiSectionBackgroundAdapter.CARD_BG_PROP;
+    const prev = forEl.style.getPropertyValue(prop);
+    savedStyles.set(prop, prev);
+    forEl.style.setProperty(prop, "none");
   }
 }

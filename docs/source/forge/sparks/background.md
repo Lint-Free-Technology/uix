@@ -12,8 +12,8 @@ Supported background sources (first non-empty value wins):
 | ------ | --- | ----------- |
 | Camera | `camera_entity` | Live `ha-camera-stream` stream. Supports zoom, pan, and position. Shows a spinner while loading. |
 | Entity picture | `image_entity` | Reads `entity_picture` from any entity and signs the URL. Shows a spinner while loading. |
-| Video | `video_url` | `<video>` element (autoplay, muted, loop). |
-| Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. |
+| Video | `video_url` | `<video>` element (autoplay, muted, loop). Supports `media-source://` URIs. |
+| Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. Supports `media-source://` URIs. |
 | Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
 
 ---
@@ -53,8 +53,8 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `camera_position` | string | `center` | Alignment of the stream inside the container. One of `center`, `top`, `bottom`, `left`, `right`, `top-left`, `top-right`, `bottom-left`, `bottom-right`. |
 | `camera_stream_cache_ms` | number | `20000` | How long (ms) to keep a `ha-camera-stream` element in the cache after it is removed from the background container. While cached, the element remains **connected** to an off-screen holder so its internal stream (MPEG/HLS/WebRTC session and auth tokens) stays alive. On the next rebuild with the same entity at the same dimensions the cached element is moved directly into the new background container without re-negotiating the stream. |
 | `image_entity` | string | — | Entity ID whose `entity_picture` attribute provides the background image. |
-| `video_url` | string | — | URL of a video to autoplay muted as the background. |
-| `image_url` | string | — | URL of a static background image. |
+| `video_url` | string | — | URL of a video to autoplay muted as the background. Accepts `media-source://` URIs (see [Media source URIs](#media-source-uris)). |
+| `image_url` | string | — | URL of a static background image. Accepts `media-source://` URIs (see [Media source URIs](#media-source-uris)). |
 | `background` | string or object | — | CSS `background` shorthand string, or a mapping of sub-properties (see below). |
 | `opacity` | number | — | CSS `opacity` applied to the background container (0–1). Use this to dim the background without affecting the foreground element. |
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
@@ -91,6 +91,24 @@ dissolve_target:
 dissolve_target: opacity_50
 ```
 
+### Media source URIs
+
+`video_url` and `image_url` accept Home Assistant [media source](https://www.home-assistant.io/integrations/media_source/) URIs in the form `media-source://media_source/local/<filename>`. UIX resolves these automatically before setting the background using the HA WebSocket `media_source/resolve_media` command — no manual URL signing is needed.
+
+Files placed in the `/media` directory of your HA instance are accessible as `media-source://media_source/local/<filename>`.
+
+```yaml
+# Image from the local media library
+- type: background
+  for: hui-tile-card $ ha-card
+  image_url: "media-source://media_source/local/bedroom.jpg"
+
+# Video from the local media library
+- type: background
+  for: hui-tile-card $ ha-card
+  video_url: "media-source://media_source/local/ambient.mp4"
+```
+
 ---
 
 ## ha-card adapter
@@ -102,6 +120,29 @@ When `for` resolves to an `ha-card` element, UIX automatically activates the **h
 - Inserts the container into `ha-card`'s shadow root so it participates in the correct stacking context.
 
 No extra configuration is needed — the adapter activates automatically when the resolved `for` element is `ha-card`.
+
+---
+
+## hui-section adapter
+
+When `for` resolves to a `hui-section` element — which happens automatically when `mold: section` is used with no explicit `for` — UIX activates the **hui-section adapter**, which:
+
+- Sets `padding: var(--ha-space-2)` on the background container to inset it from the section edges, matching the visual padding of the section.
+- Sets `border-radius: var(--ha-section-border-radius, var(--ha-border-radius-xl))` on the background container so it follows the section's rounded corners.
+- Applies `--ha-card-background: none` to the section element itself so that all cards within the section inherit a transparent card background, allowing the section background to show through.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: section
+  sparks:
+    - type: background
+      background:
+        color: "rgba(0, 100, 200, 0.2)"
+cards: []
+```
+
+No `for` is needed — when `mold: section` the default `for: element` resolves to the `hui-section` element and the adapter activates automatically.
 
 ---
 
@@ -160,6 +201,23 @@ element:
   entity: light.bed_light
 ```
 
+### Video from media library
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
+      for: hui-tile-card $ ha-card
+      video_url: "media-source://media_source/local/ambient.mp4"
+      dissolve_target:
+        - background: "none"
+element:
+  type: tile
+  entity: light.bed_light
+```
+
 ### Static image background
 
 ```yaml
@@ -170,6 +228,23 @@ forge:
     - type: background
       for: hui-tile-card $ ha-card
       image_url: /local/images/bedroom.jpg
+      dissolve_target:
+        - background: "none"
+element:
+  type: tile
+  entity: light.bed_light
+```
+
+### Image from media library
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
+      for: hui-tile-card $ ha-card
+      image_url: "media-source://media_source/local/bedroom.jpg"
       dissolve_target:
         - background: "none"
 element:
@@ -218,6 +293,19 @@ forge:
 element:
   type: tile
   entity: light.bed_light
+```
+
+### Section background
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: section
+  sparks:
+    - type: background
+      background:
+        color: "rgba(0, 100, 200, 0.15)"
+cards: []
 ```
 
 ### Styling the background container with UIX

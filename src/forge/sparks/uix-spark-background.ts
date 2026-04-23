@@ -158,6 +158,34 @@ const BACKGROUND_SUB_PROPS: Record<string, string> = {
   clip:       "background-clip",
 };
 
+/** Prefix that identifies a Home Assistant media-source URI. */
+const MEDIA_SOURCE_PREFIX = "media-source://";
+
+/**
+ * If `url` starts with `"media-source://"`, resolve it to a playable/displayable
+ * URL via the HA WebSocket `media_source/resolve_media` command.
+ *
+ * Returns the resolved URL on success, or the original `url` string if `hass`
+ * is unavailable or the resolution fails (with a console warning).
+ */
+async function _resolveMediaSourceUrl(hass: any, url: string): Promise<string> {
+  if (!url.startsWith(MEDIA_SOURCE_PREFIX)) return url;
+  if (!hass) return url;
+  try {
+    const result = await hass.callWS<{ url: string }>({
+      type: "media_source/resolve_media",
+      media_content_id: url,
+    });
+    return result.url ?? url;
+  } catch (e) {
+    console.warn(
+      `UIX Forge background spark: failed to resolve media source '${url}'.`,
+      e
+    );
+    return url;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -172,6 +200,7 @@ interface HaCameraStreamElement extends HTMLElement {
 // ---------------------------------------------------------------------------
 // Spark
 // ---------------------------------------------------------------------------
+
 
 /**
  * Background spark — places a background layer behind a target element
@@ -491,6 +520,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       this._savedLayoutStyles.set("isolation", prev);
       forEl.style.setProperty("isolation", "isolate");
     }
+
+    // Let the adapter apply any target-element-specific CSS properties
+    // (e.g. --ha-card-background: none for hui-section targets).
+    this._targetAdapter?.applyForElStyles?.(forEl, this._savedLayoutStyles);
   }
 
   private _applyDissolveTarget(forEl: HTMLElement): void {
@@ -579,10 +612,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         await this._buildImageEntityContent(container, generation);
         break;
       case "video":
-        this._buildVideoContent(container);
+        await this._buildVideoContent(container, generation);
         break;
       case "image_url":
-        this._buildImageUrlContent(container);
+        await this._buildImageUrlContent(container, generation);
         break;
       case "background":
         this._buildBackgroundContent(container);
@@ -765,7 +798,11 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     preload.src = signedUrl;
   }
 
-  private _buildVideoContent(container: HTMLElement): void {
+  private async _buildVideoContent(container: HTMLElement, generation: number): Promise<void> {
+    const hass = this.controller.forge.hass;
+    const resolvedUrl = await _resolveMediaSourceUrl(hass, this._videoUrl);
+    if (generation !== this._callGeneration) return;
+
     const videoEl = document.createElement("video");
     videoEl.style.cssText =
       "display:block;width:100%;height:100%;object-fit:cover;";
@@ -785,7 +822,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     };
     videoEl.addEventListener("canplay", onCanPlay, { once: true });
 
-    videoEl.src = this._videoUrl;
+    videoEl.src = resolvedUrl;
     container.appendChild(videoEl);
 
     // If the browser already has enough data, dismiss the spinner immediately.
@@ -796,12 +833,16 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     }
   }
 
-  private _buildImageUrlContent(container: HTMLElement): void {
+  private async _buildImageUrlContent(container: HTMLElement, generation: number): Promise<void> {
+    const hass = this.controller.forge.hass;
+    const resolvedUrl = await _resolveMediaSourceUrl(hass, this._imageUrl);
+    if (generation !== this._callGeneration) return;
+
     const imgEl = document.createElement("div");
     imgEl.style.cssText = [
       "width:100%",
       "height:100%",
-      `background-image:url('${this._imageUrl}')`,
+      `background-image:url('${resolvedUrl}')`,
       "background-size:cover",
       "background-position:center",
       "background-repeat:no-repeat",
@@ -813,7 +854,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     const done = () => this._removeSpinner(spinner);
     preload.onload = done;
     preload.onerror = done;
-    preload.src = this._imageUrl;
+    preload.src = resolvedUrl;
   }
 
   private _buildBackgroundContent(container: HTMLElement): void {
