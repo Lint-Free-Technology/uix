@@ -251,6 +251,44 @@ If the element you are forging uses Jinja style templates or same markers (e.g. 
         state: '{#uix#}{{states(config.entity,with_unit=True)}}{#uix#}'
     ```
 
+#### Using billets in nested templates
+
+Billet values are fully available as Jinja2 variables inside `<<...>>` expressions. When UIX builds the template, billet variables are set as Jinja2 `{%- set ... -%}` statements before Home Assistant evaluates the template body. This means `{{ billet_name }}` written inside `<<...>>` is evaluated by HA's template engine and the resolved value becomes part of the expression that the downstream component receives.
+
+!!! note "Coming from decluttering-card?"
+    In tools like decluttering-card, a variable placeholder such as `[[id]]` is substituted as plain text into the string before anything else happens. In UIX Forge the mechanism is different but the end result is the same: billet variables are Jinja2 variables that HA evaluates at the same time as the rest of the template, so `{{ id }}` inside `<<...>>` is replaced with the billet's value before the downstream component ever sees the string.
+
+    The important difference is that you must use standard Jinja2 expression syntax — `{{ billet_name }}` — not the billet-to-billet interpolation syntax (`{billet_name}`). The `{...}` interpolation syntax is only available inside billet *value* strings (for one billet referencing another), not inside template expressions.
+
+A common use-case is driving an `auto-entities` filter template from a billet. For example, with an `id` billet holding a room slug, you can build the device entity list for that room:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  billets:
+    id: living_room
+element:
+  type: custom:auto-entities
+  filter:
+    template: >-
+      <<device_entities(device_id('switch.{{id}}'))
+      |reject('search','device')|list>>
+  card:
+    type: entities
+```
+
+When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. HA then evaluates the template body, resolving `{{id}}` to `living_room`. The expression received by `auto-entities` is:
+
+```
+{#uix#}{{ device_entities(device_id('switch.living_room'))|reject('search','device')|list }}{#uix#}
+```
+
+`auto-entities` evaluates this Jinja2 expression and populates the card with the matching entities. Override the `id` billet per instance (or in a foundry) to reuse the same forge across multiple rooms without duplicating the filter logic.
+
+!!! tip
+    Because billet values are resolved at UIX template evaluation time, they are **baked into** the expression that the downstream component receives. If you need the downstream component to re-evaluate a value dynamically (e.g. based on changing HA state), express that logic directly as a Jinja2 function call inside the `<<...>>` block rather than relying on a billet for the dynamic part.
+
 When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
 
 ??? example "Multiple nesting levels example"
