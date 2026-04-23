@@ -104,7 +104,7 @@ Files placed in the `/media` directory of your HA instance are accessible as `me
 # Image from the local media library
 - type: background
   for: hui-tile-card $ ha-card
-  image_url: "media-source://media_source/local/bedroom.jpg"
+  image_url: "media-source://media_source/local/kitchen.jpg"
 
 # Video from the local media library
 - type: background
@@ -295,7 +295,7 @@ forge:
   sparks:
     - type: background
       for: hui-tile-card $ ha-card
-      image_url: "media-source://media_source/local/bedroom.jpg"
+      image_url: "media-source://media_source/local/kitchen.jpg"
       dissolve_target:
         - background: "none"
 element:
