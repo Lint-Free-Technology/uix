@@ -43,7 +43,6 @@ from plugins import download_lovelace_plugins
 
 REPO_ROOT = Path(__file__).parent.parent
 HA_CONFIG_DIR = REPO_ROOT / "tests" / "ha-config"
-HA_MEDIA_DIR = REPO_ROOT / "tests" / "ha-media"
 CUSTOM_COMPONENTS_DIR = REPO_ROOT / "custom_components"
 
 
@@ -169,12 +168,6 @@ def ha(ha_version: str, tmp_path_factory):
         str(CUSTOM_COMPONENTS_DIR.resolve()),
         "/config/custom_components",
         "rw",
-    )
-    # Mount local media files so media-source:// URIs can be resolved in tests.
-    container.with_volume_mapping(
-        str(HA_MEDIA_DIR.resolve()),
-        "/media",
-        "ro",
     )
 
     container.start()

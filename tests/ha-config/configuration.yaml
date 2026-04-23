@@ -3,6 +3,8 @@ homeassistant:
   unit_system: metric
   time_zone: UTC
   customize: !include customize.yaml
+  media_dirs:
+    local: /config/www/media
 
 default_config:
 

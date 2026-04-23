@@ -1345,6 +1345,7 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
             "element_present",
             "element_absent",
             "css_property",
+            "css_property_not_equals",
             "css_variable",
             "text_equals",
             "text_startswith",
