@@ -694,15 +694,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     container.style.setProperty("align-items", alignItems);
     container.style.setProperty("justify-content", justifyContent);
 
-    // stateObj can be set before insertion — it does not trigger stream
-    // negotiation on its own.  hass is set by _buildContainer after the
-    // container is in the DOM so that ha-camera-stream is connected when
-    // negotiation starts.
-    const hass = this.controller.forge.hass;
-    if (hass) {
-      streamEl.stateObj = hass.states[this._cameraEntity];
-    }
-
+    // hass and stateObj are set by _buildContainer AFTER the container is
+    // inserted into the DOM — setting stateObj before hass triggers
+    // ha-camera-stream.willUpdate → _getCapabilities which reads this.hass
+    // and throws if it is not yet assigned.
     container.appendChild(streamEl);
     this._streamEl = streamEl;
   }

@@ -27,7 +27,8 @@ export interface BackgroundTargetAdapter {
  * Returns an adapter for the given target element, or `null` if no special
  * handling is required for this element type.
  */
-export function getBackgroundTargetAdapter(element: HTMLElement): BackgroundTargetAdapter | null {
+export function getBackgroundTargetAdapter(element: HTMLElement | null): BackgroundTargetAdapter | null {
+  if (!element) return null;
   switch (element.tagName.toLowerCase()) {
     case "ha-card":
       return new HaCardBackgroundAdapter();
