@@ -417,6 +417,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
 
   private _restoreLayout(): void {
     if (!this._forEl) return;
+    // Let the adapter restore any descendant element mutations it applied.
+    this._targetAdapter?.cleanup?.(this._forEl);
     for (const [prop, origVal] of this._savedLayoutStyles) {
       if (origVal) {
         this._forEl.style.setProperty(prop, origVal);

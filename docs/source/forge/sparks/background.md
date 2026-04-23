@@ -130,8 +130,8 @@ No extra configuration is needed — the adapter activates automatically when th
 
 When `for` resolves to a `hui-section` element — which happens automatically when `mold: section` is used with no explicit `for` — UIX activates the **hui-section adapter**, which:
 
-- Sets `padding: var(--ha-space-2)` on the background container to inset it from the section edges, matching the visual padding of the section.
 - Sets `border-radius: var(--ha-section-border-radius, var(--ha-border-radius-xl))` on the background container so it follows the section's rounded corners.
+- Sets `padding: var(--ha-space-2)` on the `hui-grid-section` child element (light DOM of `hui-section`) to inset the cards from the section edges, matching the section's visual spacing.  The previous padding is restored when the spark disconnects.
 - Applies `--ha-card-background: none` to the section element itself so that all cards within the section inherit a transparent card background, allowing the section background to show through.
 
 ```yaml

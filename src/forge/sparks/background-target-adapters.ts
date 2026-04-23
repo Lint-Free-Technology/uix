@@ -33,6 +33,12 @@ export interface BackgroundTargetAdapter {
    * written here are automatically restored by `_restoreLayout`.
    */
   applyForElStyles?(forEl: HTMLElement, savedStyles: Map<string, string>): void;
+  /**
+   * Optionally clean up any styles or mutations applied to descendant elements
+   * that are not tracked by `savedStyles` (which only covers `forEl` itself).
+   * Called from `_restoreLayout` before the `savedStyles` loop.
+   */
+  cleanup?(forEl: HTMLElement): void;
 }
 
 /**
@@ -88,20 +94,25 @@ class HaCardBackgroundAdapter implements BackgroundTargetAdapter {
  *
  * When `hui-section` is the background target (typically when `mold: section`
  * with no explicit `for` value):
- *  - `padding` is set to `var(--ha-space-2)` to inset the background from the
- *    section container edges, matching the visual padding of the section.
  *  - `border-radius` is matched to the section's own border radius via
  *    `var(--ha-section-border-radius, var(--ha-border-radius-xl))` so the
  *    background follows the section's rounded corners.
+ *  - `padding: var(--ha-space-2)` is applied to the `hui-grid-section` child
+ *    element (light DOM of `hui-section`) to inset the cards from the section
+ *    edges, matching the section's visual spacing.  The previous padding value
+ *    is saved and restored in `cleanup()`.
  *  - `--ha-card-background: none` is applied to the section element itself
  *    so that all cards within the section inherit a transparent card background,
  *    allowing the section background to show through.
  */
 class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
   private static readonly CARD_BG_PROP = "--ha-card-background";
+  private static readonly GRID_SECTION_TAG = "hui-grid-section";
+  private static readonly PADDING_VALUE = "var(--ha-space-2)";
+
+  private _savedGridPadding: string | null = null;
 
   applyStyles(container: HTMLElement): void {
-    container.style.setProperty("padding", "var(--ha-space-2)");
     container.style.setProperty(
       "border-radius",
       "var(--ha-section-border-radius, var(--ha-border-radius-xl))"
@@ -117,5 +128,28 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
     const prev = forEl.style.getPropertyValue(prop);
     savedStyles.set(prop, prev);
     forEl.style.setProperty(prop, "none");
+
+    // Apply padding to hui-grid-section (light DOM child of hui-section)
+    const gridSection = forEl.querySelector<HTMLElement>(
+      HuiSectionBackgroundAdapter.GRID_SECTION_TAG
+    );
+    if (gridSection) {
+      this._savedGridPadding = gridSection.style.getPropertyValue("padding");
+      gridSection.style.setProperty("padding", HuiSectionBackgroundAdapter.PADDING_VALUE);
+    }
+  }
+
+  cleanup(forEl: HTMLElement): void {
+    const gridSection = forEl.querySelector<HTMLElement>(
+      HuiSectionBackgroundAdapter.GRID_SECTION_TAG
+    );
+    if (gridSection && this._savedGridPadding !== null) {
+      if (this._savedGridPadding) {
+        gridSection.style.setProperty("padding", this._savedGridPadding);
+      } else {
+        gridSection.style.removeProperty("padding");
+      }
+      this._savedGridPadding = null;
+    }
   }
 }
