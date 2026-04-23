@@ -114,7 +114,7 @@ Files placed in the `/media` directory of your HA instance are accessible as `me
 
 ---
 
-## ha-card adapter
+## Card (ha-card) adapter
 
 When `for` resolves to an `ha-card` element, UIX automatically activates the **ha-card adapter**, which:
 
@@ -126,12 +126,12 @@ No extra configuration is needed — the adapter activates automatically when th
 
 ---
 
-## hui-section adapter
+## Section (hui-section) adapter
 
 When `for` resolves to a `hui-section` element — which happens automatically when `mold: section` is used with no explicit `for` — UIX activates the **hui-section adapter**, which:
 
 - Sets `border-radius: var(--ha-section-border-radius, var(--ha-border-radius-xl))` on the background container so it follows the section's rounded corners.
-- Sets `padding: var(--ha-space-2)` on the `hui-grid-section` child element (light DOM of `hui-section`) to inset the cards from the section edges, matching the section's visual spacing.  The previous padding is restored when the spark disconnects.
+- Sets `padding: var(--ha-space-2)` on the `hui-grid-section` child element (light DOM of `hui-section`) to inset the cards from the section edges, matching the same padding given if you use Frontend color background settings.  The previous padding is restored when the spark disconnects.
 - Applies `--ha-card-background: none` to the section element itself so that all cards within the section inherit a transparent card background, allowing the section background to show through.
 
 ```yaml
