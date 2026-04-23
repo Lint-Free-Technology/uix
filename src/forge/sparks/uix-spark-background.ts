@@ -172,11 +172,11 @@ async function _resolveMediaSourceUrl(hass: any, url: string): Promise<string> {
   if (!url.startsWith(MEDIA_SOURCE_PREFIX)) return url;
   if (!hass) return url;
   try {
-    const result = await hass.callWS<{ url: string }>({
+    const result = await hass.callWS({
       type: "media_source/resolve_media",
       media_content_id: url,
     });
-    return result.url ?? url;
+    return (result as { url: string }).url ?? url;
   } catch (e) {
     console.warn(
       `UIX Forge background spark: failed to resolve media source '${url}'.`,
