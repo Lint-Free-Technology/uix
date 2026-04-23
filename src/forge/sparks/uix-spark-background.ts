@@ -242,6 +242,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   private _targetAdapter: BackgroundTargetAdapter | null = null;
   /** Live camera stream element (updated on hass changes). */
   private _streamEl: HaCameraStreamElement | null = null;
+  /** Fill element inside the background container for `background` type. */
+  private _bgFillEl: HTMLElement | null = null;
   /**
    * Last known non-zero container dimensions.  Stored immediately after a
    * successful camera container build so the cache key remains valid even if
@@ -368,6 +370,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       this._containerEl.remove();
       this._containerEl = null;
     }
+    this._bgFillEl = null;
     this._activeBgKey = "";
   }
 
@@ -452,6 +455,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
           }
         }
         this._updateCameraTransform();
+      } else if (bgType === "background" && this._bgFillEl) {
+        // Re-apply background CSS so template-driven values (e.g. colour
+        // expressions) update immediately when resolved config changes.
+        this._applyBackgroundStyles(this._bgFillEl);
       }
     }
   }
@@ -812,7 +819,14 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   private _buildBackgroundContent(container: HTMLElement): void {
     const fillEl = document.createElement("div");
     fillEl.style.cssText = "width:100%;height:100%;";
+    this._bgFillEl = fillEl;
+    this._applyBackgroundStyles(fillEl);
+    container.appendChild(fillEl);
+  }
 
+  /** Apply the current `_background` config to `fillEl`. */
+  private _applyBackgroundStyles(fillEl: HTMLElement): void {
+    fillEl.style.cssText = "width:100%;height:100%;";
     if (typeof this._background === "string") {
       fillEl.style.background = this._background;
     } else if (this._background && typeof this._background === "object") {
@@ -821,8 +835,6 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         fillEl.style.setProperty(cssProp, value);
       }
     }
-
-    container.appendChild(fillEl);
   }
 
   // ── Camera transform ───────────────────────────────────────────────────────
