@@ -16,6 +16,9 @@ Supported background sources (first non-empty value wins):
 | Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. Supports `media-source://` URIs. |
 | Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
 
+!!! warning
+    Background spark should not be used on a target that has its own background styling active. e.g. Using background spark on a section while also having the section has its own config is not recommended.
+
 ---
 
 ## Basic usage
@@ -29,12 +32,12 @@ forge:
       for: hui-tile-card $ ha-card
       background:
         color: "rgba(220, 53, 69, 0.6)"
-      dissolve_target:
-        - background: "none"
 element:
   type: tile
   entity: light.bed_light
 ```
+
+![Background spark basic](../../assets/page-assets/forge/sparks/background-basic.png)
 
 The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` for shadow-root crossings. Use `hui-tile-card $ ha-card` to target the card surface inside a tile card — the [ha-card adapter](#ha-card-adapter) then automatically applies matching `border-radius` and `margin` so the background follows the card's rounded corners.
 
@@ -154,18 +157,21 @@ No `for` is needed — when `mold: section` the default `for: element` resolves 
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    columns: 12
+    rows: 6
   sparks:
     - type: background
-      for: hui-tile-card $ ha-card
-      camera_entity: camera.front_door
-      camera_zoom: 1.2
-      camera_position: top
-      dissolve_target:
-        - background: "none"
+      for: hui-button-card $ ha-card
+      camera_entity: camera.demo_camera
+      camera_zoom: 1.3
+      camera_align: "top left"
 element:
-  type: tile
-  entity: camera.front_door
+  type: button
+  entity: light.bed_light
 ```
+
+![Background spark camera entity](../../assets/page-assets/forge/sparks/background-camera.png)
 
 ### Entity picture as background
 
@@ -173,16 +179,20 @@ element:
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    rows: 3
   sparks:
     - type: background
       for: hui-tile-card $ ha-card
-      image_entity: person.alice
-      dissolve_target:
-        - background: "none"
+      image_entity: person.james_bond_007
 element:
   type: tile
-  entity: person.alice
+  entity: light.bed_light
+  name: Shaken not stirred
+  icon: mdi:glass-cocktail
 ```
+
+![Background spark entity](../../assets/page-assets/forge/sparks/background-entity.png)
 
 ### Video background
 
@@ -190,33 +200,42 @@ element:
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    columns: 12
+    rows: 6
   sparks:
     - type: background
-      for: hui-tile-card $ ha-card
-      video_url: /local/videos/ambient.mp4
-      dissolve_target:
-        - background: "none"
+      for: hui-weather-forecast-card $ ha-card
+      video_url: /local/media/sydney_ferry.mp4
+      opacity: 0.9
+      background:
+        - color: black
 element:
-  type: tile
-  entity: light.bed_light
+  show_current: true
+  show_forecast: true
+  type: weather-forecast
+  entity: weather.demo_weather_south
+  forecast_type: daily
+  uix:
+    style: |
+      :host {
+        --primary-text-color: white;
+        --secondary-text-color: smokewhite;
+        --content-border-radius: var(--ha-card-border-radius, 12px);
+      }
+      .content {
+        background: rgba(0,0,0,0.3);
+        border-top-left-radius: var(--content-border-radius);
+        border-top-right-radius: var(--content-border-radius);
+      }
+      .forecast {
+        background: rgba(0,0,0,0.3);
+        border-bottom-left-radius: var(--content-border-radius);
+        border-bottom-right-radius: var(--content-border-radius);
+      }
 ```
 
-### Video from media library
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: background
-      for: hui-tile-card $ ha-card
-      video_url: "media-source://media_source/local/ambient.mp4"
-      dissolve_target:
-        - background: "none"
-element:
-  type: tile
-  entity: light.bed_light
-```
+![Background spark video url](../../assets/page-assets/forge/sparks/background-video.png)
 
 ### Static image background
 
@@ -226,14 +245,46 @@ forge:
   mold: card
   sparks:
     - type: background
+      for: hui-alarm-panel-card $ ha-card
+      image_url: https://picsum.photos/id/582/600/600
+      opacity: 0.5
+element:
+  type: alarm-panel
+  states:
+    - arm_home
+    - arm_away
+  entity: alarm_control_panel.security
+  uix:
+    style: |
+      ha-control-button {
+        --control-button-background-color: white;
+        --control-button-background-opacity: 0.3;
+      }
+```
+
+![Background spark image url](../../assets/page-assets/forge/sparks/background-image.png)
+
+### Background using full CSS background
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
       for: hui-tile-card $ ha-card
-      image_url: /local/images/bedroom.jpg
-      dissolve_target:
-        - background: "none"
+      background: linear-gradient(90deg,rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%)
 element:
   type: tile
   entity: light.bed_light
+  uix:
+    style: |
+      :host {
+        --primary-text-color: white;
+      }
 ```
+
+![Background spark image url](../../assets/page-assets/forge/sparks/background-css.png)
 
 ### Image from media library
 
@@ -252,27 +303,9 @@ element:
   entity: light.bed_light
 ```
 
-### Solid colour background
+### State-driven background color using a template
 
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: background
-      for: hui-tile-card $ ha-card
-      background:
-        color: "rgba(0, 100, 200, 0.4)"
-      dissolve_target:
-        - background: "none"
-element:
-  type: tile
-  entity: light.bed_light
-```
-
-### State-driven background colour using a template
-
-All `forge` config values support Jinja2 templates. Use the `background` key together with a template to drive the colour from entity state:
+All `forge` config values support Jinja2 templates. Use the `background` key together with a template to drive the color from entity state:
 
 ```yaml
 type: custom:uix-forge

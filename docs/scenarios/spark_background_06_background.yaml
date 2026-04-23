@@ -1,0 +1,36 @@
+id: doc_spark_background_css
+description: "Doc image: Forge Background spark with css (background.md)"
+view_path: doc-spark-background-css
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 50
+
+card:
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: background
+          for: hui-tile-card $ ha-card
+          background: linear-gradient(90deg,rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%)
+    element:
+      type: tile
+      entity: light.bed_light
+      uix:
+        style: |
+          :host {
+            --primary-text-color: white;
+          }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-css.png
+  root: hui-tile-card
+  padding: 16
