@@ -82,9 +82,6 @@ uix_foundries:
 !!! warning "YAML merge keys are shallow"
     YAML merge keys (`<<: *anchor`) perform a **shallow** merge — they only copy top-level keys. This means they are not suitable for sharing a common `forge` + `element` base across multiple foundries, because merging at the foundry root level would replace the entire `element` object rather than merging its contents. Use [foundry nesting](foundries.md#foundry-nesting) instead, which performs a deep recursive merge.
 
-!!! note "Anchor-only entries"
-    Foundry names beginning with `_` (e.g. `_base_config`) are valid foundry names. If you don't want an anchor entry to be used as a real foundry, simply avoid referencing it with `foundry:` in your cards.
-
 #### Registering a file
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
