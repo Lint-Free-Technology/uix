@@ -57,32 +57,30 @@ uix_foundries:
 
 #### YAML anchors
 
-YAML anchors and merge keys work as expected, making it easy to share a common base config across multiple foundries:
+YAML anchors and merge keys work well for sharing repeated values at the same level of a config. A common use-case is reusing formatting options across multiple entities in a `custom:multiple-entity-row` card:
 
 ```yaml
 uix_foundries:
-  _base_tile: &base_tile        # anchor — not used as a foundry directly
+  browser_multiple_entity_anchors:
     forge:
-      mold: card
+      mold: row
+      billets:
+        id: my_browser_id
     element:
-      type: tile
-      uix:
-        style: |
-          ha-card { border-radius: 20px; }
-
-  light_tile:
-    <<: *base_tile              # merge all keys from _base_tile
-    element:
-      entity: light.bed_light
-
-  switch_tile:
-    <<: *base_tile
-    element:
-      entity: switch.living_room
+      type: custom:multiple-entity-row
+      entity: binary_sensor.{{ id }}
+      entities:
+        - entity: sensor.{{ id }}_browser_battery
+          <<: &width                    # define anchor inline on first use
+            format: precision2
+            styles:
+              text-align: center
+        - entity: sensor.{{ id }}_browser_height
+          <<: *width                    # reuse the same formatting options
 ```
 
-!!! note "Anchor-only entries"
-    Foundry names beginning with `_` (e.g. `_base_tile` above) are valid foundry names. If you don't want an anchor entry to be used as a real foundry, simply avoid referencing it with `foundry:` in your cards.
+!!! warning "YAML merge keys are shallow"
+    YAML merge keys (`<<: *anchor`) perform a **shallow** merge — they only copy top-level keys. This means they are not suitable for sharing a common `forge` + `element` base across multiple foundries, because merging at the foundry root level would replace the entire `element` object rather than merging its contents. Use [foundry nesting](foundries.md#foundry-nesting) instead, which performs a deep recursive merge.
 
 #### Registering a file
 
