@@ -1,0 +1,40 @@
+id: doc_spark_background_entity
+description: "Doc image: Forge Background spark with entity (background.md)"
+view_path: doc-spark-background-entity
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    grid_options:
+      rows: 3
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        image_entity: person.james_bond_007
+  element:
+    type: tile
+    entity: light.bed_light
+    name: Shaken not stirred
+    icon: mdi:glass-cocktail
+    uix:
+      style: |
+        :host {
+          --primary-text-color: white;
+          --secondary-text-color: smokewhite;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-entity.png
+  root: hui-tile-card
+  padding: 16

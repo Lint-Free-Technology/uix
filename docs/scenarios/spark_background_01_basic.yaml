@@ -1,0 +1,31 @@
+id: doc_spark_background_basic
+description: "Doc image: Forge Background spark (background.md)"
+view_path: doc-spark-background-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        background:
+          color: "rgba(220, 53, 69, 0.6)"
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-basic.png
+  root: hui-tile-card
+  padding: 16
