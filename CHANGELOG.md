@@ -20,38 +20,6 @@
 * Rename config foundries to UI Foundries in config flow and docs ([#266](https://github.com/Lint-Free-Technology/uix/issues/266)) ([2190931](https://github.com/Lint-Free-Technology/uix/commit/2190931e6879278c87d4f81a19718d19e9a6233d))
 * Update Foundry config UI: split menus, show loaded lists, rename to Register/Deregister, and add Foundries docs links ([#265](https://github.com/Lint-Free-Technology/uix/issues/265)) ([7a5245d](https://github.com/Lint-Free-Technology/uix/commit/7a5245dca9c77a14e155d787ff57085998badb9c))
 
-## [6.4.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.5...v6.4.0-beta.6) (2026-04-22)
-
-### ⚙️ Miscellaneous
-
-* Update Foundry config UI: split menus, show loaded lists, rename to Register/Deregister, and add Foundries docs links ([#265](https://github.com/Lint-Free-Technology/uix/issues/265)) ([7a5245d](https://github.com/Lint-Free-Technology/uix/commit/7a5245dca9c77a14e155d787ff57085998badb9c))
-
-## [6.4.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.4...v6.4.0-beta.5) (2026-04-21)
-
-### ⭐ New Features
-
-* Add foundry file loading: manage foundries via YAML files in Home Assistant config dir ([#264](https://github.com/Lint-Free-Technology/uix/issues/264)) ([966e5d7](https://github.com/Lint-Free-Technology/uix/commit/966e5d74b6e134a469918961ccecfe210ee51e37)), closes [#263](https://github.com/Lint-Free-Technology/uix/issues/263)
-
-## [6.4.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.3...v6.4.0-beta.4) (2026-04-21)
-
-### ⚙️ Miscellaneous
-
-* Differentiate reload (all users) vs. restart needed (admins) notification on UIX version mismatch ([#258](https://github.com/Lint-Free-Technology/uix/issues/258)) ([e4a197a](https://github.com/Lint-Free-Technology/uix/commit/e4a197abee9eb7708e164c6d8b17815ab329b8cc)), closes [#256](https://github.com/Lint-Free-Technology/uix/issues/256)
-
-## [6.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.2...v6.4.0-beta.3) (2026-04-20)
-
-## [6.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.1...v6.4.0-beta.2) (2026-04-20)
-
-### 🐞 Bug Fixes
-
-* billet interpolation does not descend into objects inside lists ([#254](https://github.com/Lint-Free-Technology/uix/issues/254)) ([2895fd4](https://github.com/Lint-Free-Technology/uix/commit/2895fd4d4773bfea3962312b805005cc120988c5))
-
-## [6.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0...v6.4.0-beta.1) (2026-04-19)
-
-### ⭐ New Features
-
-* add {}-interpolation between billets (order-independent) ([#253](https://github.com/Lint-Free-Technology/uix/issues/253)) ([d0fbbae](https://github.com/Lint-Free-Technology/uix/commit/d0fbbae4a5ab007db3f2b821cd4d97d3539fd896))
-
 ## [6.3.0](https://github.com/Lint-Free-Technology/uix/compare/v6.2.0...v6.3.0) (2026-04-18)
 
 ### ⭐ New Features
