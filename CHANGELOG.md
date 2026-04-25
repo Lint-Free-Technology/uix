@@ -1,3 +1,25 @@
+## [6.4.0](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0...v6.4.0) (2026-04-25)
+
+### ⭐ New Features
+
+* add {}-interpolation between billets (order-independent) ([#253](https://github.com/Lint-Free-Technology/uix/issues/253)) ([d0fbbae](https://github.com/Lint-Free-Technology/uix/commit/d0fbbae4a5ab007db3f2b821cd4d97d3539fd896))
+* Add foundry file loading: manage foundries via YAML files in Home Assistant config dir ([#264](https://github.com/Lint-Free-Technology/uix/issues/264)) ([966e5d7](https://github.com/Lint-Free-Technology/uix/commit/966e5d74b6e134a469918961ccecfe210ee51e37)), closes [#263](https://github.com/Lint-Free-Technology/uix/issues/263)
+
+### 🐞 Bug Fixes
+
+* billet interpolation does not descend into objects inside lists ([#254](https://github.com/Lint-Free-Technology/uix/issues/254)) ([2895fd4](https://github.com/Lint-Free-Technology/uix/commit/2895fd4d4773bfea3962312b805005cc120988c5))
+
+### 📔 Documentation
+
+* explain how to use billets inside nested templates (with auto-entities example) ([#267](https://github.com/Lint-Free-Technology/uix/issues/267)) ([16065c9](https://github.com/Lint-Free-Technology/uix/commit/16065c9949a2a5fcd181c3a39fbcb4aac4a749bb))
+* **foundries:** fix misleading YAML anchors example and remove confusing note ([#271](https://github.com/Lint-Free-Technology/uix/issues/271)) ([3ec565f](https://github.com/Lint-Free-Technology/uix/commit/3ec565fee39f3b94c2046682b18a820ff9d677c9))
+
+### ⚙️ Miscellaneous
+
+* Differentiate reload (all users) vs. restart needed (admins) notification on UIX version mismatch ([#258](https://github.com/Lint-Free-Technology/uix/issues/258)) ([e4a197a](https://github.com/Lint-Free-Technology/uix/commit/e4a197abee9eb7708e164c6d8b17815ab329b8cc)), closes [#256](https://github.com/Lint-Free-Technology/uix/issues/256)
+* Rename config foundries to UI Foundries in config flow and docs ([#266](https://github.com/Lint-Free-Technology/uix/issues/266)) ([2190931](https://github.com/Lint-Free-Technology/uix/commit/2190931e6879278c87d4f81a19718d19e9a6233d))
+* Update Foundry config UI: split menus, show loaded lists, rename to Register/Deregister, and add Foundries docs links ([#265](https://github.com/Lint-Free-Technology/uix/issues/265)) ([7a5245d](https://github.com/Lint-Free-Technology/uix/commit/7a5245dca9c77a14e155d787ff57085998badb9c))
+
 ## [6.4.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0-beta.5...v6.4.0-beta.6) (2026-04-22)
 
 ### ⚙️ Miscellaneous
