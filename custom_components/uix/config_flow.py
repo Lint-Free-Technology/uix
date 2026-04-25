@@ -76,17 +76,56 @@ class UixOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the foundry management menu."""
+        """Show the top-level foundry management menu."""
         return self.async_show_menu(
             step_id="init",
+            menu_options=[
+                "foundry_menu",
+                "foundry_file_menu",
+            ],
+            description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
+            },
+        )
+
+    async def async_step_foundry_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the UI foundry sub-menu with the loaded foundries list."""
+        foundries_list = "\n".join(
+            f"- {name}" for name in self._foundries
+        ) or "_None_"
+        return self.async_show_menu(
+            step_id="foundry_menu",
             menu_options=[
                 "add_foundry",
                 "edit_foundry",
                 "delete_foundry",
-                "add_foundry_file",
-                "remove_foundry_file",
+            ],
+            description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
+                "foundries_list": foundries_list,
+            },
+        )
+
+    async def async_step_foundry_file_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the foundry-file sub-menu with the registered files list."""
+        foundry_files_list = "\n".join(
+            f"- {f}" for f in self._foundry_files
+        ) or "_None_"
+        return self.async_show_menu(
+            step_id="foundry_file_menu",
+            menu_options=[
+                "register_foundry_file",
+                "deregister_foundry_file",
                 "reload_foundry_files",
             ],
+            description_placeholders={
+                "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
+                "foundry_files_list": foundry_files_list,
+            },
         )
 
     async def async_step_add_foundry(
@@ -195,10 +234,10 @@ class UixOptionsFlow(OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_add_foundry_file(
+    async def async_step_register_foundry_file(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Add a foundry YAML file path."""
+        """Register a foundry YAML file path."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -222,7 +261,7 @@ class UixOptionsFlow(OptionsFlow):
                     )
 
         return self.async_show_form(
-            step_id="add_foundry_file",
+            step_id="register_foundry_file",
             data_schema=vol.Schema(
                 {
                     vol.Required("file_path"): cv.string,
@@ -231,10 +270,10 @@ class UixOptionsFlow(OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_remove_foundry_file(
+    async def async_step_deregister_foundry_file(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove a foundry YAML file path."""
+        """Deregister a foundry YAML file path."""
         if not self._foundry_files:
             return self.async_abort(reason="no_foundry_files")
 
@@ -251,7 +290,7 @@ class UixOptionsFlow(OptionsFlow):
             )
 
         return self.async_show_form(
-            step_id="remove_foundry_file",
+            step_id="deregister_foundry_file",
             data_schema=vol.Schema(
                 {
                     vol.Required("file_path"): vol.In(self._foundry_files),
