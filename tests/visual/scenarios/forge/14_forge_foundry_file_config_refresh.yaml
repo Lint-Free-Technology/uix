@@ -1,0 +1,65 @@
+id: forge_foundry_file_config_refresh
+description: "config-refresh window event causes UIX to re-read foundry files from disk — file is mutated mid-test to prove the reload is genuine"
+view_path: forge-foundry-file-config-refresh
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry_file
+    file_path: uix_test_foundries.yaml
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-file-foundry
+
+interactions:
+  - type: write_config_file
+    path: uix_test_foundries.yaml
+    content: |
+      uix_foundries:
+        uix-test-file-foundry:
+          forge:
+            mold: card
+          element:
+            type: tile
+            entity: "light.bed_light"
+            uix:
+              style: "ha-card { background: rgb(0, 100, 200) !important; }"
+  - type: dispatch_window_event
+    event: config-refresh
+    settle_ms: 1500
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "21_forge_foundry_file_config_refresh"
+    threshold: 0.02
+
+teardown:
+  - type: write_config_file
+    path: uix_test_foundries.yaml
+    content: |
+      uix_foundries:
+        uix-test-file-foundry:
+          forge:
+            mold: card
+          element:
+            type: tile
+            entity: "light.bed_light"
+            uix:
+              style: "ha-card { background: rgb(200, 0, 100) !important; }"
+  - type: remove_foundry_file
+    file_path: uix_test_foundries.yaml

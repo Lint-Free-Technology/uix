@@ -1,0 +1,36 @@
+id: forge_foundry_file
+description: "UIX Forge foundry is loaded from a YAML file and applied to the card"
+view_path: forge-foundry-file
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry_file
+    file_path: uix_test_foundries.yaml
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-file-foundry
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(200, 0, 100)"
+
+  - type: snapshot
+    name: "19_forge_foundry_file"
+    threshold: 0.02
+
+teardown:
+  - type: remove_foundry_file
+    file_path: uix_test_foundries.yaml

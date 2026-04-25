@@ -7,7 +7,7 @@ from homeassistant.components.websocket_api import (
 from homeassistant.components import websocket_api
 import voluptuous as vol
 
-from .helpers import get_version, resolve_foundries
+from .helpers import get_version, resolve_foundries, get_all_foundries, validate_foundry_file
 from .const import (
     DOMAIN,
     WS_CONNECT,
@@ -15,7 +15,11 @@ from .const import (
     WS_GET_FOUNDRIES,
     WS_SET_FOUNDRY,
     WS_DELETE_FOUNDRY,
+    WS_ADD_FOUNDRY_FILE,
+    WS_REMOVE_FOUNDRY_FILE,
+    WS_RELOAD_FOUNDRY_FILES,
     CONF_FOUNDRIES,
+    CONF_FOUNDRY_FILES,
     EVENT_FOUNDRIES_UPDATED,
 )
 
@@ -45,9 +49,11 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                 try:
                     entries = hass.config_entries.async_entries(DOMAIN)
                     foundries = {}
+                    file_paths: list[str] = []
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-                    send_update({CONF_FOUNDRIES: await hass.async_add_executor_job(resolve_foundries, hass, foundries)})
+                        file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
+                    send_update({CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths)})
                 except Exception:
                     _LOGGER.exception("Error pushing foundry update to client")
             hass.async_create_task(_push())
@@ -83,9 +89,11 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         """Return all stored foundries."""
         entries = hass.config_entries.async_entries(DOMAIN)
         foundries = {}
+        file_paths: list[str] = []
         if entries:
             foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
-        connection.send_result(msg["id"], {CONF_FOUNDRIES: await hass.async_add_executor_job(resolve_foundries, hass, foundries)})
+            file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
+        connection.send_result(msg["id"], {CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths)})
 
     @websocket_api.websocket_command(
         {
@@ -135,8 +143,78 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
         connection.send_result(msg["id"], {})
 
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): WS_ADD_FOUNDRY_FILE,
+            vol.Required("file_path"): str,
+        }
+    )
+    @websocket_api.async_response
+    async def handle_add_foundry_file(hass: HomeAssistant, connection, msg):
+        """Add a foundry YAML file path to the config entry."""
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if not entries:
+            connection.send_error(msg["id"], "no_entry", "No UIX config entry found")
+            return
+        entry = entries[0]
+        file_path: str = msg["file_path"]
+        file_paths: list[str] = list(entry.options.get(CONF_FOUNDRY_FILES, []))
+        if file_path in file_paths:
+            connection.send_error(msg["id"], "already_added", f"File '{file_path}' is already registered")
+            return
+        error_key = await hass.async_add_executor_job(validate_foundry_file, hass, file_path)
+        if error_key is not None:
+            connection.send_error(msg["id"], error_key, f"Foundry file validation failed: {error_key}")
+            return
+        file_paths.append(file_path)
+        hass.config_entries.async_update_entry(
+            entry, options={**entry.options, CONF_FOUNDRY_FILES: file_paths}
+        )
+        hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
+        connection.send_result(msg["id"], {})
+
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): WS_REMOVE_FOUNDRY_FILE,
+            vol.Required("file_path"): str,
+        }
+    )
+    @websocket_api.async_response
+    async def handle_remove_foundry_file(hass: HomeAssistant, connection, msg):
+        """Remove a foundry YAML file path from the config entry."""
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if not entries:
+            connection.send_error(msg["id"], "no_entry", "No UIX config entry found")
+            return
+        entry = entries[0]
+        file_path: str = msg["file_path"]
+        file_paths: list[str] = list(entry.options.get(CONF_FOUNDRY_FILES, []))
+        if file_path not in file_paths:
+            connection.send_error(msg["id"], "not_found", f"File '{file_path}' is not registered")
+            return
+        file_paths.remove(file_path)
+        hass.config_entries.async_update_entry(
+            entry, options={**entry.options, CONF_FOUNDRY_FILES: file_paths}
+        )
+        hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
+        connection.send_result(msg["id"], {})
+
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): WS_RELOAD_FOUNDRY_FILES,
+        }
+    )
+    @websocket_api.async_response
+    async def handle_reload_foundry_files(hass: HomeAssistant, connection, msg):
+        """Re-read all registered foundry files and push updates to connected clients."""
+        hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
+        connection.send_result(msg["id"], {})
+
     async_register_command(hass, handle_connect)
     async_register_command(hass, handle_log)
     async_register_command(hass, handle_get_foundries)
     async_register_command(hass, handle_set_foundry)
     async_register_command(hass, handle_delete_foundry)
+    async_register_command(hass, handle_add_foundry_file)
+    async_register_command(hass, handle_remove_foundry_file)
+    async_register_command(hass, handle_reload_foundry_files)

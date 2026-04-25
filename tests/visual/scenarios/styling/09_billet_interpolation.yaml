@@ -1,0 +1,48 @@
+id: billet_interpolation
+description: "UIX billet {}-interpolation resolves string and list references between billets"
+view_path: billet-interpolation
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Billet Interpolation Test"
+  entities:
+    - light.bed_light
+  uix:
+    billets:
+      # Simple string billet
+      room: "bed"
+      # String billet that interpolates another billet via {room}
+      entity_id: "light.{room}_light"
+      # List billet
+      colors:
+        - "rgb(0, 100, 200)"
+        - "rgb(200, 50, 0)"
+      # String billet interpolating a list element via {colors[0]}
+      chosen_color: "{colors[0]}"
+    style: |
+      ha-card {
+        background: {{ chosen_color }} !important;
+      }
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-node"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 100, 200)"
+
+  - type: snapshot
+    name: "16_billet_interpolation"
+    threshold: 0.02

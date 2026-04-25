@@ -158,6 +158,92 @@ delete_foundry
           - type: delete_foundry
             name: my-tile-foundry
 
+add_foundry_file
+    Register a foundry YAML file with UIX via the ``uix/add_foundry_file``
+    WebSocket API.  The file must already exist in the HA config directory.
+    Use in ``setup:`` so that file-based foundries are available before the
+    page loads.  Pair with ``remove_foundry_file`` in ``teardown:`` to
+    deregister the file afterwards.  Requires the ``ha`` container.
+
+    The YAML file must have a top-level ``uix_foundries`` key that is a
+    mapping of foundry names to their configurations.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: add_foundry_file
+            file_path: uix_test_foundries.yaml
+
+remove_foundry_file
+    Deregister a foundry YAML file from UIX via the
+    ``uix/remove_foundry_file`` WebSocket API.  The file itself is not
+    deleted.  Use in ``teardown:`` to clean up a file path added by
+    ``add_foundry_file``.  Requires the ``ha`` container.
+
+    .. code-block:: yaml
+
+        teardown:
+          - type: remove_foundry_file
+            file_path: uix_test_foundries.yaml
+
+reload_foundry_files
+    Trigger a re-read of all registered foundry files via the
+    ``uix/reload_foundry_files`` WebSocket API.  Fires the
+    foundries-updated event so all connected clients receive the latest
+    file contents.  Useful when file content changes between setup steps.
+    Requires the ``ha`` container.
+
+    .. code-block:: yaml
+
+        setup:
+          - type: reload_foundry_files
+
+dispatch_window_event
+    Dispatch a ``CustomEvent`` on ``window`` from inside the browser.
+    Useful for simulating browser-level events such as ``config-refresh``
+    (fired by the HA YAML-mode dashboard refresh button).  ``settle_ms``
+    (default 1000) is the number of milliseconds to wait after dispatching
+    so that any async reactions (e.g. a ``fetchFoundries`` round-trip) can
+    complete before the next interaction or assertion runs.
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: dispatch_window_event
+            event: config-refresh
+            settle_ms: 1000
+
+write_config_file
+    Write (or overwrite) a file inside the HA config directory.  The file
+    is written directly into the running container so that subsequent
+    ``dispatch_window_event: config-refresh`` interactions (or any other
+    reload trigger) cause UIX to read the new contents.  Useful for
+    testing that foundry files are genuinely re-read from disk rather than
+    served from a cache.
+
+    ``path`` is a path relative to the HA config root (``/config/``).
+    ``content`` is the UTF-8 text to write.
+
+    In **Docker mode** (default CI and ``make ha_up``) the file is written
+    into the running container via the Docker ``put_archive`` API.  In
+    **external mode** (``HA_URL``/``HA_TOKEN`` env vars) the
+    ``HA_CONFIG_DIR`` env var must point to the config directory on the
+    host.
+
+    .. code-block:: yaml
+
+        interactions:
+          - type: write_config_file
+            path: uix_test_foundries.yaml
+            content: |
+              uix_foundries:
+                my-foundry:
+                  forge:
+                    mold: card
+                  element:
+                    type: tile
+                    entity: "light.bed_light"
+
 wait
     Wait for a fixed number of milliseconds (default 500):
 
@@ -464,6 +550,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
+import tarfile
 from pathlib import Path
 from typing import Any
 
@@ -844,17 +931,21 @@ def run_interactions(
     running assertions and snapshots.
 
     Pass the HA container as *ha* when any ``ha_service``, ``add_foundry``,
-    or ``delete_foundry`` interactions are present in the scenario.
+    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``,
+    ``reload_foundry_files``, or ``write_config_file`` interactions are present
+    in the scenario.
 
     *key* selects which list to execute.  Use ``"setup"`` for interactions that
-    should run **before** page navigation (e.g. ``ha_service`` and
-    ``add_foundry`` calls that create entities or foundries so they exist when
-    the page first loads); use the default ``"interactions"`` for actions taken
-    after navigation; use ``"teardown"`` for cleanup steps (e.g.
-    ``delete_foundry``) that must run after assertions even when the test fails.
-    Only ``ha_service``, ``device_registry_update``, ``add_foundry``,
-    ``delete_foundry``, and ``wait`` interaction types are meaningful in
-    ``setup`` and ``teardown`` blocks.
+    should run **before** page navigation (e.g. ``ha_service``,
+    ``add_foundry``, and ``add_foundry_file`` calls that create entities or
+    foundries so they exist when the page first loads); use the default
+    ``"interactions"`` for actions taken after navigation; use ``"teardown"``
+    for cleanup steps (e.g. ``delete_foundry``, ``remove_foundry_file``,
+    ``write_config_file``) that must run after assertions even when the test
+    fails.  Only ``ha_service``, ``device_registry_update``, ``add_foundry``,
+    ``delete_foundry``, ``add_foundry_file``, ``remove_foundry_file``,
+    ``reload_foundry_files``, ``write_config_file``, and ``wait`` interaction
+    types are meaningful in ``setup`` and ``teardown`` blocks.
     """
     __tracebackhide__ = True
     for interaction in scenario.get(key, []):
@@ -893,6 +984,42 @@ def run_interactions(
                     "pass ha= to run_interactions()"
                 )
             _delete_foundry(ha, interaction)
+        elif itype == "add_foundry_file":
+            if ha is None:
+                raise ValueError(
+                    "add_foundry_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _add_foundry_file(ha, interaction)
+        elif itype == "remove_foundry_file":
+            if ha is None:
+                raise ValueError(
+                    "remove_foundry_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _remove_foundry_file(ha, interaction)
+        elif itype == "reload_foundry_files":
+            if ha is None:
+                raise ValueError(
+                    "reload_foundry_files interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _reload_foundry_files(ha)
+        elif itype == "dispatch_window_event":
+            event = interaction["event"]
+            settle_ms = interaction.get("settle_ms", 1000)
+            page.evaluate(
+                "([event]) => window.dispatchEvent(new CustomEvent(event, {bubbles: true}))",
+                [event],
+            )
+            page.wait_for_timeout(settle_ms)
+        elif itype == "write_config_file":
+            if ha is None:
+                raise ValueError(
+                    "write_config_file interaction requires the ha container — "
+                    "pass ha= to run_interactions()"
+                )
+            _write_config_file(ha, interaction)
         elif itype == "wait":
             page.wait_for_timeout(interaction.get("ms", 500))
         else:
@@ -1080,6 +1207,112 @@ def _delete_foundry(ha: HATestContainer, interaction: dict[str, Any]) -> None:
         raise RuntimeError(
             f"uix/delete_foundry failed for {name!r}: {result}"
         )
+
+
+def _add_foundry_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Register a foundry YAML file via the WebSocket API (``uix/add_foundry_file``).
+
+    The file must already exist in the HA config directory.  Use in ``setup:``
+    to make file-based foundries available before the page loads.  Pair with
+    ``remove_foundry_file`` in ``teardown:`` to deregister it afterwards.
+    """
+    __tracebackhide__ = True
+    file_path: str = interaction["file_path"]
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/add_foundry_file",
+            "file_path": file_path,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/add_foundry_file failed for {file_path!r}: {result}"
+        )
+
+
+def _remove_foundry_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Deregister a foundry YAML file via the WebSocket API (``uix/remove_foundry_file``).
+
+    Removes the file path from the UIX config entry so it is no longer loaded.
+    The file itself is not deleted.  Use in ``teardown:`` to clean up after an
+    ``add_foundry_file`` setup step.
+    """
+    __tracebackhide__ = True
+    file_path: str = interaction["file_path"]
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/remove_foundry_file",
+            "file_path": file_path,
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/remove_foundry_file failed for {file_path!r}: {result}"
+        )
+
+
+def _reload_foundry_files(ha: HATestContainer) -> None:
+    """Trigger a re-read of all registered foundry files via the WebSocket API
+    (``uix/reload_foundry_files``).
+
+    Fires the foundries-updated event on the server so all connected clients
+    receive the latest file contents.  Useful when file content has changed
+    between setup steps and you want those changes to propagate before the
+    page loads.
+    """
+    __tracebackhide__ = True
+    result = ha._ws_call(
+        {
+            "id": 1,
+            "type": "uix/reload_foundry_files",
+        }
+    )
+    if not result.get("success"):
+        raise RuntimeError(
+            f"uix/reload_foundry_files failed: {result}"
+        )
+
+
+def _write_config_file(ha: HATestContainer, interaction: dict[str, Any]) -> None:
+    """Write (or overwrite) a file inside the HA config directory.
+
+    In Docker mode the file is written directly into the running container via
+    the Docker SDK ``put_archive`` API, so changes are immediately visible
+    inside the container without restarting it.
+
+    In external mode (``_ExternalHA``) the ``HA_CONFIG_DIR`` environment
+    variable must point to the config directory on the host.
+    """
+    __tracebackhide__ = True
+    path: str = interaction["path"]
+    content: str = interaction["content"]
+    data = content.encode("utf-8")
+
+    if hasattr(ha, "get_wrapped_container"):
+        # Docker mode — write directly into /config/ via Docker API
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w") as tar:
+            info = tarfile.TarInfo(name=path)
+            info.size = len(data)
+            info.mode = 0o644
+            tar.addfile(info, io.BytesIO(data))
+        buf.seek(0)
+        ha.get_wrapped_container().put_archive("/config/", buf.getvalue())
+    else:
+        # External mode — write to the host config dir
+        config_dir = os.environ.get("HA_CONFIG_DIR")
+        if not config_dir:
+            raise RuntimeError(
+                "write_config_file requires either a Docker container (HATestContainer) "
+                "or the HA_CONFIG_DIR environment variable set to the host path of the "
+                "HA config directory (e.g. export HA_CONFIG_DIR=/path/to/ha-config). "
+                "When using 'make ha_up' / ha_server.py, HA_CONFIG_DIR is exported automatically."
+            )
+        dest = Path(config_dir) / path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
 
 
 # ---------------------------------------------------------------------------

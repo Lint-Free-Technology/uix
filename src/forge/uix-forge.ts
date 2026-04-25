@@ -180,6 +180,10 @@ export class UixForge extends LitElement {
     if (resolvedForge.billets && typeof resolvedForge.billets !== "object") {
       throw new Error("uix-forge: forge billets must be an object");
     }
+    if (resolvedForge.billets) {
+      // Validate billets eagerly and synchronously — throws from setConfig so HA shows the error card
+      buildBillets(resolvedForge.billets, undefined, true);
+    }
     if (resolvedForge.template_nesting && typeof resolvedForge.template_nesting !== "string") {
       throw new Error("uix-forge: forge template_nesting must be a string");
     }
