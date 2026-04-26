@@ -13,8 +13,12 @@ export class UixForgeMoldFooter extends UixForgeMoldBase {
     if (parentCard && !this.forge.hidden) {
       parentCard.style.display = "contents";
       const parentCardSection: HTMLElement | null = parentCard.closest(".card");
-      if (parentCardSection) {
-        parentCardSection.style.display = "contents";
+      if (parentCardSection){ 
+        if (!this.forge.preview) {
+          parentCardSection.style.display = "contents";
+        } else {
+          parentCardSection.style.display = "";
+        }
       }
     }
   }

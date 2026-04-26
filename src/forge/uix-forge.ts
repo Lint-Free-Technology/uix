@@ -702,6 +702,9 @@ export class UixForge extends LitElement {
       if (!this.preview || this._mold.isPictureElement()) {
         this.refreshForge(["hidden"]);
       }
+      if (this.preview && this._mold.isFooter()) {
+        this.refreshForge(["hidden"]);
+      }
     }
     if (_changedProperties.has("lovelace") && this._mold.isSection()) {
       if (this.forgedElement) {
