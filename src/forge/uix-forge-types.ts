@@ -32,7 +32,8 @@ export const UIX_FORGE_FORGE_MOLDS = [
   "badge",
   "row",
   "section",
-  "picture-element"
+  "picture-element",
+  "footer",
 ];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
@@ -56,6 +57,7 @@ export interface UixForgeForge {
     sparks?: Record<string, any>[];
     uix?: UixConfig;
     delayed_hass?: boolean;
+    max_width?: string;
 }
 
 export interface UixForgeElement {

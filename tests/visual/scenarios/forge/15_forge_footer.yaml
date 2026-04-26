@@ -1,0 +1,30 @@
+id: forge_footer
+description: "UIX Forge with mold footer renders a fixed-position hui-view-footer element"
+view_path: forge-footer
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: footer
+  element:
+    type: tile
+    entity: "light.bed_light"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-view-footer"
+
+  - type: css_property
+    root: "uix-forge"
+    selector: "hui-view-footer"
+    property: position
+    expected: "fixed"

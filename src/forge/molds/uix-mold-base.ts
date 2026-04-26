@@ -22,6 +22,10 @@ export abstract class UixForgeMoldBase {
     return this.type === "section";
   }
 
+  isFooter(): boolean {
+    return this.type === "footer";
+  }
+
   isCard(): boolean {
       return this.type === "card";
     }

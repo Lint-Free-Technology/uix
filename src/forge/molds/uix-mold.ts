@@ -4,6 +4,7 @@ import { UixForgeMoldCard } from "./uix-mold-card";
 import { UixForgeMoldRow } from "./uix-mold-row";
 import { UixForgeMoldSection } from "./uix-mold-section";
 import { UixForgeMoldPictureElement } from "./uix-mold-picture-element";
+import { UixForgeMoldFooter } from "./uix-mold-foooter";
 
 export type UixForgeMold = UixForgeMoldBase;
 
@@ -12,5 +13,6 @@ export const UIX_FORGE_MOLD_CLASSES: Record<string, any> = {
   "card": UixForgeMoldCard,
   "row": UixForgeMoldRow,
   "section": UixForgeMoldSection,
-  "picture-element": UixForgeMoldPictureElement
+  "picture-element": UixForgeMoldPictureElement,
+  "footer": UixForgeMoldFooter,
 };

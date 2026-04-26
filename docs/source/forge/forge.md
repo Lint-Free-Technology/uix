@@ -29,7 +29,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"` or `"section"`. |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"` or `"footer"`. |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -450,4 +450,54 @@ background: # background for section
 When editing the dashboard in UI mode, the section will be surrounded by red dashed border to show that it is configured by UIX Forge in YAML. All cards contained in the section will show in preview mode, but will not be editable. Use YAML for editing the section.
 
 !!! warning
-    Visibility in the main config is not supported. Though the Home Assistant visual editor will let you set visibility you will get an error as soon as you save the section. If you need Frontend visibility options not supported by template (screen) use a stack card as your element and set Frontend visibility on that element, templates supported.
+    Visibility in the main config is not supported for `mold: section`. Though the Home Assistant visual editor will let you set visibility you will get an error as soon as you save the section. If you need Frontend visibility options not supported by template (e.g. screen) use a stack card as your element and set Frontend visibility on that element, templates supported.
+
+## Footer
+
+Use `mold: footer` to overlay a fixed-position card at the bottom of the viewport. The forged element appears pinned at the bottom of the screen regardless of where the `custom:uix-forge` card is placed in the dashboard. The forge element itself renders as `display: contents`, so it does not take up space in the grid.
+
+You can use `mold: footer` on sections, masonry and panel dashboards. On a sections dashboard using in place of standard Home Assistant footer gives you added visibility flexibility by using a template for `hidden`.
+
+When editing the dashboard in UI mode, the footer is surrounded by a red dashed border to indicate it is configured by UIX Forge in YAML.
+
+!!! note
+    The footer element `<hui-view-footer>` is given the CSS position `fixed` rather than the standard `sticky` of a section footer. This is required as `sticky` is only relative to parent element, so the forged footer can only 'break out' to be a footer using `fixed` position. This will give a lightly different appearance in that the footer will be centered to the window and not just the dashboard area. Use asymmetrical padding via `--uix-forge-footer-padding` to adjust if required.
+
+The following forge config key controls the maximum width of the footer:
+
+| Key | Type | Allows Templates | Default | Description |
+| --- | ---- | ---------------- | ------- | ----------- |
+| `max_width` | string | | `600` | Maximum width of the footer in pixels. |
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: footer
+  max_width: 400
+element:
+  type: tile
+  entity: light.bed_light
+```
+
+The following CSS variables can be set on the forge element or any ancestor to customise the footer appearance:
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `--uix-forge-footer-border-width` | `1px` | Border width of the forged card within the footer. |
+| `--uix-forge-footer-bottom` | `var(--ha-space-2)` | Distance from the bottom of the viewport. |
+| `--uix-forge-footer-padding` | `0 var(--ha-space-2)` | Padding applied to the footer container. |
+
+### Visibility
+
+Use `forge.hidden` (templates supported) to show or hide the footer:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: footer
+  hidden: "{{ is_state('input_boolean.show_footer', 'off') }}"
+element:
+  type: tile
+  entity: light.bed_light
+```
+
