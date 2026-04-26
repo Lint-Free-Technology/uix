@@ -467,9 +467,9 @@ element:
 
 The following forge config key controls the maximum width of the footer:
 
-| Key | Default | Description |
-| --- | ------- | ----------- |
-| `max_width` | `600` | Maximum width of the footer in pixels. |
+| Key | Type | Allows Templates | Default | Description |
+| --- | ---- | ---------------- | ------- | ----------- |
+| `max_width` | string | | `600` | Maximum width of the footer in pixels. |
 
 The following CSS variables can be set on the forge element or any ancestor to customise the footer appearance:
 
