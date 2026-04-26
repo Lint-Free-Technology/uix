@@ -1,3 +1,9 @@
+## [7.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.1...v7.0.0-beta.2) (2026-04-26)
+
+### 🐞 Bug Fixes
+
+* **forge-footer:** Fix display in UI edit mode by removing `display: contents` when in edit mode. ([9e5e5b7](https://github.com/Lint-Free-Technology/uix/commit/9e5e5b7639675bc6cbb12d7c24aac0eb5a0d591a))
+
 ## [7.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0...v7.0.0-beta.1) (2026-04-26)
 
 ### ⭐ New Features
