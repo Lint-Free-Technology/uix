@@ -1,3 +1,9 @@
+## [7.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0...v7.0.0-beta.1) (2026-04-26)
+
+### ⭐ New Features
+
+* **major:** Footer mold for UIX Forge. Use a footer in section, masonry and panel dashboards. ([#277](https://github.com/Lint-Free-Technology/uix/issues/277)) ([6992aaf](https://github.com/Lint-Free-Technology/uix/commit/6992aafe22bde1e28be83ce148ea8c6255805cb4))
+
 ## [6.4.0](https://github.com/Lint-Free-Technology/uix/compare/v6.3.0...v6.4.0) (2026-04-25)
 
 ### ⭐ New Features
