@@ -454,6 +454,9 @@ When editing the dashboard in UI mode, the section will be surrounded by red das
 
 ## Footer
 
+!!! info
+    Footer mold available in v7.0.0-beta.1
+
 Use `mold: footer` to overlay a fixed-position card at the bottom of the viewport. The forged element appears pinned at the bottom of the screen regardless of where the `custom:uix-forge` card is placed in the dashboard. The forge element itself renders as `display: contents`, so it does not take up space in the grid.
 
 You can use `mold: footer` on sections, masonry and panel dashboards. On a sections dashboard using in place of standard Home Assistant footer gives you added visibility flexibility by using a template for `hidden`.
