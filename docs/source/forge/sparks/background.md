@@ -17,7 +17,7 @@ Supported background sources (first non-empty value wins):
 | Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
 
 !!! tip
-    Background spark may be above any background that may be applied by standard Home Assistant or custom element configuration. e.g. If you use standard Home Assistant section background you will get a background with padding behind the background spark. This may be convenient if you wish to have a background color behind a camera / video. In this case you would set the background spark `opacity` to let the standard section background color to show through.
+    When the background spark targets a `hui-section` (i.e. `mold: section`), UIX automatically zeros out the `div.section-container` padding so there is no double-padding effect if a standard HA section background is also active. You can still use a standard HA section background to add a colour behind the spark background — set the spark `opacity` to less than 1 to let it show through.
 
 ---
 
@@ -133,6 +133,7 @@ When `for` resolves to a `hui-section` element — which happens automatically w
 - Sets `border-radius: var(--ha-section-border-radius, var(--ha-border-radius-xl))` on the background container so it follows the section's rounded corners.
 - Sets `padding: var(--ha-space-2)` on the `hui-grid-section` child element (light DOM of `hui-section`) to inset the cards from the section edges, matching the same padding given if you use Frontend color background settings.  The previous padding is restored when the spark disconnects.
 - Applies `--ha-card-background: none` to the section element itself so that all cards within the section inherit a transparent card background, allowing the section background to show through.
+- Sets `padding: 0` on the nearest `div.section-container` ancestor (HA's own section wrapper element) to neutralise any padding it carries, preventing a double-padding effect when a HA section background is also active.  The previous padding is restored when the spark disconnects.
 
 ```yaml
 type: custom:uix-forge
@@ -377,7 +378,7 @@ element:
 
 ### Section background
 
-Here the standard section background is used to give a stronger light-blue background to the video. UIX Styling is used to remove the padding that the standard section background gets.
+Here the standard section background is used to give a stronger light-blue background to the video. The hui-section adapter automatically zeros out the `section-container` padding so there is no double-padding effect.
 
 ```yaml
 type: custom:uix-forge

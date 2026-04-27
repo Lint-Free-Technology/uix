@@ -116,13 +116,52 @@ class HaCardBackgroundAdapter implements BackgroundTargetAdapter {
  *  - `--ha-card-background: none` is applied to the section element itself
  *    so that all cards within the section inherit a transparent card background,
  *    allowing the section background to show through.
+ *  - `padding: 0` is applied to the nearest `div.section-container` ancestor
+ *    (HA's own section wrapper element) to neutralise any padding it may carry,
+ *    preventing a double-padding effect when a HA section background is also
+ *    active.  The previous padding value is saved and restored in `cleanup()`.
  */
 class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
   private static readonly CARD_BG_PROP = "--ha-card-background";
   private static readonly GRID_SECTION_TAG = "hui-grid-section";
   private static readonly PADDING_VALUE = "var(--ha-space-2)";
+  private static readonly SECTION_CONTAINER_SELECTOR = "div.section-container";
 
   private _savedGridPadding: string | null = null;
+  private _sectionContainer: HTMLElement | null = null;
+  private _savedSectionContainerPadding: string | null = null;
+
+  /** Find (or reuse) the nearest .section-container and zero its padding. */
+  private _applyToSectionContainer(forEl: HTMLElement): void {
+    if (this._sectionContainer) {
+      // Already have a reference — just ensure padding is still zeroed.
+      if (this._sectionContainer.style.getPropertyValue("padding") !== "0") {
+        this._sectionContainer.style.setProperty("padding", "0");
+      }
+      return;
+    }
+    const sectionContainer = forEl.closest<HTMLElement>(
+      HuiSectionBackgroundAdapter.SECTION_CONTAINER_SELECTOR
+    );
+    if (sectionContainer) {
+      this._sectionContainer = sectionContainer;
+      this._savedSectionContainerPadding = sectionContainer.style.getPropertyValue("padding");
+      sectionContainer.style.setProperty("padding", "0");
+    }
+  }
+
+  /** Restore a saved inline style property, removing it if the saved value was empty. */
+  private static _restoreProperty(
+    element: HTMLElement,
+    property: string,
+    savedValue: string
+  ): void {
+    if (savedValue) {
+      element.style.setProperty(property, savedValue);
+    } else {
+      element.style.removeProperty(property);
+    }
+  }
 
   applyStyles(container: HTMLElement): void {
     container.style.setProperty(
@@ -149,6 +188,11 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
       this._savedGridPadding = gridSection.style.getPropertyValue("padding");
       gridSection.style.setProperty("padding", HuiSectionBackgroundAdapter.PADDING_VALUE);
     }
+
+    // Zero out the padding on the nearest .section-container ancestor (HA's own
+    // section wrapper).  When a HA section background is also active it applies
+    // its own padding via this element; zeroing it prevents double padding.
+    this._applyToSectionContainer(forEl);
   }
 
   cleanup(forEl: HTMLElement): void {
@@ -156,12 +200,17 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
       HuiSectionBackgroundAdapter.GRID_SECTION_TAG
     );
     if (gridSection && this._savedGridPadding !== null) {
-      if (this._savedGridPadding) {
-        gridSection.style.setProperty("padding", this._savedGridPadding);
-      } else {
-        gridSection.style.removeProperty("padding");
-      }
+      HuiSectionBackgroundAdapter._restoreProperty(gridSection, "padding", this._savedGridPadding);
       this._savedGridPadding = null;
+    }
+
+    // Restore section-container padding.
+    if (this._sectionContainer && this._savedSectionContainerPadding !== null) {
+      HuiSectionBackgroundAdapter._restoreProperty(
+        this._sectionContainer, "padding", this._savedSectionContainerPadding
+      );
+      this._savedSectionContainerPadding = null;
+      this._sectionContainer = null;
     }
   }
 
@@ -180,5 +229,10 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
       }
       gridSection.style.setProperty("padding", HuiSectionBackgroundAdapter.PADDING_VALUE);
     }
+
+    // Re-apply padding:0 to the section-container if it was reset (e.g. by HA
+    // re-rendering the sections layout).  Also handles the case where
+    // applyForElStyles ran before section-container was available.
+    this._applyToSectionContainer(forEl);
   }
 }
