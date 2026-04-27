@@ -7,7 +7,7 @@ const UIX_RESULTS_ID = "uix-foundries-results";
 const ERROR_LABELS: Record<string, string> = {
   file_not_found: "The file was not found. Check the path and try again.",
   file_parse_error:
-    "The file could not be parsed as YAML. Check the file for syntax errors.",
+    "The file could not be parsed as YAML. Check the file for syntax errors. See Home Assistant log for YAML parser error details.",
   file_invalid_structure: "The file must be a YAML mapping.",
   file_missing_key: "The file must have a top-level 'uix_foundries' key.",
   file_invalid_foundries:
