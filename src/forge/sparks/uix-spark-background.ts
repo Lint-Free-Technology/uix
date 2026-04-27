@@ -490,6 +490,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         // Re-apply background CSS so template-driven values (e.g. colour
         // expressions) update immediately when resolved config changes.
         this._applyBackgroundStyles(this._bgFillEl);
+      } else if ((bgType === "image_entity" || bgType === "image_url") && this._bgFillEl) {
+        // Re-apply any background sub-property overrides (position, size, etc.)
+        // so template-driven values update immediately on state change.
+        this._applyBackgroundOverrides(this._bgFillEl);
       }
     }
   }
@@ -790,6 +794,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       "background-position:center",
       "background-repeat:no-repeat",
     ].join(";");
+    this._bgFillEl = imgEl;
+    this._applyBackgroundOverrides(imgEl);
     container.appendChild(imgEl);
 
     const spinner = this._addSpinner(container);
@@ -849,6 +855,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       "background-position:center",
       "background-repeat:no-repeat",
     ].join(";");
+    this._bgFillEl = imgEl;
+    this._applyBackgroundOverrides(imgEl);
     container.appendChild(imgEl);
 
     const spinner = this._addSpinner(container);
@@ -876,6 +884,29 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       for (const [key, value] of Object.entries(this._background)) {
         const cssProp = BACKGROUND_SUB_PROPS[key] ?? `background-${key.replace(/_/g, "-")}`;
         fillEl.style.setProperty(cssProp, value);
+      }
+    }
+  }
+
+  /**
+   * Apply `_background` object sub-properties (e.g. position, size, repeat)
+   * as CSS overrides on top of an existing element style, without resetting
+   * the element's `cssText`.  Used for `image_entity` and `image_url` sources
+   * so the `background-image` URL is preserved while the user can still
+   * control positioning/sizing via the `background:` config key.
+   *
+   * When `_background` is a plain string it is set as the `background`
+   * shorthand (which replaces `background-image`), matching the same
+   * semantics as the fill-div case.
+   */
+  private _applyBackgroundOverrides(el: HTMLElement): void {
+    if (!this._background) return;
+    if (typeof this._background === "string") {
+      el.style.background = this._background;
+    } else {
+      for (const [key, value] of Object.entries(this._background)) {
+        const cssProp = BACKGROUND_SUB_PROPS[key] ?? `background-${key.replace(/_/g, "-")}`;
+        el.style.setProperty(cssProp, value);
       }
     }
   }

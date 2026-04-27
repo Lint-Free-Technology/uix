@@ -58,7 +58,7 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `image_entity` | string | — | Entity ID whose `entity_picture` attribute provides the background image. |
 | `video_url` | string | — | URL of a video to autoplay muted as the background. Accepts `media-source://` URIs (see [Media source URIs](#media-source-uris)). |
 | `image_url` | string | — | URL of a static background image. Accepts `media-source://` URIs (see [Media source URIs](#media-source-uris)). |
-| `background` | string or object | — | CSS `background` shorthand string, or a mapping of sub-properties (see below). |
+| `background` | string or object | — | CSS `background` shorthand string, or a mapping of sub-properties (see below). When used alongside `image_entity` or `image_url`, object sub-properties (e.g. `position`, `size`) are applied as overrides on top of the image — this lets you control how the image is positioned or sized. A plain string value replaces the entire `background` shorthand (including `background-image`). |
 | `opacity` | number | — | CSS `opacity` applied to the background container (0–1). Use this to dim the background without affecting the foreground element. |
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
@@ -263,6 +263,30 @@ element:
 ```
 
 ![Background spark image url](../../assets/page-assets/forge/sparks/background-image.png)
+
+#### Controlling image position and size
+
+The `background` key can be combined with `image_url` (or `image_entity`) to override how the image is rendered. Use an object with sub-properties to adjust positioning, sizing, and other CSS background properties while keeping the image intact:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
+      for: hui-tile-card $ ha-card
+      image_url: https://picsum.photos/id/582/600/600
+      background:
+        position: "top center"
+        size: contain
+        repeat: "no-repeat"
+element:
+  type: tile
+  entity: light.bed_light
+```
+
+!!! note
+    When `background` is used alongside `image_url` or `image_entity`, only **object sub-properties** (e.g. `position`, `size`) are applied as overrides on top of the image. Using a plain string value (e.g. `background: red`) will replace the entire `background` shorthand, which also removes `background-image`.
 
 ### Background using full CSS background
 
