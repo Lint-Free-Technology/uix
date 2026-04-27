@@ -174,7 +174,7 @@ forge:
       for: hui-button-card $ ha-card
       camera_entity: camera.demo_camera
       camera_zoom: 1.3
-      camera_align: "top left"
+      camera_position: top-left
 element:
   type: button
   entity: light.bed_light
@@ -223,8 +223,6 @@ forge:
       for: hui-weather-forecast-card $ ha-card
       video_url: /local/media/sydney_ferry.mp4
       opacity: 0.9
-      background:
-        - color: black
 element:
   show_current: true
   show_forecast: true
