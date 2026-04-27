@@ -107,6 +107,27 @@ def validate_foundry_file(hass: HomeAssistant, file_path: str) -> str | None:
     return None
 
 
+def check_all_foundry_files(
+    hass: HomeAssistant, file_paths: list[str]
+) -> dict:
+    """Validate all registered foundry files.
+
+    Returns a dict with:
+    - ``errors``: list of ``{file_path, error_key}`` dicts for files that
+      failed validation.
+    - ``file_count``: total number of registered files.
+
+    This function performs file I/O and must be called from an executor thread
+    (e.g. via :meth:`~homeassistant.core.HomeAssistant.async_add_executor_job`).
+    """
+    errors = []
+    for file_path in file_paths:
+        error_key = validate_foundry_file(hass, file_path)
+        if error_key is not None:
+            errors.append({"file_path": file_path, "error_key": error_key})
+    return {"errors": errors, "file_count": len(file_paths)}
+
+
 def load_foundries_from_files(hass: HomeAssistant, file_paths: list[str]) -> dict:
     """Load and merge foundries from a list of YAML files.
 
