@@ -39,6 +39,18 @@ export interface BackgroundTargetAdapter {
    * Called from `_restoreLayout` before the `savedStyles` loop.
    */
   cleanup?(forEl: HTMLElement): void;
+  /**
+   * Re-apply adapter-managed styles to descendant elements on every `_attach`
+   * cycle (not just when the target element changes).  Use this for styles
+   * applied to children that can be replaced without the parent element itself
+   * changing — e.g. `hui-grid-section` being re-created after a section edit
+   * in the UI editor while `hui-section` (the target) remains the same node.
+   *
+   * Unlike `applyForElStyles`, this method does **not** save previous values
+   * to `savedStyles`; it simply re-applies the expected values.  It is called
+   * only when the background container is already active.
+   */
+  refreshChildStyles?(forEl: HTMLElement): void;
 }
 
 /**
@@ -150,6 +162,23 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
         gridSection.style.removeProperty("padding");
       }
       this._savedGridPadding = null;
+    }
+  }
+
+  refreshChildStyles(forEl: HTMLElement): void {
+    // Re-apply the section padding whenever _attach runs, so it is restored if
+    // the hui-grid-section element is replaced (e.g. after a section edit in
+    // the UI editor) without the hui-section parent element changing.
+    const gridSection = forEl.querySelector<HTMLElement>(
+      HuiSectionBackgroundAdapter.GRID_SECTION_TAG
+    );
+    if (!gridSection) return;
+    if (gridSection.style.getPropertyValue("padding") !== HuiSectionBackgroundAdapter.PADDING_VALUE) {
+      // Update the saved value in case this is a brand-new element (no prior padding).
+      if (this._savedGridPadding === null) {
+        this._savedGridPadding = gridSection.style.getPropertyValue("padding");
+      }
+      gridSection.style.setProperty("padding", HuiSectionBackgroundAdapter.PADDING_VALUE);
     }
   }
 }

@@ -468,6 +468,11 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     if (!this._containerEl) {
       if (bgType === "none") return;
       await this._buildContainer(forEl, bgType, bgKey, generation);
+      if (generation !== this._callGeneration) return;
+      // After initial build, refresh adapter child styles (e.g. hui-grid-section
+      // padding for the section adapter — needed when the element was created
+      // asynchronously and applyForElStyles ran before it was available).
+      this._targetAdapter?.refreshChildStyles?.(forEl);
     } else {
       // Container already exists — update camera state, transform, and opacity.
       this._containerEl.style.opacity = this._opacity !== "" ? this._opacity : "";
@@ -495,6 +500,9 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         // so template-driven values update immediately on state change.
         this._applyBackgroundOverrides(this._bgFillEl);
       }
+      // Re-apply adapter child styles so descendant elements replaced by a
+      // section/config edit (e.g. hui-grid-section) get their styles restored.
+      this._targetAdapter?.refreshChildStyles?.(forEl);
     }
   }
 

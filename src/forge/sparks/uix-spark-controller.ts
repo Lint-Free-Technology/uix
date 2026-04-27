@@ -115,13 +115,14 @@ export class UixForgeSparkController {
 
   async target(selector: string, cancelCallbacks: Array<() => void>): Promise<HTMLElement[] | void> {
     if (selector == "element") {
-      const element = this.forgedElement();
-      if (element) {
-        return [element];
-      } else {
-        console.info(`UIX Forge: spark: No element found for 'element' selector.`);
-        return;
-      }
+      return this._targetElement(cancelCallbacks).catch((e) => {
+        if (e.message === "NoElements") {
+          console.info(`UIX Forge: spark: No element found for 'element' selector.`);
+          return;
+        }
+        if (e.message === "Cancelled") return;
+        throw e;
+      });
     }
     return this._target(selector, cancelCallbacks).catch((e) => {
       if (e.message === "NoElements") {
@@ -133,6 +134,18 @@ export class UixForgeSparkController {
       }
       throw e;
     });
+  }
+
+  async _targetElement(cancelCallbacks: Array<() => void>, retries = 0): Promise<HTMLElement[]> {
+    const element = this.forgedElement();
+    if (element) return [element];
+    if (retries > 5) throw new Error("NoElements");
+    const timeout = new Promise((resolve, reject) => {
+      setTimeout(resolve, (retries + 1) * 100);
+      cancelCallbacks.push(reject);
+    });
+    await timeout.catch(() => { throw new Error("Cancelled"); });
+    return this._targetElement(cancelCallbacks, retries + 1);
   }
 
   async _target(selector: string, cancelCallbacks: Array<() => void>, retries = 0): Promise<HTMLElement[]> {
