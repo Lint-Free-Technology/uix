@@ -1345,6 +1345,7 @@ def run_assertions(page: Page, scenario: dict[str, Any]) -> None:
             "element_present",
             "element_absent",
             "css_property",
+            "css_property_not_equals",
             "css_variable",
             "text_equals",
             "text_startswith",
@@ -1524,6 +1525,21 @@ def _run_dom_assertion(page: Page, assertion: dict[str, Any], atype: str) -> Non
         assert result["value"] == expected, (
             f"CSS variable {prop!r} on <{selector}>:"
             f" expected {expected!r}, got {result['value']!r}"
+        )
+
+    elif atype == "css_property_not_equals":
+        prop = assertion["property"]
+        unexpected = assertion["unexpected"]
+        result = page.evaluate(
+            f"() => {{ {root_js} if (_err) return {{error: _err}};"
+            f" var el = currentRoot.querySelector({selector!r});"
+            f" if (!el) return {{error: 'selector {selector} not found'}};"
+            f" return {{value: getComputedStyle(el).{prop}}}; }}"
+        )
+        _check_traversal(result, assertion)
+        assert result["value"] != unexpected, (
+            f"CSS property {prop!r} on <{selector}>:"
+            f" expected a value other than {unexpected!r}"
         )
 
     elif atype == "text_equals":

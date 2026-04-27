@@ -24,7 +24,7 @@ card:
       uix:
         style: |
           :host {
-            --uix-image: /local/media/person-grey.png;
+            --uix-image: /local/media/daniel_craig_cropped.jpg;
           }
           div.marker {
             border-color: red !important;
