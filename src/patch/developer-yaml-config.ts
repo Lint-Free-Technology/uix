@@ -1,7 +1,8 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement } from "../helpers/apply_uix";
 
-const UIX_SECTION_ID = "uix-developer-tools-section";
+const UIX_RELOAD_BTN_ID = "uix-reload-foundries-btn";
+const UIX_RESULTS_ID = "uix-foundries-results";
 
 const ERROR_LABELS: Record<string, string> = {
   file_not_found: "The file was not found. Check the path and try again.",
@@ -19,63 +20,72 @@ class DeveloperYamlConfigPatch extends ModdedElement {
 
   updated(_orig, changedProperties) {
     _orig?.(changedProperties);
-    this._uixEnsureSection();
+    this._uixEnsureInjected();
   }
 
   async _validateConfig(_orig) {
     await _orig?.();
+    // Wait for HA's re-render (and our updated() hook) to settle before
+    // populating results inside the first card's card-content.
+    await this.updateComplete;
     await this._uixCheckFoundries();
   }
 
-  _uixEnsureSection(): void {
+  _uixEnsureInjected(): void {
     if (!this.shadowRoot) return;
-    if (this.shadowRoot.querySelector(`#${UIX_SECTION_ID}`)) return;
 
-    // NOTE: The `.content` selector is tied to developer-yaml-config's internal
-    // DOM structure. If HA ever renames this class, the injection won't happen.
-    const content = this.shadowRoot.querySelector(".content");
-    if (!content) return;
+    // NOTE: ha-card order and .card-content are tied to developer-yaml-config's
+    // internal DOM structure. If HA changes this, the injection won't happen.
+    const cards = this.shadowRoot.querySelectorAll("ha-card");
+    if (cards.length < 2) return;
 
-    const card = document.createElement("ha-card");
-    card.setAttribute("outlined", "");
-    card.setAttribute("header", "UIX Foundry Files");
-    card.id = UIX_SECTION_ID;
-    (card as HTMLElement).style.marginTop = "var(--ha-space-6)";
+    const firstCard = cards[0];
+    const secondCard = cards[1];
 
-    const validationDiv = document.createElement("div");
-    validationDiv.className = "card-content";
-    validationDiv.id = `${UIX_SECTION_ID}-results`;
-    card.appendChild(validationDiv);
-
-    const actionsDiv = document.createElement("div");
-    actionsDiv.className = "card-actions";
-    actionsDiv.style.cssText =
-      "display:flex;justify-content:space-between;padding:var(--ha-space-1)";
-
-    const reloadBtn = document.createElement("ha-button");
-    reloadBtn.setAttribute("appearance", "plain");
-    reloadBtn.textContent = "Reload UIX Foundry Files";
-    reloadBtn.addEventListener("click", async () => {
-      reloadBtn.setAttribute("disabled", "");
-      try {
-        await this.hass.connection.sendMessagePromise({
-          type: "uix/reload_foundry_files",
-        });
-      } finally {
-        reloadBtn.removeAttribute("disabled");
+    // 1. Results container appended to first card's .card-content (below HA's
+    //    validate result). Lit-html only patches between its own comment markers
+    //    so nodes appended after the final marker survive re-renders.
+    if (!this.shadowRoot.querySelector(`#${UIX_RESULTS_ID}`)) {
+      const cardContent = firstCard.querySelector(".card-content");
+      if (cardContent) {
+        const resultsDiv = document.createElement("div");
+        resultsDiv.id = UIX_RESULTS_ID;
+        cardContent.appendChild(resultsDiv);
       }
-    });
+    }
 
-    actionsDiv.appendChild(reloadBtn);
-    card.appendChild(actionsDiv);
+    // 2. Reload button appended to the second card (the "Reloading" card),
+    //    matching the existing ha-call-service-button card-actions pattern.
+    if (!this.shadowRoot.querySelector(`#${UIX_RELOAD_BTN_ID}`)) {
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "card-actions";
 
-    content.appendChild(card);
+      const btn = document.createElement("ha-progress-button") as any;
+      btn.id = UIX_RELOAD_BTN_ID;
+      btn.appearance = "plain";
+      btn.textContent = "Reload UIX Foundries";
+      btn.addEventListener("click", async () => {
+        btn.progress = true;
+        try {
+          await this.hass.connection.sendMessagePromise({
+            type: "uix/reload_foundry_files",
+          });
+          btn.progress = false;
+          btn.actionSuccess();
+        } catch {
+          btn.progress = false;
+          btn.actionError();
+        }
+      });
+
+      actionsDiv.appendChild(btn);
+      secondCard.appendChild(actionsDiv);
+    }
   }
 
   async _uixCheckFoundries(): Promise<void> {
-    const resultsDiv = this.shadowRoot?.querySelector(
-      `#${UIX_SECTION_ID}-results`
-    );
+    this._uixEnsureInjected();
+    const resultsDiv = this.shadowRoot?.querySelector(`#${UIX_RESULTS_ID}`);
     if (!resultsDiv) return;
 
     resultsDiv.innerHTML = "";
@@ -94,11 +104,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
       resultsDiv.innerHTML = "";
 
       if (fileCount === 0) {
-        const msg = document.createElement("div");
-        msg.style.cssText = "margin:1em 0;text-align:center";
-        msg.textContent =
-          "No UIX foundry files are registered. Register files in Settings → Devices & Services → UI eXtension.";
-        resultsDiv.appendChild(msg);
+        // No foundry files registered — no need to add noise inline.
         return;
       }
 
@@ -128,7 +134,8 @@ class DeveloperYamlConfigPatch extends ModdedElement {
       resultsDiv.innerHTML = "";
       const alert = document.createElement("ha-alert");
       alert.setAttribute("alert-type", "error");
-      alert.textContent = "UIX: Failed to check foundry files. See the browser console for details.";
+      alert.textContent =
+        "UIX: Failed to check foundry files. See the browser console for details.";
       resultsDiv.appendChild(alert);
     }
   }
