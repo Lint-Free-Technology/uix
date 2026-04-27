@@ -450,3 +450,94 @@ element:
 ```
 
 ![Background spark uix styling](../../assets/page-assets/forge/sparks/background-uix-styling.png)
+
+### Adding background to a dashboard header
+
+A sections dashboard header in its entirety (title and badges) cannot be forged with UIX Forge. However the markdown `card` used the in header can be replaced with a forged card. Using cards of your choice along with `custom:badge-horizontal-container-card` in a vertical stack, you can simulate a full header including badges and use the background spark to inject a background behind the 'full' header.
+
+You can replace the heading markdown card by simply using `Show code editor` after clicking the `+ Add title` button in the header area of the dashboard in edit mode.
+
+Border radius needs to be applied to the background as there is no adapter doing this automatically. Likewise, padding needs to be applied to the included vertical stack root.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: background
+      camera_entity: camera.demo_camera
+      opacity: 0.5
+      class: heading-background
+  uix:
+    style: |
+      .heading-background {
+        border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+      }
+element:
+  type: vertical-stack
+  cards:
+    - type: markdown
+      text_only: true
+      content: |-
+        # Hello {{ user }}
+        Welcome to my awesome dashboard. ✨
+    - type: custom:badge-horizontal-container-card
+      badges:
+        - type: entity
+          show_name: false
+          show_state: true
+          show_icon: true
+          entity: light.bed_light
+      badges_align: center
+  uix:
+    style: |
+      #root {
+        padding: 20px !important;
+      }
+```
+
+??? example "As full raw dashboard config"
+    Place the forged header card under `card:` within `header:`
+    ```yaml
+    views:
+      - type: sections
+        sections: []
+        header:
+          card:
+            type: custom:uix-forge
+            forge:
+              mold: card
+              sparks:
+                - type: background
+                  camera_entity: camera.demo_camera
+                  opacity: 0.5
+                  class: heading-background
+              uix:
+                style: |
+                  .heading-background {
+                    border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+                  }
+            element:
+              type: vertical-stack
+              cards:
+                - type: markdown
+                  text_only: true
+                  content: |-
+                    # Hello {{ user }}
+                    Welcome to my awesome dashboard. ✨
+                - type: custom:badge-horizontal-container-card
+                  badges:
+                    - type: entity
+                      show_name: false
+                      show_state: true
+                      show_icon: true
+                      entity: light.bed_light
+                  badges_align: center
+              uix:
+                style: |
+                  #root {
+                    padding: 20px !important;
+                  }
+    ```
+
+![Background spark dashboard header](../../assets/page-assets/forge/sparks/background-dashboard-header.png)
