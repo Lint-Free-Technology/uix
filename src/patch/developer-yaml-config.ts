@@ -54,8 +54,35 @@ class DeveloperYamlConfigPatch extends ModdedElement {
           await this.hass.connection.sendMessagePromise({
             type: "uix/reload_foundry_files",
           });
+
+          const checkResult: any =
+            await this.hass.connection.sendMessagePromise({
+              type: "uix/check_foundry_files",
+            });
+
+          const errors: Array<{ file_path: string; error_key: string }> =
+            checkResult?.errors ?? [];
+
           btn.progress = false;
-          btn.actionSuccess();
+
+          if (errors.length > 0) {
+            btn.actionError();
+            const message = errors
+              .map(
+                (e) =>
+                  `${e.file_path}: ${ERROR_LABELS[e.error_key] ?? e.error_key}`
+              )
+              .join("\n");
+            btn.dispatchEvent(
+              new CustomEvent("hass-notification", {
+                bubbles: true,
+                composed: true,
+                detail: { message: `UIX foundry errors:\n${message}` },
+              })
+            );
+          } else {
+            btn.actionSuccess();
+          }
         } catch {
           btn.progress = false;
           btn.actionError();
