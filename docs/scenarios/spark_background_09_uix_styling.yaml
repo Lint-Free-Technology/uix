@@ -1,0 +1,44 @@
+id: doc_spark_background_uix_styling
+description: "Doc image: Forge Background spark with uix styling (background.md)"
+view_path: doc-spark-background-uix-styling
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 50
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    grid_options:
+      rows: 4
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        image_url: /local/media/kitchen.jpg
+        class: my-background
+    uix:
+      style:
+        .: |
+          :host {
+            --primary-text-color: white;
+          }
+        "hui-tile-card $ ha-card $": |
+          .my-background div {
+            filter: blur(2px) brightness(0.8);
+          }
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-uix-styling.png
+  root: hui-tile-card
+  padding: 16

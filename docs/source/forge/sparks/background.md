@@ -63,6 +63,9 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `dissolve_target` | string or list | — | Make the `for` element transparent so the background shows through (see below). |
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
 
+!!! tip
+    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) browser console helper to find the exact `for` selector path to any element inside the forged element.
+
 ### `background` sub-property mapping
 
 When `background` is a mapping, each key is translated to its CSS property counterpart:
@@ -84,6 +87,8 @@ When `background` is a mapping, each key is translated to its CSS property count
 
 - **String `opacity_<0-100>`** — sets `opacity` on the `for` element (e.g. `opacity_50` for 50% opacity).
 - **List of CSS property objects** — each object's key/value pair is applied as an inline style on the `for` element. Property names may use underscores in place of hyphens.
+
+`dissolve_target` is made available for use cases where an element background is set on the target. In many cases it is not required and is not used in any example shown here.
 
 ```yaml
 # Remove the card's own background using a CSS property list
@@ -324,7 +329,7 @@ element:
       }
 ```
 
-![Background spark image url](../../assets/page-assets/forge/sparks/background-css.png)
+![Background spark css](../../assets/page-assets/forge/sparks/background-css.png)
 
 ### Image from media library
 
@@ -378,7 +383,10 @@ element:
 
 ### Section background
 
-Here the standard section background is used to give a stronger light-blue background to the video. The hui-section adapter automatically zeros out the `section-container` padding so there is no double-padding effect.
+Here the standard section background is used to give a stronger light-blue background to the video. The section (hui-section) adapter automatically zeros out the `section-container` padding so there is no double-padding effect.
+
+!!! tip
+    The YAML is for a complete section of a sections dashboard. You can edit a section's YAML directly by editing the section, the using `Edit in YAML` from the three dots menu.
 
 ```yaml
 type: custom:uix-forge
@@ -387,49 +395,57 @@ forge:
   sparks:
     - type: background
       video_url: /local/media/sydney_ferry.mp4
+      opacity: 0.7
 element:
   type: grid
   cards:
     - type: heading
-      heading: New section
+      heading: Section Heading
     - type: button
       entity: light.bed_light
     - type: button
       entity: light.kitchen_lights
-  background:
-    color: light-blue
-    opacity: 100
-    
+  uix:
+    style: |
+      :host {
+        --primary-text-color: white;
+      }
+column_span: 1
+background:
+  color: light-blue
+  opacity: 100
 ```
 
-### Styling the background container with UIX
+![Background spark section](../../assets/page-assets/forge/sparks/background-section.png)
 
-Use the `class` key to add a CSS class to the background container, then target it with a UIX style path:
+### Styling the background container with UIX Styling
+
+Use the `class` key to add a CSS class to the background container, then target the background div within the background container with a UIX style path:
 
 ```yaml
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    rows: 4
   sparks:
     - type: background
       for: hui-tile-card $ ha-card
-      image_url: /local/images/bedroom.jpg
+      image_url: /local/media/kitchen.jpg
       class: my-background
-      dissolve_target:
-        - background: "none"
   uix:
     style:
-      "hui-tile-card $ ha-card $":
-        ".my-background": |
-          div {
-            background-size: cover;
-            background-position: center top;
-            filter: blur(2px) brightness(0.7);
-          }
+      .: |
+        :host {
+          --primary-text-color: white;
+        }
+      "hui-tile-card $ ha-card $": |
+        .my-background div {
+          filter: blur(2px) brightness(0.8);
+        }
 element:
   type: tile
   entity: light.bed_light
 ```
 
-!!! tip
-    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) browser console helper to find the exact `for` selector path to any element inside the forged card.
+![Background spark uix styling](../../assets/page-assets/forge/sparks/background-uix-styling.png)

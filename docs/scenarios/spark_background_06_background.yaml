@@ -12,21 +12,21 @@ setup:
     settle_ms: 50
 
 card:
-    type: custom:uix-forge
-    forge:
-      mold: card
-      sparks:
-        - type: background
-          for: hui-tile-card $ ha-card
-          background: linear-gradient(90deg,rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%)
-    element:
-      type: tile
-      entity: light.bed_light
-      uix:
-        style: |
-          :host {
-            --primary-text-color: white;
-          }
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        background: linear-gradient(90deg,rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%)
+  element:
+    type: tile
+    entity: light.bed_light
+    uix:
+      style: |
+        :host {
+          --primary-text-color: white;
+        }
 
 assertions: []
 
