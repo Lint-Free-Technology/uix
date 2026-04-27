@@ -89,12 +89,14 @@ UIX validates the file before saving the registration. If the file cannot be fou
 
 #### Reloading files
 
-File contents are read when foundries are first requested by the browser and whenever foundries are updated. To force all connected browser sessions to reload the latest file contents without restarting HA:
+File contents are read when foundries are first requested by the browser and whenever foundries are updated. To force all connected browser sessions to reload the latest file contents without restarting Home Assistant:
 
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose **Manage foundry files**, then **Reload foundry files**.
 
 If your dashboard is in **YAML mode**, you can also use the dashboard's built-in **Refresh** button — UIX listens for the `config-refresh` event that the refresh button dispatches and automatically re-reads all registered foundry files.
+
+Home Assistant developer tools YAML tab also has a `UIX Foundries` reload button which will show any errors in file foundries. The global `Check configuration` also checks file foundries and reports any errors.
 
 #### Removing a file registration
 
