@@ -1,0 +1,41 @@
+id: doc_spark_background_media_source_image
+description: "Doc image: Forge Background spark with media source image (background.md)"
+view_path: doc-spark-background-media-source-image
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+    settle_ms: 50
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    grid_options:
+      columns: 12
+      rows: 3
+    sparks:
+      - type: background
+        for: hui-button-card $ ha-card
+        image_url: "media-source://media_source/local/kitchen.jpg"
+        background:
+          position: top
+  element:
+    type: button
+    entity: light.kitchen_lights
+    uix:
+      style: |
+        :host {
+          --primary-text-color: white;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-media-source-image.png
+  root: hui-button-card
+  padding: 16

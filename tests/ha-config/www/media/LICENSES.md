@@ -12,6 +12,12 @@
 - Source: <https://www.pexels.com/video/sydney-harbour-bridge-with-scenic-ferry-view-36907544/>
 - Changes: None
 
+## kitchen.jpg
+
+- License: <https://unsplash.com/license>
+- Source: Photo by Christian Mackie
+- Changes: None
+
 ## Lorem Piscum
 
 - License: <https://unsplash.com/license>

@@ -39,7 +39,7 @@ element:
 
 ![Background spark basic](../../assets/page-assets/forge/sparks/background-basic.png)
 
-The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` for shadow-root crossings. Use `hui-tile-card $ ha-card` to target the card surface inside a tile card — the [ha-card adapter](#ha-card-adapter) then automatically applies matching `border-radius` and `margin` so the background follows the card's rounded corners.
+The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` for shadow-root crossings. Use `hui-tile-card $ ha-card` to target the card surface inside a tile card — the [ha-card adapter](#card-ha-card-adapter) then automatically applies matching `border-radius` and `margin` so the background follows the card's rounded corners.
 
 ---
 
@@ -153,6 +153,9 @@ No `for` is needed — when `mold: section` the default `for: element` resolves 
 
 ### Live camera background
 
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the live camera background.
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -175,6 +178,9 @@ element:
 
 ### Entity picture as background
 
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the entity picture background.
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -195,6 +201,9 @@ element:
 ![Background spark entity](../../assets/page-assets/forge/sparks/background-entity.png)
 
 ### Video background
+
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the video background.
 
 ```yaml
 type: custom:uix-forge
@@ -238,6 +247,9 @@ element:
 ![Background spark video url](../../assets/page-assets/forge/sparks/background-video.png)
 
 ### Static image background
+
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the static image background.
 
 ```yaml
 type: custom:uix-forge
@@ -290,6 +302,9 @@ element:
 
 ### Background using full CSS background
 
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the full CSS background.
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -312,20 +327,28 @@ element:
 
 ### Image from media library
 
+!!! tip
+    As `for` target is `ha-card`, the `ha-card` adapter will be used applying card radius and margin to styling to the full CSS background. Here also the `background:` has `position: top` set to move the background image to top.
+
 ```yaml
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    columns: 12
+    rows: 3
   sparks:
     - type: background
-      for: hui-tile-card $ ha-card
+      for: hui-button-card $ ha-card
       image_url: "media-source://media_source/local/kitchen.jpg"
-      dissolve_target:
-        - background: "none"
+      background:
+        position: top
 element:
-  type: tile
-  entity: light.bed_light
+  type: button
+  entity: light.kitchen_lights
 ```
+
+![Background spark image media source](../../assets/page-assets/forge/sparks/background-media-source-image.png)
 
 ### State-driven background color using a template
 
@@ -345,12 +368,12 @@ forge:
           {% else %}
             rgba(100, 100, 100, 0.2)
           {% endif %}
-      dissolve_target:
-        - background: "none"
 element:
   type: tile
   entity: light.bed_light
 ```
+
+![Background spark template](../../assets/page-assets/forge/sparks/background-template.gif)
 
 ### Section background
 
