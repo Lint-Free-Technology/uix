@@ -286,7 +286,7 @@ element:
 ```
 
 !!! note
-    When `background` is used alongside `image_url` or `image_entity`, only **object sub-properties** (e.g. `position`, `size`) are applied as overrides on top of the image. Using a plain string value (e.g. `background: red`) will replace the entire `background` shorthand, which also removes `background-image`.
+    When `background` is used alongside `image_url` or `image_entity`, only **object sub-properties** (e.g. `position`, `size`) are applied as overrides on top of the image. Using a plain string value (e.g. `background: red`) will replace the entire `background` shorthand, which also removes `background-image`. Use a plain string only when you want to completely replace the image with a different background, such as a solid color or gradient.
 
 ### Background using full CSS background
 
