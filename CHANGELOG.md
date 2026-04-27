@@ -1,3 +1,15 @@
+## [7.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.3...v7.0.0-beta.4) (2026-04-27)
+
+### 🐞 Bug Fixes
+
+* **background-spark:** Camera stream spinner never stopping ([#278](https://github.com/Lint-Free-Technology/uix/issues/278)) ([563f9d8](https://github.com/Lint-Free-Technology/uix/commit/563f9d8ce7e126aec34635eb5dc78f8922b2dcd6))
+
+## [7.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.2...v7.0.0-beta.3) (2026-04-27)
+
+### ⭐ New Features
+
+* **major:** add background spark for UIX Forge allowing for a target of a forged element to have a background from camera_entity, image_entity, video_url, image_url backgrounds as well as straight full shorthand CSS background([#262](https://github.com/Lint-Free-Technology/uix/issues/262)) ([c8294da](https://github.com/Lint-Free-Technology/uix/commit/c8294dabfcb385fe6fd83da874c208fa599925d4)), closes [#236](https://github.com/Lint-Free-Technology/uix/issues/236)
+
 ## [7.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.1...v7.0.0-beta.2) (2026-04-26)
 
 ### 🐞 Bug Fixes

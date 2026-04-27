@@ -1,0 +1,59 @@
+id: doc_spark_background_section
+description: "Doc image: Forge Background spark with section (background.md)"
+view_path: doc-spark-background-section
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 50
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+    settle_ms: 50
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Background
+      path: test-background
+      sections:
+        - type: custom:uix-forge
+          forge:
+            mold: section
+            sparks:
+              - type: background
+                video_url: /local/media/sydney_ferry.mp4
+                opacity: 0.7
+          element:
+            type: grid
+            cards:
+              - type: heading
+                heading: Section Heading
+              - type: button
+                entity: light.bed_light
+              - type: button
+                entity: light.kitchen_lights
+            uix:
+              style: |
+                :host {
+                  --primary-text-color: white;
+                }
+          column_span: 1
+          background:
+            color: light-blue
+            opacity: 100
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-section.png
+  root: div.section
+  padding: 16

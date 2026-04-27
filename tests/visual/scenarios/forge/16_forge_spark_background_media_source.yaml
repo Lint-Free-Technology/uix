@@ -1,0 +1,40 @@
+id: forge_spark_background_media_source
+description: "Background spark image_url resolves media-source:// URIs to a playable URL"
+view_path: forge-spark-background-media-source
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        image_url: "media-source://media_source/local/test_uix_bg.png"
+        dissolve_target:
+          - background: "none"
+  element:
+    type: tile
+    entity: "light.bed_light"
+    name: "Media source background"
+
+interactions:
+  - type: wait
+    ms: 2000
+
+assertions:
+  # Background container must be present inside ha-card's shadow root
+  - type: element_present
+    root: "ha-card"
+    selector: "[data-uix-spark-bg-id]"
+
+  # The fill div must have background-image set (non-"none") meaning the
+  # media-source URI was resolved to a real URL
+  - type: css_property_not_equals
+    root: "ha-card"
+    selector: "[data-uix-spark-bg-id] div"
+    property: "backgroundImage"
+    unexpected: "none"
+
+  - type: snapshot
+    name: "23_forge_spark_background_media_source"
+    threshold: 0.02

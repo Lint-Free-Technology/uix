@@ -14,3 +14,7 @@
 - repo: Nerwyn/custom-card-features
   asset: custom-card-features.min.js
   filename: custom-card-features.min.js
+
+- repo: selvalt7/badge-horizontal-container-card
+  asset: badge-horizontal-container-card.js
+  filename: badge-horizontal-container-card.js

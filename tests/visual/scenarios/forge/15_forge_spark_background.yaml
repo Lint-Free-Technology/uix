@@ -1,0 +1,42 @@
+id: forge_spark_background
+description: "Background spark inserts a background container behind the forged element"
+view_path: forge-spark-background
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: background
+        for: hui-tile-card $ ha-card
+        background:
+          color: "rgb(220, 53, 69)"
+        dissolve_target:
+          - background: "none"
+        class: uix-test-background
+  element:
+    type: tile
+    entity: "light.bed_light"
+    name: "Background spark"
+
+assertions:
+  # Background container must exist inside ha-card's shadow root
+  - type: element_present
+    root: "ha-card"
+    selector: "[data-uix-spark-bg-id]"
+
+  # The injected container must carry the user-supplied class
+  - type: element_present
+    root: "ha-card"
+    selector: "[data-uix-spark-bg-id].uix-test-background"
+
+  # The fill div inside the container must have the configured background colour
+  - type: css_property
+    root: "ha-card"
+    selector: "[data-uix-spark-bg-id] div"
+    property: "backgroundColor"
+    expected: "rgb(220, 53, 69)"
+
+  - type: snapshot
+    name: "22_forge_spark_background"
+    threshold: 0.02
