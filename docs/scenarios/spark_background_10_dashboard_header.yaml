@@ -24,14 +24,10 @@ dashboard:
             mold: card
             sparks:
               - type: background
+                for: "hui-vertical-stack-card $ #root"
                 camera_entity: camera.demo_camera
                 opacity: 0.5
                 class: heading-background
-            uix:
-              style: |
-                .heading-background {
-                  border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
-                }
           element:
             type: vertical-stack
             cards:
@@ -53,8 +49,9 @@ dashboard:
                 #root {
                   padding: 20px !important;
                 }
-
-assertions: []
+                .heading-background {
+                  border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+                }
 
 doc_image:
   output: docs/source/assets/page-assets/forge/sparks/background-dashboard-header.png

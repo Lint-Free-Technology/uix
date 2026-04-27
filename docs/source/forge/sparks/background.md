@@ -465,14 +465,10 @@ forge:
   mold: card
   sparks:
     - type: background
+      for: "hui-vertical-stack-card $ #root"
       camera_entity: camera.demo_camera
       opacity: 0.5
       class: heading-background
-  uix:
-    style: |
-      .heading-background {
-        border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
-      }
 element:
   type: vertical-stack
   cards:
@@ -494,6 +490,9 @@ element:
       #root {
         padding: 20px !important;
       }
+      .heading-background {
+        border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+      }
 ```
 
 ??? example "As full raw dashboard config"
@@ -501,7 +500,9 @@ element:
     ```yaml
     views:
       - type: sections
-        sections: []
+        max_columns: 4
+        title: Test Background
+        path: test-background
         header:
           card:
             type: custom:uix-forge
@@ -509,14 +510,10 @@ element:
               mold: card
               sparks:
                 - type: background
+                  for: "hui-vertical-stack-card $ #root"
                   camera_entity: camera.demo_camera
                   opacity: 0.5
                   class: heading-background
-              uix:
-                style: |
-                  .heading-background {
-                    border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
-                  }
             element:
               type: vertical-stack
               cards:
@@ -537,6 +534,9 @@ element:
                 style: |
                   #root {
                     padding: 20px !important;
+                  }
+                  .heading-background {
+                    border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
                   }
     ```
 
