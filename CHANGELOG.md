@@ -1,3 +1,9 @@
+## [7.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.4...v7.0.0-beta.5) (2026-04-27)
+
+### ⭐ New Features
+
+* **file-foundries:** Add UIX foundry file check and reload to HA developer tools YAML page ([#279](https://github.com/Lint-Free-Technology/uix/issues/279)) ([cb30b52](https://github.com/Lint-Free-Technology/uix/commit/cb30b52e78f7416d67c5c34607e8e8d169ea78c1))
+
 ## [7.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.3...v7.0.0-beta.4) (2026-04-27)
 
 ### 🐞 Bug Fixes
