@@ -55,9 +55,16 @@ class DeveloperYamlConfigPatch extends ModdedElement {
     const reloadBtn = document.createElement("ha-button");
     reloadBtn.setAttribute("appearance", "plain");
     reloadBtn.textContent = "Reload UIX Foundry Files";
-    reloadBtn.addEventListener("click", () =>
-      this._uixReloadFoundries(reloadBtn)
-    );
+    reloadBtn.addEventListener("click", async () => {
+      reloadBtn.setAttribute("disabled", "");
+      try {
+        await this.hass.connection.sendMessagePromise({
+          type: "uix/reload_foundry_files",
+        });
+      } finally {
+        reloadBtn.removeAttribute("disabled");
+      }
+    });
 
     actionsDiv.appendChild(reloadBtn);
     card.appendChild(actionsDiv);
@@ -123,17 +130,6 @@ class DeveloperYamlConfigPatch extends ModdedElement {
       alert.setAttribute("alert-type", "error");
       alert.textContent = "UIX: Failed to check foundry files. See the browser console for details.";
       resultsDiv.appendChild(alert);
-    }
-  }
-
-  async _uixReloadFoundries(_orig, btn: Element): Promise<void> {
-    btn.setAttribute("disabled", "");
-    try {
-      await this.hass.connection.sendMessagePromise({
-        type: "uix/reload_foundry_files",
-      });
-    } finally {
-      btn.removeAttribute("disabled");
     }
   }
 }
