@@ -1,3 +1,9 @@
+## [7.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.3...v7.0.0-beta.4) (2026-04-27)
+
+### 🐞 Bug Fixes
+
+* **background-spark:** Camera stream spinner never stopping ([#278](https://github.com/Lint-Free-Technology/uix/issues/278)) ([563f9d8](https://github.com/Lint-Free-Technology/uix/commit/563f9d8ce7e126aec34635eb5dc78f8922b2dcd6))
+
 ## [7.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.2...v7.0.0-beta.3) (2026-04-27)
 
 ### ⭐ New Features
