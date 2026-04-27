@@ -140,7 +140,15 @@ class HuiSectionBackgroundAdapter implements BackgroundTargetAdapter {
       }
       return;
     }
-    const sectionContainer = forEl.closest<HTMLElement>(
+    // forEl is the inner hui-section, which lives inside the shadow root of the
+    // uix-forge element.  closest() cannot cross shadow-root boundaries, so we
+    // must first obtain the forge host element and then traverse upward from
+    // there (which is in the regular light DOM).
+    const root = forEl.getRootNode();
+    const searchFrom = root instanceof ShadowRoot
+      ? (root.host as HTMLElement)
+      : forEl;
+    const sectionContainer = searchFrom.closest<HTMLElement>(
       HuiSectionBackgroundAdapter.SECTION_CONTAINER_SELECTOR
     );
     if (sectionContainer) {
