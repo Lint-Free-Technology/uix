@@ -77,7 +77,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
               new CustomEvent("hass-notification", {
                 bubbles: true,
                 composed: true,
-                detail: { message: `UIX foundry errors:\n${message}` },
+                detail: { message: `UIX foundry errors:\n${message}`, duration: 10000 },
               })
             );
           } else {
@@ -120,7 +120,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
         ...current,
         result: "invalid",
         errors: current?.errors
-          ? `${current.errors}\n${uixErrors}`
+          ? `${current.errors}\n\n${uixErrors}`
           : uixErrors,
       };
       this.requestUpdate();
