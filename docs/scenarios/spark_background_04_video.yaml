@@ -23,8 +23,6 @@ card:
         for: hui-weather-forecast-card $ ha-card
         video_url: /local/media/sydney_ferry.mp4
         opacity: 0.9
-        background:
-          - color: black
   element:
     show_current: true
     show_forecast: true

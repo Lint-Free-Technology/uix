@@ -174,7 +174,7 @@ forge:
       for: hui-button-card $ ha-card
       camera_entity: camera.demo_camera
       camera_zoom: 1.3
-      camera_position: top-left
+      camera_position: bottom-left
 element:
   type: button
   entity: light.bed_light
