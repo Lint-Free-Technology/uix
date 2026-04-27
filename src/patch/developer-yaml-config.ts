@@ -126,7 +126,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
     }
   }
 
-  async _uixReloadFoundries(btn: Element): Promise<void> {
+  async _uixReloadFoundries(_orig, btn: Element): Promise<void> {
     btn.setAttribute("disabled", "");
     try {
       await this.hass.connection.sendMessagePromise({
