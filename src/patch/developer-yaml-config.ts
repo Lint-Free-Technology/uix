@@ -63,7 +63,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
       const btn = document.createElement("ha-progress-button") as any;
       btn.id = UIX_RELOAD_BTN_ID;
       btn.appearance = "plain";
-      btn.textContent = "Reload UIX Foundries";
+      btn.textContent = "UIX Foundries";
       btn.addEventListener("click", async () => {
         btn.progress = true;
         try {
