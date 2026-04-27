@@ -16,8 +16,8 @@ Supported background sources (first non-empty value wins):
 | Image URL | `image_url` | Static image applied as `background-image`. Shows a spinner while loading. Supports `media-source://` URIs. |
 | Solid colour or CSS shorthand | `background` | Any CSS `background` value, or a mapping of sub-properties. |
 
-!!! warning
-    Background spark should not be used on a target that has its own background styling active. e.g. Using background spark on a section while also having the section has its own config is not recommended.
+!!! tip
+    Background spark may be above any background that may be applied by standard Home Assistant or custom element configuration. e.g. If you use standard Home Assistant section background you will get a background with padding behind the background spark. This may be convenient if you wish to have a background color behind a camera / video. In this case you would set the background spark `opacity` to let the standard section background color to show through.
 
 ---
 
@@ -377,15 +377,28 @@ element:
 
 ### Section background
 
+Here the standard section background is used to give a stronger light-blue background to the video. UIX Styling is used to remove the padding that the standard section background gets.
+
 ```yaml
 type: custom:uix-forge
 forge:
   mold: section
   sparks:
     - type: background
-      background:
-        color: "rgba(0, 100, 200, 0.15)"
-cards: []
+      video_url: /local/media/sydney_ferry.mp4
+element:
+  type: grid
+  cards:
+    - type: heading
+      heading: New section
+    - type: button
+      entity: light.bed_light
+    - type: button
+      entity: light.kitchen_lights
+  background:
+    color: light-blue
+    opacity: 100
+    
 ```
 
 ### Styling the background container with UIX
