@@ -396,9 +396,12 @@ function _removeSpinner(spinner: HTMLElement): void {
  * Watches `streamEl` (an `ha-camera-stream` LitElement) for the media element
  * inside its shadow root and removes the spinner once media is ready.
  *
- * `ha-camera-stream` renders either:
- *   - `<video>` for streaming cameras (WebRTC / HLS) → listen for `playing`
- *   - `<img>`   for still-image cameras              → listen for `load` / `error`
+ * `ha-camera-stream` renders the actual player (e.g. `ha-hls-player`,
+ * `ha-web-rtc-player`) as a child custom element with its own shadow root, so
+ * the underlying `<video>` or `<img>` may live one or more shadow-root levels
+ * below `streamEl`.  This function searches recursively through all reachable
+ * shadow roots and observes each one so that late-rendered elements are caught
+ * regardless of nesting depth.
  *
  * Falls back to removing the spinner after `SPINNER_FALLBACK_MS` so that a
  * broken / slow stream does not leave the spinner on screen indefinitely.
@@ -407,61 +410,114 @@ function _removeSpinnerWhenCameraPlays(
   streamEl: HTMLElement,
   spinner: HTMLElement
 ): void {
-  const fallback = setTimeout(
-    () => _removeSpinner(spinner),
-    SPINNER_FALLBACK_MS
-  );
+  let finished = false;
+  const allObs: MutationObserver[] = [];
+  const observedRoots = new Set<ShadowRoot>();
 
-  const done = () => {
+  const finish = () => {
+    if (finished) return;
+    finished = true;
     clearTimeout(fallback);
+    for (const obs of allObs) obs.disconnect();
     _removeSpinner(spinner);
   };
 
-  const tryBind = (): boolean => {
-    const shadow = (streamEl as any).shadowRoot as ShadowRoot | null;
-    if (!shadow) return false;
+  const fallback = setTimeout(finish, SPINNER_FALLBACK_MS);
 
-    // Streaming camera → <video playing>
-    const video = shadow.querySelector("video");
-    if (video) {
-      if (!video.paused && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
-        // Already playing (e.g. fast reconnect).
-        done();
-      } else {
-        video.addEventListener("playing", done, { once: true });
+  // Recursively search through shadow roots to find the first <video> or <img>.
+  // Only custom elements (tag names containing "-") can have open shadow roots,
+  // so we restrict recursion to them to avoid iterating native elements.
+  const findMedia = (
+    root: ParentNode
+  ): HTMLVideoElement | HTMLImageElement | null => {
+    const v = root.querySelector("video") as HTMLVideoElement | null;
+    if (v) return v;
+    const i = root.querySelector("img") as HTMLImageElement | null;
+    if (i) return i;
+    for (const el of Array.from(root.querySelectorAll("*"))) {
+      if (!el.localName.includes("-")) continue;
+      const sr = (el as any).shadowRoot as ShadowRoot | null;
+      if (sr) {
+        const found = findMedia(sr);
+        if (found) return found;
       }
-      return true;
     }
-
-    // Still-image camera → <img>
-    const img = shadow.querySelector("img");
-    if (img) {
-      if (img.complete && img.naturalWidth > 0) {
-        // Already loaded.
-        done();
-      } else {
-        img.addEventListener("load", done, { once: true });
-        img.addEventListener("error", done, { once: true });
-      }
-      return true;
-    }
-
-    return false;
+    return null;
   };
 
-  if (tryBind()) return;
+  // The element we most recently bound to; guards against redundant re-binding
+  // when the same element triggers multiple observer callbacks.
+  let boundTo: HTMLVideoElement | HTMLImageElement | null = null;
+
+  // Find and bind to the media element.  Skips silently when already bound to
+  // the same element.  Rebinds when the element changes (e.g. ha-camera-stream
+  // re-renders and replaces the video).  Safe to call multiple times.
+  const tryBind = (): void => {
+    if (finished) return;
+    const hostShadow = (streamEl as any).shadowRoot as ShadowRoot | null;
+    if (!hostShadow) return;
+    const media = findMedia(hostShadow);
+    if (!media || media === boundTo) return;
+
+    boundTo = media;
+
+    if (media instanceof HTMLVideoElement) {
+      if (!media.paused && media.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        finish();
+      } else {
+        media.addEventListener("playing", finish, { once: true });
+        // Video load errors are also a signal to dismiss the spinner.
+        media.addEventListener("error", finish, { once: true });
+      }
+    } else {
+      // `img.complete` is true for both successfully loaded and errored images.
+      // Treat either outcome as "done" — a broken image won't become loadable
+      // without a full rebuild.
+      if (media.complete) {
+        finish();
+      } else {
+        media.addEventListener("load", finish, { once: true });
+        media.addEventListener("error", finish, { once: true });
+      }
+    }
+  };
+
+  // Observe `root` for DOM mutations and expand to any nested shadow roots
+  // that appear inside it.
+  const observeRoot = (root: ShadowRoot): void => {
+    if (observedRoots.has(root)) return;
+    observedRoots.add(root);
+    const obs = new MutationObserver(() => {
+      tryBind();
+      expandToNestedRoots(root);
+    });
+    obs.observe(root, { childList: true, subtree: true });
+    allObs.push(obs);
+  };
+
+  // Start observing the shadow roots of any custom elements within `root`
+  // that have not yet been tracked.  Only custom elements (tag names with "-")
+  // can have open shadow roots, so we skip native elements.
+  const expandToNestedRoots = (root: ParentNode): void => {
+    for (const el of Array.from(root.querySelectorAll("*"))) {
+      if (!el.localName.includes("-")) continue;
+      const sr = (el as any).shadowRoot as ShadowRoot | null;
+      if (sr && !observedRoots.has(sr)) {
+        observeRoot(sr);
+        expandToNestedRoots(sr);
+      }
+    }
+  };
+
+  tryBind();
+  if (finished) return;
 
   // Shadow root is open (LitElement) but not yet populated — observe it.
   const shadow = (streamEl as any).shadowRoot as ShadowRoot | null;
   if (!shadow) return; // should never happen for a LitElement
 
-  const obs = new MutationObserver(() => {
-    if (tryBind()) obs.disconnect();
-  });
-  obs.observe(shadow, { childList: true, subtree: true });
-
-  // Disconnect the observer when the fallback fires too.
-  setTimeout(() => obs.disconnect(), SPINNER_FALLBACK_MS);
+  observeRoot(shadow);
+  expandToNestedRoots(shadow);
 }
 
 // ---------------------------------------------------------------------------
