@@ -1,5 +1,5 @@
-import { LitElement } from "lit";
 import { patch_element } from "../helpers/patch_function";
+import { ModdedElement } from "../helpers/apply_uix";
 
 const UIX_SECTION_ID = "uix-developer-tools-section";
 
@@ -14,7 +14,7 @@ const ERROR_LABELS: Record<string, string> = {
 };
 
 @patch_element("developer-yaml-config")
-class DeveloperYamlConfigPatch extends LitElement {
+class DeveloperYamlConfigPatch extends ModdedElement {
   declare hass: any;
 
   updated(_orig, changedProperties) {
