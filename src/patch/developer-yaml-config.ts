@@ -22,12 +22,6 @@ class DeveloperYamlConfigPatch extends ModdedElement {
     this._uixEnsureReloadBtn();
   }
 
-  async _validateConfig(_orig) {
-    await _orig?.();
-    await this.updateComplete;
-    await this._uixCheckFoundries();
-  }
-
   _uixEnsureReloadBtn(): void {
     if (!this.shadowRoot) return;
 
@@ -91,41 +85,6 @@ class DeveloperYamlConfigPatch extends ModdedElement {
 
       actionsDiv.appendChild(btn);
       secondCard.appendChild(actionsDiv);
-    }
-  }
-
-  async _uixCheckFoundries(): Promise<void> {
-    try {
-      const result: any = await this.hass.connection.sendMessagePromise({
-        type: "uix/check_foundry_files",
-      });
-
-      const errors: Array<{ file_path: string; error_key: string }> =
-        result?.errors ?? [];
-      const fileCount: number = result?.file_count ?? 0;
-
-      if (fileCount === 0 || errors.length === 0) {
-        return;
-      }
-
-      const uixErrors = errors
-        .map(
-          (e) =>
-            `UIX: ${e.file_path}: ${ERROR_LABELS[e.error_key] ?? e.error_key}`
-        )
-        .join("\n");
-
-      const current = (this as any)._validateResult;
-      (this as any)._validateResult = {
-        ...current,
-        result: "invalid",
-        errors: current?.errors
-          ? `${current.errors}\n\n${uixErrors}`
-          : uixErrors,
-      };
-      this.requestUpdate();
-    } catch (e) {
-      console.error("UIX: Failed to check foundry files", e);
     }
   }
 }
