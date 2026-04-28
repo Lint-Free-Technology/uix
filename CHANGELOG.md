@@ -1,3 +1,9 @@
+## [7.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.5...v7.0.0-beta.6) (2026-04-28)
+
+### ⚙️ Miscellaneous
+
+* remove foundry file check tie-in to Check Configuration - leave reload button ([#281](https://github.com/Lint-Free-Technology/uix/issues/281)) ([d69397f](https://github.com/Lint-Free-Technology/uix/commit/d69397fbf778f7fe224eb611d232071d09f4368b))
+
 ## [7.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.4...v7.0.0-beta.5) (2026-04-27)
 
 ### ⭐ New Features
