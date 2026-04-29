@@ -167,12 +167,15 @@ export async function await_element(el, hard = false) {
 }
 
 /**
- * Splits a UIX path string on `$` and space separators, but ignores any `$`
- * or space that appears inside an attribute-selector bracket `[...]`, a
- * property-selector brace `{...}`, or inside quoted strings within those
+ * Splits a UIX path string on `$$`, `$` and space separators, but ignores
+ * any `$` or space that appears inside an attribute-selector bracket `[...]`,
+ * a property-selector brace `{...}`, or inside quoted strings within those
  * delimiters.  This preserves CSS attribute selectors like
  * `[attr$='value']` or `[attr='val with spaces']` and property selectors like
  * `{.prop='val with spaces'}` as single tokens.
+ *
+ * `$$` (two consecutive dollar signs outside brackets/quotes) is emitted as
+ * the single token `"$$"` — the express deep-search separator.
  */
 function splitPath(path: string): string[] {
   const tokens: string[] = [];
@@ -195,7 +198,17 @@ function splitPath(path: string): string[] {
       else if (c === "'") inSingleQuote = true;
       else if (c === '"') inDoubleQuote = true;
       current += c;
-    } else if (c === "$" || c === " ") {
+    } else if (c === "$") {
+      tokens.push(current);
+      current = "";
+      // Check for $$  (express deep-search separator)
+      if (i + 1 < path.length && path[i + 1] === "$") {
+        tokens.push("$$");
+        i++; // consume the second $
+      } else {
+        tokens.push("$");
+      }
+    } else if (c === " ") {
       tokens.push(current);
       tokens.push(c);
       current = "";
@@ -208,6 +221,51 @@ function splitPath(path: string): string[] {
   }
   if (current !== "") tokens.push(current);
   return tokens;
+}
+
+/**
+ * Recursively searches `roots` and all their shadow-root descendants for
+ * elements matching `selector`.  Unlike `querySelectorAll`, this crosses
+ * shadow-root boundaries so deeply-nested custom-element internals are
+ * reachable.
+ *
+ * Used by `_selectTree` when the `$$` deep-search token is encountered.
+ */
+async function deepQuerySelectorAll(
+  roots: (Element | ShadowRoot)[],
+  selector: string
+): Promise<Element[]> {
+  const found: Element[] = [];
+  const visitedRoots = new WeakSet<Element | ShadowRoot>();
+
+  async function traverse(root: Element | ShadowRoot): Promise<void> {
+    if (visitedRoots.has(root)) return;
+    visitedRoots.add(root);
+
+    // Collect matching elements in this root's own light-DOM subtree.
+    for (const el of Array.from(
+      (root as ParentNode).querySelectorAll(selector)
+    ) as Element[]) {
+      found.push(el);
+    }
+
+    // Recurse into shadow roots of every child so we can cross boundaries.
+    for (const child of Array.from(
+      (root as ParentNode).querySelectorAll("*")
+    ) as Element[]) {
+      if (child.shadowRoot) {
+        await await_element(child);
+        await traverse(child.shadowRoot);
+      }
+    }
+  }
+
+  for (const root of roots) {
+    if (!root) continue;
+    await traverse(root);
+  }
+
+  return found;
 }
 
 async function _selectTree(root, path, all = false) {
@@ -233,6 +291,10 @@ async function _selectTree(root, path, all = false) {
     while (path.length > 0 && !path[0].trim().length) path.shift();
   }
 
+  // Whether the next non-empty selector step should use a deep recursive
+  // shadow-piercing search (set to true after encountering a `$$` token).
+  let deepSearch = false;
+
   // For each element in the path
   for (const [i, p] of path.entries()) {
     if (p === "$") {
@@ -241,11 +303,30 @@ async function _selectTree(root, path, all = false) {
       continue;
     }
 
+    if (p === "$$") {
+      // Await all current elements, then arm the deep-search flag so the next
+      // non-empty selector step uses `deepQuerySelectorAll` instead of a plain
+      // `querySelectorAll` on only the first element.
+      await Promise.all(
+        [...el].map((e) => (e instanceof Element ? await_element(e) : Promise.resolve()))
+      );
+      deepSearch = true;
+      continue;
+    }
+
+    if (!p.trim().length) continue;
+
+    if (deepSearch) {
+      // Deep search: recursively traverse all current elements and their shadow
+      // roots, collecting every element matching the selector.
+      deepSearch = false;
+      el = await deepQuerySelectorAll([...el], p);
+      continue;
+    }
+
     // Only pick the first one for the next step
     const e = el[0];
     if (!e) return null;
-
-    if (!p.trim().length) continue;
 
     await await_element(e);
     el = e.querySelectorAll(p);
