@@ -307,9 +307,7 @@ async function _selectTree(root, path, all = false) {
       // Await all current elements, then arm the deep-search flag so the next
       // non-empty selector step uses `deepQuerySelectorAll` instead of a plain
       // `querySelectorAll` on only the first element.
-      await Promise.all(
-        [...el].map((e) => (e instanceof Element ? await_element(e) : Promise.resolve()))
-      );
+      await Promise.all([...el].map((e) => await_element(e)));
       deepSearch = true;
       continue;
     }
