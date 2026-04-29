@@ -291,12 +291,20 @@ async function _selectTree(root, path, all = false) {
     while (path.length > 0 && !path[0].trim().length) path.shift();
   }
 
+  // Guard: `$$` must not be the first meaningful step. Allowing it at the
+  // start would perform an unbounded deep search from the UIX root on every
+  // render — highly expensive when applied globally via a theme.
+  const firstMeaningfulToken = path.find((p) => p.trim().length > 0);
+  if (firstMeaningfulToken === "$$") return null;
+
   // Whether the next non-empty selector step should use a deep recursive
   // shadow-piercing search (set to true after encountering a `$$` token).
   let deepSearch = false;
 
-  // For each element in the path
-  for (const [i, p] of path.entries()) {
+  // Index-based loop so we can look ahead when needed.
+  for (let i = 0; i < path.length; i++) {
+    const p = path[i];
+
     if (p === "$") {
       await Promise.all([...el].map((e) => await_element(e)));
       el = [...el].map((e) => e.shadowRoot);
