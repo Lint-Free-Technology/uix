@@ -242,6 +242,15 @@ async function deepQuerySelectorAll(
     if (visitedRoots.has(root)) return;
     visitedRoots.add(root);
 
+    // If root is an Element with its own shadow root, recurse into it first so
+    // that web-component children (which live in shadow DOM, not light DOM) are
+    // reachable.  This is the common case when the selector before $$ resolves
+    // to a custom element like hui-card-features.
+    if (root instanceof Element && root.shadowRoot) {
+      await await_element(root);
+      await traverse(root.shadowRoot);
+    }
+
     // Collect matching elements in this root's own light-DOM subtree.
     for (const el of Array.from(
       (root as ParentNode).querySelectorAll(selector)
