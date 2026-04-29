@@ -1,0 +1,41 @@
+id: express_search_selector
+description: >
+  The $$ express deep-search selector navigates through shadow-root boundaries.
+  It finds ha-tile-icon which lives inside ha-card's shadow root — a boundary
+  that a plain selector cannot cross — and enters its shadow root to apply
+  color: rgb(255, 0, 0) on :host.
+view_path: express-search-selector
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: tile
+  entity: light.bed_light
+  uix:
+    style:
+      "$$ ha-tile-icon $": |
+        :host {
+          color: rgb(255, 0, 0);
+        }
+
+assertions:
+  # ha-tile-icon sits inside ha-card's shadow root.  From hui-tile-card's
+  # shadow root it is reachable only by crossing that extra shadow boundary —
+  # exactly what $$ does.
+  - type: css_property
+    root:
+      - hui-tile-card
+      - ha-card
+    selector: ha-tile-icon
+    property: color
+    expected: "rgb(255, 0, 0)"
+
+  - type: snapshot
+    name: "11_express_search_selector"
+    threshold: 0.02
