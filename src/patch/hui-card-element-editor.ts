@@ -2,6 +2,7 @@ import { LitElement } from "lit";
 import { patch_element, patch_object } from "../helpers/patch_function";
 
 const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
+const UIX_FORGE_TOOLTIP_ID = "uix-forge-wrap-btn-tooltip";
 const UIX_FORGE_MOLD_COMMENT =
   "# set mold correctly before saving: card, badge, row, picture-element, section";
 
@@ -94,24 +95,28 @@ class HuiCardElementEditorPatch extends LitElement {
     ) as any;
     if (!codeEditor) return;
 
-    const toolbar = codeEditor.shadowRoot?.querySelector(
-      "ha-icon-button-toolbar"
+    const group = codeEditor.shadowRoot?.querySelector(
+      "ha-icon-button-group"
     ) as any;
-    if (!toolbar) return;
+    if (!group) return;
 
     // Already injected
-    if (toolbar.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
+    if (group.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
+
+    const tooltip = document.createElement("ha-tooltip") as any;
+    tooltip.id = UIX_FORGE_TOOLTIP_ID;
+    tooltip.content = "Wrap in UIX Forge";
 
     const btn = document.createElement("ha-icon-button") as any;
     btn.id = UIX_FORGE_BTN_ID;
-    btn.label = "Wrap in UIX Forge";
-    btn.title = "Wrap in UIX Forge";
+    btn.setAttribute("aria-labelledby", UIX_FORGE_TOOLTIP_ID);
     const icon = document.createElement("ha-icon") as any;
     icon.icon = "mdi:lightbulb-on-outline";
     btn.appendChild(icon);
     btn.addEventListener("click", () => this._uixWrapInForge());
 
-    toolbar.appendChild(btn);
+    tooltip.appendChild(btn);
+    group.prepend(tooltip);
   }
 
   _uixWrapInForge(): void {
