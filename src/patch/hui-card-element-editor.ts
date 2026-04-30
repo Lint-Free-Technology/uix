@@ -1,6 +1,10 @@
 import { LitElement } from "lit";
 import { patch_element, patch_object } from "../helpers/patch_function";
 
+const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
+const UIX_FORGE_MOLD_COMMENT =
+  "# set mold correctly before switching to visual or saving: card, badge, row, picture-element, section";
+
 class ConfigCardElementPatch extends LitElement {
   _uixData?;
 
@@ -72,6 +76,82 @@ class HuiCardElementEditorPatch extends LitElement {
       ev.detail.config.card_mod = uixData.card_mod;
     }
     _orig(ev, ...rest);
+  }
+
+  updated(_orig, ...args) {
+    _orig?.(...args);
+    this._uixEnsureForgeBtn();
+  }
+
+  _uixEnsureForgeBtn(): void {
+    if (!this.shadowRoot) return;
+
+    const yamlEditor = this.shadowRoot.querySelector("ha-yaml-editor") as any;
+
+    if (!yamlEditor) {
+      // Not in YAML mode — remove the button if present
+      this.shadowRoot.querySelector(`#${UIX_FORGE_BTN_ID}`)?.remove();
+      return;
+    }
+
+    // Already injected
+    if (this.shadowRoot.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
+
+    const btn = document.createElement("ha-icon-button") as any;
+    btn.id = UIX_FORGE_BTN_ID;
+    btn.label = "Wrap in UIX Forge";
+    btn.title = "Wrap in UIX Forge";
+    const icon = document.createElement("ha-icon") as any;
+    icon.icon = "mdi:lightbulb-on-outline";
+    btn.appendChild(icon);
+    btn.addEventListener("click", () => this._uixWrapInForge());
+
+    // Prefer injecting into an existing toolbar; fall back to before the yaml editor
+    const toolbar =
+      this.shadowRoot.querySelector(".card-options") ??
+      this.shadowRoot.querySelector(".toolbar") ??
+      this.shadowRoot.querySelector(".action-buttons");
+
+    if (toolbar) {
+      toolbar.appendChild(btn);
+    } else {
+      yamlEditor.insertAdjacentElement("beforebegin", btn);
+    }
+  }
+
+  _uixWrapInForge(): void {
+    if (!this.shadowRoot) return;
+
+    const yamlEditor = this.shadowRoot.querySelector("ha-yaml-editor") as any;
+    if (!yamlEditor) return;
+
+    const codeEditor = yamlEditor.shadowRoot?.querySelector(
+      "ha-code-editor"
+    ) as any;
+    if (!codeEditor) return;
+
+    const rawYaml: string = codeEditor.value ?? "";
+    if (!rawYaml.trim()) return;
+
+    // Skip if already wrapped in uix-forge
+    if (/custom:uix-forge/.test(rawYaml)) return;
+
+    // Indent every non-empty line by two spaces
+    const indented = rawYaml
+      .replace(/\n$/, "")
+      .split("\n")
+      .map((line) => (line.length ? "  " + line : line))
+      .join("\n");
+
+    const forgeYaml =
+      `type: custom:uix-forge\n` +
+      `forge:\n` +
+      `  ${UIX_FORGE_MOLD_COMMENT}\n` +
+      `  mold: card\n` +
+      `element:\n` +
+      `${indented}\n`;
+
+    codeEditor.value = forgeYaml;
   }
 }
 
