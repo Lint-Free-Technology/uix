@@ -3,8 +3,7 @@ import { patch_element, patch_object } from "../helpers/patch_function";
 
 const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
 const UIX_FORGE_TOOLTIP_ID = "uix-forge-wrap-btn-tooltip";
-const UIX_FORGE_MOLD_COMMENT =
-  "# set mold correctly before saving: card, badge, row, picture-element, section";
+const UIX_FORGE_MOLD_TOOLTIP = "Wrap in UIX Forge";
 
 class ConfigCardElementPatch extends LitElement {
   _uixData?;
@@ -59,6 +58,7 @@ class ConfigCardElementPatch extends LitElement {
 @patch_element("hui-card-element-editor")
 class HuiCardElementEditorPatch extends LitElement {
   _configElement?: ConfigCardElementPatch;
+  _yamlEditor?: LitElement;
 
   async getConfigElement(_orig, ...args) {
     const retval = await _orig(...args);
@@ -87,42 +87,62 @@ class HuiCardElementEditorPatch extends LitElement {
   _uixEnsureForgeBtn(): void {
     if (!this.shadowRoot) return;
 
-    const yamlEditor = this.shadowRoot.querySelector("ha-yaml-editor") as any;
+    const yamlEditor = this._yamlEditor;
     if (!yamlEditor) return;
 
-    const codeEditor = yamlEditor.shadowRoot?.querySelector(
-      "ha-code-editor"
-    ) as any;
+    yamlEditor.updateComplete.then(() => {
+      this._uixInjectForgeBtn();
+    });
+  }
+
+  _uixInjectForgeBtn(): void {
+    if (!this.shadowRoot) return;
+
+    const yamlEditor = this._yamlEditor;
+    if (!yamlEditor) return;
+
+    const codeEditor = (yamlEditor as any)._codeEditor;
     if (!codeEditor) return;
 
-    const group = codeEditor.shadowRoot?.querySelector(
-      "ha-icon-button-group"
-    ) as any;
-    if (!group) return;
+    codeEditor.updateComplete.then(() => {
 
-    // Already injected
-    if (group.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
+      const rawYaml: string = codeEditor.value ?? "";
+      const disabled = !rawYaml.trim() || /^type:\s*custom:uix-forge/m.test(rawYaml);
 
-    const tooltip = document.createElement("ha-tooltip") as any;
-    tooltip.id = UIX_FORGE_TOOLTIP_ID;
-    tooltip.content = "Wrap in UIX Forge";
+      const toolbar = codeEditor.shadowRoot?.querySelector("ha-icon-button-toolbar") as any;
+      if (!toolbar) return;
 
-    const btn = document.createElement("ha-icon-button") as any;
-    btn.id = UIX_FORGE_BTN_ID;
-    btn.setAttribute("aria-labelledby", UIX_FORGE_TOOLTIP_ID);
-    const icon = document.createElement("ha-icon") as any;
-    icon.icon = "mdi:lightbulb-on-outline";
-    btn.appendChild(icon);
-    btn.addEventListener("click", () => this._uixWrapInForge());
+      const group = toolbar.shadowRoot?.querySelector(
+        "ha-icon-button-group"
+      ) as any;
+      if (!group) return;
 
-    tooltip.appendChild(btn);
-    group.prepend(tooltip);
+      const existingBtn = group.querySelector(`#${UIX_FORGE_BTN_ID}`) as any;
+      // Already injected
+      if (existingBtn) {
+        existingBtn.disabled = disabled;
+        return;
+      };
+
+      const btn = document.createElement("ha-icon-button") as any;
+      btn.id = UIX_FORGE_BTN_ID;
+      btn.label = UIX_FORGE_MOLD_TOOLTIP;
+      btn.disabled = disabled;
+      btn.classList.add("icon-toolbar-button");
+      btn.setAttribute("aria-labelledby", UIX_FORGE_TOOLTIP_ID);
+      const icon = document.createElement("ha-icon") as any;
+      icon.icon = "mdi:lightbulb-on-outline";
+      btn.appendChild(icon);
+      btn.addEventListener("click", () => this._uixWrapInForge());
+
+      group.prepend(btn);
+    });
   }
 
   _uixWrapInForge(): void {
     if (!this.shadowRoot) return;
 
-    const yamlEditor = this.shadowRoot.querySelector("ha-yaml-editor") as any;
+    const yamlEditor = this._yamlEditor;
     if (!yamlEditor) return;
 
     const codeEditor = yamlEditor.shadowRoot?.querySelector(
@@ -146,7 +166,6 @@ class HuiCardElementEditorPatch extends LitElement {
     const forgeYaml =
       `type: custom:uix-forge\n` +
       `forge:\n` +
-      `  ${UIX_FORGE_MOLD_COMMENT}\n` +
       `  mold: card\n` +
       `element:\n` +
       `${indented}\n`;
