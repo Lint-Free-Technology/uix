@@ -134,13 +134,16 @@ where all the intermediate shadow-host hops are resolved automatically.
     ```yaml
     uix:
       style:
-        "hui-card-features $$ hui-target-temperature-card-feature $": |
-          ha-control-number-buttons {
-            /* your styles */
+        "hui-card-features $$ ha-control-number-buttons $": |
+          #input::before {
+            background: red;
           }
-        "hui-card-features $$ ha-control-select $": |
-          .container {
-            --control-select-selected-opacity: 0.8;
+        "hui-card-features $$ ha-control-select-menu $": |
+          .select-anchor {
+            --control-select-menu-background-color: red !important;
+          }
+          .select-anchor:hover {
+            --control-select-menu-background-color: purple !important;
           }
     ```
 
