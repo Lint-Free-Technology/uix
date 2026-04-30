@@ -88,6 +88,79 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
     In short, if things seem to be working intermittently, then try splitting up the chain into several steps.
 
+## Express search selector `$$`
+
+For deeply-nested elements — especially card features and more-info controls — writing out the full chain of intermediate shadow-root crossings can be verbose. The `$$` **express search selector** provides a shorthand: it performs a **recursive, shadow-piercing search** through all descendants of the current context, regardless of how many shadow-root boundaries lie in between.
+
+```
+A $$ B $
+```
+
+is equivalent to
+
+```
+A $ <intermediate-1> $ <intermediate-2> $ … B $
+```
+
+where all the intermediate shadow-host hops are resolved automatically.
+
+!!! tip
+    `$$` is a **mid-path selector** — it must always appear between two selector steps, never at the very start of a path.
+
+!!! example "Card features — before and after"
+    The verbose explicit path:
+    ```yaml
+    uix:
+      style:
+        hui-card-features $:
+          hui-card-feature $:
+            hui-humidifier-toggle-card-feature $:
+              ha-control-select $: |
+                .container {
+                  opacity: 0.8;
+                }
+    ```
+    Using `$$`:
+    ```yaml
+    uix:
+      style:
+        "hui-card-features $$ ha-control-select $": |
+          .container {
+            opacity: 0.8;
+          }
+    ```
+
+!!! example "Multiple card feature types"
+    ```yaml
+    uix:
+      style:
+        "hui-card-features $$ ha-control-number-buttons $": |
+          #input::before {
+            background: red;
+          }
+        "hui-card-features $$ ha-control-select-menu $": |
+          .select-anchor {
+            --control-select-menu-background-color: red !important;
+          }
+          .select-anchor:hover {
+            --control-select-menu-background-color: purple !important;
+          }
+    ```
+
+!!! warning "Performance"
+    Because `$$` traverses the entire shadow DOM subtree of the current context, it is inherently slower than an explicit path. For performance-sensitive use cases, prefer the explicit path.
+
+!!! warning "Load order and retries"
+    The retry mechanism (splitting chains into separate dictionary levels) that provides load-order stability for `$` paths applies per dictionary entry. When `$$` express selector is used, the entire deep search is retried as one unit. If the target element loads very late, consider an explicit path split into two dictionary levels:
+    ```yaml
+    uix:
+      style:
+        hui-card-features $:
+          "hui-card-feature $$ ha-control-select $": |
+            .container { opacity: 0.8; }
+    ```
+    This lets UIX retry from `hui-card-features $` independently.
+
 ## Host/element path selection
 
 A path may begin with a `&` **host/element** as its first step. It filters the initial element where UIX is applied before any traversal takes place:

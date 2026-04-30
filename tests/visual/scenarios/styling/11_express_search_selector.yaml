@@ -1,0 +1,43 @@
+id: express_search_selector
+description: >
+  The $$ express deep-search selector navigates through shadow-root boundaries
+  as a mid-path separator.
+view_path: express-search-selector
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: tile
+  entity: light.bed_light
+  vertical: false
+  features:
+    - type: light-brightness
+  features_position: inline
+  uix:
+    style:
+      hui-card-features $$ ha-control-slider $: |
+        :host {
+          --control-slider-thickness: 20px !important;
+        }
+        .slider-track-bar {
+          background-color: rgb(255, 0, 0) !important;
+        }
+
+assertions:
+  - type: css_property
+    root:
+      - hui-tile-card
+      - ha-control-slider 
+    selector: .slider-track-bar
+    property: backgroundColor
+    expected: "rgb(255, 0, 0)"
+
+  - type: snapshot
+    name: "24_express_search_selector"
+    threshold: 0.02
