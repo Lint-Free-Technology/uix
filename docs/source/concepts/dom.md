@@ -105,9 +105,7 @@ A $ <intermediate-1> $ <intermediate-2> $ … B $
 where all the intermediate shadow-host hops are resolved automatically.
 
 !!! tip
-    `$$` is a **mid-path separator** — it must always appear between two selector steps, never at the very start of a path.
-
-    The selector **before** `$$` uses a normal shallow (light-DOM) search, keeping the lookup fast.  The selector **after** `$$` is where the recursive shadow-piercing search takes place.
+    `$$` is a **mid-path selector** — it must always appear between two selector steps, never at the very start of a path.
 
 !!! example "Card features — before and after"
     The verbose explicit path:
@@ -149,15 +147,13 @@ where all the intermediate shadow-host hops are resolved automatically.
 !!! warning "Performance"
     Because `$$` traverses the entire shadow DOM subtree of the current context, it is inherently slower than an explicit path. For performance-sensitive use cases, prefer the explicit path.
 
-    `$$` **must not appear as the first step** in a path. Starting with `$$` would perform an unbounded traversal from the UIX root on every render, which is especially harmful in themes that are applied to every card globally.
-
 !!! warning "Load order and retries"
-    The retry mechanism (splitting chains into separate dictionary levels) that provides load-order stability for `$` paths applies per dictionary entry. When `$$` is used, the entire deep search is retried as one unit. If the target element loads very late, consider an explicit path split into two dictionary levels:
+    The retry mechanism (splitting chains into separate dictionary levels) that provides load-order stability for `$` paths applies per dictionary entry. When `$$` express selector is used, the entire deep search is retried as one unit. If the target element loads very late, consider an explicit path split into two dictionary levels:
     ```yaml
     uix:
       style:
         hui-card-features $:
-          "$$ ha-control-select $": |
+          "hui-card-feature $$ ha-control-select $": |
             .container { opacity: 0.8; }
     ```
     This lets UIX retry from `hui-card-features $` independently.
