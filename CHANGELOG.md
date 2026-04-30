@@ -1,3 +1,9 @@
+## [7.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.6...v7.0.0-beta.7) (2026-04-30)
+
+### ⭐ New Features
+
+* `$$` express deep-search selector for shadow-piercing yaml path navigation ([#283](https://github.com/Lint-Free-Technology/uix/issues/283)) ([048c22e](https://github.com/Lint-Free-Technology/uix/commit/048c22eddfe539c359d576ebfa90539fed88e699))
+
 ## [7.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.5...v7.0.0-beta.6) (2026-04-28)
 
 ### ⚙️ Miscellaneous
