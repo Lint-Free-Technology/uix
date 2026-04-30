@@ -10,6 +10,9 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 - **Add sparks** — self-contained behaviours that augment the forged element.
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
+!!! tip "Warp in UIX Forge"
+    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element.
+
 ## Basic structure
 
 ```yaml

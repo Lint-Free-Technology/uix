@@ -1,83 +1,13 @@
 import { LitElement } from "lit";
-import { patch_element, patch_object } from "../helpers/patch_function";
+import { patch_element } from "../helpers/patch_function";
 
 const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
 const UIX_FORGE_TOOLTIP_ID = "uix-forge-wrap-btn-tooltip";
 const UIX_FORGE_MOLD_TOOLTIP = "Wrap in UIX Forge";
 
-class ConfigCardElementPatch extends LitElement {
-  _uixData?;
-
-  setConfig(_orig, config, ...rest) {
-    const newConfig = JSON.parse(JSON.stringify(config));
-
-    // Save uix config
-    this._uixData = {
-      uix: undefined,
-      card_mod: undefined,
-      entities: [],
-    };
-    if (newConfig.uix) {
-      this._uixData.uix = newConfig.uix;
-    } else if (newConfig.card_mod) {
-      this._uixData.card_mod = newConfig.card_mod;
-    }
-    delete newConfig.uix;
-    delete newConfig.card_mod;
-
-    // Save uix config for individual entities
-    if (Array.isArray(newConfig.entities)) {
-      for (const [i, e] of newConfig.entities?.entries?.()) {
-        this._uixData.entities[i] = { uix: undefined, card_mod: undefined };
-        if (e.uix) {
-          this._uixData.entities[i].uix = e.uix;
-        } else if (e.card_mod) {
-          this._uixData.entities[i].card_mod = e.card_mod;
-        }
-        delete e.uix;
-        delete e.card_mod;
-      }
-    }
-
-    _orig(newConfig, ...rest);
-
-    // Restore UIX config for entities
-    if (Array.isArray(newConfig.entities)) {
-      for (const [i, e] of newConfig.entities?.entries?.()) {
-        if (this._uixData?.entities[i]?.uix) {
-          e.uix = this._uixData.entities[i].uix;
-        }
-        if (this._uixData?.entities[i]?.card_mod) {
-          e.card_mod = this._uixData.entities[i].card_mod;
-        }
-      }
-    }
-  }
-}
-
-@patch_element("hui-card-element-editor")
-class HuiCardElementEditorPatch extends LitElement {
-  _configElement?: ConfigCardElementPatch;
+@patch_element("hui-row-element-editor")
+class HuiRowElementEditorPatch extends LitElement {
   _yamlEditor?: LitElement;
-
-  async getConfigElement(_orig, ...args) {
-    const retval = await _orig(...args);
-
-    patch_object(retval, ConfigCardElementPatch);
-
-    return retval;
-  }
-
-  _handleUIConfigChanged(_orig, ev, ...rest) {
-    const uixData = this._configElement?._uixData;
-    if (uixData && (uixData.uix)) {
-      ev.detail.config.uix = uixData.uix;
-    }
-    if (uixData && uixData.card_mod) {
-      ev.detail.config.card_mod = uixData.card_mod;
-    }
-    _orig(ev, ...rest);
-  }
 
   updated(_orig, ...args) {
     _orig?.(...args);
@@ -166,11 +96,10 @@ class HuiCardElementEditorPatch extends LitElement {
     const forgeYaml =
       `type: custom:uix-forge\n` +
       `forge:\n` +
-      `  mold: card\n` +
+      `  mold: row\n` +
       `element:\n` +
       `${indented}\n`;
 
     codeEditor.value = forgeYaml;
   }
 }
-

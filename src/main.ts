@@ -27,6 +27,8 @@ import "./patch/ha-sidebar";
 import "./patch/persistent-notification-item";
 import "./patch/hui-card-element-editor";
 import "./patch/hui-badge-element-editor";
+import "./patch/hui-row-element-editor";
+import "./patch/hui-picture-element-element-editor";
 import "./patch/hui-dialog-edit-card";
 import "./patch/hui-dialog-edit-badge";
 import "./patch/ha-panel-config";
