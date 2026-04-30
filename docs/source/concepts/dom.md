@@ -90,6 +90,9 @@ Chains ending with `$` is a special case for convenience, selecting the shadow r
 
 ## Express search selector `$$`
 
+!!! info
+    Express search selector `$$` available in v7.0.0-beta.7
+
 For deeply-nested elements — especially card features and more-info controls — writing out the full chain of intermediate shadow-root crossings can be verbose. The `$$` **express search selector** provides a shorthand: it performs a **recursive, shadow-piercing search** through all descendants of the current context, regardless of how many shadow-root boundaries lie in between.
 
 ```
