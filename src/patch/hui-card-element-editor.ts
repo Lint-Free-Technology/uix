@@ -3,7 +3,7 @@ import { patch_element, patch_object } from "../helpers/patch_function";
 
 const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
 const UIX_FORGE_MOLD_COMMENT =
-  "# set mold correctly before switching to visual or saving: card, badge, row, picture-element, section";
+  "# set mold correctly before saving: card, badge, row, picture-element, section";
 
 class ConfigCardElementPatch extends LitElement {
   _uixData?;
@@ -87,15 +87,20 @@ class HuiCardElementEditorPatch extends LitElement {
     if (!this.shadowRoot) return;
 
     const yamlEditor = this.shadowRoot.querySelector("ha-yaml-editor") as any;
+    if (!yamlEditor) return;
 
-    if (!yamlEditor) {
-      // Not in YAML mode — remove the button if present
-      this.shadowRoot.querySelector(`#${UIX_FORGE_BTN_ID}`)?.remove();
-      return;
-    }
+    const codeEditor = yamlEditor.shadowRoot?.querySelector(
+      "ha-code-editor"
+    ) as any;
+    if (!codeEditor) return;
+
+    const toolbar = codeEditor.shadowRoot?.querySelector(
+      "ha-icon-button-toolbar"
+    ) as any;
+    if (!toolbar) return;
 
     // Already injected
-    if (this.shadowRoot.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
+    if (toolbar.querySelector(`#${UIX_FORGE_BTN_ID}`)) return;
 
     const btn = document.createElement("ha-icon-button") as any;
     btn.id = UIX_FORGE_BTN_ID;
@@ -106,17 +111,7 @@ class HuiCardElementEditorPatch extends LitElement {
     btn.appendChild(icon);
     btn.addEventListener("click", () => this._uixWrapInForge());
 
-    // Prefer injecting into an existing toolbar; fall back to before the yaml editor
-    const toolbar =
-      this.shadowRoot.querySelector(".card-options") ??
-      this.shadowRoot.querySelector(".toolbar") ??
-      this.shadowRoot.querySelector(".action-buttons");
-
-    if (toolbar) {
-      toolbar.appendChild(btn);
-    } else {
-      yamlEditor.insertAdjacentElement("beforebegin", btn);
-    }
+    toolbar.appendChild(btn);
   }
 
   _uixWrapInForge(): void {
