@@ -134,13 +134,13 @@ class HuiCardElementEditorPatch extends LitElement {
     if (!rawYaml.trim()) return;
 
     // Skip if already wrapped in uix-forge
-    if (/custom:uix-forge/.test(rawYaml)) return;
+    if (/^type:\s*custom:uix-forge/m.test(rawYaml)) return;
 
-    // Indent every non-empty line by two spaces
+    // Indent every non-blank line by two spaces
     const indented = rawYaml
-      .replace(/\n$/, "")
+      .replace(/\s+$/, "")
       .split("\n")
-      .map((line) => (line.length ? "  " + line : line))
+      .map((line) => (line.trim().length ? "  " + line : line))
       .join("\n");
 
     const forgeYaml =
