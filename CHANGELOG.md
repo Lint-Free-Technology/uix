@@ -1,3 +1,9 @@
+## [7.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.7...v7.0.0-beta.8) (2026-04-30)
+
+### ⭐ New Features
+
+* Add "Wrap in UIX Forge" lightbulb icon button to card, badge, row, and picture-element YAML editors ([#284](https://github.com/Lint-Free-Technology/uix/issues/284)) ([763c6d3](https://github.com/Lint-Free-Technology/uix/commit/763c6d38d786276914d2cc8951dc1e408b4d8187))
+
 ## [7.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.6...v7.0.0-beta.7) (2026-04-30)
 
 ### ⭐ New Features
