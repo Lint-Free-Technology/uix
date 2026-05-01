@@ -120,6 +120,10 @@ const updateImage = (el: any): void => {
 };
 
 const bindUix = async (el: any) => {
+  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+  // and we want to batch it with any potential updates that might be happening at the same time.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+  
   updateImage(el);
   el._boundUixImage = el._boundUixImage ?? new Set();
   const newUix = await findParentUix(el);
@@ -129,6 +133,9 @@ const bindUix = async (el: any) => {
 
     uix.addEventListener("uix-styles-update", async () => {
       await uix.updateComplete;
+      // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+      // and we want to batch it with any potential updates that might be happening at the same time.
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       updateImage(el);
     });
     el._boundUixImage.add(uix);

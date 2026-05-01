@@ -15,6 +15,10 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
 
   await themesReady();
 
+  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+  // and we want to batch it with any potential updates that might be happening at the same time.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
   const el = root.parentElement ? root.parentElement : root;
   const cs = window.getComputedStyle(el);
   const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
@@ -59,7 +63,12 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
 }
 
 export async function get_theme_macros(root: Uix): Promise<Record<string, MacroConfig | string>> {
+
   await themesReady().catch(() => {});
+
+  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+  // and we want to batch it with any potential updates that might be happening at the same time.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 
   const el = root.parentElement ? root.parentElement : root;
   const cs = window.getComputedStyle(el);

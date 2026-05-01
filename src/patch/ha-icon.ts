@@ -39,6 +39,10 @@ const updateIcon = (el) => {
 };
 
 const bindUix = async (el) => {
+  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+  // and we want to batch it with any potential updates that might be happening at the same time.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
   // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
 
   updateIcon(el);
@@ -50,6 +54,9 @@ const bindUix = async (el) => {
 
     uix.addEventListener("uix-styles-update", async () => {
       await uix.updateComplete;
+      // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
+      // and we want to batch it with any potential updates that might be happening at the same time.
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       updateIcon(el);
     });
     el._boundUix.add(uix);
