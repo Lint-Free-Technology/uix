@@ -168,10 +168,12 @@ class HaEntityMarkerPatch extends ModdedElement {
   entityUnit;
   entityPicture;
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout>;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    this._applyUix().then(() => bindUix(this));
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), 250);
   }
   async _applyUix() {
     const entityId = this.entityId;
@@ -210,40 +212,48 @@ class HaEntityMarkerPatch extends ModdedElement {
 @patch_element("ha-tile-icon")
 class HaTileIconPatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout>;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
   }
 }
 
 @patch_element("state-badge")
 class HaStateBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout>;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
   }
 }
 
 @patch_element("ha-user-badge")
 class HaUserBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout>;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
   }
 }
 
 @patch_element("ha-person-badge")
 class HaPersonBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout>;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
   }
 }
 
