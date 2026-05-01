@@ -84,7 +84,7 @@ const bindUix = async (el) => {
 @patch_element("ha-state-icon")
 class HaStateIconPatch extends ModdedElement {
   uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_retries = 0;
@@ -96,7 +96,7 @@ class HaStateIconPatch extends ModdedElement {
 @patch_element("ha-icon")
 class HaIconPatch extends ModdedElement {
   uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_retries = 0;
@@ -108,7 +108,7 @@ class HaIconPatch extends ModdedElement {
 @patch_element("ha-svg-icon")
 class HaSvgIconPatch extends ModdedElement {
   uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;

@@ -168,7 +168,7 @@ class HaEntityMarkerPatch extends ModdedElement {
   entityUnit;
   entityPicture;
   uix_image_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
@@ -212,7 +212,7 @@ class HaEntityMarkerPatch extends ModdedElement {
 @patch_element("ha-tile-icon")
 class HaTileIconPatch extends ModdedElement {
   uix_image_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
@@ -224,7 +224,7 @@ class HaTileIconPatch extends ModdedElement {
 @patch_element("state-badge")
 class HaStateBadgePatch extends ModdedElement {
   uix_image_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
@@ -236,7 +236,7 @@ class HaStateBadgePatch extends ModdedElement {
 @patch_element("ha-user-badge")
 class HaUserBadgePatch extends ModdedElement {
   uix_image_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
@@ -248,7 +248,7 @@ class HaUserBadgePatch extends ModdedElement {
 @patch_element("ha-person-badge")
 class HaPersonBadgePatch extends ModdedElement {
   uix_image_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout>;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
