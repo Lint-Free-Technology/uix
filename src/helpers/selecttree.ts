@@ -176,6 +176,9 @@ export async function await_element(el, hard = false) {
  *
  * `$$` (two consecutive dollar signs outside brackets/quotes) is emitted as
  * the single token `"$$"` — the express deep-search separator.
+ *
+ * Empty strings are never emitted: separators at the start, end, or adjacent
+ * to one another do not produce empty tokens.
  */
 function splitPath(path: string): string[] {
   const tokens: string[] = [];
@@ -199,7 +202,7 @@ function splitPath(path: string): string[] {
       else if (c === '"') inDoubleQuote = true;
       current += c;
     } else if (c === "$") {
-      tokens.push(current);
+      if (current !== "") tokens.push(current);
       current = "";
       // Check for $$  (express deep-search separator)
       if (i + 1 < path.length && path[i + 1] === "$") {
@@ -209,7 +212,7 @@ function splitPath(path: string): string[] {
         tokens.push("$");
       }
     } else if (c === " ") {
-      tokens.push(current);
+      if (current !== "") tokens.push(current);
       tokens.push(c);
       current = "";
     } else {
@@ -280,11 +283,10 @@ async function deepQuerySelectorAll(
 async function _selectTree(root, path, all = false) {
   let el = [root];
 
-  // Split and clean path
+  // Split path (splitPath never emits empty-string tokens)
   if (typeof path === "string") {
     path = splitPath(path);
   }
-  while (path[path.length - 1] === "") path.pop();
 
   // Handle optional leading & host/element filter (must be the first step).
   // If current elements are ShadowRoots, match against the host;
@@ -303,8 +305,10 @@ async function _selectTree(root, path, all = false) {
   // Guard: `$$` must not be the first meaningful step. Allowing it at the
   // start would perform an unbounded deep search from the UIX root on every
   // render — highly expensive when applied globally via a theme.
-  const firstMeaningfulToken = path.find((p) => p.trim().length > 0);
-  if (firstMeaningfulToken === "$$") return null;
+  // splitPath never emits empty tokens, so path[0] is always the first
+  // meaningful token (space tokens have .trim().length === 0 and are skipped
+  // by the loop, but cannot appear before a real selector here).
+  if (path[0] === "$$") return null;
 
   // Whether the next non-empty selector step should use a deep recursive
   // shadow-piercing search (set to true after encountering a `$$` token).
