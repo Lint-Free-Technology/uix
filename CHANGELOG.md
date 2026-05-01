@@ -1,3 +1,9 @@
+## [7.0.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.9...v7.0.0-beta.10) (2026-05-01)
+
+### ⚙️ Miscellaneous
+
+* Debounce icon and picture-entity updates at 250ms to maintain performance when icons rapidly update ([#287](https://github.com/Lint-Free-Technology/uix/issues/287)) ([5b8e5ba](https://github.com/Lint-Free-Technology/uix/commit/5b8e5ba38393f8702a07b1734ba0d80fd9125348))
+
 ## [7.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.8...v7.0.0-beta.9) (2026-05-01)
 
 ### ⚙️ Miscellaneous
