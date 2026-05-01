@@ -3,6 +3,7 @@ import { yaml2json } from "./yaml2json";
 import { Uix } from "../uix";
 import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
+import { nextAnimationFrame } from "./raf";
 
 function cssValueIsTrue(v: string): boolean {
   if (!v) return false;
@@ -10,82 +11,107 @@ function cssValueIsTrue(v: string): boolean {
   return t === "true" || t === "1" || t === "yes" || t === "on";
 }
 
+// Per-root in-flight promise maps: coalesces concurrent calls so multiple
+// uix-nodes don't each schedule their own rAF-based style read.
+const _themeInFlight = new WeakMap<Uix, Promise<UixStyle>>();
+const _themeMacrosInFlight = new WeakMap<Uix, Promise<Record<string, MacroConfig | string>>>();
+
 export async function get_theme(root: Uix): Promise<UixStyle> {
   if (!root.type) return null;
 
-  await themesReady();
+  if (_themeInFlight.has(root)) return _themeInFlight.get(root)!;
 
-  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
-  // and we want to batch it with any potential updates that might be happening at the same time.
-  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+  const promise = (async (): Promise<UixStyle> => {
+    try {
+      await themesReady();
 
-  const el = root.parentElement ? root.parentElement : root;
-  const cs = window.getComputedStyle(el);
-  const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+      // Wait for next animation frame before computing styles: batches reflow reads
+      await nextAnimationFrame();
 
-  // Determine debug flag from CSS variables.
-  // Checked patterns:
-  //  - --uix-<type>-debug
-  //  - --uix-<type>-<class>-debug
-  let debug = false;
+      const el = root.parentElement ? root.parentElement : root;
+      const cs = window.getComputedStyle(el);
+      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
 
-  const typeDebug = cs.getPropertyValue(`--uix-${root.type}-debug`) || cs.getPropertyValue(`--card-mod-${root.type}-debug`);
-  if (cssValueIsTrue(typeDebug)) debug = true;
+      // Determine debug flag from CSS variables.
+      // Checked patterns:
+      //  - --uix-<type>-debug
+      //  - --uix-<type>-<class>-debug
+      let debug = false;
 
-  for (const cls of root.classes) {
-    const debugVar = cs.getPropertyValue(`--uix-${root.type}-${cls}-debug`) || cs.getPropertyValue(`--card-mod-${root.type}-${cls}-debug`);
-    if (cssValueIsTrue(debugVar)) {
-      debug = true;
-      break;
+      const typeDebug = cs.getPropertyValue(`--uix-${root.type}-debug`) || cs.getPropertyValue(`--card-mod-${root.type}-debug`);
+      if (cssValueIsTrue(typeDebug)) debug = true;
+
+      for (const cls of root.classes) {
+        const debugVar = cs.getPropertyValue(`--uix-${root.type}-${cls}-debug`) || cs.getPropertyValue(`--card-mod-${root.type}-${cls}-debug`);
+        if (cssValueIsTrue(debugVar)) {
+          debug = true;
+          break;
+        }
+      }
+
+      root.debug ||= !!debug;
+
+      root.debug && console.log("UIX Debug: Theme:", theme);
+
+      const hs = await hass();
+      if (!hs) return {};
+      const themes = hs?.themes.themes ?? {};
+      if (!themes[theme]) return {};
+
+      if (themes[theme][`uix-${root.type}-yaml`]) {
+        return yaml2json(themes[theme][`uix-${root.type}-yaml`]);
+      } else if (themes[theme][`card-mod-${root.type}-yaml`]) {
+        return yaml2json(themes[theme][`card-mod-${root.type}-yaml`]);
+      } else if (themes[theme][`uix-${root.type}`]) {
+        return { ".": themes[theme][`uix-${root.type}`] };
+      } else if (themes[theme][`card-mod-${root.type}`]) {
+        return { ".": themes[theme][`card-mod-${root.type}`] };
+      } else {
+        return {};
+      }
+    } finally {
+      _themeInFlight.delete(root);
     }
-  }
+  })();
 
-  root.debug ||= !!debug;
-
-  root.debug && console.log("UIX Debug: Theme:", theme);
-
-  const hs = await hass();
-  if (!hs) return {};
-  const themes = hs?.themes.themes ?? {};
-  if (!themes[theme]) return {};
-
-  if (themes[theme][`uix-${root.type}-yaml`]) {
-    return yaml2json(themes[theme][`uix-${root.type}-yaml`]);
-  } else if (themes[theme][`card-mod-${root.type}-yaml`]) {
-    return yaml2json(themes[theme][`card-mod-${root.type}-yaml`]);
-  } else if (themes[theme][`uix-${root.type}`]) {
-    return { ".": themes[theme][`uix-${root.type}`] };
-  } else if (themes[theme][`card-mod-${root.type}`]) {
-    return { ".": themes[theme][`card-mod-${root.type}`] };
-  } else {
-    return {};
-  }
+  _themeInFlight.set(root, promise);
+  return promise;
 }
 
 export async function get_theme_macros(root: Uix): Promise<Record<string, MacroConfig | string>> {
 
-  await themesReady().catch(() => {});
+  if (_themeMacrosInFlight.has(root)) return _themeMacrosInFlight.get(root)!;
 
-  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
-  // and we want to batch it with any potential updates that might be happening at the same time.
-  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-
-  const el = root.parentElement ? root.parentElement : root;
-  const cs = window.getComputedStyle(el);
-  const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
-
-  const hs = await hass();
-  if (!hs) return {};
-  const themes = hs?.themes.themes ?? {};
-  if (!themes[theme]) return {};
-
-  if (themes[theme]["uix-macros-yaml"]) {
+  const promise = (async (): Promise<Record<string, MacroConfig | string>> => {
     try {
-      return await yaml2json(themes[theme]["uix-macros-yaml"]) ?? {};
-    } catch (e) {
-      console.error("UIX: Error parsing uix-macros-yaml from theme:", theme, e);
+      await themesReady().catch(() => {});
+
+      // Wait for next animation frame before computing styles: batches reflow reads
+      await nextAnimationFrame();
+
+      const el = root.parentElement ? root.parentElement : root;
+      const cs = window.getComputedStyle(el);
+      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+
+      const hs = await hass();
+      if (!hs) return {};
+      const themes = hs?.themes.themes ?? {};
+      if (!themes[theme]) return {};
+
+      if (themes[theme]["uix-macros-yaml"]) {
+        try {
+          return await yaml2json(themes[theme]["uix-macros-yaml"]) ?? {};
+        } catch (e) {
+          console.error("UIX: Error parsing uix-macros-yaml from theme:", theme, e);
+          return {};
+        }
+      }
       return {};
+    } finally {
+      _themeMacrosInFlight.delete(root);
     }
-  }
-  return {};
+  })();
+
+  _themeMacrosInFlight.set(root, promise);
+  return promise;
 }

@@ -1,6 +1,7 @@
 import { LitElement } from "lit";
 import { ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
+import { nextAnimationFrame } from "../helpers/raf";
 import { Uix } from "../uix";
 
 /*
@@ -39,33 +40,44 @@ const updateIcon = (el) => {
 };
 
 const bindUix = async (el) => {
-  // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
-  // and we want to batch it with any potential updates that might be happening at the same time.
-  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+  // Coalesce: if a bindUix run is already in progress for this element, skip
+  if (el._bindUixPending) return;
+  el._bindUixPending = true;
+  try {
+    // Wait for next animation frame before computing styles: batches reflow reads
+    await nextAnimationFrame();
 
-  // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
+    // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
 
-  updateIcon(el);
-  el._boundUix = el._boundUix ?? new Set();
-  const newUix = await findParentUix(el);
+    updateIcon(el);
+    el._boundUix = el._boundUix ?? new Set();
+    const newUix = await findParentUix(el);
 
-  for (const uix of newUix) {
-    if (el._boundUix.has(uix)) continue;
+    for (const uix of newUix) {
+      if (el._boundUix.has(uix)) continue;
 
-    uix.addEventListener("uix-styles-update", async () => {
-      await uix.updateComplete;
-      // Wait for next animation frame before computing styles for performance as querying styles can trigger reflow 
-      // and we want to batch it with any potential updates that might be happening at the same time.
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-      updateIcon(el);
-    });
-    el._boundUix.add(uix);
+      uix.addEventListener("uix-styles-update", async () => {
+        // Coalesce rapid style-update events to a single update per frame
+        if (el._updateIconPending) return;
+        el._updateIconPending = true;
+        try {
+          await uix.updateComplete;
+          await nextAnimationFrame();
+          updateIcon(el);
+        } finally {
+          el._updateIconPending = false;
+        }
+      });
+      el._boundUix.add(uix);
+    }
+  } finally {
+    el._bindUixPending = false;
   }
 
   // Find uix elements created later, increased interval
   if (el.uix_retries < 5) {
     el.uix_retries++;
-    return window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
+    window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
   }
 };
 
