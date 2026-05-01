@@ -1,3 +1,10 @@
+## [7.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.8...v7.0.0-beta.9) (2026-05-01)
+
+### ⚙️ Miscellaneous
+
+* fix splitPath to not emit empty tokens, simplify $$ guard to O(1) performance ([#285](https://github.com/Lint-Free-Technology/uix/issues/285)) ([b33ce62](https://github.com/Lint-Free-Technology/uix/commit/b33ce62677d40fc10f90e3f38d4ea618e9113ccc))
+* **styling:** Performance optimizations for theme, icon, picture-entity - awaiting animation frame and single code flight path ([#286](https://github.com/Lint-Free-Technology/uix/issues/286)) ([ea3656f](https://github.com/Lint-Free-Technology/uix/commit/ea3656f2d9c72fb92ee459a2dbb56a0f3b4ac8aa))
+
 ## [7.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.7...v7.0.0-beta.8) (2026-04-30)
 
 ### ⭐ New Features
