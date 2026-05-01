@@ -1,7 +1,7 @@
 import { LitElement } from "lit";
 import { ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
-import { nextAnimationFrame } from "../helpers/raf";
+import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
 import { Uix } from "../uix";
 
 /*
@@ -89,7 +89,7 @@ class HaStateIconPatch extends ModdedElement {
     _orig?.(...args);
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
@@ -101,7 +101,7 @@ class HaIconPatch extends ModdedElement {
     _orig?.(...args);
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
@@ -114,7 +114,7 @@ class HaSvgIconPatch extends ModdedElement {
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 

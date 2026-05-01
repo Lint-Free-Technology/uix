@@ -1,6 +1,6 @@
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
-import { nextAnimationFrame } from "../helpers/raf";
+import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
 import { Uix } from "../uix";
 
 /*
@@ -173,7 +173,7 @@ class HaEntityMarkerPatch extends ModdedElement {
     _orig?.(...args);
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), 250);
+    this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), UIX_PATCH_DEBOUNCE_MS);
   }
   async _applyUix() {
     const entityId = this.entityId;
@@ -217,7 +217,7 @@ class HaTileIconPatch extends ModdedElement {
     _orig?.(...args);
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
@@ -229,7 +229,7 @@ class HaStateBadgePatch extends ModdedElement {
     _orig?.(...args);
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
@@ -241,7 +241,7 @@ class HaUserBadgePatch extends ModdedElement {
     _orig?.(...args);
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
@@ -253,7 +253,7 @@ class HaPersonBadgePatch extends ModdedElement {
     _orig?.(...args);
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), 250);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
