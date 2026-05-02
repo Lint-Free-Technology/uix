@@ -10,6 +10,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _connected = false;
     private _connectionResolve;
     private _foundries: Record<string, any> = {};
+    private _hassThrottleOverride: { enable?: boolean; ms?: number } | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -218,11 +219,42 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     get hassThrottleEnable(): boolean {
+      if (this._hassThrottleOverride?.enable !== undefined) {
+        return this._hassThrottleOverride.enable;
+      }
       return this._data?.hass_throttle_enable ?? false;
     }
 
     get hassThrottleMs(): number {
+      if (this._hassThrottleOverride?.ms !== undefined) {
+        return this._hassThrottleOverride.ms;
+      }
       return this._data?.hass_throttle_ms ?? 200;
+    }
+
+    /**
+     * Set a client-side override for the hass throttle settings.
+     *
+     * This is intended for use by external integrations such as Browser Mod
+     * that want to apply per-user or per-device throttle settings without
+     * requiring a backend configuration change.  The override takes precedence
+     * over the server-side config pushed by the UIX integration.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured values.
+     *
+     * @example
+     * // Enable throttle with a 500 ms interval for this browser session:
+     * window.uixCoordinator.setThrottleOverride({ enable: true, ms: 500 });
+     *
+     * // Override only the interval (inherits the server enable/disable flag):
+     * window.uixCoordinator.setThrottleOverride({ ms: 1000 });
+     *
+     * // Remove the override and revert to server defaults:
+     * window.uixCoordinator.setThrottleOverride(null);
+     */
+    public setThrottleOverride(override: { enable?: boolean; ms?: number } | null = null): void {
+      this._hassThrottleOverride = override;
     }
   }
 
