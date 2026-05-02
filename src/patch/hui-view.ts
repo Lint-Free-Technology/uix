@@ -33,26 +33,27 @@ class HuiViewPatch extends ModdedElement {
         const newHass = (this as any).hass;
         // Only throttle when entity states changed, so that other hass changes
         // (themes, localize, etc.) always pass through immediately.
-        if (oldHass?.entities !== newHass?.entities) {
+        if (oldHass?.states !== newHass?.states) {
           const now = Date.now();
           const elapsed = now - this._uixLastHassOnlyUpdate;
           const throttleMs = coordinator.hassThrottleMs;
           if (elapsed < throttleMs) {
-            // Throttled: save the latest hass so it can be flushed if no
-            // further update arrives naturally before the window expires.
+            // Throttled: always save the LATEST hass so the flush applies the
+            // most recent state, not the first one in the throttle window.
             this._uixPendingHass = newHass;
-            // Schedule a one-shot flush at throttleMs + 50ms after the last
-            // allowed update. Only one timer runs per throttle window.
-            if (this._uixFlushTimer === undefined) {
-              this._uixFlushTimer = setTimeout(() => {
-                this._uixFlushTimer = undefined;
-                if (this._uixPendingHass !== undefined) {
-                  const pending = this._uixPendingHass;
-                  this._uixPendingHass = undefined;
-                  (this as any).hass = pending;
-                }
-              }, throttleMs + 50 - elapsed);
+            // Reschedule the flush timer on every throttled call so it always
+            // fires 50ms after the LAST throttled update, not the first.
+            if (this._uixFlushTimer !== undefined) {
+              clearTimeout(this._uixFlushTimer);
             }
+            this._uixFlushTimer = setTimeout(() => {
+              this._uixFlushTimer = undefined;
+              if (this._uixPendingHass !== undefined) {
+                const pending = this._uixPendingHass;
+                this._uixPendingHass = undefined;
+                (this as any).hass = pending;
+              }
+            }, throttleMs + 50);
             return false;
           }
           // Update is allowed through: record timestamp and cancel any pending flush.
