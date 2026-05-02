@@ -1,3 +1,10 @@
+## [7.0.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.10...v7.0.0-beta.11) (2026-05-02)
+
+### ⚙️ Miscellaneous
+
+* For performance only apply UIX to view when view config will have changed (narrow, lovelace, index). ([a77844e](https://github.com/Lint-Free-Technology/uix/commit/a77844ef2943bcaa89574024f216db1abe81c402))
+* show debug on apply_uix if existing element has UIX debug set. Properly outputs debug on subsequent calls to apply_uix for elements where debug is set by theme. ([3679ebb](https://github.com/Lint-Free-Technology/uix/commit/3679ebb6ed9bd7bd91116d73f2cbf25ceb204aea))
+
 ## [7.0.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.9...v7.0.0-beta.10) (2026-05-01)
 
 ### ⚙️ Miscellaneous
