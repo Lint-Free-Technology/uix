@@ -382,7 +382,7 @@ export async function apply_uix(
   shadow: boolean = true,
   cls = undefined
 ) {
-  const debug = uix_config?.debug
+  const debug = uix_config?.debug || element._uix?.[0]?.debug
     ? (...msg) => console.log("UIX Debug:", ...msg)
     : (...msg) => {};
 
