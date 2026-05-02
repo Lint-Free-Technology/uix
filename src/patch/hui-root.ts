@@ -1,6 +1,7 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix} from "../helpers/apply_uix";
 import { selectTree } from "../helpers/selecttree";
+import { PropertyValueMap } from "lit";
 
 /*
 Patch hui-root for theme styling
@@ -29,8 +30,9 @@ class HuiRootPatch extends ModdedElement {
     apply_uix(this, "root");
   }
 
-  shouldUpdate(_orig, changedProperties) {
-    if (changedProperties.size === 1 && changedProperties.has("hass")) {
+  shouldUpdate(_orig, ...args): boolean {
+    const _changedProperties = args[0] as PropertyValueMap<any> | undefined;
+    if (_changedProperties.size === 1 && _changedProperties.has("hass")) {
       const now = Date.now();
       if (now - this._uixLastHassOnlyUpdate < HASS_THROTTLE_MS) {
         return false;
@@ -41,6 +43,6 @@ class HuiRootPatch extends ModdedElement {
       // incorrectly throttled relative to a potentially long-ago hass update.
       this._uixLastHassOnlyUpdate = 0;
     }
-    return _orig ? _orig(changedProperties) : true;
+    return _orig ? _orig(...args) : true;
   }
 }
