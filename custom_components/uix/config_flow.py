@@ -69,7 +69,7 @@ class UixConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class UixOptionsFlow(OptionsFlow):
-    """Options flow for managing UIX foundries."""
+    """Options flow for configuring UIX."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize the options flow."""
@@ -85,7 +85,7 @@ class UixOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the top-level foundry management menu."""
+        """Show the top-level UIX settings menu."""
         return self.async_show_menu(
             step_id="init",
             menu_options=[

@@ -14,7 +14,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "Manage UIX Forge Foundries",
+                "title": "UIX Settings",
                 "description": "{foundries_docs_link}",
                 "menu_options": {
                     "foundry_menu": "Manage UI foundries",
