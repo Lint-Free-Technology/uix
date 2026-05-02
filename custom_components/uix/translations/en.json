@@ -18,7 +18,8 @@
                 "description": "{foundries_docs_link}",
                 "menu_options": {
                     "foundry_menu": "Manage UI foundries",
-                    "foundry_file_menu": "Manage foundry files"
+                    "foundry_file_menu": "Manage foundry files",
+                    "performance_settings": "Performance settings"
                 }
             },
             "foundry_menu": {
@@ -37,6 +38,18 @@
                     "register_foundry_file": "Register a foundry file",
                     "deregister_foundry_file": "Deregister a foundry file",
                     "reload_foundry_files": "Reload foundry files"
+                }
+            },
+            "performance_settings": {
+                "title": "Performance Settings",
+                "description": "Configure performance optimizations for UIX.",
+                "data": {
+                    "hass_throttle_enable": "Throttle entity state updates",
+                    "hass_throttle_ms": "Throttle interval"
+                },
+                "data_description": {
+                    "hass_throttle_enable": "When enabled, reduces the frequency at which the dashboard root re-renders when entity states change rapidly.",
+                    "hass_throttle_ms": "Minimum time between entity state update re-renders. Only applies when throttling is enabled."
                 }
             },
             "add_foundry": {

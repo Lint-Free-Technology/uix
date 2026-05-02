@@ -216,6 +216,14 @@ export const ConnectionMixin = (SuperClass) => {
     get foundries(): Record<string, any> {
       return this._foundries;
     }
+
+    get hassThrottleEnable(): boolean {
+      return this._data?.hass_throttle_enable ?? false;
+    }
+
+    get hassThrottleMs(): number {
+      return this._data?.hass_throttle_ms ?? 200;
+    }
   }
 
   return UixConnection;

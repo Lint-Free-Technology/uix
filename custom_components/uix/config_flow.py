@@ -4,7 +4,13 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.selector import ObjectSelector
+from homeassistant.helpers.selector import (
+    BooleanSelector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    ObjectSelector,
+)
 
 from .checks import (
     check_card_mod_frontend_script_extra_module, 
@@ -16,6 +22,9 @@ from .const import (
     CARD_MOD_FRONTEND_SCRIPT_URL,
     CONF_FOUNDRIES,
     CONF_FOUNDRY_FILES,
+    CONF_HASS_THROTTLE_ENABLE,
+    CONF_HASS_THROTTLE_MS,
+    DEFAULT_HASS_THROTTLE_MS,
     EVENT_FOUNDRIES_UPDATED,
 )
 from .helpers import validate_foundry_file
@@ -82,6 +91,7 @@ class UixOptionsFlow(OptionsFlow):
             menu_options=[
                 "foundry_menu",
                 "foundry_file_menu",
+                "performance_settings",
             ],
             description_placeholders={
                 "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
@@ -126,6 +136,44 @@ class UixOptionsFlow(OptionsFlow):
                 "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
                 "foundry_files_list": foundry_files_list,
             },
+        )
+
+    async def async_step_performance_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure performance settings."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title="",
+                data={
+                    **self._config_entry.options,
+                    CONF_HASS_THROTTLE_ENABLE: user_input[CONF_HASS_THROTTLE_ENABLE],
+                    CONF_HASS_THROTTLE_MS: int(user_input[CONF_HASS_THROTTLE_MS]),
+                },
+            )
+
+        return self.async_show_form(
+            step_id="performance_settings",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_HASS_THROTTLE_ENABLE,
+                        default=self._config_entry.options.get(CONF_HASS_THROTTLE_ENABLE, False),
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_HASS_THROTTLE_MS,
+                        default=self._config_entry.options.get(CONF_HASS_THROTTLE_MS, DEFAULT_HASS_THROTTLE_MS),
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=50,
+                            max=10000,
+                            step=50,
+                            unit_of_measurement="ms",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    ),
+                }
+            ),
         )
 
     async def async_step_add_foundry(
