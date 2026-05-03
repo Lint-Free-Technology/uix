@@ -12,6 +12,10 @@ WS_LOG = f"{DOMAIN}/log"
 CONF_FOUNDRIES = "foundries"
 CONF_FOUNDRY_FILES = "foundry_files"
 
+CONF_HASS_THROTTLE_ENABLE = "hass_throttle_enable"
+CONF_HASS_THROTTLE_MS = "hass_throttle_ms"
+DEFAULT_HASS_THROTTLE_MS = 200
+
 WS_GET_FOUNDRIES = f"{DOMAIN}/get_foundries"
 WS_SET_FOUNDRY = f"{DOMAIN}/set_foundry"
 WS_DELETE_FOUNDRY = f"{DOMAIN}/delete_foundry"
