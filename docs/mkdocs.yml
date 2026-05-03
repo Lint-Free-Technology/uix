@@ -48,7 +48,10 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 nav:
-  - About: 'index.md'
+  - UI eXtension:
+      - About:
+         - index.md
+      - contributing.md
   - Quick Start: 'quick-start.md'
   - UIX Styling:
       -  Styling:
@@ -92,7 +95,9 @@ nav:
           - forge/sparks/map.md
           - forge/sparks/lock.md
           - forge/sparks/background.md
-  - Contributing: 'contributing.md'
+  - UIX Extras:
+      - extras/index.md
+      - extras/frontend-states-throttling.md
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
