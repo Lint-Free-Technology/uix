@@ -71,12 +71,9 @@ type: custom:button-card
 name: Enable Throttle
 icon: mdi:speedometer
 tap_action:
-  action: fire-dom-event
-  browser_mod:
-    service: browser_mod.javascript
-    data:
-      code: >
-        window.uixCoordinator?.setThrottleOverride({ enable: true, ms: 500 });
+  action: javascript
+  code: |
+    window.uixCoordinator?.setThrottleOverride({ enable: true, ms: 500 });
 
 ---
 
@@ -85,16 +82,10 @@ type: custom:button-card
 name: Disable Throttle
 icon: mdi:speedometer-slow
 tap_action:
-  action: fire-dom-event
-  browser_mod:
-    service: browser_mod.javascript
-    data:
-      code: >
-        window.uixCoordinator?.setThrottleOverride(null);
+  action: javascript
+  code: |
+    window.uixCoordinator?.setThrottleOverride(null);
 ```
-
-!!! note
-    The above examples use `browser_mod.javascript` via `fire-dom-event` and require [Browser Mod](https://github.com/thomasloven/hass-browser_mod) to be installed. Alternatively, you can use the `custom:button-card` `action: call-service` with `service: browser_mod.javascript` directly if your setup supports it.
 
 ## Configuration reference
 
