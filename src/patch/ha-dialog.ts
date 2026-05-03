@@ -62,6 +62,12 @@ class HaDialogPatch extends ModdedElement {
         haDialog = this.shadowRoot.querySelector("ha-adaptive-popover");
       }
       if (!haDialog) {
+        haDialog = this.shadowRoot.querySelector("ha-wa-dialog");
+      }
+      if (!haDialog) {
+        haDialog = this.shadowRoot.querySelector("ha-md-dialog");
+      }
+      if (!haDialog) {
         // Notification 'dialog' is ha-drawer
         haDialog = this.shadowRoot.querySelector("ha-drawer");
       }
