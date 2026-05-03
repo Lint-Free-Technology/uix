@@ -90,6 +90,43 @@ tap_action:
     [[[ window.uixCoordinator?.setThrottleOverride(null); ]]]
 ```
 
+??? example "Full toggle example"
+    A button card that reads the current throttle state and toggles it on or off, showing the current interval when active.
+    ```yaml
+    type: custom:button-card
+    grid_options:
+      rows: 2
+      columns: 6
+    section_mode: true
+    update_timer: 500ms
+    variables:
+      throttle: |
+        [[[ return window.uixCoordinator?.hassThrottleEnable; ]]]
+      throttleMs: |
+        [[[ return window.uixCoordinator?.hassThrottleMs; ]]]
+    styles:
+      card:
+        - "--throttle-icon-color": >
+            [[[ return variables.throttle ? "var(--state-active-color)" :
+            "var(--state-inactive-color)"; ]]]
+        - "--ha-ripple-hover-color": >
+            [[[ return variables.throttle ? "var(--state-active-color)" :
+            "var(--state-inactive-color)"; ]]]
+    name: >
+      [[[ return variables.throttle ? `Throttle ON (${variables.throttleMs}ms)` :
+      "Throttle OFF"; ]]]
+    icon: >
+      [[[ return variables.throttle ? "mdi:speedometer" : "mdi:speedometer-slow";
+      ]]]
+    color: var(--throttle-icon-color)
+    tap_action:
+      action: javascript
+      javascript: >
+        [[[ variables.throttle ? window.uixCoordinator?.setThrottleOverride({
+        enable: false }) : window.uixCoordinator?.setThrottleOverride({ enable: true
+        }); ]]]
+    ```
+
 ## Configuration reference
 
 | Setting | Default | Description |
