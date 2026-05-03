@@ -71,3 +71,20 @@ uix-doc-red-classes:
     :host(.purple) {
       background: purple;
     }
+
+uix-date-picker-selection:
+  uix-theme: uix-date-picker-selection
+
+  uix-dialog-yaml: |
+    "&.type-dialog-date-picker": |
+      calendar-month::part(range-inner),
+      calendar-month::part(range-start),
+      calendar-month::part(range-end),
+      calendar-month::part(selected),
+      calendar-month::part(selected):hover,
+      calendar-month:not(.dummy)::part(button selected):hover {
+        background-color: red !important;
+      }
+      calendar-month::part(button):hover {
+        background-color: rgba(255, 0, 0, 0.2) !important;
+      }
