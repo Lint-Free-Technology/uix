@@ -1,3 +1,9 @@
+## [7.0.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.11...v7.0.0-beta.12) (2026-05-03)
+
+### ⭐ New Features
+
+* **performance:** Dashboard view states update throttle, configurable via integration UI and client-side override API ([#292](https://github.com/Lint-Free-Technology/uix/issues/292)) ([bfbad63](https://github.com/Lint-Free-Technology/uix/commit/bfbad639fca065daa3908e7277b34c2bbad3e34c))
+
 ## [7.0.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.10...v7.0.0-beta.11) (2026-05-02)
 
 ### ⚙️ Miscellaneous
