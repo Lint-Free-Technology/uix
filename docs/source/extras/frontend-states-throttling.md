@@ -16,7 +16,7 @@ Frontend states throttling is **disabled by default**. To enable it:
 1. In Home Assistant, go to **Settings → Devices & Services → UI eXtension → Configure**.
 2. Select **Performance settings** from the menu.
 3. Toggle **Throttle entity state updates** on.
-4. Set the **Throttle interval** — the minimum time (in milliseconds) between state-update re-renders. The default is `200 ms`. The valid range is 50–10 000 ms.
+4. Set the **Throttle interval** — the minimum time (in milliseconds) between state-update re-renders. The default is `200 ms`. The valid range is 50–10,000 ms.
 5. Save.
 
 The setting takes effect immediately across all connected browser sessions — no page reload required.
@@ -65,7 +65,7 @@ javascript: >
 | Setting | Default | Description |
 |---|---|---|
 | Throttle entity state updates | Off | Enable/disable the states throttle globally. |
-| Throttle interval | 200 ms | Minimum time between state-update re-renders. Range: 50–10 000 ms. |
+| Throttle interval | 200 ms | Minimum time between state-update re-renders. Range: 50–10,000 ms. |
 
 ## When to use throttling
 
