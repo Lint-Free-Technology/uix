@@ -61,7 +61,7 @@ Browser Mod lets you run JavaScript per browser session via [**Default action**]
     window.uixCoordinator?.setThrottleOverride({ enable: true, ms: 1000 });
 ```
 
-## Using with custom:button-card
+### Using with custom:button-card
 
 [`custom:button-card`](https://github.com/custom-cards/button-card) can be used to add toggle buttons directly on a dashboard to enable, disable, or clear the throttle override at runtime — useful for testing or for dashboards that need dynamic control.
 
@@ -72,8 +72,8 @@ name: Enable Throttle
 icon: mdi:speedometer
 tap_action:
   action: javascript
-  code: |
-    window.uixCoordinator?.setThrottleOverride({ enable: true, ms: 500 });
+  javascript: |
+    [[[ window.uixCoordinator?.setThrottleOverride({ enable: true, ms: 500 }); ]]]
 
 ---
 
@@ -83,8 +83,8 @@ name: Disable Throttle
 icon: mdi:speedometer-slow
 tap_action:
   action: javascript
-  code: |
-    window.uixCoordinator?.setThrottleOverride(null);
+  javascript: |
+    [[[ window.uixCoordinator?.setThrottleOverride(null); ]]]
 ```
 
 ## Configuration reference
