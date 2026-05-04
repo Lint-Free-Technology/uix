@@ -1,3 +1,10 @@
+## [7.0.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.12...v7.0.0-beta.13) (2026-05-04)
+
+### ⭐ New Features
+
+* Compress uix.js for client network inflight efficiency ([#296](https://github.com/Lint-Free-Technology/uix/issues/296)) ([9ca77b4](https://github.com/Lint-Free-Technology/uix/commit/9ca77b4f9e13541b32b4cb201839b68473e6e3b5))
+* **styling:** Look for ha-adaptive-popover for dialog adaptive popover styling by theme ([#294](https://github.com/Lint-Free-Technology/uix/issues/294)) ([9f7617c](https://github.com/Lint-Free-Technology/uix/commit/9f7617c73ede4fc28ccb0e10f16cda9e0191ed84))
+
 ## [7.0.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.11...v7.0.0-beta.12) (2026-05-03)
 
 ### ⭐ New Features
