@@ -1,0 +1,41 @@
+id: doc_spark_background_image
+description: "Doc image: Forge Background spark with image (background.md)"
+view_path: doc-spark-background-image
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 50
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: background
+        for: hui-alarm-panel-card $ ha-card
+        image_url: https://picsum.photos/id/582/600/600
+        opacity: 0.5
+  element:
+    type: alarm-panel
+    states:
+      - arm_home
+      - arm_away
+    entity: alarm_control_panel.security
+    uix:
+      style: |
+        ha-control-button {
+          --control-button-background-color: white;
+          --control-button-background-opacity: 0.3;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-image.png
+  root: hui-alarm-panel-card
+  padding: 16

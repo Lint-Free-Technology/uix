@@ -382,7 +382,7 @@ export async function apply_uix(
   shadow: boolean = true,
   cls = undefined
 ) {
-  const debug = uix_config?.debug
+  const debug = uix_config?.debug ?? element._uix?.[0]?.debug
     ? (...msg) => console.log("UIX Debug:", ...msg)
     : (...msg) => {};
 
@@ -420,7 +420,7 @@ export async function apply_uix(
 
   uix.type = type;
   uix.uix_class = cls;
-  uix.debug = uix_config?.debug ?? false;
+  uix.debug = uix_config?.debug ?? element._uix?.[0]?.debug;
   uix.cancelStyleChild();
 
   if (!element._uix.includes(uix)) element._uix.push(uix);

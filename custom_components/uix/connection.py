@@ -7,7 +7,7 @@ from homeassistant.components.websocket_api import (
 from homeassistant.components import websocket_api
 import voluptuous as vol
 
-from .helpers import get_version, resolve_foundries, get_all_foundries, validate_foundry_file
+from .helpers import get_version, resolve_foundries, get_all_foundries, validate_foundry_file, check_all_foundry_files
 from .const import (
     DOMAIN,
     WS_CONNECT,
@@ -18,8 +18,12 @@ from .const import (
     WS_ADD_FOUNDRY_FILE,
     WS_REMOVE_FOUNDRY_FILE,
     WS_RELOAD_FOUNDRY_FILES,
+    WS_CHECK_FOUNDRY_FILES,
     CONF_FOUNDRIES,
     CONF_FOUNDRY_FILES,
+    CONF_HASS_THROTTLE_ENABLE,
+    CONF_HASS_THROTTLE_MS,
+    DEFAULT_HASS_THROTTLE_MS,
     EVENT_FOUNDRIES_UPDATED,
 )
 
@@ -50,10 +54,18 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     entries = hass.config_entries.async_entries(DOMAIN)
                     foundries = {}
                     file_paths: list[str] = []
+                    throttle_enable = False
+                    throttle_ms = DEFAULT_HASS_THROTTLE_MS
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
                         file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
-                    send_update({CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths)})
+                        throttle_enable = entries[0].options.get(CONF_HASS_THROTTLE_ENABLE, False)
+                        throttle_ms = int(entries[0].options.get(CONF_HASS_THROTTLE_MS, DEFAULT_HASS_THROTTLE_MS))
+                    send_update({
+                        CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths),
+                        CONF_HASS_THROTTLE_ENABLE: throttle_enable,
+                        CONF_HASS_THROTTLE_MS: throttle_ms,
+                    })
                 except Exception:
                     _LOGGER.exception("Error pushing foundry update to client")
             hass.async_create_task(_push())
@@ -67,7 +79,16 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         connection.subscriptions[msg["id"]] = close_connection
         connection.send_result(msg["id"])
 
-        send_update({})
+        entries = hass.config_entries.async_entries(DOMAIN)
+        throttle_enable = False
+        throttle_ms = DEFAULT_HASS_THROTTLE_MS
+        if entries:
+            throttle_enable = entries[0].options.get(CONF_HASS_THROTTLE_ENABLE, False)
+            throttle_ms = int(entries[0].options.get(CONF_HASS_THROTTLE_MS, DEFAULT_HASS_THROTTLE_MS))
+        send_update({
+            CONF_HASS_THROTTLE_ENABLE: throttle_enable,
+            CONF_HASS_THROTTLE_MS: throttle_ms,
+        })
     
     @websocket_api.websocket_command(
         {
@@ -210,6 +231,21 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
         connection.send_result(msg["id"], {})
 
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): WS_CHECK_FOUNDRY_FILES,
+        }
+    )
+    @websocket_api.async_response
+    async def handle_check_foundry_files(hass: HomeAssistant, connection, msg):
+        """Validate all registered foundry files and return errors."""
+        entries = hass.config_entries.async_entries(DOMAIN)
+        file_paths: list[str] = []
+        if entries:
+            file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
+        result = await hass.async_add_executor_job(check_all_foundry_files, hass, file_paths)
+        connection.send_result(msg["id"], result)
+
     async_register_command(hass, handle_connect)
     async_register_command(hass, handle_log)
     async_register_command(hass, handle_get_foundries)
@@ -218,3 +254,4 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
     async_register_command(hass, handle_add_foundry_file)
     async_register_command(hass, handle_remove_foundry_file)
     async_register_command(hass, handle_reload_foundry_files)
+    async_register_command(hass, handle_check_foundry_files)

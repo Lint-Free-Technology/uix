@@ -1,0 +1,45 @@
+id: theme_adaptive_popover
+description: "UIX popover styling adapts to theme changes"
+
+theme: uix-date-picker-selection
+
+view_path: theme-adaptive-popover
+
+card:
+  type: entities
+  entities:
+    - entity: datetime.date_and_time
+
+interactions:
+  - type: click
+    root: 
+      - hui-entities-card
+      - hui-datetime-entity-row
+    selector: ha-date-input
+    settle_ms: 3000
+  - type: hover
+    root:
+      - ha-dialog-date-picker
+      - calendar-month
+    selector: table tbody tr:nth-of-type(1) td:nth-of-type(5) button
+    settle_ms: 100
+  
+assertions:
+  - type: css_property
+    root:
+      - ha-dialog-date-picker
+      - calendar-month
+    selector: table tbody tr:nth-of-type(1) td:nth-of-type(4) button
+    property: backgroundColor
+    expected: "rgb(255, 0, 0)"
+  - type: css_property
+    root:
+      - ha-dialog-date-picker
+      - calendar-month
+    selector: table tbody tr:nth-of-type(1) td:nth-of-type(5) button
+    property: backgroundColor
+    expected: "rgba(255, 0, 0, 0.2)"
+
+  - type: snapshot
+    name: 24_theme_adaptive_popover
+    threshold: 0.02

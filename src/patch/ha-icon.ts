@@ -1,6 +1,7 @@
 import { LitElement } from "lit";
 import { ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
+import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
 import { Uix } from "../uix";
 
 /*
@@ -39,57 +40,81 @@ const updateIcon = (el) => {
 };
 
 const bindUix = async (el) => {
-  // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
+  // Coalesce: if a bindUix run is already in progress for this element, skip
+  if (el._bindUixPending) return;
+  el._bindUixPending = true;
+  try {
+    // Wait for next animation frame before computing styles: batches reflow reads
+    await nextAnimationFrame();
 
-  updateIcon(el);
-  el._boundUix = el._boundUix ?? new Set();
-  const newUix = await findParentUix(el);
+    // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
 
-  for (const uix of newUix) {
-    if (el._boundUix.has(uix)) continue;
+    updateIcon(el);
+    el._boundUix = el._boundUix ?? new Set();
+    const newUix = await findParentUix(el);
 
-    uix.addEventListener("uix-styles-update", async () => {
-      await uix.updateComplete;
-      updateIcon(el);
-    });
-    el._boundUix.add(uix);
+    for (const uix of newUix) {
+      if (el._boundUix.has(uix)) continue;
+
+      uix.addEventListener("uix-styles-update", async () => {
+        // Coalesce rapid style-update events to a single update per frame
+        if (el._updateIconPending) return;
+        el._updateIconPending = true;
+        try {
+          await uix.updateComplete;
+          await nextAnimationFrame();
+          updateIcon(el);
+        } finally {
+          el._updateIconPending = false;
+        }
+      });
+      el._boundUix.add(uix);
+    }
+  } finally {
+    el._bindUixPending = false;
   }
 
   // Find uix elements created later, increased interval
   if (el.uix_retries < 5) {
     el.uix_retries++;
-    return window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
+    window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
   }
 };
 
 @patch_element("ha-state-icon")
 class HaStateIconPatch extends ModdedElement {
   uix_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-icon")
 class HaIconPatch extends ModdedElement {
   uix_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-svg-icon")
 class HaSvgIconPatch extends ModdedElement {
   uix_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
     this.uix_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 

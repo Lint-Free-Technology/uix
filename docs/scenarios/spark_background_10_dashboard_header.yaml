@@ -1,0 +1,59 @@
+id: doc_spark_background_dashboard_header
+description: "Doc image: Forge Background spark with a dashboard header (background.md)"
+view_path: doc-spark-background-dashboard-header
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 50
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Background
+      path: test-background
+      header:
+        card:
+          type: custom:uix-forge
+          forge:
+            mold: card
+            sparks:
+              - type: background
+                for: "hui-vertical-stack-card $ #root"
+                camera_entity: camera.demo_camera
+                opacity: 0.5
+                class: heading-background
+          element:
+            type: vertical-stack
+            cards:
+              - type: markdown
+                text_only: true
+                content: |-
+                  # Hello {{ user }}
+                  Welcome to my awesome dashboard. ✨
+              - type: custom:badge-horizontal-container-card
+                badges:
+                  - type: entity
+                    show_name: false
+                    show_state: true
+                    show_icon: true
+                    entity: light.bed_light
+                badges_align: center
+            uix:
+              style: |
+                #root {
+                  padding: 20px !important;
+                }
+                .heading-background {
+                  border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+                }
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-dashboard-header.png
+  root: hui-view-header
+  padding: 16

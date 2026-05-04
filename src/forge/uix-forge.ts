@@ -58,6 +58,7 @@ export class UixForge extends LitElement {
   private _foundryUpdateListener?: EventListener;
   private _resolvedUix?: any;
   private _delayedHass?: boolean;
+  private _view: LovelaceElement;
 
   constructor() {
       super();
@@ -569,6 +570,11 @@ export class UixForge extends LitElement {
         this.style.setProperty("transform", "none");
       });
     }
+    if (this._mold.isFooter()) {
+      (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
+      this.forgedElement.hass = this.hass;
+      this.refreshForge(["hidden"]);
+    }
   }
 
   private forgeElement() {
@@ -639,6 +645,30 @@ export class UixForge extends LitElement {
       });
       return;
     }
+    if (this._mold.isFooter()) {
+      // Create a dummy hui-view to load sections view which loads hui-view-footer, 
+      // which is needed to forge the footer element even if not used in a view with a footer. 
+      // The dummy view is hidden and not added to the DOM if hui-view-footer is already defined, 
+      // otherwise it is added to the DOM until hui-view-footer is defined and then removed.
+      if (!window.customElements.get("hui-view-footer") && !this._view) {
+        this._view = document.createElement("hui-view") as LovelaceElement;
+        (this._view as any).index = 0;
+        this._view.lovelace = { config: { views: [{ type: "sections", sections: [] }] } };
+        this._view.hass = this.hass;
+        this._view.style.setProperty("display", "none");
+        document.body.appendChild(this._view);
+      }
+      window.customElements.whenDefined("hui-view-footer").then(() => {
+        this.forgedElement = document.createElement("hui-view-footer") as LovelaceElement;
+        (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
+        this.forgedElement.hass = this.hass;
+        this.forgedElement.lovelace = { editMode: false };
+        document.body.contains(this._view) && document.body.removeChild(this._view);
+        this._view = undefined;
+        this.refreshForge(["hidden"]);
+      });
+      return;
+    }
   }
 
   private hiddenByConfig() {
@@ -670,6 +700,9 @@ export class UixForge extends LitElement {
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);
       if (!this.preview || this._mold.isPictureElement()) {
+        this.refreshForge(["hidden"]);
+      }
+      if (this.preview && this._mold.isFooter()) {
         this.refreshForge(["hidden"]);
       }
     }

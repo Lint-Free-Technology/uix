@@ -2,6 +2,9 @@ homeassistant:
   country: US
   unit_system: metric
   time_zone: UTC
+  customize: !include customize.yaml
+  media_dirs:
+    local: /config/www/media
 
 default_config:
 
@@ -19,3 +22,7 @@ input_boolean:
   test_boolean:
     name: Test Boolean
     initial: off
+
+person:
+  - name: James Bond 007
+    id: james_bond007

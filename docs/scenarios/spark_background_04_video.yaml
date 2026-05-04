@@ -1,0 +1,56 @@
+id: doc_spark_background_video
+description: "Doc image: Forge Background spark video (background.md)"
+view_path: doc-spark-background-video
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+    settle_ms: 2000
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    grid_options:
+      columns: 12
+      rows: 6
+    sparks:
+      - type: background
+        for: hui-weather-forecast-card $ ha-card
+        video_url: /local/media/sydney_ferry.mp4
+        opacity: 0.9
+  element:
+    show_current: true
+    show_forecast: true
+    type: weather-forecast
+    entity: weather.demo_weather_south
+    forecast_type: daily
+    uix:
+      style: |
+        :host {
+          --primary-text-color: white;
+          --secondary-text-color: smokewhite;
+          --content-border-radius: var(--ha-card-border-radius, 12px);
+        }
+        .content {
+          background: rgba(0,0,0,0.3);
+          border-top-left-radius: var(--content-border-radius);
+          border-top-right-radius: var(--content-border-radius);
+        }
+        .forecast {
+          background: rgba(0,0,0,0.3);
+          border-bottom-left-radius: var(--content-border-radius);
+          border-bottom-right-radius: var(--content-border-radius);
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/background-video.png
+  root: hui-weather-forecast-card
+  padding: 16
+  threshold: 1 # high threshold as video feed can be slightly different on each run due to timing

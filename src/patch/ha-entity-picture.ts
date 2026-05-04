@@ -1,5 +1,6 @@
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
+import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
 import { Uix } from "../uix";
 
 /*
@@ -120,24 +121,42 @@ const updateImage = (el: any): void => {
 };
 
 const bindUix = async (el: any) => {
-  updateImage(el);
-  el._boundUixImage = el._boundUixImage ?? new Set();
-  const newUix = await findParentUix(el);
+  // Coalesce: if a bindUix run is already in progress for this element, skip
+  if (el._bindUixPending) return;
+  el._bindUixPending = true;
+  try {
+    // Wait for next animation frame before computing styles: batches reflow reads
+    await nextAnimationFrame();
 
-  for (const uix of newUix) {
-    if (el._boundUixImage.has(uix)) continue;
+    updateImage(el);
+    el._boundUixImage = el._boundUixImage ?? new Set();
+    const newUix = await findParentUix(el);
 
-    uix.addEventListener("uix-styles-update", async () => {
-      await uix.updateComplete;
-      updateImage(el);
-    });
-    el._boundUixImage.add(uix);
+    for (const uix of newUix) {
+      if (el._boundUixImage.has(uix)) continue;
+
+      uix.addEventListener("uix-styles-update", async () => {
+        // Coalesce rapid style-update events to a single update per frame
+        if (el._updateImagePending) return;
+        el._updateImagePending = true;
+        try {
+          await uix.updateComplete;
+          await nextAnimationFrame();
+          updateImage(el);
+        } finally {
+          el._updateImagePending = false;
+        }
+      });
+      el._boundUixImage.add(uix);
+    }
+  } finally {
+    el._bindUixPending = false;
   }
 
   // Find uix elements created later, increased interval
   if (el.uix_image_retries < 5) {
     el.uix_image_retries++;
-    return window.setTimeout(() => bindUix(el), 250 * el.uix_image_retries);
+    window.setTimeout(() => bindUix(el), 250 * el.uix_image_retries);
   }
 };
 
@@ -149,10 +168,12 @@ class HaEntityMarkerPatch extends ModdedElement {
   entityUnit;
   entityPicture;
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    this._applyUix().then(() => bindUix(this));
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), UIX_PATCH_DEBOUNCE_MS);
   }
   async _applyUix() {
     const entityId = this.entityId;
@@ -191,40 +212,48 @@ class HaEntityMarkerPatch extends ModdedElement {
 @patch_element("ha-tile-icon")
 class HaTileIconPatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("state-badge")
 class HaStateBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-user-badge")
 class HaUserBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-person-badge")
 class HaPersonBadgePatch extends ModdedElement {
   uix_image_retries = 0;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     this.uix_image_retries = 0;
-    bindUix(this);
+    clearTimeout(this._bindUixDebounce);
+    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 

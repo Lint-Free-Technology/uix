@@ -167,12 +167,18 @@ export async function await_element(el, hard = false) {
 }
 
 /**
- * Splits a UIX path string on `$` and space separators, but ignores any `$`
- * or space that appears inside an attribute-selector bracket `[...]`, a
- * property-selector brace `{...}`, or inside quoted strings within those
+ * Splits a UIX path string on `$$`, `$` and space separators, but ignores
+ * any `$` or space that appears inside an attribute-selector bracket `[...]`,
+ * a property-selector brace `{...}`, or inside quoted strings within those
  * delimiters.  This preserves CSS attribute selectors like
  * `[attr$='value']` or `[attr='val with spaces']` and property selectors like
  * `{.prop='val with spaces'}` as single tokens.
+ *
+ * `$$` (two consecutive dollar signs outside brackets/quotes) is emitted as
+ * the single token `"$$"` — the express deep-search separator.
+ *
+ * Empty strings are never emitted: separators at the start, end, or adjacent
+ * to one another do not produce empty tokens.
  */
 function splitPath(path: string): string[] {
   const tokens: string[] = [];
@@ -195,8 +201,18 @@ function splitPath(path: string): string[] {
       else if (c === "'") inSingleQuote = true;
       else if (c === '"') inDoubleQuote = true;
       current += c;
-    } else if (c === "$" || c === " ") {
-      tokens.push(current);
+    } else if (c === "$") {
+      if (current !== "") tokens.push(current);
+      current = "";
+      // Check for $$  (express deep-search separator)
+      if (i + 1 < path.length && path[i + 1] === "$") {
+        tokens.push("$$");
+        i++; // consume the second $
+      } else {
+        tokens.push("$");
+      }
+    } else if (c === " ") {
+      if (current !== "") tokens.push(current);
       tokens.push(c);
       current = "";
     } else {
@@ -210,14 +226,67 @@ function splitPath(path: string): string[] {
   return tokens;
 }
 
+/**
+ * Recursively searches `roots` and all their shadow-root descendants for
+ * elements matching `selector`.  Unlike `querySelectorAll`, this crosses
+ * shadow-root boundaries so deeply-nested custom-element internals are
+ * reachable.
+ *
+ * Used by `_selectTree` when the `$$` deep-search token is encountered.
+ */
+async function deepQuerySelectorAll(
+  roots: (Element | ShadowRoot)[],
+  selector: string
+): Promise<Element[]> {
+  const found: Element[] = [];
+  const visitedRoots = new WeakSet<Element | ShadowRoot>();
+
+  async function traverse(root: Element | ShadowRoot): Promise<void> {
+    if (visitedRoots.has(root)) return;
+    visitedRoots.add(root);
+
+    // If root is an Element with its own shadow root, recurse into it first so
+    // that web-component children (which live in shadow DOM, not light DOM) are
+    // reachable.  This is the common case when the selector before $$ resolves
+    // to a custom element like hui-card-features.
+    if (root instanceof Element && root.shadowRoot) {
+      await await_element(root);
+      await traverse(root.shadowRoot);
+    }
+
+    // Collect matching elements in this root's own light-DOM subtree.
+    for (const el of Array.from(
+      (root as ParentNode).querySelectorAll(selector)
+    ) as Element[]) {
+      found.push(el);
+    }
+
+    // Recurse into shadow roots of every child so we can cross boundaries.
+    for (const child of Array.from(
+      (root as ParentNode).querySelectorAll("*")
+    ) as Element[]) {
+      if (child.shadowRoot) {
+        await await_element(child);
+        await traverse(child.shadowRoot);
+      }
+    }
+  }
+
+  for (const root of roots) {
+    if (!root) continue;
+    await traverse(root);
+  }
+
+  return found;
+}
+
 async function _selectTree(root, path, all = false) {
   let el = [root];
 
-  // Split and clean path
+  // Split path (splitPath never emits empty-string tokens)
   if (typeof path === "string") {
     path = splitPath(path);
   }
-  while (path[path.length - 1] === "") path.pop();
 
   // Handle optional leading & host/element filter (must be the first step).
   // If current elements are ShadowRoots, match against the host;
@@ -233,19 +302,50 @@ async function _selectTree(root, path, all = false) {
     while (path.length > 0 && !path[0].trim().length) path.shift();
   }
 
-  // For each element in the path
-  for (const [i, p] of path.entries()) {
+  // Guard: `$$` must not be the first meaningful step. Allowing it at the
+  // start would perform an unbounded deep search from the UIX root on every
+  // render — highly expensive when applied globally via a theme.
+  // splitPath never emits empty tokens, so path[0] is always the first
+  // meaningful token (space tokens have .trim().length === 0 and are skipped
+  // by the loop, but cannot appear before a real selector here).
+  if (path[0] === "$$") return null;
+
+  // Whether the next non-empty selector step should use a deep recursive
+  // shadow-piercing search (set to true after encountering a `$$` token).
+  let deepSearch = false;
+
+  // Index-based loop so we can look ahead when needed.
+  for (let i = 0; i < path.length; i++) {
+    const p = path[i];
+
     if (p === "$") {
       await Promise.all([...el].map((e) => await_element(e)));
       el = [...el].map((e) => e.shadowRoot);
       continue;
     }
 
+    if (p === "$$") {
+      // Await all current elements, then arm the deep-search flag so the next
+      // non-empty selector step uses `deepQuerySelectorAll` instead of a plain
+      // `querySelectorAll` on only the first element.
+      await Promise.all([...el].map((e) => await_element(e)));
+      deepSearch = true;
+      continue;
+    }
+
+    if (!p.trim().length) continue;
+
+    if (deepSearch) {
+      // Deep search: recursively traverse all current elements and their shadow
+      // roots, collecting every element matching the selector.
+      deepSearch = false;
+      el = await deepQuerySelectorAll([...el], p);
+      continue;
+    }
+
     // Only pick the first one for the next step
     const e = el[0];
     if (!e) return null;
-
-    if (!p.trim().length) continue;
 
     await await_element(e);
     el = e.querySelectorAll(p);
