@@ -11,6 +11,12 @@ uix-test-theme:
       color: white !important;
     }
 
+# Theme used by the theme-foundry-sparks test scenario.
+# References a foundry that is created dynamically in the test setup.
+uix-test-theme-foundry-sparks:
+  uix-theme: uix-test-theme-foundry-sparks
+  uix-card-foundry: uix-test-card-tooltip-foundry
+
 # ---------------------------------------------------------------------------
 # Documentation image themes — used by scenarios under
 # tests/visual/scenarios/doc-images/ to generate the page-asset PNGs

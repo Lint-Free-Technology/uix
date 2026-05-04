@@ -1,7 +1,7 @@
 export type UixForgeSpark = UixForgeSparkBase;
 
 import { PropertyValues } from "lit";
-import { UixForge } from "../uix-forge";
+import { UixSparkHost } from "./uix-spark-host";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";
@@ -31,10 +31,10 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
 };
 
 export class UixForgeSparkController {
-  forge: UixForge;
+  forge: UixSparkHost;
   sparks: UixForgeSparkBase[] = [];
 
-  constructor(forge: UixForge) {
+  constructor(forge: UixSparkHost) {
       this.forge = forge;
   }
 

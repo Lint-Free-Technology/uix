@@ -6,7 +6,7 @@ import {
   unbind_template,
 } from "./helpers/templates";
 import pjson from "../package.json";
-import { get_theme, get_theme_macros } from "./helpers/themes";
+import { get_theme, get_theme_macros, get_theme_foundry } from "./helpers/themes";
 import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
@@ -18,6 +18,8 @@ import {
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
+import { UixForgeSparkController } from "./forge/sparks/uix-spark-controller";
+import { UixElementSparkHost } from "./forge/sparks/uix-element-spark-host";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -49,6 +51,13 @@ export class Uix extends LitElement {
   _renderer: (_: string) => void;
 
   _cancel_style_child = [];
+
+  /** Spark controller for foundry-based sparks applied via theme. */
+  private _sparkController?: UixForgeSparkController;
+  /** The foundry name currently active for this node (null = no foundry). */
+  private _sparkFoundryName?: string | null;
+  /** Listener for uix-foundries-updated to reconfigure sparks when foundries reload. */
+  private _foundryUpdateListener?: EventListener;
 
   _observer: MutationObserver = new MutationObserver((mutations) => {
     // MutationObserver to keep track of any changes to the parent element
@@ -96,6 +105,7 @@ export class Uix extends LitElement {
     });
   }
 
+
   connectedCallback() {
     super.connectedCallback();
     if (this._processStylesOnConnect) {
@@ -116,11 +126,21 @@ export class Uix extends LitElement {
     // Make sure the uix element is invisible
     this.setAttribute("slot", "none");
     this.style.display = "none";
+
+    // Re-activate any existing spark controller (e.g. after a quick disconnect/reconnect).
+    this._sparkController?.connectedCallback();
+    // Re-register the foundry update listener if a foundry was previously active.
+    if (this._sparkFoundryName) {
+      this._addFoundryUpdateListener();
+    }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._disconnect();
+    // Deactivate sparks and remove the foundry update listener.
+    this._sparkController?.disconnectedCallback();
+    this._removeFoundryUpdateListener();
   }
 
   set styles(stl: UixStyle) {
@@ -142,6 +162,8 @@ export class Uix extends LitElement {
 
   refresh() {
     this._connect();
+    // Notify any foundry-based spark controller that the host element has updated.
+    this._sparkController?.updated(undefined);
   }
 
   cancelStyleChild() {
@@ -167,6 +189,9 @@ export class Uix extends LitElement {
 
     // Save processed styles
     this._fixed_styles = styles;
+
+    // Set up (or update) foundry-based sparks specified via theme.
+    await this._updateSparkFoundry();
 
     this.refresh();
   }
@@ -310,6 +335,119 @@ export class Uix extends LitElement {
     this.cancelStyleChild();
     await unbind_template(this._renderer);
     this.uix_parent?.refresh?.();
+  }
+
+  /**
+   * Returns the host element this uix-node is attached to.
+   *
+   * When `apply_uix` was called with `shadow = true` (the default), the uix-node
+   * lives inside a shadow root, so `parentNode.host` is the actual element.
+   * When `shadow = false`, the uix-node is a direct child and `parentElement` is
+   * the element.
+   */
+  private _getSparkHostElement(): HTMLElement | null {
+    const parentNode = this.parentNode as any;
+    if (parentNode?.host) return parentNode.host as HTMLElement;
+    return this.parentElement;
+  }
+
+  /**
+   * Check the active theme for a `uix-<type>-foundry` variable and set up (or
+   * tear down) the foundry-based spark controller accordingly.
+   *
+   * This is called from `_process_styles()`, which runs whenever the styles
+   * setter is triggered (e.g. on initial load and on theme changes).  The
+   * foundry name is cached in `_sparkFoundryName` so that re-runs caused by
+   * unrelated style updates do not redundantly reconfigure sparks.
+   */
+  private async _updateSparkFoundry() {
+    const foundryName = await get_theme_foundry(this);
+
+    if (foundryName === this._sparkFoundryName) {
+      // Foundry hasn't changed — just update the existing controller's config
+      // in case the foundry itself was edited (handled by the foundry update listener).
+      return;
+    }
+
+    this._sparkFoundryName = foundryName;
+
+    if (!foundryName) {
+      // No foundry active — clean up any existing spark controller.
+      if (this._sparkController) {
+        this._sparkController.disconnectedCallback();
+        this._sparkController = undefined;
+      }
+      this._removeFoundryUpdateListener();
+      return;
+    }
+
+    // Register for future foundry changes so sparks update if the foundry is edited.
+    this._addFoundryUpdateListener();
+
+    // Try to apply sparks from the named foundry immediately.
+    this._applyFoundrySparks(foundryName);
+  }
+
+  /**
+   * Resolve the named foundry from the coordinator and configure the spark
+   * controller with the foundry's `forge.sparks` list.
+   *
+   * Safe to call multiple times; the spark controller is created once and
+   * reused.  Called both from `_updateSparkFoundry()` and from the
+   * `uix-foundries-updated` event listener so that sparks react to live
+   * foundry edits.
+   */
+  private _applyFoundrySparks(foundryName: string) {
+    const coordinator = (window as any).uixCoordinator;
+    if (
+      !coordinator?.foundries ||
+      (Object.keys(coordinator.foundries).length === 0 && !coordinator.ready)
+    ) {
+      // Coordinator not yet ready — the foundry update listener will retry.
+      return;
+    }
+
+    const foundryData = coordinator.foundries[foundryName];
+    if (!foundryData) {
+      console.warn(`UIX: Foundry '${foundryName}' not found for '${this.type}' theme sparks.`);
+      return;
+    }
+
+    const sparks: Record<string, any>[] = foundryData.forge?.sparks ?? [];
+
+    const hostEl = this._getSparkHostElement();
+    if (!hostEl) return;
+
+    // uix-forge elements manage their own spark lifecycle — skip them to
+    // prevent double-application of sparks from a theme uix-card-foundry.
+    if (hostEl.localName === "uix-forge") return;
+
+    if (!this._sparkController) {
+      const host = new UixElementSparkHost(hostEl);
+      this._sparkController = new UixForgeSparkController(host);
+      if (this.isConnected) {
+        this._sparkController.connectedCallback();
+      }
+    }
+
+    this._sparkController.setConfig(sparks);
+  }
+
+  private _addFoundryUpdateListener() {
+    if (this._foundryUpdateListener) return;
+    this._foundryUpdateListener = () => {
+      if (this._sparkFoundryName) {
+        this._applyFoundrySparks(this._sparkFoundryName);
+      }
+    };
+    window.addEventListener("uix-foundries-updated", this._foundryUpdateListener);
+  }
+
+  private _removeFoundryUpdateListener() {
+    if (this._foundryUpdateListener) {
+      window.removeEventListener("uix-foundries-updated", this._foundryUpdateListener);
+      this._foundryUpdateListener = undefined;
+    }
   }
 
   private _style_rendered(result: string) {

@@ -235,6 +235,18 @@ red-theme:
 
 Also `<any variable>-yaml`.
 
+### Foundry sparks via theme
+
+Each `uix-<type>` variable has a corresponding `uix-<type>-foundry` variable. When set to a foundry name, UIX resolves that foundry and applies its `forge.sparks` to every themed element of that type — without requiring a `uix-forge` custom card.
+
+```yaml
+my-awesome-theme:
+  uix-theme: my-awesome-theme
+  uix-persistent-notification-item-foundry: my-notification-foundry
+```
+
+See [Foundries — Applying foundry sparks via theme](../forge/foundries.md#applying-foundry-sparks-via-theme) for full details and examples.
+
 ## Dialogs
 
 `uix-dialog` and `uix-dialog-yaml` apply to styles rooted in the dialog element of dialogs which may be `ha-dialog`, `ha-adaptive-dialog`, or `ha-drawer` (notification uses a dialog with an element using the drawer type). Dialogs will also have their class set to `type-<dialog-type>` where `<dialog-type>` will be the dialog element name with any `ha-` prefix stripped. e.g. UIX will append `type-dialog-box` to dialog boxes as used by alerts and other dialog boxes. The Home Assistant dialog manager places dialogs in the shadow root of the top `<home-assistant>` element. The active dialog will be the last child of the shadow root. To view what dialog you wish to target, review the last child of this shadow root node.

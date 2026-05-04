@@ -129,6 +129,42 @@ element:
   entity: light.kitchen
 ```
 
+## Applying foundry sparks via theme
+
+Sparks defined in a foundry's `forge.sparks` list can be applied to any themed element — without using a `uix-forge` custom card — by adding a `uix-<type>-foundry` variable to your theme.
+
+When UIX processes a themed element of that type it resolves the named foundry, reads its `forge.sparks` list, and attaches the sparks to the element in the same way as a forge card would.
+
+```yaml
+my-awesome-theme:
+  uix-theme: my-awesome-theme
+
+  # Apply the sparks in `my-notification-foundry` to every
+  # persistent-notification-item element rendered under this theme.
+  uix-persistent-notification-item-foundry: my-notification-foundry
+```
+
+The foundry only needs to define `forge.sparks`. The `element` key is not used (and is not required) because the themed element already exists in the page.
+
+```yaml
+# Foundry definition (in UIX Settings or a YAML file)
+my-notification-foundry:
+  forge:
+    sparks:
+      - type: lock
+        for: element
+        confirmation: true
+```
+
+The `for` selector in each spark is resolved relative to the themed element:
+
+- `for: element` — the element itself (e.g. the `persistent-notification-item`).
+- `for: "$ ha-button.dismiss"` — the dismiss button inside the element's shadow root.
+- Any other UIX path string navigating into the element's DOM tree.
+
+!!! tip "Supported element types"
+    Any element type that UIX themes can style (all `uix-<thing>` variables) also supports `uix-<thing>-foundry`. For example `uix-card-foundry`, `uix-row-foundry`, `uix-persistent-notification-item-foundry`, and so on. See the [Theme variables](../using/themes.md#theme-variables) section for the full list.
+
 ## Foundry config structure
 
 A foundry is a YAML object that can contain any combination of `forge` and `element` keys:

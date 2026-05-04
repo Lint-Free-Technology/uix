@@ -1,0 +1,34 @@
+id: forge_theme_foundry_sparks
+description: "Sparks specified in a Foundry can be applied to elements via a theme uix-<type>-foundry variable"
+view_path: forge-theme-foundry-sparks
+theme: uix-test-theme-foundry-sparks
+
+setup:
+  - type: add_foundry
+    name: uix-test-card-tooltip-foundry
+    config:
+      forge:
+        sparks:
+          - type: attribute
+            for: "$ ha-card"
+            attribute: data-uix-theme-spark
+            value: "active"
+
+card:
+  type: tile
+  entity: light.bed_light
+
+interactions:
+  - type: wait
+    ms: 1000
+
+assertions:
+  # The attribute spark should have set data-uix-theme-spark="active" on the
+  # ha-card element inside hui-card's shadow root.
+  - type: element_present
+    root: hui-card
+    selector: "ha-card[data-uix-theme-spark='active']"
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-card-tooltip-foundry

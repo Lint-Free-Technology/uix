@@ -1,6 +1,6 @@
 import { hass } from "./hass";
 import { yaml2json } from "./yaml2json";
-import { Uix } from "../uix";
+import type { Uix } from "../uix";
 import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
 import { nextAnimationFrame } from "./raf";
@@ -114,4 +114,36 @@ export async function get_theme_macros(root: Uix): Promise<Record<string, MacroC
 
   _themeMacrosInFlight.set(root, promise);
   return promise;
+}
+
+/**
+ * Read the `uix-<type>-foundry` theme variable for the given uix-node.
+ *
+ * When a theme sets e.g. `uix-persistent-notification-item-foundry: my_foundry`,
+ * UIX will apply the sparks defined in that foundry to every themed element of
+ * that type — without needing a uix-forge custom card.
+ *
+ * Returns the foundry name string, or `null` if no foundry is configured.
+ */
+export async function get_theme_foundry(root: Uix): Promise<string | null> {
+  if (!root.type) return null;
+
+  await themesReady().catch(() => {});
+
+  // Wait for next animation frame before computing styles: batches reflow reads
+  await nextAnimationFrame();
+
+  const el = root.parentElement ? root.parentElement : root;
+  const cs = window.getComputedStyle(el);
+  const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+
+  const hs = await hass();
+  if (!hs) return null;
+  const themes = hs?.themes.themes ?? {};
+  if (!themes[theme]) return null;
+
+  const foundryName = themes[theme][`uix-${root.type}-foundry`];
+  if (!foundryName || typeof foundryName !== "string") return null;
+
+  return foundryName.trim() || null;
 }

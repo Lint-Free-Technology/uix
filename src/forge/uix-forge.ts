@@ -6,6 +6,7 @@ import { bind_template, hasTemplate, unbind_template } from "../helpers/template
 import { apply_uix, buildMacros, buildBillets, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
+import type { UixSparkHost } from "./sparks/uix-spark-host";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -36,7 +37,7 @@ function _mergeFoundryConfig(foundry: any, local: any): any {
   return result;
 }
 
-export class UixForge extends LitElement {
+export class UixForge extends LitElement implements UixSparkHost {
   @property({attribute: false}) hass: any;
   @property({attribute: false}) preview: boolean;
   @property({attribute: false}) layout: boolean;
