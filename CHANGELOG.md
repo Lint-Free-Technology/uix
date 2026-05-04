@@ -1,3 +1,30 @@
+## [7.0.0](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0...v7.0.0) (2026-05-04)
+
+### ⭐ New Features
+
+* `$$` express deep-search selector for shadow-piercing yaml path navigation ([#283](https://github.com/Lint-Free-Technology/uix/issues/283)) ([048c22e](https://github.com/Lint-Free-Technology/uix/commit/048c22eddfe539c359d576ebfa90539fed88e699))
+* Add "Wrap in UIX Forge" lightbulb icon button to card, badge, row, and picture-element YAML editors ([#284](https://github.com/Lint-Free-Technology/uix/issues/284)) ([763c6d3](https://github.com/Lint-Free-Technology/uix/commit/763c6d38d786276914d2cc8951dc1e408b4d8187))
+* Compress uix.js for client network inflight efficiency ([#296](https://github.com/Lint-Free-Technology/uix/issues/296)) ([9ca77b4](https://github.com/Lint-Free-Technology/uix/commit/9ca77b4f9e13541b32b4cb201839b68473e6e3b5))
+* **file-foundries:** Add UIX foundry file check and reload to HA developer tools YAML page ([#279](https://github.com/Lint-Free-Technology/uix/issues/279)) ([cb30b52](https://github.com/Lint-Free-Technology/uix/commit/cb30b52e78f7416d67c5c34607e8e8d169ea78c1))
+* **major:** add background spark for UIX Forge allowing for a target of a forged element to have a background from camera_entity, image_entity, video_url, image_url backgrounds as well as straight full shorthand CSS background([#262](https://github.com/Lint-Free-Technology/uix/issues/262)) ([c8294da](https://github.com/Lint-Free-Technology/uix/commit/c8294dabfcb385fe6fd83da874c208fa599925d4)), closes [#236](https://github.com/Lint-Free-Technology/uix/issues/236)
+* **major:** Footer mold for UIX Forge. Use a footer in section, masonry and panel dashboards. ([#277](https://github.com/Lint-Free-Technology/uix/issues/277)) ([6992aaf](https://github.com/Lint-Free-Technology/uix/commit/6992aafe22bde1e28be83ce148ea8c6255805cb4))
+* **performance:** Dashboard view states update throttle, configurable via integration UI and client-side override API ([#292](https://github.com/Lint-Free-Technology/uix/issues/292)) ([bfbad63](https://github.com/Lint-Free-Technology/uix/commit/bfbad639fca065daa3908e7277b34c2bbad3e34c))
+* **styling:** Look for ha-adaptive-popover for dialog adaptive popover styling by theme ([#294](https://github.com/Lint-Free-Technology/uix/issues/294)) ([9f7617c](https://github.com/Lint-Free-Technology/uix/commit/9f7617c73ede4fc28ccb0e10f16cda9e0191ed84))
+
+### 🐞 Bug Fixes
+
+* **background-spark:** Camera stream spinner never stopping ([#278](https://github.com/Lint-Free-Technology/uix/issues/278)) ([563f9d8](https://github.com/Lint-Free-Technology/uix/commit/563f9d8ce7e126aec34635eb5dc78f8922b2dcd6))
+* **forge-footer:** Fix display in UI edit mode by removing `display: contents` when in edit mode. ([9e5e5b7](https://github.com/Lint-Free-Technology/uix/commit/9e5e5b7639675bc6cbb12d7c24aac0eb5a0d591a))
+
+### ⚙️ Miscellaneous
+
+* Debounce icon and picture-entity updates at 250ms to maintain performance when icons rapidly update ([#287](https://github.com/Lint-Free-Technology/uix/issues/287)) ([5b8e5ba](https://github.com/Lint-Free-Technology/uix/commit/5b8e5ba38393f8702a07b1734ba0d80fd9125348))
+* fix splitPath to not emit empty tokens, simplify $$ guard to O(1) performance ([#285](https://github.com/Lint-Free-Technology/uix/issues/285)) ([b33ce62](https://github.com/Lint-Free-Technology/uix/commit/b33ce62677d40fc10f90e3f38d4ea618e9113ccc))
+* For performance only apply UIX to view when view config will have changed (narrow, lovelace, index). ([a77844e](https://github.com/Lint-Free-Technology/uix/commit/a77844ef2943bcaa89574024f216db1abe81c402))
+* remove foundry file check tie-in to Check Configuration - leave reload button ([#281](https://github.com/Lint-Free-Technology/uix/issues/281)) ([d69397f](https://github.com/Lint-Free-Technology/uix/commit/d69397fbf778f7fe224eb611d232071d09f4368b))
+* show debug on apply_uix if existing element has UIX debug set. Properly outputs debug on subsequent calls to apply_uix for elements where debug is set by theme. ([3679ebb](https://github.com/Lint-Free-Technology/uix/commit/3679ebb6ed9bd7bd91116d73f2cbf25ceb204aea))
+* **styling:** Performance optimizations for theme, icon, picture-entity - awaiting animation frame and single code flight path ([#286](https://github.com/Lint-Free-Technology/uix/issues/286)) ([ea3656f](https://github.com/Lint-Free-Technology/uix/commit/ea3656f2d9c72fb92ee459a2dbb56a0f3b4ac8aa))
+
 ## [7.0.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0-beta.12...v7.0.0-beta.13) (2026-05-04)
 
 ### ⭐ New Features
