@@ -4,9 +4,6 @@ description: Learn about how UIX can help tame your Home Assistant Frontend with
 ---
 # Frontend states throttling
 
-!!! info
-    Frontend states throttling available in v7.0.0-beta.12
-
 Home Assistant can be very chatty sending states to the Frontend, with no mechanism to control which states are sent. Therefore if you have a Bluetooth RSSI changing rapidly, it will send the state to the Frontend causing views to refresh. This can be problematic for slow devices or for busy Dashboard views. UIX provides Frontend states throttling which can be used to help mitigate issues caused by rapid state updates.
 
 !!! info "What is throttled?"
