@@ -6,7 +6,9 @@
   "scripts": {
     "build": "rollup -c",
     "update-manifest-version": "node -e \"const pkg = require('./package.json'); const manifest = require('./custom_components/uix/manifest.json'); manifest.version = pkg.version; require('fs').writeFileSync('./custom_components/uix/manifest.json', JSON.stringify(manifest, null, 2) + '\\n');\"",
+    "compress-build-artifacts": "node -e \"const fs = require('fs'); const path = require('path'); const zlib = require('zlib'); const buildDir = path.join(__dirname, 'custom_components/uix'); fs.readdirSync(buildDir).forEach(file => { if (file.endsWith('.js')) { const filePath = path.join(buildDir, file); const fileContents = fs.readFileSync(filePath); const compressed = zlib.gzipSync(fileContents); fs.writeFileSync(filePath + '.gz', compressed); } });\"",
     "prebuild": "npm run update-manifest-version",
+    "postbuild": "npm run compress-build-artifacts",
     "watch": "rollup -c --watch"
   },
   "keywords": [],
