@@ -21,6 +21,9 @@ The setting takes effect immediately across all connected browser sessions — n
 
 When the delay is enabled, UIX listens for the `after-show` event fired by Home Assistant dialogs once their open animation has completed. Styles are only applied at that point rather than immediately when the dialog is opened, which prevents mid-animation style recalculations that can cause animation flicker.
 
+!!! info
+    The need for delaying UIX styling for dialogs may be Browser dependent. Safari / webKit devices, particularly iOS seem to suffer more from the issue of applying dialog styles without delay.
+
 ## Client-side override API
 
 `window.uixCoordinator` exposes a `setDialogApplyAfterShowOverride()` method that lets external integrations — such as [Browser Mod](https://github.com/thomasloven/hass-browser_mod) — apply **per-browser**, **per-user**, or **per-device** settings without requiring a backend configuration change. For Browser Mod you would apply a [**Default action**](https://github.com/thomasloven/hass-browser_mod/blob/master/documentation/configuration-panel.md#default-action) javascript action.
