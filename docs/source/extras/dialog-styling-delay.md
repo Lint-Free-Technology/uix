@@ -128,4 +128,4 @@ The delay is beneficial when:
 - You are on a **slow or low-powered device** where style calculations during the open animation are noticeable.
 
 !!! warning
-    Enabling this option means styles are applied slightly later than normal. On fast devices the difference this will be quick but likely noticeable3, but on very slow devices there will be a delay. If you have devices needing the option set or not, consider using Browser Mod with Default action to set the override via javascript.
+    Enabling this option means styles are applied slightly later than normal. On fast devices, the difference will likely be minor, but on very slow devices there may be a noticeable delay. If some devices need this option enabled and others do not, consider using Browser Mod with Default action to set the override via javascript.
