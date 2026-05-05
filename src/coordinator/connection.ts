@@ -232,6 +232,10 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.hass_throttle_ms ?? 200;
     }
 
+    get dialogApplyAfterShow(): boolean {
+      return this._data?.dialog_apply_after_show ?? false;
+    }
+
     /**
      * Set a client-side override for the hass throttle settings.
      *

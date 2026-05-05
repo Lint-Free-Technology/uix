@@ -10,22 +10,28 @@ There is no style passed to apply_uix here, everything comes only from themes.
 @patch_element("ha-more-info-dialog")
 class MoreInfoDIalogPatch extends ModdedElement {
   showDialog(_orig, params, ...rest) {
+    const coordinator = (window as any).uixCoordinator;
+    if (coordinator?.dialogApplyAfterShow) {
+      this.addEventListener("after-show", () => this._uixDialogApplyUix(params), { once: true });
+    }
     _orig?.(params, ...rest);
+    if (!coordinator?.dialogApplyAfterShow) {
+      this._uixDialogApplyUix(params);
+    }
+  }
 
-    this.requestUpdate();
-    this.updateComplete.then(async () => {
-      const haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog") ?? this.shadowRoot.querySelector("ha-dialog");
-      if (!haDialog) return;
+  _uixDialogApplyUix(params) {
+    const haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog") ?? this.shadowRoot.querySelector("ha-dialog");
+    if (!haDialog) return;
 
-      apply_uix(
-        haDialog as ModdedElement,
-        "more-info",
-        undefined,
-        {
-          config: params,
-        },
-        false
-      );
-    });
+    apply_uix(
+      haDialog as ModdedElement,
+      "more-info",
+      undefined,
+      {
+        config: params,
+      },
+      false
+    );
   }
 }

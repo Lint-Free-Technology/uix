@@ -49,40 +49,45 @@ export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
 }
 
 class HaDialogPatch extends ModdedElement {
-  async updated(_orig, args) {
-    await _orig?.(args);
+  _uixAfterShowListener: EventListener | null = null;
 
-    this.updateComplete.then(async () => {
-      let haDialog: HTMLElement | null =
-        this.shadowRoot.querySelector("ha-dialog");
-      if (!haDialog) {
-        haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog");
-      }
-      if (!haDialog) {
-        haDialog = this.shadowRoot.querySelector("ha-adaptive-popover");
-      }
-      if (!haDialog) {
-        haDialog = this.shadowRoot.querySelector("ha-wa-dialog");
-      }
-      if (!haDialog) {
-        haDialog = this.shadowRoot.querySelector("ha-md-dialog");
-      }
-      if (!haDialog) {
-        // Notification 'dialog' is ha-drawer
-        haDialog = this.shadowRoot.querySelector("ha-drawer");
-      }
-      if (!haDialog) return;
+  updated(_orig, args) {
+    const coordinator = (window as any).uixCoordinator;
+    if (coordinator?.dialogApplyAfterShow && !this._uixAfterShowListener) {
+      this._uixAfterShowListener = this._uixDialogApplyUix.bind(this);
+      this.addEventListener("after-show", this._uixAfterShowListener);
+    }
+    _orig?.(args);
+    if (!(coordinator?.dialogApplyAfterShow)) {
+      this.requestUpdate();
+      this.updateComplete.then(() => this._uixDialogApplyUix());
+    }
+  }
 
-      const cls = `type-${this.localName.replace?.("ha-", "")}`;
-      apply_uix(
-        haDialog as ModdedElement,
-        "dialog",
-        undefined,
-        { params: dialogParams[this.localName] ?? {} },
-        false,
-        cls
-      );
-    });
+  _uixDialogApplyUix() {
+    let haDialog: HTMLElement | null =
+    this.shadowRoot.querySelector("ha-dialog");
+    if (!haDialog) {
+      haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog");
+    }
+    if (!haDialog) {
+      haDialog = this.shadowRoot.querySelector("ha-adaptive-popover");
+    }
+    if (!haDialog) {
+      // Notification 'dialog' is ha-drawer
+      haDialog = this.shadowRoot.querySelector("ha-drawer");
+    }
+    if (!haDialog) return;
+
+    const cls = `type-${this.localName.replace?.("ha-", "")}`;
+    apply_uix(
+      haDialog as ModdedElement,
+      "dialog",
+      undefined,
+      { params: dialogParams[this.localName] ?? {} },
+      false,
+      cls
+    );
   }
 }
 
