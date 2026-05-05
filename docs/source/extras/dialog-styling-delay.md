@@ -1,10 +1,10 @@
 ---
 title: Dialog styling delay
-description: Learn how UIX can delay applying dialog styles until after a dialog is fully shown, reducing visual flicker
+description: Learn how UIX can delay applying dialog styles until after a dialog is fully shown, reducing visual flicker and animation artifacts
 ---
 # Dialog styling delay
 
-By default, UIX applies styles to dialogs as soon as they are opened. On some devices this can produce a brief visual flicker as the styles are applied mid-animation. UIX provides a **dialog styling delay** option that defers style application until after the dialog's open animation completes, eliminating this flicker.
+By default, UIX applies styles to dialogs as soon as they are opened. On some devices this can produce a brief visual flicker as the styles are applied mid-animation causing Browser repaint during animation. UIX provides a **dialog styling delay** option that defers style application until after the dialog's open animation completes, eliminating any flicker or animation artifacts.
 
 ## Enabling via the integration UI
 
@@ -19,7 +19,7 @@ The setting takes effect immediately across all connected browser sessions — n
 
 ## How it works
 
-When the delay is enabled, UIX listens for the `after-show` event fired by Home Assistant dialogs once their open animation has completed. Styles are only applied at that point rather than immediately when the dialog is opened, which prevents mid-animation style recalculations that can cause flicker.
+When the delay is enabled, UIX listens for the `after-show` event fired by Home Assistant dialogs once their open animation has completed. Styles are only applied at that point rather than immediately when the dialog is opened, which prevents mid-animation style recalculations that can cause animation flicker.
 
 ## Client-side override API
 
@@ -77,6 +77,40 @@ tap_action:
     [[[ window.uixCoordinator?.setDialogApplyAfterShowOverride(false); ]]]
 ```
 
+??? example "Full toggle example"
+    ```yaml
+    type: custom:button-card
+    grid_options:
+      rows: 2
+      columns: 6
+    section_mode: true
+    update_timer: 500ms
+    variables:
+      dialogApplyAfterShow: |
+        [[[ return window.uixCoordinator?.dialogApplyAfterShow; ]]]
+    styles:
+      card:
+        - "--dialog-icon-color": >
+            [[[ return variables.dialogApplyAfterShow ? "var(--state-active-color)"
+            : "var(--state-inactive-color)"; ]]]
+        - "--ha-ripple-hover-color": >
+            [[[ return variables.dialogApplyAfterShow ? "var(--state-active-color)"
+            : "var(--state-inactive-color)"; ]]]
+    name: >
+      [[[ return variables.dialogApplyAfterShow ? "UIX Dialog Delay ON" : "UIX
+      Dialog Delay OFF"; ]]]
+    icon: >
+      [[[ return variables.dialogApplyAfterShow ? "mdi:timer-play-outline" :
+      "mdi:timer-off-outline"; ]]]
+    color: var(--dialog-icon-color)
+    tap_action:
+      action: javascript
+      javascript: >
+        [[[ variables.dialogApplyAfterShow ?
+        window.uixCoordinator?.setDialogApplyAfterShowOverride(false) :
+        window.uixCoordinator?.setDialogApplyAfterShowOverride(true); ]]]
+    ```
+
 ## Configuration reference
 
 | Setting | Default | Description |
@@ -87,8 +121,8 @@ tap_action:
 
 The delay is beneficial when:
 
-- Dialogs show a **brief flash or flicker** of unstyled content before UIX styles are applied.
+- Dialogs show a **brief flash or animation artifacts** like may be seen with the bottom sheet dialog variant.
 - You are on a **slow or low-powered device** where style calculations during the open animation are noticeable.
 
 !!! warning
-    Enabling this option means styles are applied slightly later than normal. On fast devices the difference is imperceptible, but on very slow devices there may be a brief moment where the dialog is visible but unstyled.
+    Enabling this option means styles are applied slightly later than normal. On fast devices the difference this will be quick but likely noticeable3, but on very slow devices there will be a delay. If you have devices needing the option set or not, consider using Browser Mod with Default action to set the override via javascript.
