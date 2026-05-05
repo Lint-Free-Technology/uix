@@ -16,7 +16,8 @@ class MoreInfoDIalogPatch extends ModdedElement {
     }
     _orig?.(params, ...rest);
     if (!coordinator?.dialogApplyAfterShow) {
-      this._uixDialogApplyUix(params);
+      this.requestUpdate();
+      this.updateComplete.then(() => this._uixDialogApplyUix(params));
     }
   }
 

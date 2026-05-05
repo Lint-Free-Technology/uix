@@ -56,6 +56,9 @@ class HaDialogPatch extends ModdedElement {
     if (coordinator?.dialogApplyAfterShow && !this._uixAfterShowListener) {
       this._uixAfterShowListener = this._uixDialogApplyUix.bind(this);
       this.addEventListener("after-show", this._uixAfterShowListener);
+    } else if (this._uixAfterShowListener) {
+      this.removeEventListener("after-show", this._uixAfterShowListener);
+      this._uixAfterShowListener = null;
     }
     _orig?.(args);
     if (!(coordinator?.dialogApplyAfterShow)) {
