@@ -98,6 +98,7 @@ nav:
   - UIX Extras:
       - extras/index.md
       - extras/frontend-states-throttling.md
+      - extras/dialog-styling-delay.md
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
