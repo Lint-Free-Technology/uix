@@ -25,6 +25,7 @@ from .const import (
     CONF_HASS_THROTTLE_ENABLE,
     CONF_HASS_THROTTLE_MS,
     DEFAULT_HASS_THROTTLE_MS,
+    CONF_DIALOG_APPLY_AFTER_SHOW,
     EVENT_FOUNDRIES_UPDATED,
 )
 from .helpers import validate_foundry_file
@@ -149,6 +150,7 @@ class UixOptionsFlow(OptionsFlow):
                     **self._config_entry.options,
                     CONF_HASS_THROTTLE_ENABLE: user_input[CONF_HASS_THROTTLE_ENABLE],
                     CONF_HASS_THROTTLE_MS: int(user_input[CONF_HASS_THROTTLE_MS]),
+                    CONF_DIALOG_APPLY_AFTER_SHOW: user_input[CONF_DIALOG_APPLY_AFTER_SHOW],
                 },
             )
 
@@ -172,6 +174,10 @@ class UixOptionsFlow(OptionsFlow):
                             mode=NumberSelectorMode.BOX,
                         )
                     ),
+                    vol.Optional(
+                        CONF_DIALOG_APPLY_AFTER_SHOW,
+                        default=self._config_entry.options.get(CONF_DIALOG_APPLY_AFTER_SHOW, False),
+                    ): BooleanSelector(),
                 }
             ),
         )
