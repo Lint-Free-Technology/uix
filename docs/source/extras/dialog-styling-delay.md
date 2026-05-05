@@ -4,6 +4,9 @@ description: Learn how UIX can delay applying dialog styles until after a dialog
 ---
 # Dialog styling delay
 
+!!! note
+    Dialog styling delay available in 7.1.0-beta.1
+
 By default, UIX applies styles to dialogs as soon as they are opened. On some devices this can produce a brief visual flicker as the styles are applied mid-animation causing Browser repaint during animation. UIX provides a **dialog styling delay** option that defers style application until after the dialog's open animation completes, eliminating any flicker or animation artifacts.
 
 ## Enabling via the integration UI
