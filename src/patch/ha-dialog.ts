@@ -67,8 +67,7 @@ class HaDialogPatch extends ModdedElement {
   }
 
   _uixDialogApplyUix() {
-    let haDialog: HTMLElement | null =
-    this.shadowRoot.querySelector("ha-dialog");
+    let haDialog: HTMLElement | null = this.shadowRoot.querySelector("ha-dialog");
     if (!haDialog) {
       haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog");
     }
