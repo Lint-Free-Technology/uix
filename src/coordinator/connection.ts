@@ -11,6 +11,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _connectionResolve;
     private _foundries: Record<string, any> = {};
     private _hassThrottleOverride: { enable?: boolean; ms?: number } | null = null;
+    private _dialogApplyAfterShowOverride: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -233,6 +234,9 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     get dialogApplyAfterShow(): boolean {
+      if (this._dialogApplyAfterShowOverride !== null) {
+        return this._dialogApplyAfterShowOverride;
+      }
       return this._data?.dialog_apply_after_show ?? false;
     }
 
@@ -259,6 +263,31 @@ export const ConnectionMixin = (SuperClass) => {
      */
     public setThrottleOverride(override: { enable?: boolean; ms?: number } | null = null): void {
       this._hassThrottleOverride = override;
+    }
+
+    /**
+     * Set a client-side override for the dialog apply-after-show setting.
+     *
+     * This is intended for use by external integrations such as Browser Mod
+     * that want to apply per-browser, per-user, or per-device settings without
+     * requiring a backend configuration change.  The override takes precedence
+     * over the server-side config pushed by the UIX integration.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     *
+     * @example
+     * // Enable delay for this browser session:
+     * window.uixCoordinator.setDialogApplyAfterShowOverride(true);
+     *
+     * // Disable delay for this browser session:
+     * window.uixCoordinator.setDialogApplyAfterShowOverride(false);
+     *
+     * // Remove the override and revert to server defaults:
+     * window.uixCoordinator.setDialogApplyAfterShowOverride(null);
+     */
+    public setDialogApplyAfterShowOverride(value: boolean | null = null): void {
+      this._dialogApplyAfterShowOverride = value;
     }
   }
 
