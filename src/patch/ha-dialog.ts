@@ -59,7 +59,6 @@ class HaDialogPatch extends ModdedElement {
     }
     _orig?.(args);
     if (!(coordinator?.dialogApplyAfterShow)) {
-      this.requestUpdate();
       this.updateComplete.then(() => this._uixDialogApplyUix());
     }
   }
