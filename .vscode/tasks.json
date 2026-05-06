@@ -51,7 +51,7 @@
     {
       "label": "HA: Start persistent server",
       "type": "shell",
-      "command": "source .venv/bin/activate && python tests/ha_server.py",
+      "command": "source .venv/bin/activate && HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server",
       "isBackground": true,
       "problemMatcher": {
         "owner": "ha-server",
