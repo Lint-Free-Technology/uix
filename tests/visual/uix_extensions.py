@@ -62,7 +62,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from scenario_runner import register_interaction_type
+from ha_testcontainer.visual.scenario_runner import register_interaction_type
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page
