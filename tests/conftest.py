@@ -19,6 +19,13 @@ HA_URL
 HA_TOKEN
     Long-lived access token for the pre-running HA instance.  Required when
     ``HA_URL`` is set.
+LOVELACE_EXTRA_CONFIG_DIR
+    Path to a directory whose contents are copied on top of
+    ``tests/ha-config/`` before the container starts.  Use this to inject
+    additional themes, entity fixtures, etc. without modifying the test config.
+LOVELACE_PLUGINS_YAML
+    Path to an alternative ``plugins.yaml``.  When set, this file is used
+    instead of ``tests/plugins.yaml`` for downloading Lovelace plugins.
 """
 
 from __future__ import annotations
@@ -26,6 +33,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 import threading
 from pathlib import Path
 from typing import Any
@@ -36,6 +44,15 @@ import websocket
 from ha_testcontainer import HATestContainer, HAVersion
 
 from plugins import download_lovelace_plugins
+
+# ---------------------------------------------------------------------------
+# Make tests/visual/ importable so uix_extensions (and scenario_runner) can
+# be imported from the root conftest before pytest adds it to sys.path.
+# ---------------------------------------------------------------------------
+
+sys.path.insert(0, str(Path(__file__).parent / "visual"))
+
+import uix_extensions  # noqa: F401, E402 — side-effect: registers UIX interaction types
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -155,7 +172,20 @@ def ha(ha_version: str, tmp_path_factory):
     # so the source tree is never polluted by HA's runtime writes.
     ha_tmp = tmp_path_factory.mktemp("ha-state")
     shutil.copytree(str(HA_CONFIG_DIR), str(ha_tmp), dirs_exist_ok=True)
-    download_lovelace_plugins(ha_tmp / "www")
+
+    # Merge any extra config on top (LOVELACE_EXTRA_CONFIG_DIR).
+    extra_config_env = os.environ.get("LOVELACE_EXTRA_CONFIG_DIR", "").strip()
+    if extra_config_env:
+        extra_config = Path(extra_config_env)
+        if extra_config.exists():
+            shutil.copytree(str(extra_config), str(ha_tmp), dirs_exist_ok=True)
+
+    # Download plugins (respects LOVELACE_PLUGINS_YAML override).
+    plugins_yaml_env = os.environ.get("LOVELACE_PLUGINS_YAML", "").strip()
+    download_lovelace_plugins(
+        ha_tmp / "www",
+        plugins_yaml=Path(plugins_yaml_env) if plugins_yaml_env else None,
+    )
 
     container = HATestContainer(
         version=ha_version,

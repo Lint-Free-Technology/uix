@@ -56,10 +56,13 @@ _TRUSTED_DOWNLOAD_HOSTS = frozenset(
 )
 
 
-def _load_plugins() -> list[dict[str, str]]:
-    """Load the plugin registry from ``plugins.yaml``."""
-    with _PLUGINS_YAML.open() as fh:
+def _load_plugins(plugins_yaml: Path | None = None) -> list[dict[str, str]]:
+    """Load the plugin registry from *plugins_yaml* (defaults to the ``plugins.yaml`` next to this module)."""
+    path = plugins_yaml if plugins_yaml is not None else _PLUGINS_YAML
+    with path.open() as fh:
         data = yaml.safe_load(fh)
+    if data is None:
+        return []
     if not isinstance(data, list):
         raise ValueError(f"{_PLUGINS_YAML} must contain a YAML list, got {type(data).__name__}")
     return data
@@ -79,11 +82,12 @@ def _github_headers() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def download_lovelace_plugins(www_dir: Path) -> None:
+def download_lovelace_plugins(www_dir: Path, *, plugins_yaml: Path | None = None) -> None:
     """Download the latest release of each registered plugin into *www_dir*.
 
-    The plugin list is read from ``tests/plugins.yaml`` on every call so that
-    changes to the registry are picked up without restarting the process.
+    The plugin list is read from *plugins_yaml* (defaults to
+    ``tests/plugins.yaml`` in the same directory as this module).  Pass an
+    explicit path to use a component-specific registry instead.
 
     Creates *www_dir* if it does not exist.  Files are always overwritten so
     the latest version is guaranteed on every fresh container startup.
@@ -97,9 +101,12 @@ def download_lovelace_plugins(www_dir: Path) -> None:
     www_dir:
         The ``www/`` subdirectory inside the HA config temp dir.  Files
         placed here are served at ``/local/<filename>`` by Home Assistant.
+    plugins_yaml:
+        Override the default ``plugins.yaml`` path.  When ``None``, uses
+        the ``plugins.yaml`` file next to this module.
     """
     www_dir.mkdir(parents=True, exist_ok=True)
-    plugins = _load_plugins()
+    plugins = _load_plugins(plugins_yaml)
     for plugin in plugins:
         _download_plugin(www_dir, plugin)
     _write_lovelace_resources(www_dir.parent, plugins)

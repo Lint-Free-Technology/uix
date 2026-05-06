@@ -30,6 +30,18 @@ Environment variables
 HA_VERSION
     Docker image tag to use.  Defaults to ``stable``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
+LOVELACE_EXTRA_CONFIG_DIR
+    Path to a directory whose contents are copied on top of
+    ``tests/ha-config/`` before the container starts.  Use this to inject
+    additional themes, foundry YAML files, etc. without modifying the test
+    config.
+LOVELACE_PLUGINS_YAML
+    Path to an alternative ``plugins.yaml``.  When set, this file is used
+    instead of ``tests/plugins.yaml`` for downloading Lovelace plugins.
+LOVELACE_SETUP_INTEGRATION
+    Integration domain to configure after startup (e.g. ``uix``).
+    Leave unset or empty to skip automatic integration setup.  When unset,
+    the UIX integration is set up automatically (the default for this server).
 """
 
 from __future__ import annotations
@@ -76,8 +88,19 @@ def main() -> None:
     ha_tmp = Path(tempfile.mkdtemp(prefix="uix-ha-state-"))
     shutil.copytree(str(_HA_CONFIG_DIR), str(ha_tmp), dirs_exist_ok=True)
 
+    # Merge any extra config on top (LOVELACE_EXTRA_CONFIG_DIR).
+    extra_config_env = os.environ.get("LOVELACE_EXTRA_CONFIG_DIR", "").strip()
+    if extra_config_env:
+        extra_config = Path(extra_config_env)
+        if extra_config.exists():
+            shutil.copytree(str(extra_config), str(ha_tmp), dirs_exist_ok=True)
+
     from plugins import download_lovelace_plugins
-    download_lovelace_plugins(ha_tmp / "www")
+    plugins_yaml_env = os.environ.get("LOVELACE_PLUGINS_YAML", "").strip()
+    download_lovelace_plugins(
+        ha_tmp / "www",
+        plugins_yaml=Path(plugins_yaml_env) if plugins_yaml_env else None,
+    )
 
     container = HATestContainer(
         version=ha_version,
@@ -90,7 +113,11 @@ def main() -> None:
     )
 
     container.start()
-    container.setup_integration("uix")
+
+    # Set up the UIX integration (overridable via LOVELACE_SETUP_INTEGRATION).
+    integration = os.environ.get("LOVELACE_SETUP_INTEGRATION", "uix").strip()
+    if integration:
+        container.setup_integration(integration)
 
     url = container.get_url()
     token = container.get_token()
