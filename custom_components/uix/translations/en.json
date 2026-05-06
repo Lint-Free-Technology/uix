@@ -45,11 +45,13 @@
                 "description": "Configure performance optimizations for UIX.",
                 "data": {
                     "hass_throttle_enable": "Throttle entity state updates",
-                    "hass_throttle_ms": "Throttle interval"
+                    "hass_throttle_ms": "Throttle interval",
+                    "dialog_apply_after_show": "Delay UIX styling for dialogs until fully shown"
                 },
                 "data_description": {
                     "hass_throttle_enable": "When enabled, reduces the frequency at which the dashboard root re-renders when entity states change rapidly.",
-                    "hass_throttle_ms": "Minimum time between entity state update re-renders. Only applies when throttling is enabled."
+                    "hass_throttle_ms": "Minimum time between entity state update re-renders. Only applies when throttling is enabled.",
+                    "dialog_apply_after_show": "When enabled, UIX styles for dialogs are applied after the dialog's open animation completes rather than immediately. This can reduce visual flicker on slower devices."
                 }
             },
             "add_foundry": {
