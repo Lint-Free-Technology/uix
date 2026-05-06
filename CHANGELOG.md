@@ -1,4 +1,4 @@
-## [7.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0...v7.1.0-beta.1) (2026-05-05)
+## [7.1.0](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0...v7.1.0) (2026-05-06)
 
 ### ⭐ New Features
 
