@@ -4,12 +4,6 @@
 
 * **dialog-styling:** UIX integration option to allow delaying UIX application until after-show ([#304](https://github.com/Lint-Free-Technology/uix/issues/304)) ([0eb9a0b](https://github.com/Lint-Free-Technology/uix/commit/0eb9a0bcb4c48aafe7ba846996b0ad2e5b266a31))
 
-## [7.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0...v7.1.0-beta.1) (2026-05-05)
-
-### ⭐ New Features
-
-* **dialog-styling:** UIX integration option to allow delaying UIX application until after-show ([#304](https://github.com/Lint-Free-Technology/uix/issues/304)) ([0eb9a0b](https://github.com/Lint-Free-Technology/uix/commit/0eb9a0bcb4c48aafe7ba846996b0ad2e5b266a31))
-
 ## [7.0.0](https://github.com/Lint-Free-Technology/uix/compare/v6.4.0...v7.0.0) (2026-05-04)
 
 ### ⭐ New Features
