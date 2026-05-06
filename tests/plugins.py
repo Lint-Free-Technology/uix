@@ -64,7 +64,7 @@ def _load_plugins(plugins_yaml: Path | None = None) -> list[dict[str, str]]:
     if data is None:
         return []
     if not isinstance(data, list):
-        raise ValueError(f"{_PLUGINS_YAML} must contain a YAML list, got {type(data).__name__}")
+        raise ValueError(f"{path} must contain a YAML list, got {type(data).__name__}")
     return data
 
 

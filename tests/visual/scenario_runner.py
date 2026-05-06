@@ -1,5 +1,5 @@
-"""YAML-driven scenario engine for Lovelace/HA visual tests.
-Each ``.yaml`` file under ``ha-tests/visual/scenarios/`` defines one test
+"""YAML-driven scenario engine for UIX visual tests.
+Each ``.yaml`` file under ``tests/visual/scenarios/`` defines one test
 scenario.  This module provides helpers to load those files, push their
 Lovelace configuration to the running HA instance, navigate to the resulting
 view, and evaluate the assertions declared in the file.
@@ -171,7 +171,7 @@ wait
 
 Custom interaction types
     Register your own interaction types with :func:`register_interaction_type`.
-    For example, the UIX extension module (``ha-tests/uix/extensions.py``)
+    For example, the UIX extension module (``tests/visual/uix_extensions.py``)
     registers ``add_foundry``, ``delete_foundry``, ``add_foundry_file``,
     ``remove_foundry_file``, and ``reload_foundry_files`` this way.
 
@@ -263,11 +263,11 @@ Documentation images
 --------------------
 Any scenario YAML may declare a ``doc_image`` key to have a cropped screenshot
 written to a documentation asset path.  See :func:`capture_doc_image` and
-``ha-tests/visual/test_doc_images.py`` for full details.
+``tests/visual/test_doc_images.py`` for full details.
 
 Scenarios that exist *only* to generate documentation images (no functional
 assertions) should be placed under ``docs/scenarios/`` rather than
-``ha-tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
+``tests/visual/scenarios/``.  They are loaded by :func:`load_doc_scenarios`
 and are excluded from ``test_scenarios.py``.
 
 ``doc_image`` accepts a **single mapping** or a **list of mappings**.  Each
@@ -743,7 +743,7 @@ def load_all_scenarios() -> list[dict[str, Any]]:
     """Return all test scenarios from ``*.yaml`` files under *SCENARIOS_DIR*.
 
     Files are sorted so the order is deterministic across platforms.
-    Only the ``ha-tests/visual/scenarios/`` tree is searched — documentation-only
+    Only the ``tests/visual/scenarios/`` tree is searched — documentation-only
     scenarios living under ``docs/scenarios/`` are intentionally excluded so
     that ``test_scenarios.py`` does not run them as functional tests.
 
