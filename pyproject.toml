@@ -9,7 +9,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 test = [
-    "ha-testcontainer[test]==1.0.2",
+    "ha-testcontainer[test]>=2.0",
 ]
 
 [tool.pytest.ini_options]

@@ -305,7 +305,7 @@ import pytest
 from ha_testcontainer import HATestContainer
 from playwright.sync_api import Page
 
-from scenario_runner import (
+from ha_testcontainer.visual.scenario_runner import (
     capture_doc_animation,
     capture_doc_image,
     clear_scenario,

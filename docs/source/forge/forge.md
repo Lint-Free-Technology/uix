@@ -11,7 +11,7 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
 !!! tip "Warp in UIX Forge"
-    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element. *Available in v7.0.0-beta.8*
+    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element.
 
 ## Basic structure
 
@@ -456,9 +456,6 @@ When editing the dashboard in UI mode, the section will be surrounded by red das
     Visibility in the main config is not supported for `mold: section`. Though the Home Assistant visual editor will let you set visibility you will get an error as soon as you save the section. If you need Frontend visibility options not supported by template (e.g. screen) use a stack card as your element and set Frontend visibility on that element, templates supported.
 
 ## Footer
-
-!!! info
-    Footer mold available in v7.0.0-beta.1
 
 Use `mold: footer` to overlay a fixed-position card at the bottom of the viewport. The forged element appears pinned at the bottom of the screen regardless of where the `custom:uix-forge` card is placed in the dashboard. The forge element itself renders as `display: contents`, so it does not take up space in the grid.
 

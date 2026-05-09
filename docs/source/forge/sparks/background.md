@@ -4,9 +4,6 @@ icon: material/image-outline
 ---
 # :material-image-outline: Background spark
 
-!!! info
-    Background spark available in v7.0.0-beta.3
-
 The `background` spark places a styled background layer behind a target element inside a [UIX Forge](../index.md) forged element. The background container sits at `z-index: -1` so it is rendered below all sibling content without disrupting layout.
 
 Supported background sources (first non-empty value wins):

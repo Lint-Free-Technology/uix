@@ -14,14 +14,14 @@
 #   make doc_images_update   Regenerate ALL documentation images (use after HA/UIX visual changes)
 #   make doc_audit           Check that all doc images are scenario-generated or explicitly excluded
 
-.PHONY: ha_up doc_images_gen doc_images_update doc_audit
+.PHONY: ha_up ha-tests-up doc_images_gen doc_images_update doc_audit
 
 # Start a persistent Home Assistant container and leave it running.
 # The script prints HA_URL and HA_TOKEN and writes them to .ha_env.
 # In a second terminal:  source .ha_env && pytest tests/visual/test_doc_images.py -k <id>
 # Press Ctrl-C here to stop HA.
-ha_up:
-	python tests/ha_server.py
+ha_up ha-tests-up:
+	HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
 
 # Run the doc-image test suite.  Missing images are created automatically;
 # existing images are verified against the current rendered output.
