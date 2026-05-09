@@ -44,7 +44,7 @@ export class UixForgeMoldCardAsBadge extends UixForgeMoldBase {
   }
 
   refresh(path: UixForgeConfigPath): void {
-    if (path?.length === 1 && path[0] === "hidden") {
+    if (path.length === 1 && path[0] === "hidden") {
       this.forge.dispatchEvent(new CustomEvent("badge-visibility-changed", {
         detail: { value: this.forge.hidden },
         bubbles: true,
