@@ -4,7 +4,7 @@ description: Learn about UIX Forge, a powerful custom element that combines temp
 ---
 UIX Forge provides a way to forge Home Assistant elements allowing for templates for all of the element's configuration, as well as additional advanced augmentation of the element through [UIX Forge Sparks](./sparks/).
 
-Home Assistant elements supported are card, badge, row, section and picture-element.
+Home Assistant elements supported are card, badge, row, section and picture-element. Cross-context molds allow embedding one element type in a different parent context, such as a card used as a row inside an entities card — see [Cross-context molds](./forge.md#cross-context-molds).
 
 See [Forge](./forge.md) for complete forge config reference.
 
