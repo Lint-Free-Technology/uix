@@ -523,9 +523,6 @@ Each cross-context mold intercepts the inner element's native visibility event, 
 
 The most common use-case: embed a `glance`, `markdown`, `tile`, or any other card-type element directly inside an `entities` card (or `custom:fold-entity-row`). The card is created as a real `hui-card` element while UIX Forge signals the parent entities card exactly like a regular row.
 
-!!! example inline end "Glance card as a row"
-    ![Glance card embedded as a row inside an entities card](../assets/page-assets/forge/card-as-row.png)
-
 ```yaml
 type: entities
 title: "Bedroom"
@@ -545,6 +542,8 @@ entities:
           name: Kitchen
   - entity: light.bed_light
 ```
+
+![Glance card embedded as a row inside an entities card](../assets/page-assets/forge/card-as-row.png)
 
 !!! tip "Visibility"
     Unlike `custom:hui-element` or `custom:hui-xxx-card`, `forge.hidden` works correctly with `card_as_row`. You can use templates to conditionally show or hide the embedded card and the entities card will respond properly:
