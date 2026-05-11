@@ -28,3 +28,6 @@ assertions:
     selector: "ha-card"
     property: "backgroundColor"
     expected: "rgb(255, 0, 0)"
+  - type: snapshot
+    name: "25_forge_billet_uix_object_template"
+    threshold: 0.02
