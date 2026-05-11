@@ -1,3 +1,13 @@
+## [7.1.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.1.1-beta.1) (2026-05-11)
+
+### 🐞 Bug Fixes
+
+* Allow Jinja templates in billet-provided `uix` objects ([#319](https://github.com/Lint-Free-Technology/uix/issues/319)) ([1269b27](https://github.com/Lint-Free-Technology/uix/commit/1269b27b2a4df6a9d50241937138b4957b9b59f0)), closes [#318](https://github.com/Lint-Free-Technology/uix/issues/318)
+
+### ⚙️ Miscellaneous
+
+* migrate to ha-testcontainer 2.0.0, remove replicated test infrastructure ([#310](https://github.com/Lint-Free-Technology/uix/issues/310)) ([5759af8](https://github.com/Lint-Free-Technology/uix/commit/5759af846df1f2f095f7b185167d2b2f348d2740))
+
 ## [7.1.0](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0...v7.1.0) (2026-05-06)
 
 ### ⭐ New Features
