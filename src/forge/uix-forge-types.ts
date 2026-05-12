@@ -110,14 +110,18 @@ export class UixForgeConfigBuilder {
   _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
   refreshCallback?: (path: UixForgeConfigPath) => void;
-  _nestedTemplateOpen: string;
+  _nestedTemplateOpen: string[];
 
-  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string) {
+  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string | string[]) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
     this.refreshCallback = refreshCallback;
-    this._nestedTemplateOpen = nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN;
+    if (Array.isArray(nestedTemplateOpen)) {
+      this._nestedTemplateOpen = nestedTemplateOpen;
+    } else {
+      this._nestedTemplateOpen = [nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN];
+    }
   }
 
   get config() {
@@ -151,8 +155,8 @@ export class UixForgeConfigBuilder {
     return this.ready;
   }
 
-  public set nestedTemplateOpen(value: string) {
-    this._nestedTemplateOpen = value;
+  public set nestedTemplateOpen(value: string | string[]) {
+    this._nestedTemplateOpen = Array.isArray(value) ? value : [value];
   }
 
   private set ready(value: boolean) {
@@ -170,7 +174,7 @@ export class UixForgeConfigBuilder {
   }
 
   private checkReady() {
-    const _checkReady = (value, nestingOpen) => {
+    const _checkReady = (value, nestingOpen: string[]) => {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
@@ -183,7 +187,7 @@ export class UixForgeConfigBuilder {
           !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW) &&
           !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT)
         ) continue;
-        if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
+        if (hasTemplate(val) || (typeof val === "string" && nestingOpen.some((open) => val.includes(open)))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
           if (!_checkReady(val, nestingOpen)) return false;
