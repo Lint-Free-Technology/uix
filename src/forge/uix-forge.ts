@@ -84,13 +84,17 @@ export class UixForge extends LitElement {
   }
 
   private _templateNestingPairs(): Array<{ open: string; close: string }> {
-    const pairs = [{ open: this._templateNestingOpen, close: this._templateNestingClose }];
-    if (
-      this._templateNestingOpen !== UIX_FORGE_NESTED_TEMPLATE_OPEN ||
-      this._templateNestingClose !== UIX_FORGE_NESTED_TEMPLATE_CLOSE
-    ) {
-      pairs.push({ open: UIX_FORGE_NESTED_TEMPLATE_OPEN, close: UIX_FORGE_NESTED_TEMPLATE_CLOSE });
-    }
+    const pairs: Array<{ open: string; close: string }> = [];
+    const addPair = (open: string, close: string) => {
+      if (!pairs.some((pair) => pair.open === open && pair.close === close)) {
+        pairs.push({ open, close });
+      }
+    };
+    addPair(this._templateNestingOpen, this._templateNestingClose);
+    addPair(
+      `${this._templateNestingOpen.charAt(0)}%`,
+      `%${this._templateNestingClose.charAt(this._templateNestingClose.length - 1)}`
+    );
     return pairs;
   }
 
