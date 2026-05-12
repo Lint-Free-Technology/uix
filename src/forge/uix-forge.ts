@@ -93,7 +93,7 @@ export class UixForge extends LitElement {
     addPair(this._templateNestingOpen, this._templateNestingClose);
     const openChar = this._templateNestingOpen.charAt(0);
     const closeChar = this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
-    if (this._templateNestingOpen.length > 1 && this._templateNestingClose.length > 1 && openChar && closeChar) {
+    if (this._templateNestingOpen.length > 1 && this._templateNestingClose.length > 1) {
       addPair(`${openChar}%`, `%${closeChar}`);
     }
     return pairs;
