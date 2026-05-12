@@ -83,6 +83,11 @@ export class UixForge extends LitElement {
     return false;
   }
 
+  /**
+   * Builds the active nested-template delimiter pairs for this forge instance.
+   * The configured `template_nesting` pair is always included, and when possible
+   * an inferred statement pair (for example `<%`/`%>`) is added alongside it.
+   */
   private _templateNestingPairs(): Array<{ open: string; close: string }> {
     const pairs: Array<{ open: string; close: string }> = [];
     const addPair = (open: string, close: string) => {
