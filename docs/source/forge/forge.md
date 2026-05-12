@@ -506,6 +506,9 @@ element:
 
 ## Cross-context molds
 
+!!! info
+    Cross-context molds available in v7.2.0-beta.1
+
 Cross-context molds let you **forge one element type while acting as a different element type** in the parent container. This is the cleanest replacement for the fragile `custom:hui-element` and `custom:hui-xxx-card` hacks, which lack visibility support and can break across HA updates.
 
 | Mold | Forges | Acts as |
