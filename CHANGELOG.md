@@ -1,3 +1,9 @@
+## [7.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.1-beta.1...v7.2.0-beta.1) (2026-05-12)
+
+### ⭐ New Features
+
+* **forge:** add cross-context mold types (card_as_row, card_as_badge, row_as_card, row_as_badge, badge_as_card, badge_as_row, badge_as_picture_element) ([#316](https://github.com/Lint-Free-Technology/uix/issues/316)) ([bcda0e5](https://github.com/Lint-Free-Technology/uix/commit/bcda0e51ad6cb2b51ab5af8fe419257f5145bca3)), closes [#314](https://github.com/Lint-Free-Technology/uix/issues/314)
+
 ## [7.1.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.1.1-beta.1) (2026-05-11)
 
 ### 🐞 Bug Fixes
