@@ -29,8 +29,15 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
 
 export const UIX_FORGE_FORGE_MOLDS = [
   "card",
+  "card_as_row",
+  "card_as_badge",
   "badge",
+  "badge_as_card",
+  "badge_as_picture_element",
+  "badge_as_row",
   "row",
+  "row_as_card",
+  "row_as_badge",
   "section",
   "picture-element",
   "footer",

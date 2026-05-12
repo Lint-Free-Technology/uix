@@ -1,0 +1,38 @@
+id: doc_forge_card_as_row
+description: "Doc image: glance card embedded as a row inside an entities card using mold card_as_row (forge.md)"
+view_path: doc-forge-card-as-row
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: entities
+  title: "Bedroom"
+  icon: mdi:bed
+  entities:
+    - type: "custom:uix-forge"
+      forge:
+        mold: card_as_row
+      element:
+        type: glance
+        entities:
+          - entity: light.bed_light
+            name: Bed
+          - entity: light.ceiling_lights
+            name: Ceiling
+          - entity: light.kitchen_lights
+            name: Kitchen
+    - entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/card-as-row.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02

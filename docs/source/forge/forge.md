@@ -32,7 +32,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"` or `"footer"`. |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -503,3 +503,79 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+## Cross-context molds
+
+Cross-context molds let you **forge one element type while acting as a different element type** in the parent container. This is the cleanest replacement for the fragile `custom:hui-element` and `custom:hui-xxx-card` hacks, which lack visibility support and can break across HA updates.
+
+| Mold | Forges | Acts as |
+| ---- | ------ | ------- |
+| `card_as_row` | `hui-card` (card element) | Row inside an entities / fold-entity-row |
+| `card_as_badge` | `hui-card` (card element) | Badge in a badge container |
+| `row_as_card` | Row element | Card in a card grid |
+| `row_as_badge` | Row element | Badge in a badge container |
+| `badge_as_card` | `hui-badge` (badge element) | Card in a card grid |
+| `badge_as_row` | `hui-badge` (badge element) | Row inside an entities / fold-entity-row |
+| `badge_as_picture_element` | `hui-badge` (badge element) | Picture element inside a picture-elements card |
+
+Each cross-context mold intercepts the inner element's native visibility event, updates its own hidden state, and re-fires the appropriate event for the parent container. `forge.hidden` (templates supported) works across all cross-context molds.
+
+For `badge_as_picture_element`, the badge element config needs to include the regular picture element positioning in `style` object.
+
+### card_as_row — embedding a card as a row
+
+The most common use-case: embed a `glance`, `markdown`, `tile`, or any other card-type element directly inside an `entities` card (or `custom:fold-entity-row`). The card is created as a real `hui-card` element while UIX Forge signals the parent entities card exactly like a regular row.
+
+```yaml
+type: entities
+title: "Bedroom"
+icon: mdi:bed
+entities:
+  - type: "custom:uix-forge"
+    forge:
+      mold: card_as_row
+    element:
+      type: glance
+      entities:
+        - entity: light.bed_light
+          name: Bed
+        - entity: light.ceiling_lights
+          name: Ceiling
+        - entity: light.kitchen_lights
+          name: Kitchen
+  - entity: light.bed_light
+```
+
+![Glance card embedded as a row inside an entities card](../assets/page-assets/forge/card-as-row.png)
+
+### badge as picture-element - embedding a badge as a picture-element
+
+```yaml
+type: picture-elements
+elements:
+  - type: custom:uix-forge
+    forge:
+      mold: badge_as_picture_element
+    element:
+      type: entity
+      entity: light.bed_light
+      style:
+        top: 25%
+        left: 50%
+image: https://demo.home-assistant.io/stub_config/floorplan.png
+```
+
+![badge embedded in a picture-elements card](../assets/page-assets/forge/badge-as-picture-element.png)
+
+!!! tip "Visibility"
+    Unlike `custom:hui-element` or `custom:hui-xxx-card`, `forge.hidden` works correctly with `card_as_row`. You can use templates to conditionally show or hide the embedded card and the entities card will respond properly:
+    ```yaml
+    type: "custom:uix-forge"
+    forge:
+      mold: card_as_row
+      hidden: "{{ is_state('sun.sun', 'below_horizon') }}"
+    element:
+      type: glance
+      entities:
+        - entity: sun.sun
+    ```

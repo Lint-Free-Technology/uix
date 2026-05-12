@@ -26,7 +26,7 @@ export class UixForgeMoldFooter extends UixForgeMoldBase {
   refresh(path: UixForgeConfigPath): void {
     if (path.length === 1 && path[0] === "hidden") {
       // dispatch to hui-card so as wherever the footer is hosted does not take up space when hidden, such as row hosting the card
-      this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: this.forge.hidden }, bubbles: true, composed: true }));
+      this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.forge.hidden }, bubbles: true, composed: true }));
       this.setParentDisplay();
     } else {
       this.forge.refreshForgedElement(path);
