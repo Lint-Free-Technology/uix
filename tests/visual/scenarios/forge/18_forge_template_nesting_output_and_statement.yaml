@@ -1,0 +1,22 @@
+id: forge_template_nesting_output_and_statement
+description: "UIX Forge template_nesting supports output and statement delimiters in one template"
+view_path: forge-template-nesting-output-and-statement
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: markdown
+    content: |
+      <% if true %>
+      Nested result: << 'output-and-statement-ok' >>
+      <% else %>
+      Nested result: fail
+      <% endif %>
+
+assertions:
+  - type: text_equals
+    root: ha-markdown
+    selector: p
+    expected: "Nested result: output-and-statement-ok"
