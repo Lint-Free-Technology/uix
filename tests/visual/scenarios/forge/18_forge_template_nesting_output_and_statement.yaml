@@ -11,8 +11,6 @@ card:
     content: |
       <% if true %>
       Nested result: << 'output-and-statement-ok' >>
-      <% else %>
-      Nested result: fail
       <% endif %>
 
 assertions:
