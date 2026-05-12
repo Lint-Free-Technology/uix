@@ -51,6 +51,21 @@ export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{%% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT = `{% raw %}%}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+
+export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: string; closeRaw: string } {
+  if (nestingOpen.charAt(1) === "%") {
+    return {
+      openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT,
+      closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT,
+    };
+  }
+  return {
+    openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW,
+    closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW,
+  };
+}
 
 export interface UixForgeForge {
     type?: string;
@@ -156,7 +171,12 @@ export class UixForgeConfigBuilder {
         // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
         if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
         // If we have nested template marker but not the raw open marker, this means the template is ready.
-        if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
+        if (
+          typeof val === "string" &&
+          val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) &&
+          !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW) &&
+          !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT)
+        ) continue;
         if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {

@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -423,9 +423,10 @@ export class UixForge extends LitElement {
             unbind_template(binding.callback);
           }
         }
+        const { openRaw, closeRaw } = getNestedTemplateRawDelimiters(this._templateNestingOpen);
         const template = current[k]
-          .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
-          .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
+          .replaceAll(this._templateNestingOpen, openRaw)
+          .replaceAll(this._templateNestingClose, closeRaw);
         const macroStr = buildMacros(this._macros, template);
         const billetStr = buildBillets(this._billets, macroStr + template);
         const callback = (res: any) => {
@@ -770,6 +771,5 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     customElements.define("uix-forge", UixForge);
   }
 });
-
 
 
