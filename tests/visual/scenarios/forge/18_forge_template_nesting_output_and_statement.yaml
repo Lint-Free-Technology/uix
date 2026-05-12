@@ -9,7 +9,7 @@ card:
   element:
     type: markdown
     content: |
-      <% if true %>
+      <% if config.element.type == "markdown" %>
       Nested result: << 'output-and-statement-ok' >>
       <% endif %>
 
