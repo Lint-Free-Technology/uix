@@ -53,5 +53,13 @@ export class UixForgeMoldBadgeAsPictureElement extends UixForgeMoldBase {
     } else {
       this.forge.refreshForgedElement(path);
     }
+    this.forge.updateComplete.then(() => {
+      const styleConfig = this.forge.forgedElementConfig?.style;
+      if (styleConfig) {
+        for (const [prop, value] of Object.entries(styleConfig)) {
+          this.forge.style.setProperty(String(prop), String(value));
+        }
+      }
+    });
   }
 }

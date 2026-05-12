@@ -520,7 +520,7 @@ Cross-context molds let you **forge one element type while acting as a different
 
 Each cross-context mold intercepts the inner element's native visibility event, updates its own hidden state, and re-fires the appropriate event for the parent container. `forge.hidden` (templates supported) works across all cross-context molds.
 
-For `badge_as_picture_element`, the element is forged as a real `hui-badge` and the forge itself acts as the picture element in the picture-elements card. Because picture-elements cards have no visibility event mechanism, visibility is managed by setting `display: none` directly on the forge element when the inner badge reports that it is hidden.
+For `badge_as_picture_element`, the badge element config needs to include the regular picture element positioning in `style` object.
 
 ### card_as_row — embedding a card as a row
 
@@ -547,6 +547,25 @@ entities:
 ```
 
 ![Glance card embedded as a row inside an entities card](../assets/page-assets/forge/card-as-row.png)
+
+### badge as picture-element - embedding a badge as a picture-element
+
+```yaml
+type: picture-elements
+elements:
+  - type: custom:uix-forge
+    forge:
+      mold: badge_as_picture_element
+    element:
+      type: entity
+      entity: light.bed_light
+      style:
+        top: 25%
+        left: 50%
+image: https://demo.home-assistant.io/stub_config/floorplan.png
+```
+
+![badge embedded in a picture-elements card](../assets/page-assets/forge/badge-as-picture-element.png)
 
 !!! tip "Visibility"
     Unlike `custom:hui-element` or `custom:hui-xxx-card`, `forge.hidden` works correctly with `card_as_row`. You can use templates to conditionally show or hide the embedded card and the entities card will respond properly:
