@@ -340,7 +340,7 @@ When there are multiple forge layers, each additional layer requires one extra `
     ![Nesting example](../assets/page-assets/forge/forge-nesting.gif)
 
 ??? warning "Read if you wish to create your own nesting sequence"
-    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. For default `<<>>`, `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. For `%`-style nesting (for example `<%%>`, used as `<% ... %>`), `<%` is replaced with `{% raw %}{#uix#}{%% endraw %}` and `%>` is replaced with `{% raw %}%}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
+    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. For default `<<>>`, `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. For `%`-style nesting (for example `<%%>`, used as `<% ... %>`), `<%` is replaced with `{% raw %}{#uix#}{%{% endraw %}` and `%>` is replaced with `{% raw %}%}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
 
 ### Using with auto-entities
 

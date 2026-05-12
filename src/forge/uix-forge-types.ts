@@ -51,7 +51,7 @@ export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
-export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{%% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{%{% endraw %}`;
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT = `{% raw %}%}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
 
 export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: string; closeRaw: string } {
