@@ -19,8 +19,9 @@ export class UixForgeMoldBadgeAsRow extends UixForgeMoldBase {
 
   handleBadgeVisibilityChanged = (event: Event) => {
     const customEvent = event as CustomEvent;
-    // badge-visibility-changed: value=true means the badge IS hidden
-    this._hidden = customEvent.detail?.value ?? false;
+    // badge-visibility-changed: value=true means the badge IS visible, 
+    // so we want to set hidden to the opposite of that
+    this._hidden = !(customEvent.detail?.value ?? true);
     customEvent.stopPropagation();
     this.updateRowVisibility();
   }

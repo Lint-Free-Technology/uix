@@ -34,11 +34,12 @@ export class UixForgeMoldBadgeAsCard extends UixForgeMoldBase {
 
   handleBadgeVisibilityChanged = (event: Event) => {
     const customEvent = event as CustomEvent;
-    // badge-visibility-changed: value=true means the badge IS hidden
-    this._hidden = customEvent.detail?.value ?? false;
+    // badge-visibility-changed: value=true means the badge IS visible, 
+    // so we want to set hidden to the opposite of that
+    this._hidden = !(customEvent.detail?.value ?? true);
     customEvent.stopPropagation();
     this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", {
-      detail: { value: this.forge.hidden },
+      detail: { value: !this.forge.hidden },
       bubbles: true,
       composed: true,
     }));
@@ -55,7 +56,7 @@ export class UixForgeMoldBadgeAsCard extends UixForgeMoldBase {
   refresh(path: UixForgeConfigPath): void {
     if (path.length === 1 && path[0] === "hidden") {
       this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", {
-        detail: { value: this.forge.hidden },
+        detail: { value: !this.forge.hidden },
         bubbles: true,
         composed: true,
       }));

@@ -19,8 +19,9 @@ export class UixForgeMoldCardAsRow extends UixForgeMoldBase {
 
   handleCardVisibilityChanged = (event: Event) => {
     const customEvent = event as CustomEvent;
-    // card-visibility-changed: value=true means the card IS hidden
-    this._hidden = customEvent.detail?.value ?? false;
+    // card-visibility-changed: value=true means the card IS visible, 
+    // so we want to set hidden to the opposite of that
+    this._hidden = !(customEvent.detail?.value ?? true);
     customEvent.stopPropagation();
     this.updateRowVisibility();
   }

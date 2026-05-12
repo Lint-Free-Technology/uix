@@ -35,7 +35,7 @@ export class UixForgeMoldRowAsCard extends UixForgeMoldBase {
     // row-visibility-changed: value=true means the row IS visible
     this._hidden = !customEvent.detail?.value;
     this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", {
-      detail: { value: this.forge.hidden },
+      detail: { value: !this.forge.hidden },
       bubbles: true,
       composed: true,
     }));
@@ -52,7 +52,7 @@ export class UixForgeMoldRowAsCard extends UixForgeMoldBase {
   refresh(path: UixForgeConfigPath): void {
     if (path.length === 1 && path[0] === "hidden") {
       this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", {
-        detail: { value: this.forge.hidden },
+        detail: { value: !this.forge.hidden },
         bubbles: true,
         composed: true,
       }));
