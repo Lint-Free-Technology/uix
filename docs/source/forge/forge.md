@@ -32,7 +32,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`. See [Cross-context molds](#cross-context-molds). |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -516,8 +516,11 @@ Cross-context molds let you **forge one element type while acting as a different
 | `row_as_badge` | Row element | Badge in a badge container |
 | `badge_as_card` | `hui-badge` (badge element) | Card in a card grid |
 | `badge_as_row` | `hui-badge` (badge element) | Row inside an entities / fold-entity-row |
+| `badge_as_picture_element` | Badge element config | Picture element inside a picture-elements card |
 
 Each cross-context mold intercepts the inner element's native visibility event, updates its own hidden state, and re-fires the appropriate event for the parent container. `forge.hidden` (templates supported) works across all cross-context molds.
+
+For `badge_as_picture_element`, there is no visibility event mechanism in picture-elements cards. Instead, visibility is managed using a `hui-conditional` element with a `screen` media query — the same technique used by the standard `picture-element` mold. When `badge-visibility-changed` bubbles from the inner element, the mold recreates the conditional wrapper with `(max-width: 0px)` to hide or `(max-width: 99999px)` to show.
 
 ### card_as_row — embedding a card as a row
 

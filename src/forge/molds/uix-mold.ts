@@ -1,5 +1,6 @@
 import { UixForgeMoldBadge } from "./uix-mold-badge";
 import { UixForgeMoldBadgeAsCard } from "./uix-mold-badge-as-card";
+import { UixForgeMoldBadgeAsPictureElement } from "./uix-mold-badge-as-picture-element";
 import { UixForgeMoldBadgeAsRow } from "./uix-mold-badge-as-row";
 import { UixForgeMoldBase } from "./uix-mold-base";
 import { UixForgeMoldCard } from "./uix-mold-card";
@@ -17,6 +18,7 @@ export type UixForgeMold = UixForgeMoldBase;
 export const UIX_FORGE_MOLD_CLASSES: Record<string, any> = {
   "badge": UixForgeMoldBadge,
   "badge_as_card": UixForgeMoldBadgeAsCard,
+  "badge_as_picture_element": UixForgeMoldBadgeAsPictureElement,
   "badge_as_row": UixForgeMoldBadgeAsRow,
   "card": UixForgeMoldCard,
   "card_as_badge": UixForgeMoldCardAsBadge,
