@@ -516,11 +516,11 @@ Cross-context molds let you **forge one element type while acting as a different
 | `row_as_badge` | Row element | Badge in a badge container |
 | `badge_as_card` | `hui-badge` (badge element) | Card in a card grid |
 | `badge_as_row` | `hui-badge` (badge element) | Row inside an entities / fold-entity-row |
-| `badge_as_picture_element` | Badge element config | Picture element inside a picture-elements card |
+| `badge_as_picture_element` | `hui-badge` (badge element) | Picture element inside a picture-elements card |
 
 Each cross-context mold intercepts the inner element's native visibility event, updates its own hidden state, and re-fires the appropriate event for the parent container. `forge.hidden` (templates supported) works across all cross-context molds.
 
-For `badge_as_picture_element`, there is no visibility event mechanism in picture-elements cards. Instead, visibility is managed using a `hui-conditional` element with a `screen` media query — the same technique used by the standard `picture-element` mold. When `badge-visibility-changed` bubbles from the inner element, the mold recreates the conditional wrapper with `(max-width: 0px)` to hide or `(max-width: 99999px)` to show.
+For `badge_as_picture_element`, the element is forged as a real `hui-badge` and the forge itself acts as the picture element in the picture-elements card. Because picture-elements cards have no visibility event mechanism, visibility is managed by setting `display: none` directly on the forge element when the inner badge reports that it is hidden.
 
 ### card_as_row — embedding a card as a row
 

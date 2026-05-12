@@ -1,12 +1,16 @@
-import { UixForgeConfigPath } from "../uix-forge-types";
+import { HuiBadge, UixForgeConfigPath } from "../uix-forge-types";
 import { UixForgeMoldBase } from "./uix-mold-base";
 
 export class UixForgeMoldBadgeAsPictureElement extends UixForgeMoldBase {
   type = "badge_as_picture_element";
   _hidden = false;
 
-  isPictureElement(): boolean {
+  isBadge(): boolean {
     return true;
+  }
+
+  isError(): boolean {
+    return (this.forge.forgedElement as HuiBadge)?._element?.tagName?.toLowerCase() === "hui-error-badge";
   }
 
   hidden(): boolean {
@@ -21,8 +25,18 @@ export class UixForgeMoldBadgeAsPictureElement extends UixForgeMoldBase {
     customEvent.stopPropagation();
     if (newHidden === this._hidden) return;
     this._hidden = newHidden;
-    // Recreate the conditional wrapper with the updated hidden state
-    this.forge.refreshForgedElement();
+    this.updatePictureElementVisibility();
+  }
+
+  updatePictureElementVisibility() {
+    // Picture-elements cards have no visibility event mechanism.
+    // Apply visibility directly on the forge element's own CSS so that
+    // it hides/shows itself without disturbing the picture-elements layout.
+    if (this.forge.hidden) {
+      this.forge.style.setProperty("display", "none");
+    } else {
+      this.forge.style.removeProperty("display");
+    }
   }
 
   connectedCallback(): void {
@@ -34,6 +48,10 @@ export class UixForgeMoldBadgeAsPictureElement extends UixForgeMoldBase {
   }
 
   refresh(path: UixForgeConfigPath): void {
-    this.forge.refreshForgedElement(path);
+    if (path.length === 1 && path[0] === "hidden") {
+      this.updatePictureElementVisibility();
+    } else {
+      this.forge.refreshForgedElement(path);
+    }
   }
 }
