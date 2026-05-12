@@ -91,10 +91,10 @@ export class UixForge extends LitElement {
       }
     };
     addPair(this._templateNestingOpen, this._templateNestingClose);
-    const nestingPrefix = this._templateNestingOpen.charAt(0);
-    const nestingSuffix = this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
-    if (nestingPrefix && nestingSuffix) {
-      addPair(`${nestingPrefix}%`, `%${nestingSuffix}`);
+    const openChar = this._templateNestingOpen.charAt(0);
+    const closeChar = this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
+    if (this._templateNestingOpen.length > 1 && this._templateNestingClose.length > 1 && openChar && closeChar) {
+      addPair(`${openChar}%`, `%${closeChar}`);
     }
     return pairs;
   }
