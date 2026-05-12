@@ -55,6 +55,12 @@ export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORG
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT = `{% raw %}%}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
 
 export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: string; closeRaw: string } {
+  if (nestingOpen.length < 2) {
+    return {
+      openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW,
+      closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW,
+    };
+  }
   if (nestingOpen.charAt(1) === "%") {
     return {
       openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT,
