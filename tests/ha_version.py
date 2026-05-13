@@ -12,5 +12,10 @@ _VERSION_FILE = Path(__file__).parent / "HA_VERSION"
 
 def resolve_ha_version() -> str:
     """Return effective HA version from env, or the repo-pinned default in tests/HA_VERSION."""
-    return os.environ.get("HA_VERSION", _VERSION_FILE.read_text().strip())
+    env_version = os.environ.get("HA_VERSION")
+    if env_version is not None:
+        env_version = env_version.strip()
+        if env_version:
+            return env_version
+    return _VERSION_FILE.read_text().strip()
 
