@@ -66,7 +66,7 @@ pytest tests/visual/test_scenarios.py -k forge
 HA_VERSION=2024.6.0 pytest tests/
 ```
 
-Accepted values for `HA_VERSION`: `beta`, `dev`, or a
+Accepted values for `HA_VERSION`: `stable`, `beta`, `dev`, or a
 pinned version string such as `2024.6.0`.
 
 If `HA_VERSION` is unset, tests use the version recorded in
