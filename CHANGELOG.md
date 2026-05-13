@@ -1,3 +1,9 @@
+## [7.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0-beta.1...v7.2.0-beta.2) (2026-05-13)
+
+### 🐞 Bug Fixes
+
+* Add inferred JInja statement/flow-control `{% %}` template nesting support in UIX Forge `template_nesting` ([#320](https://github.com/Lint-Free-Technology/uix/issues/320)) ([c27dfbc](https://github.com/Lint-Free-Technology/uix/commit/c27dfbcba37fa0cf997203fdac47aee975548c70))
+
 ## [7.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.1-beta.1...v7.2.0-beta.1) (2026-05-12)
 
 ### ⭐ New Features
