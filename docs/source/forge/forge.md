@@ -320,7 +320,7 @@ When there are multiple forge layers, each additional layer requires one extra `
     ![Template nesting in markdown card content](../assets/page-assets/forge/template-nesting-markdown.png)
 
 !!! tip
-    Whether to nest markdown content templates or not depends on your use case. If templates are not nested they are rendered by UIX Forge and the whole markdown card will be updated when the template updates. If you markdown templates are dynamic and update frequently you are best to use template nesting so the markdown card renders the template, using its optimized rendering to update only the output line that has changed.
+    Whether to nest markdown content templates or not depends on your use case. If templates are not nested, they are rendered by UIX Forge and the whole markdown card will be updated when the template updates. If your markdown templates are dynamic and update frequently you are best to use template nesting so the markdown card renders the template, using its optimized rendering to update only the output line that has changed.
 
 #### Using billets in nested templates
 
