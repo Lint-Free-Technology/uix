@@ -12,7 +12,7 @@ the ``pytest11`` entry point and requires no explicit import.
 Environment variables
 ---------------------
 HA_VERSION
-    Docker image tag to use.  Defaults to ``stable``.
+    Docker image tag to use.  Defaults to the value in ``tests/HA_VERSION``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
 HA_URL
     Base URL of a **pre-running** Home Assistant instance (e.g.
@@ -46,7 +46,21 @@ from pathlib import Path
 # value (e.g. from ``source .ha_env``) unchanged.
 
 _REPO_ROOT = Path(__file__).parent.parent
+_HA_VERSION_FILE = _REPO_ROOT / "tests" / "HA_VERSION"
 
+
+def _resolve_default_ha_version() -> str:
+    """Resolve default HA version from tests/HA_VERSION, ignoring blank/comment lines."""
+    try:
+        for line in _HA_VERSION_FILE.read_text(encoding="utf-8").splitlines():
+            value = line.strip()
+            if value and not value.startswith("#"):
+                return value
+    except FileNotFoundError:
+        pass
+    return "stable"
+
+os.environ.setdefault("HA_VERSION", _resolve_default_ha_version())
 os.environ.setdefault("HA_CONFIG_PATH", str(_REPO_ROOT / "tests" / "ha-config"))
 os.environ.setdefault("HA_CUSTOM_COMPONENTS_PATH", str(_REPO_ROOT / "custom_components"))
 os.environ.setdefault("HA_SETUP_INTEGRATION", "uix")
@@ -60,4 +74,3 @@ os.environ.setdefault("HA_PLUGINS_YAML", str(_REPO_ROOT / "tests" / "plugins.yam
 sys.path.insert(0, str(Path(__file__).parent / "visual"))
 
 import uix_extensions  # noqa: F401, E402 - side-effect: registers UIX interaction types
-
