@@ -129,14 +129,20 @@ export class UixForge extends LitElement {
   }
 
   private _replaceNestedTemplateDelimiters(value: string): string {
+    type PassthroughDelimiterMapping = {
+      passthroughOpenMarker: string;
+      passthroughCloseMarker: string;
+      open: string;
+      close: string;
+    };
     let output = value;
-    const passthroughDelimiters: Array<{ passthroughOpenMarker: string; passthroughCloseMarker: string; open: string; close: string }> = [];
-    for (let index = 0; index < this._templateNestingPairs().length; index++) {
-      const { open, close } = this._templateNestingPairs()[index];
+    const passthroughDelimiters: PassthroughDelimiterMapping[] = [];
+    for (let pairIndex = 0; pairIndex < this._templateNestingPairs().length; pairIndex++) {
+      const { open, close } = this._templateNestingPairs()[pairIndex];
       const passthroughOpen = open.charAt(0) + open;
       const passthroughClose = close + close.charAt(close.length - 1);
-      const passthroughOpenMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_OPEN_${index}##`;
-      const passthroughCloseMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_CLOSE_${index}##`;
+      const passthroughOpenMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_OPEN_${pairIndex}##`;
+      const passthroughCloseMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_CLOSE_${pairIndex}##`;
       passthroughDelimiters.push({ passthroughOpenMarker, passthroughCloseMarker, open, close });
       output = output
         .split(passthroughOpen).join(passthroughOpenMarker)
