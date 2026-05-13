@@ -1,0 +1,84 @@
+id: doc_forge_theme
+description: "Doc image: UIX Forge card with mold theme type (forge.md)"
+view_path: doc-forge-theme
+theme: uix-card-as-badge
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 10
+      title: Home Summary Cards as Badges
+      path: home-summary-cards-as-badges
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: light
+            tap_action:
+              action: navigate
+              navigation_path: /light?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: climate
+            tap_action:
+              action: navigate
+              navigation_path: /climate?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: security
+            tap_action:
+              action: navigate
+              navigation_path: /security?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: media_players
+            tap_action:
+              action: navigate
+              navigation_path: /home/media-players
+        # - type: custom:uix-forge
+        #  forge:
+        #    mold: card_as_badge
+        #  element:
+        #    type: home-summary
+        #    summary: energy
+        #    tap_action:
+        #      action: navigate
+        #      navigation_path: >-
+        #        /energy/overview?historyBack=1&backPath=/dashboard-scratchpad/scratchtable
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: maintenance
+            tap_action:
+              action: navigate
+              navigation_path: >-
+                /maintenance?historyBack=1&b/maintenance?historyBack=1&backPath=/dashboard-scratchpad/scratchtable
+
+interactions:
+  - type: wait
+    ms: 5000
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/forge-theme.png
+  root: hui-view-badges
+  padding: 16
+  threshold: 0.02

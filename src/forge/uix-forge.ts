@@ -566,7 +566,7 @@ export class UixForge extends LitElement {
     }
     apply_uix(
       (this as any),
-      "card",
+      this._mold.type.split("_").join("-"),
       this._mergeForgeUix(this._resolvedUix),
       { config: 
         { 

@@ -451,6 +451,120 @@ element:
 
 ![Example using uix element styling](../assets/page-assets/forge/uix-element-styling.png)
 
+### Theme styling
+
+The theme type given to UIX forge container matches the mold type, including [cross-context molds](#cross-context-molds). This can be useful in targeting the UIX forge container and styling the contained element.
+
+??? example "Theme cross-context mold: card_as_badge"
+    Here styling is given to all cards used as badges by applying theme styling to `uix-card-as-badge-yaml`. The theming assumes all cards used as badges are home-summary cards. *`energy` is commented out as the demo integration used for image generation does not have energy set up.*
+
+    Theme:
+    ```yaml
+    uix-card-as-badge-yaml: |
+      .: |
+        :host {
+          --ha-tile-info-primary-font-size: var(--ha-font-size-s);
+          --ha-card-border-radius: var(--ha-badge-border-radius, calc(var(--ha-badge-size, 36px) / 2));
+        }
+      hui-home-summary-card $: |
+        ha-tile-container {
+          line-height: 0;
+        }
+        ha-tile-icon {
+          --mdc-icon-size: 18px;
+          --tile-icon-size: 18px;
+        }
+      hui-home-summary-card $ ha-tile-info $: |
+        div.info {
+          flex-direction: row;
+          align-items: center;
+          gap: var(--ha-space-2);
+        }
+        div.info slot.primary span,
+        div.info slot.secondary span {
+          overflow: visible;
+        }
+      hui-home-summary-card $$ ha-tile-container $: |
+        .container {
+          margin: 0;
+        }
+        .content {
+          gap: var(--ha-space-2);
+          padding: 8px 10px;
+        }
+    ```
+
+    Dashboard with home-summary cards as badges:
+    ```yaml
+    - type: sections
+      max_columns: 10
+      title: Home Summary Cards as Badges
+      path: home-summary-cards-as-badges
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: light
+            tap_action:
+              action: navigate
+              navigation_path: /light?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: climate
+            tap_action:
+              action: navigate
+              navigation_path: /climate?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: security
+            tap_action:
+              action: navigate
+              navigation_path: /security?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: media_players
+            tap_action:
+              action: navigate
+              navigation_path: /home/media-players
+        # - type: custom:uix-forge
+        #  forge:
+        #    mold: card_as_badge
+        #  element:
+        #    type: home-summary
+        #    summary: energy
+        #    tap_action:
+        #      action: navigate
+        #      navigation_path: >-
+        #        /energy/overview?historyBack=1&backPath=/dashboard-root/view-path
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: maintenance
+            tap_action:
+              action: navigate
+              navigation_path: >-
+                /maintenance?historyBack=1&b/maintenance?historyBack=1&backPath=/dashboard-root/view-path
+    ```
+
+    ![Theming home-summary badges as cards](../assets/page-assets/forge/forge-theme.png)
+
 ## Sections
 
 When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
