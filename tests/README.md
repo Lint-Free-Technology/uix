@@ -85,7 +85,7 @@ overhead, start a **persistent** HA instance in a separate terminal:
 ```bash
 make ha_up
 # or equivalently:
-HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
+HA_VERSION=$(awk 'NF && $1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true); HA_VERSION=${HA_VERSION:-stable} HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
 ```
 
 The script starts HA, sets up UIX, and writes `HA_URL` + `HA_TOKEN` to
