@@ -7,7 +7,7 @@ sets up the UIX integration so tests can exercise it against a real HA instance.
 Environment variables
 ---------------------
 HA_VERSION
-    Docker image tag to use.  Defaults to ``stable``.
+    Docker image tag to use.  Defaults to ``2026.4.0``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
 HA_URL
     Base URL of a **pre-running** Home Assistant instance (e.g.
@@ -33,8 +33,9 @@ from typing import Any
 import pytest
 import requests
 import websocket
-from ha_testcontainer import HATestContainer, HAVersion
+from ha_testcontainer import HATestContainer
 
+from ha_version import resolve_ha_version
 from plugins import download_lovelace_plugins
 
 # ---------------------------------------------------------------------------
@@ -118,7 +119,7 @@ class _ExternalHA:
 
 @pytest.fixture(scope="session")
 def ha_version() -> str:
-    return os.environ.get("HA_VERSION", HAVersion.STABLE)
+    return resolve_ha_version()
 
 
 @pytest.fixture(scope="session")
@@ -145,6 +146,7 @@ def ha(ha_version: str, tmp_path_factory):
     ha_url_env = os.environ.get("HA_URL")
     ha_token_env = os.environ.get("HA_TOKEN")
     if ha_url_env and ha_token_env:
+        print(f"[uix-tests] Using external HA at {ha_url_env} (HA_VERSION={ha_version})")
         yield _ExternalHA(ha_url_env, ha_token_env)
         return
 
@@ -161,6 +163,7 @@ def ha(ha_version: str, tmp_path_factory):
         version=ha_version,
         config_path=ha_tmp,
     )
+    print(f"[uix-tests] Starting local HA container (HA_VERSION={ha_version})")
     # Mount local UIX alongside the temp config dir.
     # (config_path takes precedence in the constructor, so custom_components
     # must be mapped separately here.)
@@ -257,4 +260,3 @@ def ha_lovelace_url_path(ha) -> str:
     """
     _create_dashboard(ha, UIX_TEST_DASHBOARD_URL_PATH, "UIX Tests")
     return UIX_TEST_DASHBOARD_URL_PATH
-

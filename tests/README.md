@@ -66,8 +66,11 @@ pytest tests/visual/test_scenarios.py -k forge
 HA_VERSION=2024.6.0 pytest tests/
 ```
 
-Accepted values for `HA_VERSION`: `stable` (default), `beta`, `dev`, or a
+Accepted values for `HA_VERSION`: `beta`, `dev`, or a
 pinned version string such as `2024.6.0`.
+
+If `HA_VERSION` is unset, tests default to the repository-pinned version:
+`2026.4.0`.
 
 ### Fast iteration — keep HA running between pytest invocations
 
@@ -90,6 +93,7 @@ The script starts HA, sets up UIX, and writes `HA_URL` + `HA_TOKEN` to
 ```
 export HA_URL=http://localhost:12345
 export HA_TOKEN=eyJ...
+export HA_VERSION=2026.4.0
 ```
 
 **Terminal 2** (iterate as many times as you like):

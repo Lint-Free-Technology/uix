@@ -28,7 +28,7 @@ Press **Ctrl-C** in Terminal 1 to stop HA and clean up.
 Environment variables
 ---------------------
 HA_VERSION
-    Docker image tag to use.  Defaults to ``stable``.
+    Docker image tag to use.  Defaults to ``2026.4.0``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
 """
 
@@ -39,6 +39,8 @@ import shutil
 import signal
 import sys
 from pathlib import Path
+
+from ha_version import resolve_ha_version
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -56,7 +58,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 def main() -> None:
     try:
-        from ha_testcontainer import HATestContainer, HAVersion
+        from ha_testcontainer import HATestContainer
     except ImportError:
         print(
             "ha_testcontainer is not installed.  Run:\n"
@@ -65,7 +67,7 @@ def main() -> None:
         )
         sys.exit(1)
 
-    ha_version = os.environ.get("HA_VERSION", HAVersion.STABLE)
+    ha_version = resolve_ha_version()
 
     print(f"Starting Home Assistant {ha_version} container…", file=sys.stderr)
 
@@ -95,7 +97,12 @@ def main() -> None:
     url = container.get_url()
     token = container.get_token()
 
-    env_content = f"export HA_URL={url}\nexport HA_TOKEN={token}\nexport HA_CONFIG_DIR={ha_tmp}\n"
+    env_content = (
+        f"export HA_URL={url}\n"
+        f"export HA_TOKEN={token}\n"
+        f"export HA_VERSION={ha_version}\n"
+        f"export HA_CONFIG_DIR={ha_tmp}\n"
+    )
 
     _ENV_FILE.write_text(env_content)
 
@@ -103,6 +110,7 @@ def main() -> None:
     print(file=sys.stderr)
     print("=" * 60, file=sys.stderr)
     print(f"  Home Assistant is ready at {url}", file=sys.stderr)
+    print(f"  HA_VERSION in use: {ha_version}", file=sys.stderr)
     print(f"  Env vars written to  {_ENV_FILE.relative_to(_REPO_ROOT)}", file=sys.stderr)
     print(file=sys.stderr)
     print("  In another terminal run:", file=sys.stderr)
