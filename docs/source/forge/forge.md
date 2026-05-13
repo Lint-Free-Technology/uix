@@ -225,6 +225,9 @@ See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on 
 
 ### Template nesting
 
+!!! info
+    Jinja statement/flow-control delimiter nesting included in 7.2.0-beta.2
+
 If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
 
 ??? example "Single level template nesting example"
