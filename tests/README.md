@@ -66,8 +66,11 @@ pytest tests/visual/test_scenarios.py -k forge
 HA_VERSION=2024.6.0 pytest tests/
 ```
 
-Accepted values for `HA_VERSION`: `stable` (default), `beta`, `dev`, or a
-pinned version string such as `2024.6.0`.
+By default, the harness reads `tests/HA_VERSION`. To change the default version
+for all local/CI test runs, edit that file.
+
+Accepted values for `HA_VERSION`: `stable`, `beta`, `dev`, or a pinned version
+string such as `2024.6.0`.
 
 ### Fast iteration — keep HA running between pytest invocations
 
