@@ -15,9 +15,11 @@ card:
     entity: "{{ 'sun.sun' }}"
 
 assertions:
-  - type: text_equals
+  - type: text_equals # text_equals does include newlines so expected value single line
     root: ha-markdown
     selector: p
-    expected: |
-      <% if true %><< True >><% endif %>
-      true
+    expected: |-
+      <% if true %><< True >><% endif %>True
+  - type: snapshot
+    name: 26_forge_template_nesting_output_and_statement
+    threshold: 0.02
