@@ -116,13 +116,42 @@ export class UixForge extends LitElement {
     return output;
   }
 
+  private _hasNonPassthroughTemplateOrNestedTemplate(value: string): boolean {
+    let masked = value;
+    for (const { open, close } of this._templateNestingPairs()) {
+      const passthroughOpen = open.charAt(0) + open;
+      const passthroughClose = close + close.charAt(close.length - 1);
+      masked = masked
+        .split(passthroughOpen).join("")
+        .split(passthroughClose).join("");
+    }
+    return this.hasTemplateOrNestedTemplate(masked);
+  }
+
   private _replaceNestedTemplateDelimiters(value: string): string {
     let output = value;
+    const passthroughDelimiters: Array<{ passthroughOpenMarker: string; passthroughCloseMarker: string; open: string; close: string }> = [];
+    for (let index = 0; index < this._templateNestingPairs().length; index++) {
+      const { open, close } = this._templateNestingPairs()[index];
+      const passthroughOpen = open.charAt(0) + open;
+      const passthroughClose = close + close.charAt(close.length - 1);
+      const passthroughOpenMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_OPEN_${index}##`;
+      const passthroughCloseMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_CLOSE_${index}##`;
+      passthroughDelimiters.push({ passthroughOpenMarker, passthroughCloseMarker, open, close });
+      output = output
+        .split(passthroughOpen).join(passthroughOpenMarker)
+        .split(passthroughClose).join(passthroughCloseMarker);
+    }
     for (const { open, close } of this._templateNestingPairs()) {
       const { openRaw, closeRaw } = getNestedTemplateRawDelimiters(open);
       output = output
         .split(open).join(openRaw)
         .split(close).join(closeRaw);
+    }
+    for (const { passthroughOpenMarker, passthroughCloseMarker, open, close } of passthroughDelimiters) {
+      output = output
+        .split(passthroughOpenMarker).join(open)
+        .split(passthroughCloseMarker).join(close);
     }
     return output;
   }
@@ -445,7 +474,11 @@ export class UixForge extends LitElement {
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
-      } else if (typeof current[k] === "string" && this._stripPassthroughNesting(current[k]) !== current[k]) {
+      } else if (
+        typeof current[k] === "string" &&
+        this._stripPassthroughNesting(current[k]) !== current[k] &&
+        !this._hasNonPassthroughTemplateOrNestedTemplate(current[k])
+      ) {
         // Passthrough template: strip one nesting level and pass through to the inner forge
         const passthrough = this._stripPassthroughNesting(current[k]);
         base.nested = { keys: currentPath, value: UIX_FORGE_PASSTHROUGH_MARKER + passthrough };

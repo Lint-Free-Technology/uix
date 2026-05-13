@@ -1,5 +1,5 @@
 id: forge_template_nesting_output_and_statement
-description: "UIX Forge template_nesting supports output and statement delimiters in one template"
+description: "UIX Forge unnests first-level output and statement delimiters even when passthrough delimiters are present in the same template"
 view_path: forge-template-nesting-output-and-statement
 
 card:
@@ -9,12 +9,15 @@ card:
   element:
     type: markdown
     content: |
-      <% if config.element.type == "markdown" %>
-      Nested result: << 'output-and-statement-ok' >>
-      <% endif %>
+      <<% if true %>><<< True >>><<% endif %>>
+      <% if true %><< True >><% endif %>
+    icon: "{{ 'mdi:test-tube' }}"
+    entity: "{{ 'sun.sun' }}"
 
 assertions:
   - type: text_equals
     root: ha-markdown
     selector: p
-    expected: "Nested result: output-and-statement-ok"
+    expected: |
+      <% if true %><< True >><% endif %>
+      true
