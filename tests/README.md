@@ -69,8 +69,9 @@ HA_VERSION=2024.6.0 pytest tests/
 Accepted values for `HA_VERSION`: `beta`, `dev`, or a
 pinned version string such as `2024.6.0`.
 
-If `HA_VERSION` is unset, tests default to the repository-pinned version:
-`2026.4.0`.
+If `HA_VERSION` is unset, tests use the version recorded in
+[`tests/HA_VERSION`](HA_VERSION).  Edit that file to change the default for
+everyone — it is committed to the repository and shows up clearly in diffs.
 
 ### Fast iteration — keep HA running between pytest invocations
 

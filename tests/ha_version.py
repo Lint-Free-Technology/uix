@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
-# Keep test runs deterministic across time by pinning a default HA image tag.
-DEFAULT_HA_VERSION = "2026.4.0"
+# Single source of truth for the pinned HA version used by the test suite.
+# Edit tests/HA_VERSION to change it — one line, no Python knowledge required.
+_VERSION_FILE = Path(__file__).parent / "HA_VERSION"
 
 
 def resolve_ha_version() -> str:
-    """Return effective HA version from env, or the repo default."""
-    return os.environ.get("HA_VERSION", DEFAULT_HA_VERSION)
+    """Return effective HA version from env, or the repo-pinned default in tests/HA_VERSION."""
+    return os.environ.get("HA_VERSION", _VERSION_FILE.read_text().strip())
 

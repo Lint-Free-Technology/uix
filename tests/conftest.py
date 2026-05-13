@@ -7,7 +7,7 @@ sets up the UIX integration so tests can exercise it against a real HA instance.
 Environment variables
 ---------------------
 HA_VERSION
-    Docker image tag to use.  Defaults to ``2026.4.0``.
+    Docker image tag to use.  Defaults to the version in ``tests/HA_VERSION``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
 HA_URL
     Base URL of a **pre-running** Home Assistant instance (e.g.

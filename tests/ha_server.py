@@ -28,7 +28,7 @@ Press **Ctrl-C** in Terminal 1 to stop HA and clean up.
 Environment variables
 ---------------------
 HA_VERSION
-    Docker image tag to use.  Defaults to ``2026.4.0``.
+    Docker image tag to use.  Defaults to the version in ``tests/HA_VERSION``.
     Set to ``beta``, ``dev``, or a pinned version such as ``2024.6.0``.
 """
 
