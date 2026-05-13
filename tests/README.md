@@ -68,6 +68,7 @@ HA_VERSION=2024.6.0 pytest tests/
 
 By default, the harness reads `tests/HA_VERSION`. To change the default version
 for all local/CI test runs, edit that file.
+Blank lines and lines beginning with `#` are ignored.
 
 Accepted values for `HA_VERSION`: `stable`, `beta`, `dev`, or a pinned version
 string such as `2024.6.0`.

@@ -50,7 +50,7 @@ _HA_VERSION_FILE = _REPO_ROOT / "tests" / "HA_VERSION"
 
 
 def _resolve_default_ha_version() -> str:
-    """Resolve default HA version from tests/HA_VERSION, falling back to stable."""
+    """Resolve default HA version from tests/HA_VERSION, ignoring blank/comment lines."""
     try:
         for line in _HA_VERSION_FILE.read_text(encoding="utf-8").splitlines():
             value = line.strip()
