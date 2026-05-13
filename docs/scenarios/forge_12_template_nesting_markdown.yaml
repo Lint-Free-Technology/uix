@@ -12,6 +12,8 @@ card:
       <<% if true %>><<< True >>><<% endif %>>
       <% if true %><< True >><% endif %>
 
+assertions: []
+
 doc_image:
   output: docs/source/assets/page-assets/forge/template-nesting-markdown.png
   root: hui-markdown-card
