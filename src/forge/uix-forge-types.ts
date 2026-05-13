@@ -49,8 +49,34 @@ export const UIX_FORGE_PASSTHROUGH_MARKER = "##UIX_FORGE_PASSTHROUGH##";
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN = "<<";
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
-export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
-export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_OUTPUT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{{{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_OUTPUT = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{%{% endraw %}`;
+export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT = `{% raw %}%}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+
+/**
+ * Returns the raw Jinja delimiter placeholders for a nested template opener.
+ * Output-style openers (for example `<<`) map to `{{ ... }}` placeholders,
+ * while statement-style openers (for example `<%`) map to `{% ... %}` placeholders.
+ */
+export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: string; closeRaw: string } {
+  if (nestingOpen.length < 2) {
+    return {
+      openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_OUTPUT,
+      closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_OUTPUT,
+    };
+  }
+  if (nestingOpen.charAt(1) === "%") {
+    return {
+      openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT,
+      closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT,
+    };
+  }
+  return {
+    openRaw: UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_OUTPUT,
+    closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_OUTPUT,
+  };
+}
 
 export interface UixForgeForge {
     type?: string;
@@ -89,14 +115,18 @@ export class UixForgeConfigBuilder {
   _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
   refreshCallback?: (path: UixForgeConfigPath) => void;
-  _nestedTemplateOpen: string;
+  _nestedTemplateOpen: string[];
 
-  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string) {
+  constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string | string[]) {
     this._config = {};
     this._templateBindings = new Map();
     this.ready = false;
     this.refreshCallback = refreshCallback;
-    this._nestedTemplateOpen = nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN;
+    if (Array.isArray(nestedTemplateOpen)) {
+      this._nestedTemplateOpen = nestedTemplateOpen;
+    } else {
+      this._nestedTemplateOpen = [nestedTemplateOpen ?? UIX_FORGE_NESTED_TEMPLATE_OPEN];
+    }
   }
 
   get config() {
@@ -130,8 +160,8 @@ export class UixForgeConfigBuilder {
     return this.ready;
   }
 
-  public set nestedTemplateOpen(value: string) {
-    this._nestedTemplateOpen = value;
+  public set nestedTemplateOpen(value: string | string[]) {
+    this._nestedTemplateOpen = Array.isArray(value) ? value : [value];
   }
 
   private set ready(value: boolean) {
@@ -149,15 +179,20 @@ export class UixForgeConfigBuilder {
   }
 
   private checkReady() {
-    const _checkReady = (value, nestingOpen) => {
+    const _checkReady = (value, nestingOpen: string[]) => {
       for (const key of Object.keys(value)) {
         if (key === "uix") return true;
         const val = value[key];
         // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
         if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
         // If we have nested template marker but not the raw open marker, this means the template is ready.
-        if (typeof val === "string" && val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) && !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)) continue;
-        if (hasTemplate(val) || (typeof val === "string" && val.includes(nestingOpen))) return false;
+        if (
+          typeof val === "string" &&
+          val.includes(UIX_FORGE_NESTED_TEMPLATE_MARKER) &&
+          !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_OUTPUT) &&
+          !val.includes(UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT)
+        ) continue;
+        if (hasTemplate(val) || (typeof val === "string" && nestingOpen.some((open) => val.includes(open)))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
           if (!_checkReady(val, nestingOpen)) return false;
