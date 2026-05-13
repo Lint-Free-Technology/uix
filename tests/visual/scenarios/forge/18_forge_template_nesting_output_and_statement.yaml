@@ -11,8 +11,6 @@ card:
     content: |
       <<% if true %>><<< True >>><<% endif %>>
       <% if true %><< True >><% endif %>
-    icon: "{{ 'mdi:test-tube' }}"
-    entity: "{{ 'sun.sun' }}"
 
 assertions:
   - type: text_equals # text_equals does include newlines so expected value single line
