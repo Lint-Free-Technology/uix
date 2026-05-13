@@ -453,6 +453,9 @@ element:
 
 ### Theme styling
 
+!!! note
+    Theme type per mold updated in v7.2.0-beta.3
+
 The theme type given to UIX forge container matches the mold type, including [cross-context molds](#cross-context-molds). This can be useful in targeting the UIX forge container and styling the contained element.
 
 ??? example "Theme cross-context mold: card_as_badge"
