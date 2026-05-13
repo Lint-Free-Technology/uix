@@ -1,0 +1,33 @@
+id: forge_card_as_row
+description: "UIX Forge with mold card_as_row embeds a card (tile) as a row inside an entities card"
+view_path: forge-card-as-row
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+
+card:
+  type: entities
+  title: "Card as Row"
+  entities:
+    - light.bed_light
+    - type: "custom:uix-forge"
+      forge:
+        mold: card_as_row
+      element:
+        type: tile
+        entity: light.bed_light
+        name: "Tile as Row"
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: "uix-forge"
+
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card"

@@ -1,0 +1,33 @@
+id: forge_billet_uix_object_template
+description: "UIX Forge billet allows Jinja templates inside nested uix objects"
+view_path: forge-billet-uix-object-template
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    billets:
+      cards:
+        - type: markdown
+          content: "Billet template in uix object"
+          uix:
+            style: |
+              ha-card {
+                background: {{ "rgb(255, 0, 0)" }};
+              }
+  element:
+    type: vertical-stack
+    cards: "{{ cards }}"
+
+assertions:
+  - type: css_property
+    root:
+      - "uix-forge"
+      - "hui-vertical-stack-card"
+      - "hui-markdown-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 0, 0)"
+  - type: snapshot
+    name: "25_forge_billet_uix_object_template"
+    threshold: 0.02

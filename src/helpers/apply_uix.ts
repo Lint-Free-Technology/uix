@@ -58,12 +58,13 @@ function _resolveBilletString(
   value: string,
   resolvedSoFar: BilletConfig,
   billetName: string,
-  throwOnError?: boolean
+  throwOnError?: boolean,
+  allowTemplates?: boolean
 ): string {
   const reportError = throwOnError
     ? (msg: string) => { throw new Error(msg); }
     : (msg: string) => console.error(msg);
-  if (/\{\{|\}\}/.test(value)) {
+  if (!allowTemplates && /\{\{|\}\}/.test(value)) {
     reportError(
       `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
       `Billets do not support templates — use a macro instead.`
@@ -113,17 +114,24 @@ function _resolveBilletString(
   });
 }
 
-function _resolveBilletValue(value: any, resolvedSoFar: BilletConfig, billetName: string, throwOnError?: boolean): any {
+function _resolveBilletValue(
+  value: any,
+  resolvedSoFar: BilletConfig,
+  billetName: string,
+  throwOnError?: boolean,
+  inUixObject?: boolean
+): any {
   if (typeof value === "string") {
-    return _resolveBilletString(value, resolvedSoFar, billetName, throwOnError);
+    return _resolveBilletString(value, resolvedSoFar, billetName, throwOnError, inUixObject);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName, throwOnError));
+    return value.map((item) => _resolveBilletValue(item, resolvedSoFar, billetName, throwOnError, inUixObject));
   }
   if (value !== null && typeof value === "object") {
     const result: Record<string, any> = {};
     for (const k of Object.keys(value)) {
-      result[k] = _resolveBilletValue(value[k], resolvedSoFar, billetName, throwOnError);
+      const childInUixObject = inUixObject || k === "uix";
+      result[k] = _resolveBilletValue(value[k], resolvedSoFar, billetName, throwOnError, childInUixObject);
     }
     return result;
   }

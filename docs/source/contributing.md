@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+  - toc
+---
 # Contributing
 
 Contributions to UI eXtension are most welcome, either integration or frontend code, or updates to documentation.

@@ -1,0 +1,23 @@
+id: forge_template_nesting_output_and_statement
+description: "UIX Forge unnests first-level output and statement delimiters even when passthrough delimiters are present in the same template"
+view_path: forge-template-nesting-output-and-statement
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: markdown
+    content: |
+      <<% if true %>><<< True >>><<% endif %>>
+      <% if true %><< True >><% endif %>
+
+assertions:
+  - type: text_equals # text_equals does include newlines so expected value single line
+    root: ha-markdown
+    selector: p
+    expected: |-
+      <% if true %><< True >><% endif %>True
+  - type: snapshot
+    name: 26_forge_template_nesting_output_and_statement
+    threshold: 0.02
