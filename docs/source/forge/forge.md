@@ -563,7 +563,7 @@ The theme type given to UIX forge container matches the mold type, including [cr
             tap_action:
               action: navigate
               navigation_path: >-
-                /maintenance?historyBack=1&b/maintenance?historyBack=1&backPath=/dashboard-root/view-path
+                /maintenance?historyBack=1&backPath=/dashboard-root/view-path
     ```
 
     ![Theming home-summary badges as cards](../assets/page-assets/forge/forge-theme.png)

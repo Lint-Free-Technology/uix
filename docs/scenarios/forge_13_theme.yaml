@@ -69,7 +69,7 @@ dashboard:
             tap_action:
               action: navigate
               navigation_path: >-
-                /maintenance?historyBack=1&b/maintenance?historyBack=1&backPath=/dashboard-scratchpad/scratchtable
+                /maintenance?historyBack=1&backPath=/dashboard-scratchpad/scratchtable
 
 interactions:
   - type: wait
