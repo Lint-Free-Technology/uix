@@ -94,7 +94,7 @@ The script starts HA, sets up UIX, and writes `HA_URL` + `HA_TOKEN` to
 ```
 export HA_URL=http://localhost:12345
 export HA_TOKEN=eyJ...
-export HA_VERSION=2026.4.0
+export HA_VERSION=2026.5.1
 ```
 
 **Terminal 2** (iterate as many times as you like):
