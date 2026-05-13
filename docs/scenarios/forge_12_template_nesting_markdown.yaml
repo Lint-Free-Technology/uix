@@ -1,0 +1,19 @@
+id: doc_forge_template_nesting_markdown
+description: "UIX Forge: Template nesting in markdown card (forge.md)"
+view_path: doc-template-nesting-markdown
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: markdown
+    content: |
+      <<% if true %>><<< True >>><<% endif %>>
+      <% if true %><< True >><% endif %>
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/template-nesting-markdown.png
+  root: hui-markdown-card
+  padding: 16
+  threshold: 0.02
