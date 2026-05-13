@@ -1,3 +1,9 @@
+## [7.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0-beta.2...v7.2.0-beta.3) (2026-05-13)
+
+### ⚙️ Miscellaneous
+
+* Use mold type as UIX styling theme type for UIX Styling ([cddae81](https://github.com/Lint-Free-Technology/uix/commit/cddae81731c3ca447cd4f03e0846108e0e08c8fa))
+
 ## [7.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0-beta.1...v7.2.0-beta.2) (2026-05-13)
 
 ### 🐞 Bug Fixes
