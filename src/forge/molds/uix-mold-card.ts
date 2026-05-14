@@ -27,7 +27,7 @@ export class UixForgeMoldCard extends UixForgeMoldBase {
 
   refresh(path: UixForgeConfigPath): void {
     if (path.length === 1 && path[0] === "hidden") {
-      this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: this.forge.hidden },bubbles: true, composed: true }));
+      this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.forge.hidden },bubbles: true, composed: true }));
     } else if (path.length >= 1 && path[0] === "grid_options") {
       this.forge.dispatchEvent(new CustomEvent("card-updated", { bubbles: true, composed: true }));
     } else {

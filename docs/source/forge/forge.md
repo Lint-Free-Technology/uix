@@ -32,13 +32,13 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Currently `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"` or `"footer"`. |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
-| `template_nesting` | string | | `"<<>>"` | Four-character string used to escape `{{ }}` in templates. Use when the element config itself contains Jinja2-like syntax. When nesting multiple forge layers deep, add an extra `<>` pair per additional layer (e.g. `"<<<>>>"` for two layers of nesting). |
+| `template_nesting` | string | | `"<<>>"` | Four-character string used to escape nested templates. A single setting controls both Jinja forms: with the default `<<>>`, use `<<...>>` for `{{...}}` and `<%...%>` for `{%...%}` in the same nested template. Use when the element config itself contains Jinja2-like syntax. When nesting multiple forge layers deep, add an extra `<>` pair per additional layer (e.g. `<<< >>>` and `<<% %>>` for two layers of nesting). |
 | `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
@@ -132,7 +132,7 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves, except inside nested `uix` objects where the template is rendered by UIX Styling and not UIX Forge.
 
 ```yaml
 type: custom:uix-forge
@@ -225,9 +225,9 @@ See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on 
 
 ### Template nesting
 
-If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required.
+If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
 
-!!! example "Single level template nesting"
+??? example "Single level template nesting example"
     Below is an example using `custom:template-entity-row` which itself supports templates. This requires any template that needs to be rendered by `custom:template-entity-row` to be nested in `<<>>` nesting characters.
     ```yaml
     type: custom:uix-forge
@@ -251,47 +251,11 @@ If the element you are forging uses Jinja style templates or same markers (e.g. 
         state: '{#uix#}{{states(config.entity,with_unit=True)}}{#uix#}'
     ```
 
-#### Using billets in nested templates
+#### Multiple nesting levels
 
-Billet values are fully available as Jinja2 variables inside `<<...>>` expressions. When UIX builds the template, billet variables are set as Jinja2 `{%- set ... -%}` statements before Home Assistant evaluates the template body. This means `{{ billet_name }}` written inside `<<...>>` is evaluated by HA's template engine and the resolved value becomes part of the expression that the receiving card gets.
+When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` and `<<% %>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
 
-!!! note "Coming from decluttering-card?"
-    In tools like decluttering-card, a variable placeholder such as `[[id]]` is substituted as plain text into the string before anything else happens. In UIX Forge the mechanism is different but the end result is the same: billet variables are Jinja2 variables that HA evaluates at the same time as the rest of the template, so `{{ id }}` inside `<<...>>` is replaced with the billet's value before the receiving card ever sees the string.
-
-    The important difference is that you must use standard Jinja2 expression syntax — `{{ billet_name }}` — not the billet-to-billet interpolation syntax (`{billet_name}`). The `{...}` interpolation syntax is only available inside billet *value* strings (for one billet referencing another), not inside template expressions.
-
-A common use-case is driving an `auto-entities` filter template from a billet. For example, with an `id` billet holding a room slug, you can build the device entity list for that room:
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  billets:
-    id: living_room
-element:
-  type: custom:auto-entities
-  filter:
-    template: >-
-      <<device_entities(device_id('switch.{{id}}'))
-      |reject('search','device')|list>>
-  card:
-    type: entities
-```
-
-When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. HA then evaluates the template body, resolving `{{id}}` to `living_room`. The expression received by `auto-entities` is:
-
-```
-{#uix#}{{ device_entities(device_id('switch.living_room'))|reject('search','device')|list }}{#uix#}
-```
-
-`auto-entities` evaluates this Jinja2 expression and populates the card with the matching entities. Override the `id` billet per instance (or in a foundry) to reuse the same forge across multiple rooms without duplicating the filter logic.
-
-!!! tip
-    Because billet values are resolved at UIX template evaluation time, they are **baked into** the expression that the receiving card gets. If you need the receiving card to re-evaluate a value dynamically (e.g. based on changing HA state), express that logic directly as a Jinja2 function call inside the `<<...>>` block rather than relying on a billet for the dynamic part.
-
-When there are multiple forge layers, each additional layer requires one extra `<` / `>` pair (e.g. `<<<` / `>>>` for two levels). UIX strips one nesting level internally at each intermediate forge layer, so the correct number of delimiters reaches the final forge layer automatically — you only need to set `template_nesting` to the total number of layers deep the value needs to travel.
-
-??? example "Multiple nesting levels example"
+??? example "Multiple nesting levels example with output"
     ```yaml
     type: custom:uix-forge
     entity: media_player.kitchen # overall entity in global uix-forge config
@@ -339,8 +303,69 @@ When there are multiple forge layers, each additional layer requires one extra `
 
     ![Nesting example](../assets/page-assets/forge/forge-nesting.gif)
 
+??? example "Multiple nesting levels with markdown card"
+    This example shows that the markdown output will render the first level nested template and just output the second level nested template, showing exactly how nesting works.
+
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        <<% if true %>><<< True >>><<% endif %>>
+        <% if true %><< True >><% endif %>
+    ```
+
+    ![Template nesting in markdown card content](../assets/page-assets/forge/template-nesting-markdown.png)
+
+#### Template nesting and macros
+
+Template nesting **is not** supported in macros. It is impossible to get a rendered template text from a macro. Macros are available to UIX Forge templates and UIX Styling, but templates **are not** available to be rendered in the context of any nested/forged card including Home Assistant markdown card.
+
+!!! tip
+    Whether to nest markdown content templates or not depends on your use case. If templates are not nested, they are rendered by UIX Forge and the whole markdown card will be updated when the template updates. If your markdown templates are dynamic and update frequently you are best to use template nesting so the markdown card renders the template, using its optimized rendering to update only the output line that has changed. If you need to put complex logic in a macro for markdown card, you can store that in custom_templates in Home Assistant and then call as a nested template. e.g. if you macro in custom_templates is `content()` then you can use `<< content() >>` in your markdown card to have the markdown card render the `content()` macro.
+
+#### Using billets in nested templates
+
+Billet values are fully available as Jinja2 variables inside `<<...>>` expressions. When UIX builds the template, billet variables are set as Jinja2 `{%- set ... -%}` statements before Home Assistant evaluates the template body. This means `{{ billet_name }}` written inside `<<...>>` is evaluated by HA's template engine and the resolved value becomes part of the expression that the receiving card gets.
+
+!!! note "Coming from decluttering-card?"
+    In tools like decluttering-card, a variable placeholder such as `[[id]]` is substituted as plain text into the string before anything else happens. In UIX Forge the mechanism is different but the end result is the same: UIX Forge injects billet variables into the generated Jinja2 template, and Home Assistant evaluates them together with the rest of the template body, so `{{ id }}` inside `<<...>>` is replaced with the billet's value before the receiving card ever sees the string.
+
+    The important difference is that you must use standard Jinja2 expression syntax — `{{ billet_name }}` — not the billet-to-billet interpolation syntax (`{billet_name}`). The `{...}` interpolation syntax is only available inside billet *value* strings (for one billet referencing another), not inside template expressions.
+
+A common use-case is driving an `auto-entities` filter template from a billet. For example, with an `id` billet holding a room slug, you can build the device entity list for that room:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  billets:
+    id: living_room
+element:
+  type: custom:auto-entities
+  filter:
+    template: >-
+      <<device_entities(device_id('switch.{{id}}'))
+      |reject('search','device')|list>>
+  card:
+    type: entities
+```
+
+When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. HA then evaluates the template body, resolving `{{id}}` to `living_room`. The expression received by `auto-entities` is:
+
+```
+{#uix#}{{ device_entities(device_id('switch.living_room'))|reject('search','device')|list }}{#uix#}
+```
+
+`auto-entities` evaluates this Jinja2 expression and populates the card with the matching entities. Override the `id` billet per instance (or in a foundry) to reuse the same forge across multiple rooms without duplicating the filter logic.
+
+!!! tip
+    Because billet values are resolved at UIX template evaluation time, they are **baked into** the expression that the receiving card gets. If you need the receiving card to re-evaluate a value dynamically (e.g. based on changing HA state), express that logic directly as a Jinja2 function call inside the `<<...>>` block rather than relying on a billet for the dynamic part.
+
 ??? warning "Read if you wish to create your own nesting sequence"
-    When using template nesting, the template nesting characters `<<>>` are replaced with Jinja `raw` directives before the template is rendered. he replacement includes a marker for internal readiness code to be able to recognise a rendered template with nesting. `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`. If you try and create this sequence without using the nesting shorthand, it must be replicated EXACTLY for forge internal readiness checks to complete.
+    When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognize a rendered template with nesting. With the default `<<>>`, `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`; flow-control delimiters are inferred automatically, so `<%` is replaced with `{% raw %}{#uix#}{%{% endraw %}` and `%>` is replaced with `{% raw %}%}{#uix#}{% endraw %}`. If you try and create these sequences without using the nesting shorthand, they must be replicated EXACTLY for forge internal readiness checks to complete.
 
 ### Using with auto-entities
 
@@ -427,6 +452,120 @@ element:
 
 ![Example using uix element styling](../assets/page-assets/forge/uix-element-styling.png)
 
+### Theme styling
+
+The theme type given to UIX forge container matches the mold type, including [cross-context molds](#cross-context-molds). This can be useful in targeting the UIX forge container and styling the contained element.
+
+??? example "Theme cross-context mold: card_as_badge"
+    Here styling is given to all cards used as badges by applying theme styling to `uix-card-as-badge-yaml`. The theming assumes all cards used as badges are home-summary cards. *`energy` is commented out as the demo integration used for image generation does not have energy set up.*
+
+    Theme:
+    ```yaml
+    uix-card-as-badge-yaml: |
+      .: |
+        :host {
+          --ha-tile-info-primary-font-size: var(--ha-font-size-s);
+          --ha-card-border-radius: var(--ha-badge-border-radius, calc(var(--ha-badge-size, 36px) / 2));
+        }
+      hui-home-summary-card $: |
+        ha-tile-container {
+          line-height: 0;
+        }
+        ha-tile-icon {
+          --mdc-icon-size: 18px;
+          --tile-icon-size: 18px;
+        }
+      hui-home-summary-card $ ha-tile-info $: |
+        div.info {
+          flex-direction: row;
+          align-items: center;
+          gap: var(--ha-space-2);
+        }
+        div.info slot.primary span,
+        div.info slot.secondary span {
+          overflow: visible;
+        }
+      hui-home-summary-card $$ ha-tile-container $: |
+        .container {
+          margin: 0;
+        }
+        .content {
+          gap: var(--ha-space-2);
+          padding: 8px 10px;
+        }
+    ```
+
+    Dashboard with home-summary cards as badges:
+    ```yaml
+    - type: sections
+      max_columns: 10
+      title: Home Summary Cards as Badges
+      path: home-summary-cards-as-badges
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: light
+            tap_action:
+              action: navigate
+              navigation_path: /light?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: climate
+            tap_action:
+              action: navigate
+              navigation_path: /climate?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: security
+            tap_action:
+              action: navigate
+              navigation_path: /security?historyBack=1
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: media_players
+            tap_action:
+              action: navigate
+              navigation_path: /home/media-players
+        # - type: custom:uix-forge
+        #  forge:
+        #    mold: card_as_badge
+        #  element:
+        #    type: home-summary
+        #    summary: energy
+        #    tap_action:
+        #      action: navigate
+        #      navigation_path: >-
+        #        /energy/overview?historyBack=1&backPath=/dashboard-root/view-path
+        - type: custom:uix-forge
+          forge:
+            mold: card_as_badge
+          element:
+            type: home-summary
+            summary: maintenance
+            tap_action:
+              action: navigate
+              navigation_path: >-
+                /maintenance?historyBack=1&backPath=/dashboard-root/view-path
+    ```
+
+    ![Theming home-summary badges as cards](../assets/page-assets/forge/forge-theme.png)
+
 ## Sections
 
 When using UIX Forge for a section in sections view, use the YAML section editor (use three dots menu) and change type to `custom: uix-forge`. Set forge `mold` to `section`.
@@ -504,3 +643,78 @@ element:
   entity: light.bed_light
 ```
 
+## Cross-context molds
+
+Cross-context molds let you **forge one element type while acting as a different element type** in the parent container. This is the cleanest replacement for the fragile `custom:hui-element` and `custom:hui-xxx-card` hacks, which lack visibility support and can break across HA updates.
+
+| Mold | Forges | Acts as |
+| ---- | ------ | ------- |
+| `card_as_row` | `hui-card` (card element) | Row inside an entities / fold-entity-row |
+| `card_as_badge` | `hui-card` (card element) | Badge in a badge container |
+| `row_as_card` | Row element | Card in a card grid |
+| `row_as_badge` | Row element | Badge in a badge container |
+| `badge_as_card` | `hui-badge` (badge element) | Card in a card grid |
+| `badge_as_row` | `hui-badge` (badge element) | Row inside an entities / fold-entity-row |
+| `badge_as_picture_element` | `hui-badge` (badge element) | Picture element inside a picture-elements card |
+
+Each cross-context mold intercepts the inner element's native visibility event, updates its own hidden state, and re-fires the appropriate event for the parent container. `forge.hidden` (templates supported) works across all cross-context molds.
+
+For `badge_as_picture_element`, the badge element config needs to include the regular picture element positioning in `style` object.
+
+### card_as_row — embedding a card as a row
+
+The most common use-case: embed a `glance`, `markdown`, `tile`, or any other card-type element directly inside an `entities` card (or `custom:fold-entity-row`). The card is created as a real `hui-card` element while UIX Forge signals the parent entities card exactly like a regular row.
+
+```yaml
+type: entities
+title: "Bedroom"
+icon: mdi:bed
+entities:
+  - type: "custom:uix-forge"
+    forge:
+      mold: card_as_row
+    element:
+      type: glance
+      entities:
+        - entity: light.bed_light
+          name: Bed
+        - entity: light.ceiling_lights
+          name: Ceiling
+        - entity: light.kitchen_lights
+          name: Kitchen
+  - entity: light.bed_light
+```
+
+![Glance card embedded as a row inside an entities card](../assets/page-assets/forge/card-as-row.png)
+
+### badge as picture-element - embedding a badge as a picture-element
+
+```yaml
+type: picture-elements
+elements:
+  - type: custom:uix-forge
+    forge:
+      mold: badge_as_picture_element
+    element:
+      type: entity
+      entity: light.bed_light
+      style:
+        top: 25%
+        left: 50%
+image: https://demo.home-assistant.io/stub_config/floorplan.png
+```
+
+![badge embedded in a picture-elements card](../assets/page-assets/forge/badge-as-picture-element.png)
+
+!!! tip "Visibility"
+    Unlike `custom:hui-element` or `custom:hui-xxx-card`, `forge.hidden` works correctly with `card_as_row`. You can use templates to conditionally show or hide the embedded card and the entities card will respond properly:
+    ```yaml
+    type: "custom:uix-forge"
+    forge:
+      mold: card_as_row
+      hidden: "{{ is_state('sun.sun', 'below_horizon') }}"
+    element:
+      type: glance
+      entities:
+        - entity: sun.sun
+    ```

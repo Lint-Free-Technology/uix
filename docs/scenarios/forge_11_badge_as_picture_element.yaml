@@ -1,0 +1,33 @@
+id: doc_forge_badge_as_picture_element
+description: "Doc image: badge in picture entities card using mold badge_as_picture_element (forge.md)"
+view_path: doc-forge-badge-as-picture-element
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: picture-elements
+  elements:
+    - type: custom:uix-forge
+      forge:
+        mold: badge_as_picture_element
+      element:
+        type: entity
+        entity: light.bed_light
+        style:
+          top: 25%
+          left: 50%
+  image: https://demo.home-assistant.io/stub_config/floorplan.png
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/badge-as-picture-element.png
+  root: hui-picture-elements-card
+  padding: 16
+  threshold: 0.02

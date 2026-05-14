@@ -94,3 +94,39 @@ uix-date-picker-selection:
       calendar-month::part(button):hover {
         background-color: rgba(255, 0, 0, 0.2) !important;
       }
+
+uix-card-as-badge:
+  uix-theme: uix-card-as-badge
+
+  uix-card-as-badge-yaml: |
+    .: |
+      :host {
+        --ha-tile-info-primary-font-size: var(--ha-font-size-s);
+        --ha-card-border-radius: var(--ha-badge-border-radius, calc(var(--ha-badge-size, 36px) / 2));
+      }
+    hui-home-summary-card $: |
+      ha-tile-container {
+        line-height: 0;
+      }
+      ha-tile-icon {
+        --mdc-icon-size: 18px;
+        --tile-icon-size: 18px;
+      }
+    hui-home-summary-card $ ha-tile-info $: |
+      div.info {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--ha-space-2);
+      }
+      div.info slot.primary span,
+      div.info slot.secondary span {
+          overflow: visible;
+        }
+    hui-home-summary-card $$ ha-tile-container $: |
+      .container {
+        margin: 0;
+      }
+      .content {
+        gap: var(--ha-space-2);
+        padding: 8px 10px;
+      }

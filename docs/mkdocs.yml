@@ -49,9 +49,14 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 nav:
   - UI eXtension:
-      - About:
-          - index.md
-      - contributing.md
+       - About: index.md
+       - Quick Start: /quick-start
+       - UIX Styling: /using
+       - UIX Forge: /forge
+       - UIX Extras: /extras
+       - UIX Guides: /guides
+       - FAQ: /faq
+       - Contributing: /contributing
   - Quick Start: 'quick-start.md'
   - UIX Styling:
       -  Styling:

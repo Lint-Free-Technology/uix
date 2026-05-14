@@ -21,7 +21,7 @@
 # In a second terminal:  source .ha_env && pytest tests/visual/test_doc_images.py -k <id>
 # Press Ctrl-C here to stop HA.
 ha_up ha-tests-up:
-	HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
+	HA_VERSION="$$(awk 'NF && $$1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true)"; HA_VERSION="$${HA_VERSION:-stable}" HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
 
 # Run the doc-image test suite.  Missing images are created automatically;
 # existing images are verified against the current rendered output.

@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -80,16 +80,87 @@ export class UixForge extends LitElement implements UixSparkHost {
 
   private hasTemplateOrNestedTemplate(value: any): boolean {
     if (hasTemplate(value)) return true;
-    if (typeof value === "string" && value.includes(this._templateNestingOpen)) return true;
+    if (typeof value === "string" && this._templateNestingPairs().some(({ open }) => value.includes(open))) return true;
     return false;
   }
 
-  private get _passthroughNestingOpen(): string {
-    return this._templateNestingOpen.charAt(0) + this._templateNestingOpen;
+  /**
+   * Builds the active nested-template delimiter pairs for this forge instance.
+   * The configured `template_nesting` pair is always included, and when possible
+   * an inferred statement pair (for example `<%`/`%>`) is added alongside it.
+   */
+  private _templateNestingPairs(): Array<{ open: string; close: string }> {
+    const pairs: Array<{ open: string; close: string }> = [];
+    const addPair = (open: string, close: string) => {
+      if (!pairs.some((pair) => pair.open === open && pair.close === close)) {
+        pairs.push({ open, close });
+      }
+    };
+    addPair(this._templateNestingOpen, this._templateNestingClose);
+    const openChar = this._templateNestingOpen.charAt(0);
+    const closeChar = this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
+    if (this._templateNestingOpen.length > 1 && this._templateNestingClose.length > 1) {
+      addPair(`${openChar}%`, `%${closeChar}`);
+    }
+    return pairs;
   }
 
-  private get _passthroughNestingClose(): string {
-    return this._templateNestingClose + this._templateNestingClose.charAt(this._templateNestingClose.length - 1);
+  private _stripPassthroughNesting(value: string): string {
+    let output = value;
+    for (const { open, close } of this._templateNestingPairs()) {
+      const passthroughOpen = open.charAt(0) + open;
+      const passthroughClose = close + close.charAt(close.length - 1);
+      output = output
+        .split(passthroughOpen).join(open)
+        .split(passthroughClose).join(close);
+    }
+    return output;
+  }
+
+  private _hasNonPassthroughTemplateOrNestedTemplate(value: string): boolean {
+    let masked = value;
+    for (const { open, close } of this._templateNestingPairs()) {
+      const passthroughOpen = open.charAt(0) + open;
+      const passthroughClose = close + close.charAt(close.length - 1);
+      masked = masked
+        .split(passthroughOpen).join("")
+        .split(passthroughClose).join("");
+    }
+    return this.hasTemplateOrNestedTemplate(masked);
+  }
+
+  private _replaceNestedTemplateDelimiters(value: string): string {
+    type PassthroughDelimiterMapping = {
+      passthroughOpenMarker: string;
+      passthroughCloseMarker: string;
+      open: string;
+      close: string;
+    };
+    let output = value;
+    const passthroughDelimiters: PassthroughDelimiterMapping[] = [];
+    for (let pairIndex = 0; pairIndex < this._templateNestingPairs().length; pairIndex++) {
+      const { open, close } = this._templateNestingPairs()[pairIndex];
+      const passthroughOpen = open.charAt(0) + open;
+      const passthroughClose = close + close.charAt(close.length - 1);
+      const passthroughOpenMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_OPEN_${pairIndex}##`;
+      const passthroughCloseMarker = `##UIX_FORGE_NESTED_PASSTHROUGH_CLOSE_${pairIndex}##`;
+      passthroughDelimiters.push({ passthroughOpenMarker, passthroughCloseMarker, open, close });
+      output = output
+        .split(passthroughOpen).join(passthroughOpenMarker)
+        .split(passthroughClose).join(passthroughCloseMarker);
+    }
+    for (const { open, close } of this._templateNestingPairs()) {
+      const { openRaw, closeRaw } = getNestedTemplateRawDelimiters(open);
+      output = output
+        .split(open).join(openRaw)
+        .split(close).join(closeRaw);
+    }
+    for (const { passthroughOpenMarker, passthroughCloseMarker, open, close } of passthroughDelimiters) {
+      output = output
+        .split(passthroughOpenMarker).join(open)
+        .split(passthroughCloseMarker).join(close);
+    }
+    return output;
   }
 
   private _resolveFoundry(
@@ -200,7 +271,9 @@ export class UixForge extends LitElement implements UixSparkHost {
 
     this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
     this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;
-    this._forgeConfig.nestedTemplateOpen = this._templateNestingOpen;
+    const nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
+    this._forgeConfig.nestedTemplateOpen = nestedTemplateOpen;
+    this._forgedElementConfig.nestedTemplateOpen = nestedTemplateOpen;
     const forgeConfig = { ...resolvedForge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
@@ -408,11 +481,13 @@ export class UixForge extends LitElement implements UixSparkHost {
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
         await this.bindTemplates(base, current[k], currentPath);
-      } else if (typeof current[k] === "string" && current[k].includes(this._passthroughNestingOpen) && current[k].includes(this._passthroughNestingClose)) {
+      } else if (
+        typeof current[k] === "string" &&
+        this._stripPassthroughNesting(current[k]) !== current[k] &&
+        !this._hasNonPassthroughTemplateOrNestedTemplate(current[k])
+      ) {
         // Passthrough template: strip one nesting level and pass through to the inner forge
-        const passthrough = current[k]
-          .split(this._passthroughNestingOpen).join(this._templateNestingOpen)
-          .split(this._passthroughNestingClose).join(this._templateNestingClose);
+        const passthrough = this._stripPassthroughNesting(current[k]);
         base.nested = { keys: currentPath, value: UIX_FORGE_PASSTHROUGH_MARKER + passthrough };
       } else if (this.hasTemplateOrNestedTemplate(current[k])) {
         // If already bound, unbind first
@@ -424,9 +499,7 @@ export class UixForge extends LitElement implements UixSparkHost {
             unbind_template(binding.callback);
           }
         }
-        const template = current[k]
-          .replaceAll(this._templateNestingOpen, UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW)
-          .replaceAll(this._templateNestingClose, UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW);
+        const template = this._replaceNestedTemplateDelimiters(current[k]);
         const macroStr = buildMacros(this._macros, template);
         const billetStr = buildBillets(this._billets, macroStr + template);
         const callback = (res: any) => {
@@ -459,8 +532,11 @@ export class UixForge extends LitElement implements UixSparkHost {
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
     this._billets = forgeConfig.billets;
-    this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : "<<";
-    this._templateNestingClose = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(2) : ">>";
+    this._templateNestingOpen = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
+    this._templateNestingClose = forgeConfig.template_nesting ? forgeConfig.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;
+    const nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
+    this._forgeConfig.nestedTemplateOpen = nestedTemplateOpen;
+    this._forgedElementConfig.nestedTemplateOpen = nestedTemplateOpen;
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
@@ -491,7 +567,7 @@ export class UixForge extends LitElement implements UixSparkHost {
     }
     apply_uix(
       (this as any),
-      "card",
+      this._mold.type.split("_").join("-"),
       this._mergeForgeUix(this._resolvedUix),
       { config: 
         { 
@@ -771,6 +847,3 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     customElements.define("uix-forge", UixForge);
   }
 });
-
-
-
