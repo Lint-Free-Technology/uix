@@ -27,7 +27,7 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import Page
 
-from scenario_runner import (
+from ha_testcontainer.visual.scenario_runner import (
     clear_scenario,
     goto_scenario,
     load_all_scenarios,

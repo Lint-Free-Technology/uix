@@ -55,12 +55,12 @@ tap_action:
   uix_forge:
     - forge_id: my_tile
       data:
-        entity: light.living_room
+        entity: light.living_room_rgbww_lights
 ```
 
 ```yaml
 type: button
-name: Living Room
+name: Bed Room
 tap_action:
   action: fire-dom-event
   uix_forge:
@@ -75,6 +75,9 @@ Forged tile that receives and changes tile entity based on event data, with a de
 type: custom:uix-forge
 forge:
   mold: card
+  grid_options:
+    rows: 1
+    columns: full
   sparks:
     - type: event
       forge_id: my_tile
@@ -82,6 +85,8 @@ element:
   type: tile
   entity: "{{ uixForge.event.entity | default('light.bed_light') }}"
 ```
+
+![Event spark example](../../assets/page-assets/forge/sparks/event_tile.gif)
 
 ### Listening to another forged element's events
 

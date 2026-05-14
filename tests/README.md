@@ -66,8 +66,12 @@ pytest tests/visual/test_scenarios.py -k forge
 HA_VERSION=2024.6.0 pytest tests/
 ```
 
-Accepted values for `HA_VERSION`: `stable` (default), `beta`, `dev`, or a
-pinned version string such as `2024.6.0`.
+By default, the harness reads `tests/HA_VERSION`. To change the default version
+for all local/CI test runs, edit that file.
+Blank lines and lines beginning with `#` are ignored.
+
+Accepted values for `HA_VERSION`: `stable`, `beta`, `dev`, or a pinned version
+string such as `2024.6.0`.
 
 ### Fast iteration — keep HA running between pytest invocations
 
@@ -81,7 +85,7 @@ overhead, start a **persistent** HA instance in a separate terminal:
 ```bash
 make ha_up
 # or equivalently:
-python tests/ha_server.py
+HA_VERSION=$(awk 'NF && $1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true); HA_VERSION=${HA_VERSION:-stable} HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
 ```
 
 The script starts HA, sets up UIX, and writes `HA_URL` + `HA_TOKEN` to
