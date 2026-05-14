@@ -225,9 +225,6 @@ See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on 
 
 ### Template nesting
 
-!!! info
-    Jinja statement/flow-control delimiter nesting included in 7.2.0-beta.2
-
 If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
 
 ??? example "Single level template nesting example"
@@ -457,9 +454,6 @@ element:
 
 ### Theme styling
 
-!!! note
-    Theme type per mold updated in v7.2.0-beta.3
-
 The theme type given to UIX forge container matches the mold type, including [cross-context molds](#cross-context-molds). This can be useful in targeting the UIX forge container and styling the contained element.
 
 ??? example "Theme cross-context mold: card_as_badge"
@@ -650,9 +644,6 @@ element:
 ```
 
 ## Cross-context molds
-
-!!! info
-    Cross-context molds available in v7.2.0-beta.1
 
 Cross-context molds let you **forge one element type while acting as a different element type** in the parent container. This is the cleanest replacement for the fragile `custom:hui-element` and `custom:hui-xxx-card` hacks, which lack visibility support and can break across HA updates.
 
