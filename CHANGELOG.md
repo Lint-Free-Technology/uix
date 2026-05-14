@@ -1,30 +1,18 @@
-## [7.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0-beta.2...v7.2.0-beta.3) (2026-05-13)
-
-### ⚙️ Miscellaneous
-
-* Use mold type as UIX styling theme type for UIX Styling ([cddae81](https://github.com/Lint-Free-Technology/uix/commit/cddae81731c3ca447cd4f03e0846108e0e08c8fa))
-
-## [7.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0-beta.1...v7.2.0-beta.2) (2026-05-13)
-
-### 🐞 Bug Fixes
-
-* Add inferred JInja statement/flow-control `{% %}` template nesting support in UIX Forge `template_nesting` ([#320](https://github.com/Lint-Free-Technology/uix/issues/320)) ([c27dfbc](https://github.com/Lint-Free-Technology/uix/commit/c27dfbcba37fa0cf997203fdac47aee975548c70))
-
-## [7.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.1-beta.1...v7.2.0-beta.1) (2026-05-12)
+## [7.2.0](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.2.0) (2026-05-14)
 
 ### ⭐ New Features
 
 * **forge:** add cross-context mold types (card_as_row, card_as_badge, row_as_card, row_as_badge, badge_as_card, badge_as_row, badge_as_picture_element) ([#316](https://github.com/Lint-Free-Technology/uix/issues/316)) ([bcda0e5](https://github.com/Lint-Free-Technology/uix/commit/bcda0e51ad6cb2b51ab5af8fe419257f5145bca3)), closes [#314](https://github.com/Lint-Free-Technology/uix/issues/314)
 
-## [7.1.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.1.1-beta.1) (2026-05-11)
-
 ### 🐞 Bug Fixes
 
+* Add inferred JInja statement/flow-control `{% %}` template nesting support in UIX Forge `template_nesting` ([#320](https://github.com/Lint-Free-Technology/uix/issues/320)) ([c27dfbc](https://github.com/Lint-Free-Technology/uix/commit/c27dfbcba37fa0cf997203fdac47aee975548c70))
 * Allow Jinja templates in billet-provided `uix` objects ([#319](https://github.com/Lint-Free-Technology/uix/issues/319)) ([1269b27](https://github.com/Lint-Free-Technology/uix/commit/1269b27b2a4df6a9d50241937138b4957b9b59f0)), closes [#318](https://github.com/Lint-Free-Technology/uix/issues/318)
 
 ### ⚙️ Miscellaneous
 
 * migrate to ha-testcontainer 2.0.0, remove replicated test infrastructure ([#310](https://github.com/Lint-Free-Technology/uix/issues/310)) ([5759af8](https://github.com/Lint-Free-Technology/uix/commit/5759af846df1f2f095f7b185167d2b2f348d2740))
+* Use mold type as UIX styling theme type for UIX Styling ([cddae81](https://github.com/Lint-Free-Technology/uix/commit/cddae81731c3ca447cd4f03e0846108e0e08c8fa))
 
 ## [7.1.0](https://github.com/Lint-Free-Technology/uix/compare/v7.0.0...v7.1.0) (2026-05-06)
 
