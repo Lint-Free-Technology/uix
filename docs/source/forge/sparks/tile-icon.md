@@ -36,8 +36,10 @@ forge:
       color: red
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
 ```
+
+![Tile icon spark basic example](../../assets/page-assets/forge/sparks/tile-icon-basic.png)
 
 ## Configuration
 
@@ -79,8 +81,10 @@ forge:
         action: more-info
 element:
   type: tile
-  entity: light.living_room
+  entity: light.bed_light
 ```
+
+![Tile icon spark actions example](../../assets/page-assets/forge/sparks/tile-icon-actions.gif)
 
 !!! note
     - The spark targets the **first** element matched by `after`/`before`.
@@ -101,8 +105,10 @@ element:
           color: blue
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
+
+    ![Tile icon spark fixed blue](../../assets/page-assets/forge/sparks/tile-icon-fixed-blue.png)
 
 ??? example "Insert an entity state icon before an element"
     ```yaml
@@ -115,8 +121,10 @@ element:
           entity: light.ceiling_lights
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
+
+    ![Tile icon spark entity state](../../assets/page-assets/forge/sparks/tile-icon-entity-state.png)
 
 ??? example "Insert an icon using an SVG path"
     Path is a filled circle
@@ -131,8 +139,10 @@ element:
           color: red
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
+
+    ![Tile icon spark svg path](../../assets/page-assets/forge/sparks/tile-icon-svg-path.png)
 
 ??? example "Insert an image icon"
     ```yaml
@@ -142,11 +152,13 @@ element:
       sparks:
         - type: tile-icon
           after: hui-tile-card $ ha-tile-icon
-          image_url: /local/my-icon.png
+          image_url: /local/media/daniel_craig_cropped.png
     element:
       type: tile
-      entity: light.living_room
+      entity: light.bed_light
     ```
+
+    ![Tile icon spark image](../../assets/page-assets/forge/sparks/tile-icon-image.png)
 
 ??? example "Cross a shadow boundary to reach a deeply nested element"
     ```yaml
@@ -155,11 +167,13 @@ element:
       mold: card
       sparks:
         - type: tile-icon
-          before: hui-alarm-panel-card $ ha-textfield
+          before: hui-alarm-panel-card $$ ha-input
           icon: mdi:star
           color: red
     element:
       type: alarm-panel
       states: []
-      entity: alarm_control_panel.test_panel
+      entity: alarm_control_panel.security
     ```
+
+    ![Tile icon spark nested](../../assets/page-assets/forge/sparks/tile-icon-nested.png)

@@ -1,0 +1,36 @@
+id: doc_spark_tile_icon_entity_state
+description: "Doc image: Forge Tile Icon spark entity state (tile-icon.md)"
+view_path: doc-spark-tile-icon-entity-state
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: tile-icon
+        before: hui-tile-card $ ha-tile-icon:not([data-uix-forge-tile-icon-id])
+        entity: light.ceiling_lights
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/tile-icon-entity-state.png
+  root: hui-tile-card
+  padding: 16
