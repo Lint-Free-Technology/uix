@@ -1,3 +1,9 @@
+## [7.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0-beta.2...v7.3.0-beta.3) (2026-05-15)
+
+### 🐞 Bug Fixes
+
+* Console errors and broken forged element when returning to a view containing a row in entities card with `state_color` set or forged elements via `auto-entities`. ([913e97a](https://github.com/Lint-Free-Technology/uix/commit/913e97a1edc3816cf48d91e39009abdc84f7949f))
+
 ## [7.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0-beta.1...v7.3.0-beta.2) (2026-05-15)
 
 ### 🐞 Bug Fixes
