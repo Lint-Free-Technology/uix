@@ -43,6 +43,15 @@ function* domAncestorsAndSelf(el: Node): Generator<Node> {
   }
 }
 
+// Walk upward from the target to confirm it is actually inside the provided
+// UIX/forge scope, which may be either an element boundary or a shadow root.
+function isNodeWithinScope(target: Element, scope: Element | ShadowRoot): boolean {
+  for (const node of domAncestorsAndSelf(target)) {
+    if (node === scope) return true;
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // Find the closest ancestor (or self) that has a non-child UIX node
 // ---------------------------------------------------------------------------
@@ -54,7 +63,9 @@ function findUixParent(element: Element): UixParentInfo | null {
     const nonChild = uixNodes.filter(
       (u: any) => u.type && !u.type.endsWith("-child")
     );
-    if (nonChild.length > 0) {
+    // Only match a UIX parent when the target is inside the scope that its
+    // uix-node actually styles, not merely somewhere in the host's light DOM.
+    if (nonChild.length > 0 && isNodeWithinScope(element, uixContext(node, nonChild))) {
       return {
         element: node,
         uixNodes: nonChild,
@@ -181,7 +192,7 @@ function buildPathKeyAndCssSelector(
   const segments: Segment[] = [];
   let current: Node = targetEl;
 
-  while (current && current !== ctx && current !== uixParentEl) {
+  while (current && current !== ctx) {
     if (current instanceof ShadowRoot) {
       segments.unshift({ kind: "shadow" });
       current = current.host;
@@ -195,7 +206,7 @@ function buildPathKeyAndCssSelector(
     }
   }
 
-  if (current !== ctx && current !== uixParentEl) return null;
+  if (current !== ctx) return null;
 
   // Find the last shadow-root crossing in the walk
   let lastShadowIdx = -1;
@@ -401,7 +412,9 @@ function findUixForgeParent(element: Element): UixForgeParentInfo | null {
     if (!(node instanceof Element)) continue;
     if (node.localName === "uix-forge") {
       const forgedEl: Element | null = (node as any).forgedElement ?? null;
-      return { forgeEl: node, forgedEl };
+      if (forgedEl && isNodeWithinScope(element, forgedEl)) {
+        return { forgeEl: node, forgedEl };
+      }
     }
   }
   return null;
@@ -739,4 +752,3 @@ function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | nu
 
   console.groupEnd();
 };
-
