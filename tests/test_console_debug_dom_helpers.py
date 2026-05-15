@@ -63,7 +63,7 @@ def _run_helper(page: Page, helper_name: str, setup_script: str) -> list[dict[st
             };
           }
           try {
-            const target = (0, eval)(setupScript);
+            const target = new Function(`return ${setupScript}`)();
             window[helperName](target);
           } finally {
             for (const method of methods) {

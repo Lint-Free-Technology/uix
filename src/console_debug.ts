@@ -44,7 +44,6 @@ function* domAncestorsAndSelf(el: Node): Generator<Node> {
 }
 
 function isNodeWithinScope(target: Element, scope: Element | ShadowRoot): boolean {
-  if (target === scope) return true;
   for (const node of domAncestorsAndSelf(target)) {
     if (node === scope) return true;
   }
