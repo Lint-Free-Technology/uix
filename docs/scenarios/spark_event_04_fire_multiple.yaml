@@ -1,0 +1,75 @@
+id: doc_spark_event_fire_multiple
+description: "Doc image: Forge Event spark fire multiple (event.md)"
+view_path: doc-spark-event-fire-multiple
+
+cards:
+  - type: button
+    name: Main Card
+    grid_options:
+      columns: full
+    tap_action:
+      action: fire-dom-event
+      uix_forge:
+        - forge_id: card_a
+          data:
+            selected: Selected A
+        - forge_id: card_b
+          data:
+            selected: Selected B
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: 6
+        rows: auto
+      sparks:
+        - type: event
+          forge_id: card_a
+    element:
+      type: markdown
+      content: |
+        My data: {{ uixForge.event.selected | default('none') }}
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: 6
+        rows: auto
+      sparks:
+        - type: event
+          forge_id: card_b
+    element:
+      type: markdown
+      content: |
+        My data: {{ uixForge.event.selected | default('none') }}
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/event_fire_multiple.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: 
+            - hui-button-card
+          selector: ha-card
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: 
+            - hui-button-card
+          selector: ha-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s

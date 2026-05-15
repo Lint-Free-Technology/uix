@@ -95,6 +95,30 @@ Use `other_forge_ids` to receive events intended for a different forged element.
 !!! tip
     While `uixForge.event` will always exist as a template variable, `uixForge.event.<forge_id>` will not so you need to check for its existence in the dict prior to accessing, otherwise your template will error. If you are unsure of why a template is not working as expected, you can always use [template debugging](../../debugging/templates.md) with `{# uix.debug #}`.
 
+Two button cards fire DOM events; a UIX forge receives as `other_forge_ids`:
+
+```yaml
+type: button
+name: Card A
+tap_action:
+  action: fire-dom-event
+  uix_forge:
+    - forge_id: card_a
+      data:
+        selected: Selected
+```
+
+```yaml
+type: button
+name: Bed Room
+tap_action:
+  action: fire-dom-event
+  uix_forge:
+    - forge_id: card_b
+      data:
+        entity: Selected
+```
+
 ```yaml
 type: custom:uix-forge
 forge:
@@ -113,9 +137,35 @@ element:
     uixForge.event else 'none' | default('none') }}
 ```
 
+![Event spark other_forge_ids example](../../assets/page-assets/forge/sparks/event_other_forge_ids.gif)
+
 ### Combining own ID and other IDs
 
-You can set both `forge_id` and `other_forge_ids` simultaneously:
+You can set both `forge_id` and `other_forge_ids` simultaneously.
+
+Two button cards fire DOM events; a UIX forge receives as `forge_id` and `other_forge_ids`:
+
+```yaml
+type: button
+name: Main Card
+tap_action:
+  action: fire-dom-event
+  uix_forge:
+    - forge_id: main-card
+      data:
+        selected: "Hello main_card!"
+```
+
+```yaml
+type: button
+name: Sidebar Card
+tap_action:
+  action: fire-dom-event
+  uix_forge:
+    - forge_id: sidebar_card
+      data:
+        data_key: "Hello sidebar_card!"
+```
 
 ```yaml
 type: custom:uix-forge
@@ -129,11 +179,71 @@ forge:
 element:
   type: markdown
   content: |
-    My data: {# uix.debug #}{{ uixForge.event.my_key | default('none') }}
+    My data: {{ uixForge.event.data_key | default('none') }}
 
-    Sidebar data: {{ uixForge.event.sidebar_card.my_key if "sidebar_card" in
+    Sidebar data: {{ uixForge.event.sidebar_card.data_key if "sidebar_card" in
     uixForge.event else 'none' | default('none') }}
 ```
+
+![Event spark mixed ids example](../../assets/page-assets/forge/sparks/event_mixed_forge_ids.gif)
+
+### Sending event data to more than one forged element
+
+You can send event data to multiple forged elements at the same time.
+
+Button card sends forge event data to two forged elements:
+
+```yaml
+type: button
+name: Main Card
+grid_options:
+  columns: full
+tap_action:
+  action: fire-dom-event
+  uix_forge:
+    - forge_id: card_a
+      data:
+        selected: Selected A
+    - forge_id: card_b
+      data:
+        selected: Selected B
+```
+
+Two forged elements receiving event data:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  grid_options:
+    columns: 6
+    rows: auto
+  sparks:
+    - type: event
+      forge_id: card_a
+element:
+  type: markdown
+  content: |
+    My data: {{ uixForge.event.selected | default('none') }}
+```
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  grid_options:
+    columns: 6
+    rows: auto
+  sparks:
+    - type: event
+      forge_id: card_b
+element:
+  type: markdown
+  content: |
+    My data: {{ uixForge.event.selected | default('none') }}
+```
+
+![Event spark fire multiple example](../../assets/page-assets/forge/sparks//event_fire_multiple.gif)
 
 !!! note
     - The event spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.
