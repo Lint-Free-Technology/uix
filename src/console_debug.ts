@@ -159,6 +159,7 @@ function uixContext(uixParentEl: Element, uixNodes?: any[]): Element | ShadowRoo
 const THEME_UIX_TYPES = new Set([
   "dialog", "root", "view", "more-info", "sidebar",
   "config", "panel-custom", "top-app-bar-fixed", "developer-tools",
+  "calendar", "history",
 ]);
 
 // ---------------------------------------------------------------------------
