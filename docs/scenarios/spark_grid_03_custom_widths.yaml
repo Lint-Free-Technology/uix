@@ -1,0 +1,61 @@
+id: doc_spark_grid_custom_widths
+description: "Doc image: Forge Grid spark with custom widths (grid.md)"
+view_path: doc-spark-grid-custom-widths
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Grid
+      path: test-grid
+      sections:
+        - type: grid
+          column_span: 4
+          cards:
+            - type: custom:uix-forge
+              forge:
+                mold: card
+                grid_options:
+                  columns: full
+                sparks:
+                  - type: grid
+                    for: "hui-grid-card $ #root"
+                    columns: 200px minmax(0, 1fr) 200px
+                    gap: 8px 16px
+              element:
+                type: grid
+                square: false
+                cards:
+                  - type: tile
+                    entity: light.living_room_rgbww_lights
+                  - type: tile
+                    entity: light.bed_light
+                  - type: tile
+                    entity: light.kitchen_lights
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/grid-custom-widths.png
+  root: hui-grid-card
+  padding: 16
