@@ -43,6 +43,8 @@ function* domAncestorsAndSelf(el: Node): Generator<Node> {
   }
 }
 
+// Walk upward from the target to confirm it is actually inside the provided
+// UIX/forge scope, which may be either an element boundary or a shadow root.
 function isNodeWithinScope(target: Element, scope: Element | ShadowRoot): boolean {
   for (const node of domAncestorsAndSelf(target)) {
     if (node === scope) return true;
@@ -61,6 +63,8 @@ function findUixParent(element: Element): UixParentInfo | null {
     const nonChild = uixNodes.filter(
       (u: any) => u.type && !u.type.endsWith("-child")
     );
+    // Only match a UIX parent when the target is inside the scope that its
+    // uix-node actually styles, not merely somewhere in the host's light DOM.
     if (nonChild.length > 0 && isNodeWithinScope(element, uixContext(node, nonChild))) {
       return {
         element: node,
