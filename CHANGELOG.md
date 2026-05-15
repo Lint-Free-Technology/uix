@@ -1,3 +1,13 @@
+## [7.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0...v7.3.0-beta.1) (2026-05-15)
+
+### ⭐ New Features
+
+* Apply UIX to history panel so it can be styled by `uix-history(-yaml)` theme variable ([d1cdb80](https://github.com/Lint-Free-Technology/uix/commit/d1cdb80d5a762581f2ee436ba19dc97b10f94fc7))
+
+### 🐞 Bug Fixes
+
+* `uix_path`/`uix_forge_path` false positives across shadow-root boundaries, particularly on panels not patched by UIX where uix-top-app-bar-fixed is incorrectly reported as a UIX parent ([#332](https://github.com/Lint-Free-Technology/uix/issues/332)) ([793321e](https://github.com/Lint-Free-Technology/uix/commit/793321ed90800400182752bac96cdb94a29540ca))
+
 ## [7.2.0](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.2.0) (2026-05-14)
 
 ### ⭐ New Features
