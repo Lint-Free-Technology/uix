@@ -1,3 +1,9 @@
+## [7.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0-beta.1...v7.3.0-beta.2) (2026-05-15)
+
+### 🐞 Bug Fixes
+
+* Exclude history and calendar UIX types from suggesting non-theme boilerplate for UIX DOM helpers ([97c33fb](https://github.com/Lint-Free-Technology/uix/commit/97c33fb85f4bc9fb816cf2943d522056f584b30b))
+
 ## [7.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0...v7.3.0-beta.1) (2026-05-15)
 
 ### ⭐ New Features
