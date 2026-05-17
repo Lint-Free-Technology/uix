@@ -1,3 +1,25 @@
+## [7.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0-beta.2...v7.3.0-beta.3) (2026-05-15)
+
+### 🐞 Bug Fixes
+
+* Console errors and broken forged element when returning to a view containing a row in entities card with `state_color` set or forged elements via `auto-entities`. ([913e97a](https://github.com/Lint-Free-Technology/uix/commit/913e97a1edc3816cf48d91e39009abdc84f7949f))
+
+## [7.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0-beta.1...v7.3.0-beta.2) (2026-05-15)
+
+### 🐞 Bug Fixes
+
+* Exclude history and calendar UIX types from suggesting non-theme boilerplate for UIX DOM helpers ([97c33fb](https://github.com/Lint-Free-Technology/uix/commit/97c33fb85f4bc9fb816cf2943d522056f584b30b))
+
+## [7.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0...v7.3.0-beta.1) (2026-05-15)
+
+### ⭐ New Features
+
+* Apply UIX to history panel so it can be styled by `uix-history(-yaml)` theme variable ([d1cdb80](https://github.com/Lint-Free-Technology/uix/commit/d1cdb80d5a762581f2ee436ba19dc97b10f94fc7))
+
+### 🐞 Bug Fixes
+
+* `uix_path`/`uix_forge_path` false positives across shadow-root boundaries, particularly on panels not patched by UIX where uix-top-app-bar-fixed is incorrectly reported as a UIX parent ([#332](https://github.com/Lint-Free-Technology/uix/issues/332)) ([793321e](https://github.com/Lint-Free-Technology/uix/commit/793321ed90800400182752bac96cdb94a29540ca))
+
 ## [7.2.0](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.2.0) (2026-05-14)
 
 ### ⭐ New Features

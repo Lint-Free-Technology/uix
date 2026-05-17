@@ -1,0 +1,32 @@
+id: doc_spark_tile_icon_nested
+description: "Doc image: Forge Tile Icon spark nested image (tile-icon.md)"
+view_path: doc-spark-tile-icon-nested
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: tile-icon
+        before: hui-alarm-panel-card $$ ha-input
+        icon: mdi:star
+        color: red
+  element:
+    type: alarm-panel
+    states: []
+    entity: alarm_control_panel.security
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/tile-icon-nested.png
+  root: hui-alarm-panel-card
+  padding: 16

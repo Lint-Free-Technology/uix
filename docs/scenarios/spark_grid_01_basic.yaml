@@ -1,0 +1,52 @@
+id: doc_spark_grid_basic
+description: "Doc image: Forge Grid spark basic (grid.md)"
+view_path: doc-spark-grid-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: grid
+        for: "hui-grid-card $ #root"
+        columns: 3
+  element:
+    type: grid
+    square: false
+    cards:
+      - type: tile
+        entity: light.living_room_rgbww_lights
+        name: Living Room
+      - type: tile
+        entity: light.bed_light
+        name: Bedroom
+      - type: tile
+        entity: light.ceiling_lights
+        name: Ceiling
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/grid-basic.png
+  root: hui-grid-card
+  padding: 16

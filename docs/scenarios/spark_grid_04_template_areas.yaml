@@ -1,0 +1,60 @@
+id: doc_spark_grid_template_areas
+description: "Doc image: Forge Grid spark with template areas (grid.md)"
+view_path: doc-spark-grid-template-areas
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Grid
+      path: test-grid
+      sections:
+        - type: grid
+          column_span: 4
+          cards:
+            - type: custom:uix-forge
+              forge:
+                mold: card
+                grid_options:
+                  columns: full
+                sparks:
+                  - type: grid
+                    for: "hui-grid-card $ #root"
+                    columns: auto 150px
+                    gap: 8
+                    areas: '"header header" "main sidebar"'
+                    elements:
+                      - header
+                      - main
+                      - sidebar
+              element:
+                type: grid
+                square: false
+                cards:
+                  - type: markdown
+                    content: "# Header"     # → grid-area: header (spans full width)
+                  - type: tile
+                    entity: light.living_room_rgbww_lights  # → grid-area: main
+                  - type: tile
+                    entity: light.bed_light      # → grid-area: sidebar
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/grid-template-areas.png
+  root: hui-grid-card
+  padding: 16

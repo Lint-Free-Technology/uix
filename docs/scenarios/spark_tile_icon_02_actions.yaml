@@ -1,0 +1,76 @@
+id: doc_spark_tile_icon_actions
+description: "Doc image: Forge Tile Icon spark action (tile-icon.md)"
+view_path: doc-spark-tile-icon-actions
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: tile-icon
+        after: hui-tile-card $ ha-tile-icon
+        entity: light.ceiling_lights
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/tile-icon-actions.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-tile-icon:nth-child(2)
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-tile-icon:nth-child(2)
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: 
+            - uix-forge
+            - hui-tile-card
+          selector: ha-tile-icon:nth-child(2)
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s

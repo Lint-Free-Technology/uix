@@ -1,0 +1,69 @@
+id: doc_spark_grid_gap
+description: "Doc image: Forge Grid spark with gap (grid.md)"
+view_path: doc-spark-grid-gap
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.office_rgbw_lights
+      brightness: 255
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Grid
+      path: test-grid
+      sections:
+        - type: grid
+          column_span: 4
+          cards:
+            - type: custom:uix-forge
+              forge:
+                mold: card
+                grid_options:
+                  columns: full
+                sparks:
+                  - type: grid
+                    for: "hui-grid-card $ #root"
+                    columns: repeat(4, minmax(0, 1fr))
+                    gap: 8
+              element:
+                type: grid
+                square: false
+                cards:
+                  - type: tile
+                    entity: light.living_room_rgbww_lights
+                  - type: tile
+                    entity: light.bed_light
+                  - type: tile
+                    entity: light.kitchen_lights
+                  - type: tile
+                    entity: light.office_rgbw_lights
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/grid-gap.png
+  root: hui-grid-card
+  padding: 16

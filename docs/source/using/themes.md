@@ -229,6 +229,7 @@ red-theme:
 - `uix-developer-tools`
 - `uix-grid-section`
 - `uix-calendar`
+- `uix-history`
 - `uix-drawer`
 - `uix-view-background`
 - `uix-persistent-notification-item`
