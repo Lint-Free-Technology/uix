@@ -29,6 +29,10 @@ type ThemedElement = HTMLElement & {
 
 let processedThemesCache: Record<string, ProcessedTheme> = {};
 
+export function invalidateFrontendThemeCache(): void {
+  processedThemesCache = {};
+}
+
 function hexToRgb(value: string): [number, number, number] | undefined {
   const hex = value.trim();
   if (!hex.startsWith("#")) return undefined;
