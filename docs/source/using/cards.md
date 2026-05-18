@@ -34,3 +34,16 @@ For a card contained by a `<hui-card>` element, which is almost every standard H
         }
     ```
     ![Styling with CSS variables](../assets/page-assets/using/basic-first-uix.png)
+
+You can also optionally set a local Home Assistant theme for just that styled element. The theme can contain [UIX Themes](./themes.md).
+
+```yaml
+uix:
+  theme: my-awesome-theme
+  style: |
+    ha-card {
+      color: var(--primary-color);
+    }
+```
+
+`uix.theme` overrides the inherited/current theme for that UIX node and its UIX child paths unless a child sets its own `theme`. See [UIX Themes - Override with `uix.theme`](./themes.md#local-theme-override-with-uixtheme) for a full example.

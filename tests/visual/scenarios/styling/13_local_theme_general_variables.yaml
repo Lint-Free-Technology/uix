@@ -1,0 +1,25 @@
+id: local_theme_general_variables
+description: "uix.theme applies general Home Assistant theme variables on a single styled element"
+
+theme: uix-global-blue
+
+view_path: local-theme-general-variables
+
+card:
+  type: entities
+  title: "Local Theme General Variables"
+  entities:
+    - light.bed_light
+  uix:
+    theme: uix-local-orange
+    style: |
+      ha-card {
+        color: var(--primary-color) !important;
+      }
+
+assertions:
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "color"
+    expected: "rgb(255, 122, 0)"

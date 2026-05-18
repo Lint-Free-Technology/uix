@@ -2,7 +2,7 @@
 
 Importing this module registers the UIX interaction types
 (``add_foundry``, ``delete_foundry``, ``add_foundry_file``,
-``remove_foundry_file``, ``reload_foundry_files``) with
+``remove_foundry_file``, ``reload_foundry_files``, ``set_theme_file``) with
 :mod:`scenario_runner` so they can be used in scenario YAML files.
 
 This module is imported by ``tests/conftest.py`` at session start, which
@@ -56,13 +56,32 @@ reload_foundry_files
     .. code-block:: yaml
 
         - type: reload_foundry_files
+
+set_theme_file
+    Write Home Assistant ``themes.yaml`` for scenario setup/interactions.
+    Can either write full file content directly, or update a single theme
+    from the base ``themes.yaml``.
+
+    .. code-block:: yaml
+
+        - type: set_theme_file
+          theme: uix-local-orange
+          values:
+            primary-color: "#ff00ff"
 """
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ha_testcontainer.visual.scenario_runner import register_interaction_type
+import yaml
+
+from ha_testcontainer.visual.scenario_runner import (
+    _write_config_file,
+    register_interaction_type,
+)
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page
@@ -175,6 +194,58 @@ def _reload_foundry_files(page: "Page | None", interaction: dict[str, Any], ha: 
         raise RuntimeError(f"uix/reload_foundry_files failed: {result}")
 
 
+def _set_theme_file(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Write ``themes.yaml`` content for a scenario.
+
+    Supported forms:
+    1) full file write:
+         {type: set_theme_file, content: "...yaml..."}
+    2) update one theme from the base themes file:
+         {type: set_theme_file, theme: "my-theme", values: {...}}
+    """
+    if ha is None:
+        raise ValueError(
+            "set_theme_file interaction requires the ha container — "
+            "pass ha= to run_interactions()"
+        )
+
+    path = interaction.get("path", "themes.yaml")
+    content = interaction.get("content")
+
+    if content is None:
+        theme_name = interaction["theme"]
+        values = interaction["values"]
+
+        ha_config_path = os.environ.get("HA_CONFIG_PATH")
+        if not ha_config_path:
+            raise RuntimeError(
+                "set_theme_file requires HA_CONFIG_PATH environment variable to locate the base themes.yaml for theme updates"
+            )
+        themes_path = Path(ha_config_path) / "themes.yaml"
+        base_content = themes_path.read_text(encoding="utf-8")
+        themes_data = yaml.safe_load(base_content) or {}
+
+        theme_data = themes_data.get(theme_name)
+        if theme_data is None:
+            theme_data = {}
+            themes_data[theme_name] = theme_data
+        if not isinstance(theme_data, dict):
+            raise ValueError(
+                f"Theme {theme_name!r} must be a mapping, got {type(theme_data).__name__}"
+            )
+
+        theme_data.update(values)
+        content = yaml.safe_dump(themes_data, sort_keys=False)
+
+    _write_config_file(
+        ha,
+        {
+            "path": path,
+            "content": content,
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # Registration — executed at import time
 # ---------------------------------------------------------------------------
@@ -184,3 +255,4 @@ register_interaction_type("delete_foundry", _delete_foundry)
 register_interaction_type("add_foundry_file", _add_foundry_file)
 register_interaction_type("remove_foundry_file", _remove_foundry_file)
 register_interaction_type("reload_foundry_files", _reload_foundry_files)
+register_interaction_type("set_theme_file", _set_theme_file)
