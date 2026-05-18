@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from playwright.sync_api import Page
@@ -15,7 +16,8 @@ from ha_testcontainer.visual.scenario_runner import (
 )
 
 
-THEMES_FILE = Path(__file__).parents[1] / "ha-config" / "themes.yaml"
+THEMES_FILE = Path(os.environ["HA_CONFIG_PATH"]) / "themes.yaml"
+THEME_RELOAD_WAIT_MS = 1200
 
 
 def _modify_themes_yaml(content: str) -> str:
@@ -74,7 +76,7 @@ def test_local_theme_updates_after_theme_reload(
                 "service": "set_theme",
                 "data": {"name": "uix-global-blue"},
             },
-            {"type": "wait", "ms": 1200},
+            {"type": "wait", "ms": THEME_RELOAD_WAIT_MS},
         ],
         "interactions": [
             {
@@ -83,7 +85,7 @@ def test_local_theme_updates_after_theme_reload(
                 "content": updated_themes,
             },
             {"type": "ha_service", "domain": "frontend", "service": "reload_themes"},
-            {"type": "wait", "ms": 1200},
+            {"type": "wait", "ms": THEME_RELOAD_WAIT_MS},
         ],
         "assertions": [
             {
@@ -108,7 +110,7 @@ def test_local_theme_updates_after_theme_reload(
                 "content": original_themes,
             },
             {"type": "ha_service", "domain": "frontend", "service": "reload_themes"},
-            {"type": "wait", "ms": 1200},
+            {"type": "wait", "ms": THEME_RELOAD_WAIT_MS},
         ],
     }
 
