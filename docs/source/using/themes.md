@@ -146,6 +146,30 @@ entities:
 
 ![Red theme with classes](../assets/page-assets/using/theme-red-classes.png){ width="500" }
 
+## Navigating the shadow DOM
+
+Just like with UIX styles applied to a card, you can traverse the shadow DOM structure of the thing you want to style. To do this, you need to specify the variable `uix-<thing>-yaml`, and then the syntax is exactly the same.
+
+```yaml
+red-theme:
+  uix-theme: red-theme
+  ...
+  uix-row-yaml: |
+    ...
+    hui-generic-entity-row $ state-badge $: |
+      @keyframes pulse {
+        50% {
+          opacity: 0.5;
+        }
+      }
+      ha-state-icon {
+        animation: pulse 2s infinite;
+      }
+```
+
+!!! tip "Theme variables MUST be strings"
+    While the value of the `uix-<thing>-yaml` variable is actually yaml, as far as the theme is concerned it MUST be a string, which in turn contains more strings.
+
 ## Local theme override with `uix.theme`
 
 You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme:
@@ -188,34 +212,10 @@ entities:
       theme: row-blue-override
 ```
 
-![UIX Theme override example](../assets/page-assets/using/theme-local-override.png)
+![UIX Theme override example](../assets/page-assets/using/theme-local-override.png){ width="500" }
 
 - `uix.theme` takes precedence over inherited/current theme for that UIX node.
 - UIX child style paths inherit the same effective theme unless they set their own `theme`.
-
-## Navigating the shadow DOM
-
-Just like with UIX styles applied to a card, you can traverse the shadow DOM structure of the thing you want to style. To do this, you need to specify the variable `uix-<thing>-yaml`, and then the syntax is exactly the same.
-
-```yaml
-red-theme:
-  uix-theme: red-theme
-  ...
-  uix-row-yaml: |
-    ...
-    hui-generic-entity-row $ state-badge $: |
-      @keyframes pulse {
-        50% {
-          opacity: 0.5;
-        }
-      }
-      ha-state-icon {
-        animation: pulse 2s infinite;
-      }
-```
-
-!!! tip "Theme variables MUST be strings"
-    While the value of the `uix-<thing>-yaml` variable is actually yaml, as far as the theme is concerned it MUST be a string, which in turn contains more strings.
 
 ## Updating `uix-<thing>` variable to `uix-<thing>-yaml` variable
 
