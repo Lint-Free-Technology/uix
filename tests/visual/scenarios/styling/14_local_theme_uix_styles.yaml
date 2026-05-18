@@ -1,0 +1,21 @@
+id: local_theme_uix_styles
+description: "uix.theme switches UIX theme styling variables for one element while global theme differs"
+
+theme: uix-global-blue
+
+view_path: local-theme-uix-styles
+
+card:
+  type: entities
+  title: "Local Theme UIX Styles"
+  entities:
+    - light.bed_light
+  uix:
+    theme: uix-local-orange
+
+assertions:
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 122, 0)"

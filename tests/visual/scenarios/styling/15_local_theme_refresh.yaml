@@ -1,0 +1,39 @@
+id: local_theme_refresh
+description: "uix.theme keeps local general theming and UIX themed styles after global theme updates"
+
+theme: uix-global-blue
+
+view_path: local-theme-refresh
+
+card:
+  type: entities
+  title: "Local Theme Refresh"
+  entities:
+    - light.bed_light
+  uix:
+    theme: uix-local-orange
+    style: |
+      ha-card {
+        color: var(--primary-color) !important;
+      }
+
+interactions:
+  - type: ha_service
+    domain: frontend
+    service: set_theme
+    data:
+      name: uix-global-green
+  - type: wait
+    ms: 1200
+
+assertions:
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 122, 0)"
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "color"
+    expected: "rgb(255, 122, 0)"
