@@ -16,6 +16,27 @@ function cssValueIsTrue(v: string): boolean {
 const _themeInFlight = new WeakMap<Uix, Promise<UixStyle>>();
 const _themeMacrosInFlight = new WeakMap<Uix, Promise<Record<string, MacroConfig | string>>>();
 
+function normalizeTheme(theme?: string): string {
+  if (typeof theme !== "string") return "";
+  return theme.trim();
+}
+
+export function getThemeTargetElement(root: Uix): HTMLElement {
+  if (root.parentElement) return root.parentElement;
+  const shadowHost = (root.parentNode as any)?.host;
+  if (shadowHost instanceof HTMLElement) return shadowHost;
+  return root;
+}
+
+function getCssThemeName(root: Uix): string {
+  const cs = window.getComputedStyle(getThemeTargetElement(root));
+  return normalizeTheme(cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme"));
+}
+
+export function getEffectiveThemeName(root: Uix): string {
+  return normalizeTheme(root.theme) || normalizeTheme(root.uix_parent?.theme) || getCssThemeName(root);
+}
+
 export async function get_theme(root: Uix): Promise<UixStyle> {
   if (!root.type) return null;
 
@@ -28,9 +49,9 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
       // Wait for next animation frame before computing styles: batches reflow reads
       await nextAnimationFrame();
 
-      const el = root.parentElement ? root.parentElement : root;
+      const el = getThemeTargetElement(root);
       const cs = window.getComputedStyle(el);
-      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+      const theme = getEffectiveThemeName(root);
 
       // Determine debug flag from CSS variables.
       // Checked patterns:
@@ -89,9 +110,7 @@ export async function get_theme_macros(root: Uix): Promise<Record<string, MacroC
       // Wait for next animation frame before computing styles: batches reflow reads
       await nextAnimationFrame();
 
-      const el = root.parentElement ? root.parentElement : root;
-      const cs = window.getComputedStyle(el);
-      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+      const theme = getEffectiveThemeName(root);
 
       const hs = await hass();
       if (!hs) return {};

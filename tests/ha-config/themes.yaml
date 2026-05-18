@@ -89,6 +89,30 @@ uix-date-picker-selection:
         background-color: rgba(255, 0, 0, 0.2) !important;
       }
 
+uix-global-blue:
+  uix-theme: uix-global-blue
+  primary-color: "#0000ff"
+  uix-card: |
+    ha-card {
+      background-color: rgb(0, 0, 255) !important;
+    }
+
+uix-local-orange:
+  uix-theme: uix-local-orange
+  primary-color: "#ff7a00"
+  uix-card: |
+    ha-card {
+      background-color: rgb(255, 122, 0) !important;
+    }
+
+uix-global-green:
+  uix-theme: uix-global-green
+  primary-color: "#00aa00"
+  uix-card: |
+    ha-card {
+      background-color: rgb(0, 170, 0) !important;
+    }
+
 uix-card-as-badge:
   uix-theme: uix-card-as-badge
 

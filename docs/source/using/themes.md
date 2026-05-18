@@ -146,6 +146,25 @@ entities:
 
 ![Red theme with classes](../assets/page-assets/using/theme-red-classes.png){ width="500" }
 
+## Local theme override with `uix.theme`
+
+You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme:
+
+```yaml
+type: entities
+entities:
+  - light.bed_light
+uix:
+  theme: my-awesome-theme
+  style: |
+    ha-card {
+      color: var(--primary-color);
+    }
+```
+
+- `uix.theme` takes precedence over inherited/current theme for that UIX node.
+- UIX child style paths inherit the same effective theme unless they set their own `theme`.
+
 ## Navigating the shadow DOM
 
 Just like with UIX styles applied to a card, you can traverse the shadow DOM structure of the thing you want to style. To do this, you need to specify the variable `uix-<thing>-yaml`, and then the syntax is exactly the same.

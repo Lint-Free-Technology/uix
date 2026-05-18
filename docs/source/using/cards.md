@@ -11,6 +11,19 @@ uix:
   style: <styles>
 ```
 
+You can also optionally set a local theme for just that styled element:
+
+```yaml
+uix:
+  theme: my-awesome-theme
+  style: |
+    ha-card {
+      color: var(--primary-color);
+    }
+```
+
+`uix.theme` overrides the inherited/current theme for that UIX node and its UIX child paths unless a child sets its own `theme`.
+
 In the simplest form, `<styles>` is a string of [CSS](https://www.w3schools.com/css/) which will be injected into the appropriate element based on the card type. See [Concepts - application](../concepts/application.md) for a detailed description on where UI eXtension is applied.
 
 !!! note

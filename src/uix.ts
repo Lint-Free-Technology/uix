@@ -6,7 +6,12 @@ import {
   unbind_template,
 } from "./helpers/templates";
 import pjson from "../package.json";
-import { get_theme, get_theme_macros } from "./helpers/themes";
+import {
+  get_theme,
+  get_theme_macros,
+  getEffectiveThemeName,
+  getThemeTargetElement,
+} from "./helpers/themes";
 import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
@@ -18,6 +23,7 @@ import {
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
+import { applyFrontendThemeOnElement } from "./helpers/frontend_themes";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -35,6 +41,8 @@ export class Uix extends LitElement {
   classes: string[] = [];
   macros: Record<string, MacroConfig | string> = {};
   billets: BilletConfig = {};
+  private _theme?: string;
+  private _themeAppliedByUix: boolean = false;
 
   debug: boolean = false;
 
@@ -140,6 +148,20 @@ export class Uix extends LitElement {
     return this._styles;
   }
 
+  set theme(theme: string | undefined) {
+    if (this._theme === theme) return;
+    this._theme = theme;
+    if (!this.isConnected) {
+      this._processStylesOnConnect = true;
+      return;
+    }
+    this._process_styles(this.uix_input);
+  }
+
+  get theme(): string | undefined {
+    return this._theme;
+  }
+
   refresh() {
     this._connect();
   }
@@ -156,6 +178,13 @@ export class Uix extends LitElement {
   private async _process_styles(stl) {
     let styles =
       typeof stl === "string" || stl === undefined ? { ".": stl ?? "" } : JSON.parse(JSON.stringify(stl));
+
+    const effectiveTheme = getEffectiveThemeName(this);
+    if (effectiveTheme || this._themeAppliedByUix) {
+      const styleHost = getThemeTargetElement(this);
+      const applied = await applyFrontendThemeOnElement(styleHost, effectiveTheme);
+      this._themeAppliedByUix = applied && !!effectiveTheme;
+    }
 
     // Merge uix styles with theme styles
     const theme_styles = await get_theme(this);
@@ -194,7 +223,13 @@ export class Uix extends LitElement {
       const uix = await apply_uix(
         ch,
         `${this.type}-child`,
-        { style, debug: this.debug, macros: this._fixed_macros, billets: this.billets },
+        {
+          style,
+          theme: getEffectiveThemeName(this),
+          debug: this.debug,
+          macros: this._fixed_macros,
+          billets: this.billets,
+        },
         this.variables,
         false
       );
