@@ -1,4 +1,5 @@
 import { hass } from "./hass";
+import { hex2rgb } from "./common/color/convert_color";
 import { normalizeThemeName } from "./theme_utils";
 
 interface ProcessedTheme {
@@ -33,27 +34,6 @@ export function invalidateFrontendThemeCache(): void {
   processedThemesCache = {};
 }
 
-function hexToRgb(value: string): [number, number, number] | undefined {
-  const hex = value.trim();
-  if (!hex.startsWith("#")) return undefined;
-  const raw = hex.slice(1);
-  if (raw.length === 3) {
-    const r = parseInt(raw[0] + raw[0], 16);
-    const g = parseInt(raw[1] + raw[1], 16);
-    const b = parseInt(raw[2] + raw[2], 16);
-    if ([r, g, b].some((v) => Number.isNaN(v))) return undefined;
-    return [r, g, b];
-  }
-  if (raw.length >= 6) {
-    const r = parseInt(raw.slice(0, 2), 16);
-    const g = parseInt(raw.slice(2, 4), 16);
-    const b = parseInt(raw.slice(4, 6), 16);
-    if ([r, g, b].some((v) => Number.isNaN(v))) return undefined;
-    return [r, g, b];
-  }
-  return undefined;
-}
-
 const processTheme = (
   themeCacheKey: string,
   theme: ThemeVars
@@ -74,8 +54,12 @@ const processTheme = (
     const rgbKey = `rgb-${key}`;
     if (theme[rgbKey] !== undefined) continue;
 
-    const rgb = hexToRgb(value);
-    if (!rgb) continue;
+    let rgb: [number, number, number];
+    try {
+      rgb = hex2rgb(value);
+    } catch {
+      continue;
+    }
 
     const prefixedRgbKey = `--${rgbKey}`;
     styles[prefixedRgbKey] = `${rgb.join(",")}`;
