@@ -1,7 +1,7 @@
 export type UixForgeSpark = UixForgeSparkBase;
 
 import { PropertyValues } from "lit";
-import type { UixForge } from "../uix-forge";
+import { UixForge } from "../uix-forge";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import { UixForgeSparkDomEvents } from "./uix-spark-event";
 import { UixForgeSparkTooltip } from "./uix-spark-tooltip";

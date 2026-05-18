@@ -1,19 +1,9 @@
 import { LitElement } from "lit";
 import { Uix } from "../uix";
-import { get_theme_foundry } from "./themes";
-import { resolveFoundryConfig } from "../forge/foundries";
-import { UixForgeSparkController } from "../forge/sparks/uix-spark-controller";
 
 export class ModdedElement extends LitElement {
   _uix: Uix[] = [];
   modElement?: ModdedElement;
-  _uixThemeSparkController?: UixForgeSparkController;
-  _uixThemeSparkContext?: {
-    type: string;
-    variables: Record<string, any>;
-    classes: string[];
-  };
-  _uixThemeSparkCleanup?: () => void;
 
   setConfig(_orig, config, ...args) {
     _orig?.(config, ...args);
@@ -30,13 +20,6 @@ export class ModdedElement extends LitElement {
     Promise.all([this.updateComplete]).then(() =>
       this._uix.forEach((uix) => uix.refresh?.())
     );
-    this._uixThemeSparkController?.updated(args[0]);
-  }
-
-  disconnectedCallback(_orig, ...args) {
-    _orig?.(...args);
-    this._uixThemeSparkCleanup?.();
-    this._uixThemeSparkCleanup = undefined;
   }
 }
 
@@ -480,87 +463,5 @@ export async function apply_uix(
   cls && uix.classes.push(cls);
   element.classList?.add(...uix.classes);
 
-  element._uixThemeSparkContext = {
-    type,
-    variables,
-    classes: [...uix.classes],
-  };
-  void applyThemeSparkFoundry(element);
-
   return uix;
-}
-
-function createThemeSparkMold(type: string) {
-  return {
-    isRow: () => type === "row",
-    isBadge: () => type === "badge",
-    isCard: () => type === "card",
-    isPictureElement: () => type === "picture-element" || type === "element",
-    isSection: () => type === "section",
-    isFooter: () => type === "footer",
-  };
-}
-
-function createThemeSparkHost(element: ModdedElement, context: NonNullable<ModdedElement["_uixThemeSparkContext"]>) {
-  return {
-    hass: (element as any).hass,
-    hidden: false,
-    mold: createThemeSparkMold(context.type),
-    forgedElement: element,
-    forgedElementConfig: context.variables?.config ?? {},
-    refreshForgeTemplates: () => {},
-    refreshForge: () => {},
-  };
-}
-
-async function applyThemeSparkFoundry(element: ModdedElement): Promise<void> {
-  const context = element._uixThemeSparkContext;
-  if (!context) return;
-
-  if (!element._uixThemeSparkCleanup) {
-    const refresh = () => {
-      void applyThemeSparkFoundry(element);
-    };
-    document.addEventListener("uix_update", refresh);
-    window.addEventListener("uix-foundries-updated", refresh);
-    element._uixThemeSparkCleanup = () => {
-      document.removeEventListener("uix_update", refresh);
-      window.removeEventListener("uix-foundries-updated", refresh);
-      element._uixThemeSparkController?.disconnectedCallback();
-    };
-  }
-
-  const foundryName = await get_theme_foundry({
-    type: context.type,
-    classes: context.classes,
-    parentElement: element.parentElement,
-  });
-
-  if (!foundryName) {
-    element._uixThemeSparkController?.setConfig([]);
-    return;
-  }
-
-  let resolved;
-  try {
-    resolved = resolveFoundryConfig({ foundry: foundryName });
-  } catch (err) {
-    console.error("UIX: Error resolving theme foundry for sparks:", err);
-    element._uixThemeSparkController?.setConfig([]);
-    return;
-  }
-  if (!resolved) return;
-
-  const sparkConfigs = resolved.forge?.sparks;
-  if (!element._uixThemeSparkController) {
-    const host = createThemeSparkHost(element, context);
-    element._uixThemeSparkController = new UixForgeSparkController(host as any);
-    element._uixThemeSparkController.setConfig(sparkConfigs);
-    element._uixThemeSparkController.connectedCallback();
-    return;
-  }
-
-  const host = createThemeSparkHost(element, context);
-  element._uixThemeSparkController.forge = host as any;
-  element._uixThemeSparkController.setConfig(sparkConfigs);
 }
