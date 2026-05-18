@@ -34,13 +34,11 @@ function getCssThemeName(root: Uix): string {
 export function getEffectiveThemeName(root: Uix): string {
   // Precedence order:
   // 1) Explicit local `uix.theme` on this node
-  // 2) Inherited theme from parent UIX node
-  // 3) Current CSS theme variables from the styled element context
+  // 2) Current CSS theme variables from the styled element context
   // normalizeThemeName() returns undefined for empty/whitespace inputs, so
   // blank values never block fallback to the next precedence level.
   return (
     normalizeThemeName(root.theme) ||
-    normalizeThemeName(root.uix_parent?.theme) ||
     getCssThemeName(root)
   );
 }

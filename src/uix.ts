@@ -235,7 +235,6 @@ export class Uix extends LitElement {
         `${this.type}-child`,
         {
           style,
-          theme: getEffectiveThemeName(this),
           debug: this.debug,
           macros: this._fixed_macros,
           billets: this.billets,
