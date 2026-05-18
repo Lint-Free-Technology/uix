@@ -7,7 +7,7 @@ interface ProcessedTheme {
   styles: Record<string, string>;
 }
 
-type ThemeVars = Record<string, any>;
+type ThemeVars = Record<string, string | number | boolean | undefined>;
 type ThemeDefinition = ThemeVars & {
   modes?: {
     light?: ThemeVars;
@@ -126,7 +126,11 @@ export const applyThemesOnElement = (
   target.__themes = { cacheKey: themeCacheKey, keys: newTheme?.keys };
 
   for (const styleName of Object.keys(styles)) {
-    element.style.setProperty(styleName, styles[styleName]);
+    if (styles[styleName] === "") {
+      element.style.removeProperty(styleName);
+    } else {
+      element.style.setProperty(styleName, styles[styleName]);
+    }
   }
 };
 

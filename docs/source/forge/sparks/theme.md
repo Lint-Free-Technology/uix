@@ -14,7 +14,7 @@ Use it when you want a forged element to pick up an existing theme without addin
 |-----|------|----------|---------|-------------|
 | `type` | string | ✅ | — | Must be `theme`. |
 | `for` | string | | `element` | Target selector path inside the forged element. |
-| `theme` | string | ✅ | — | Theme name to apply. |
+| `theme` | string | | — | Theme name to apply. |
 
 ## Example
 

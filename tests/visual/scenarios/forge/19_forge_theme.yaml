@@ -12,7 +12,7 @@ card:
         theme: uix-test-theme
   element:
     type: tile
-    entity: "light.bed_light"
+    entity: light.bed_light
     name: "Theme spark"
 
 interactions:

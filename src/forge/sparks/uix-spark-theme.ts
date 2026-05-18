@@ -1,6 +1,12 @@
 import { PropertyValues } from "lit";
 import { applyFrontendThemeOnElement } from "../../helpers/frontend_themes";
+import type { UixForgeSparkController } from "./uix-spark-controller";
 import { UixForgeSparkBase } from "./uix-spark-base";
+
+interface UixForgeSparkThemeConfig {
+  for?: string;
+  theme?: string;
+}
 
 export class UixForgeSparkTheme extends UixForgeSparkBase {
   type = "theme";
@@ -9,17 +15,17 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   private _theme: string = "";
   private _targetElement: HTMLElement | null = null;
 
-  constructor(controller: any, config: Record<string, any>) {
+  constructor(controller: UixForgeSparkController, config: UixForgeSparkThemeConfig) {
     super(controller, config);
     this._applyConfig(config);
   }
 
-  configUpdated(config: Record<string, any>): void {
+  configUpdated(config: UixForgeSparkThemeConfig): void {
     super.configUpdated(config);
     this._applyConfig(config);
   }
 
-  private _applyConfig(config: Record<string, any>) {
+  private _applyConfig(config: UixForgeSparkThemeConfig) {
     this._for = config.for || "element";
     this._theme = config.theme || "";
   }
