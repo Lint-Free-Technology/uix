@@ -6,34 +6,12 @@ import { bind_template, hasTemplate, unbind_template } from "../helpers/template
 import { apply_uix, buildMacros, buildBillets, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
 import { UixForgeSparkController } from "./sparks/uix-spark-controller";
+import { resolveFoundryConfig } from "./foundries";
 
 declare global {
   interface HTMLElementTagNameMap {
     [UIX_FORGE_TYPE]: UixForge;
   }
-}
-
-function _mergeFoundryConfig(foundry: any, local: any): any {
-  if (!foundry) return local ?? {};
-  if (!local) return foundry ?? {};
-  const result = { ...foundry };
-  for (const key of Object.keys(local)) {
-    const lv = local[key];
-    const fv = result[key];
-    if (
-      lv !== null &&
-      typeof lv === "object" &&
-      !Array.isArray(lv) &&
-      fv !== null &&
-      typeof fv === "object" &&
-      !Array.isArray(fv)
-    ) {
-      result[key] = _mergeFoundryConfig(fv, lv);
-    } else {
-      result[key] = lv;
-    }
-  }
-  return result;
 }
 
 export class UixForge extends LitElement {
@@ -166,38 +144,7 @@ export class UixForge extends LitElement {
     config: { foundry?: string; forge?: any; element?: any },
     visited: Set<string> = new Set()
   ): { forge: any; element: any } | null {
-    const foundryName = config.foundry;
-
-    if (foundryName) {
-      const coordinator = (window as any).uixCoordinator;
-      // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
-      if (!coordinator?.foundries || (Object.keys(coordinator.foundries).length === 0 && !coordinator.ready)) {
-        return null;
-      }
-      const foundryData = coordinator.foundries[foundryName];
-      if (!foundryData) {
-        throw new Error(`Foundry '${foundryName}' not found. Check that it is defined in the UIX integration.`);
-      }
-      if (visited.has(foundryName)) {
-        throw new Error(`Circular foundry reference detected: '${foundryName}'.`);
-      }
-      const nextVisited = new Set(visited);
-      nextVisited.add(foundryName);
-
-      // Recursively resolve the foundry's own base (if it also references another foundry)
-      const baseResolved = this._resolveFoundry(foundryData, nextVisited);
-      if (baseResolved === null) return null;
-
-      // foundryData overrides base, local config overrides foundry
-      const mergedForge = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.forge, foundryData.forge), config.forge);
-      const mergedElement = _mergeFoundryConfig(_mergeFoundryConfig(baseResolved.element, foundryData.element), config.element);
-      return { forge: mergedForge, element: mergedElement };
-    }
-
-    return {
-      forge: config.forge ?? {},
-      element: config.element ?? {},
-    };
+    return resolveFoundryConfig(config, visited);
   }
 
   public setConfig(config: UixForgeConfig) {

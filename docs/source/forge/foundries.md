@@ -129,6 +129,31 @@ element:
   entity: light.kitchen
 ```
 
+## Applying a foundry's sparks from a theme
+
+Themes can reference a foundry by element type using `uix-<type>-foundry`. When UIX finds that key, it resolves the foundry and applies that foundry's `forge.sparks` to matching elements of that type.
+
+This is useful when you want forge spark behaviour on existing Home Assistant elements without wrapping them in `custom:uix-forge`.
+
+```yaml
+my-awesome-theme:
+  uix-theme: my-awesome-theme
+  uix-card-foundry: themed_card_sparks
+```
+
+```yaml
+uix_foundries:
+  themed_card_sparks:
+    forge:
+      sparks:
+        - type: background
+          for: ha-card
+          background:
+            color: teal
+```
+
+Only the foundry's `forge.sparks` are applied in this theme-driven mode; the foundry's `element` config is ignored because the target element already exists.
+
 ## Foundry config structure
 
 A foundry is a YAML object that can contain any combination of `forge` and `element` keys:

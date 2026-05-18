@@ -124,3 +124,7 @@ uix-card-as-badge:
         gap: var(--ha-space-2);
         padding: 8px 10px;
       }
+
+uix-theme-foundry-sparks:
+  uix-theme: uix-theme-foundry-sparks
+  uix-card-foundry: uix-test-theme-foundry-sparks
