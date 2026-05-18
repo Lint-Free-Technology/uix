@@ -19,12 +19,28 @@ uix-test-theme:
 
 uix-doc-red-basic:
   uix-theme: uix-doc-red-basic
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
+
+uix-doc-row-red:
+  uix-theme: uix-doc-row-red
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: red;
+      }
+
+uix-doc-row-blue-override:
+  uix-theme: uix-doc-row-blue-override
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: blue;
+      }
 
 uix-doc-red-border:
   uix-theme: uix-doc-red-border
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {
@@ -34,7 +50,7 @@ uix-doc-red-border:
 
 uix-doc-red-template:
   uix-theme: uix-doc-red-template
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {
@@ -58,7 +74,7 @@ uix-test-view-bg-shorthand:
 
 uix-doc-red-classes:
   uix-theme: uix-doc-red-classes
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {

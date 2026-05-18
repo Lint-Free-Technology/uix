@@ -150,17 +150,45 @@ entities:
 
 You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme:
 
+Main red row theme:
+
+```yaml
+row-red:
+  uix-theme: row-red
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: red;
+      }
+
+```
+
+Override blue row theme:
+
+```yaml
+row-blue-override:
+  uix-theme: row-blue-override
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: blue;
+      }
+```
+
+Entities card with theme override for one row:
+
 ```yaml
 type: entities
+title: Lights
 entities:
-  - light.bed_light
-uix:
-  theme: my-awesome-theme
-  style: |
-    ha-card {
-      color: var(--primary-color);
-    }
+  - entity: light.bed_light
+  - entity: light.ceiling_lights
+  - entity: light.kitchen_lights
+    uix:
+      theme: row-blue-override
 ```
+
+![UIX Theme override example](../assets/page-assets/using/theme-local-override.png)
 
 - `uix.theme` takes precedence over inherited/current theme for that UIX node.
 - UIX child style paths inherit the same effective theme unless they set their own `theme`.

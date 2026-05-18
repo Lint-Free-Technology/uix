@@ -1,0 +1,21 @@
+id: doc_theme_local_override
+description: "Doc image: red theme with teal/purple entity row classes plus local override (themes.md)"
+view_path: doc-theme-local-override
+theme: uix-doc-row-red
+
+card:
+  type: entities
+  title: Lights
+  entities:
+    - entity: light.bed_light
+    - entity: light.ceiling_lights
+    - entity: light.kitchen_lights
+      uix:
+        theme: uix-doc-row-blue-override
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-local-override.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02
