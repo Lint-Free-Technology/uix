@@ -13,6 +13,7 @@ let _cachedApplyThemesOnElement: ApplyThemesOnElement | null | undefined;
 let _warnedApplyThemesLookupFailure = false;
 const MAX_SCAN_DEPTH = 4;
 const WEBPACK_CHUNK_BRIDGE_PREFIX = "uix-theme-bridge";
+let _webpackBridgeChunkCounter = 0;
 
 function debugThemeBridge(...args: any[]) {
   if ((window as any)?.uixThemeDebug) {
@@ -30,6 +31,9 @@ function warnApplyThemesLookupFailureOnce() {
 }
 
 function looksLikeApplyThemesOnElement(fn: Function): boolean {
+  // Heuristic fallback for minified webpack exports where the original symbol
+  // name may not survive. If this stops matching on a future HA version,
+  // resolution still fails safely and UIX falls back without crashing.
   const src = Function.prototype.toString.call(fn);
   return (
     src.includes("__themes") &&
@@ -76,9 +80,10 @@ function getWebpackRequireFromRuntime() {
   let webpackRequire: any;
   try {
     // Inject a unique runtime chunk to access webpack's require function.
-    // Date.now() is sufficient here since resolution is one-shot and cached.
     win[chunkKey].push([
-      [`${WEBPACK_CHUNK_BRIDGE_PREFIX}-${Date.now()}`],
+      [
+        `${WEBPACK_CHUNK_BRIDGE_PREFIX}-${Date.now()}-${++_webpackBridgeChunkCounter}-${Math.random().toString(36).slice(2)}`,
+      ],
       {},
       (req: any) => {
         webpackRequire = req;
@@ -102,6 +107,9 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
   const entitiesUpdatedSource = customElements
     .get("hui-entities-card")
     ?.prototype?.updated?.toString?.() ?? "";
+  // This is a best-effort optimization path based on current HA internals.
+  // Matching failure only affects scan order; resolver still uses the general
+  // module/export scan and then falls back safely if nothing is found.
   const preferEntitiesPath =
     entitiesUpdatedSource.includes("_config.theme") &&
     entitiesUpdatedSource.includes("_hass.themes");
