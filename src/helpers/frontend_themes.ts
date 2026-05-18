@@ -21,13 +21,19 @@ type HassThemes = {
 };
 
 let processedThemesCache: Record<string, ProcessedTheme> = {};
-const MAX_PROCESSED_THEME_CACHE = 128;
 
 function hexToRgb(value: string): [number, number, number] | undefined {
   const hex = value.trim();
   if (!hex.startsWith("#")) return undefined;
   const raw = hex.slice(1);
   if (raw.length === 3) {
+    const r = parseInt(raw[0] + raw[0], 16);
+    const g = parseInt(raw[1] + raw[1], 16);
+    const b = parseInt(raw[2] + raw[2], 16);
+    if ([r, g, b].some((v) => Number.isNaN(v))) return undefined;
+    return [r, g, b];
+  }
+  if (raw.length === 4) {
     const r = parseInt(raw[0] + raw[0], 16);
     const g = parseInt(raw[1] + raw[1], 16);
     const b = parseInt(raw[2] + raw[2], 16);
@@ -45,7 +51,7 @@ function hexToRgb(value: string): [number, number, number] | undefined {
 }
 
 const processTheme = (
-  cacheKey: string,
+  themeCacheKey: string,
   theme: ThemeVars
 ): ProcessedTheme | undefined => {
   if (!theme || !Object.keys(theme).length) return undefined;
@@ -72,10 +78,7 @@ const processTheme = (
     keys[prefixedRgbKey] = "";
   }
 
-  if (Object.keys(processedThemesCache).length >= MAX_PROCESSED_THEME_CACHE) {
-    processedThemesCache = {};
-  }
-  processedThemesCache[cacheKey] = { styles, keys };
+  processedThemesCache[themeCacheKey] = { styles, keys };
   return { styles, keys };
 };
 
@@ -98,6 +101,9 @@ export const applyThemesOnElement = (
 
   // Cache key for processed CSS variable maps of the selected theme/mode.
   let themeCacheKey = themeToApply;
+  if (themeToApply) {
+    themeCacheKey = `${themeToApply}__${darkMode ? "dark" : "light"}`;
+  }
   let themeRules: ThemeVars = {};
 
   if (
