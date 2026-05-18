@@ -132,7 +132,8 @@ export const applyThemesOnElement = (
 
 export async function applyFrontendThemeOnElement(
   element: HTMLElement,
-  selectedTheme?: string
+  selectedTheme?: string,
+  main = false
 ): Promise<boolean> {
   if (!element) return false;
 
@@ -140,7 +141,13 @@ export async function applyFrontendThemeOnElement(
   if (!hs?.themes) return false;
 
   try {
-    applyThemesOnElement(element, hs.themes, normalizeThemeName(selectedTheme));
+    applyThemesOnElement(
+      element,
+      hs.themes,
+      normalizeThemeName(selectedTheme),
+      undefined,
+      main
+    );
     return true;
   } catch (e) {
     console.error("UIX: Error applying local theme on element:", element, e);

@@ -9,9 +9,9 @@ import pjson from "../package.json";
 import {
   get_theme,
   get_theme_macros,
-  getEffectiveThemeName,
   getThemeTargetElement,
 } from "./helpers/themes";
+import { normalizeThemeName } from "./helpers/theme_utils";
 import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
@@ -189,11 +189,16 @@ export class Uix extends LitElement {
     let styles =
       typeof stl === "string" || stl === undefined ? { ".": stl ?? "" } : JSON.parse(JSON.stringify(stl));
 
-    const effectiveTheme = getEffectiveThemeName(this);
-    if (effectiveTheme || this._themeAppliedByUix) {
+    const localTheme = normalizeThemeName(this.theme);
+    if (localTheme || this._themeAppliedByUix) {
       const styleHost = getThemeTargetElement(this);
-      const applied = await applyFrontendThemeOnElement(styleHost, effectiveTheme);
-      this._themeAppliedByUix = applied && !!effectiveTheme;
+      const restoreMainTheme = !localTheme && this._themeAppliedByUix;
+      const applied = await applyFrontendThemeOnElement(
+        styleHost,
+        localTheme,
+        restoreMainTheme
+      );
+      this._themeAppliedByUix = applied && !!localTheme;
     }
 
     // Merge uix styles with theme styles
