@@ -3,6 +3,23 @@ description: "Doc image: red theme with teal/purple entity row classes plus loca
 view_path: doc-theme-local-override
 theme: uix-doc-row-red
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.ceiling_lights
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.kitchen_lights
+
 card:
   type: entities
   title: Lights
