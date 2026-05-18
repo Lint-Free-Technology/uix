@@ -20,6 +20,13 @@ type HassThemes = {
   themes?: Record<string, ThemeDefinition>;
 };
 
+type ThemedElement = HTMLElement & {
+  __themes?: {
+    cacheKey?: string;
+    keys?: Record<string, "">;
+  };
+};
+
 let processedThemesCache: Record<string, ProcessedTheme> = {};
 
 function hexToRgb(value: string): [number, number, number] | undefined {
@@ -27,13 +34,6 @@ function hexToRgb(value: string): [number, number, number] | undefined {
   if (!hex.startsWith("#")) return undefined;
   const raw = hex.slice(1);
   if (raw.length === 3) {
-    const r = parseInt(raw[0] + raw[0], 16);
-    const g = parseInt(raw[1] + raw[1], 16);
-    const b = parseInt(raw[2] + raw[2], 16);
-    if ([r, g, b].some((v) => Number.isNaN(v))) return undefined;
-    return [r, g, b];
-  }
-  if (raw.length === 4) {
     const r = parseInt(raw[0] + raw[0], 16);
     const g = parseInt(raw[1] + raw[1], 16);
     const b = parseInt(raw[2] + raw[2], 16);
@@ -92,7 +92,7 @@ export const applyThemesOnElement = (
   themeSettings?: { dark?: boolean },
   main?: boolean
 ): void => {
-  const target = element as any;
+  const target = element as ThemedElement;
   const themeToApply = selectedTheme || (main ? themes?.theme : undefined);
   const darkMode =
     themeSettings?.dark !== undefined
@@ -100,10 +100,9 @@ export const applyThemesOnElement = (
       : themes?.darkMode || false;
 
   // Cache key for processed CSS variable maps of the selected theme/mode.
-  let themeCacheKey = themeToApply;
-  if (themeToApply) {
-    themeCacheKey = `${themeToApply}__${darkMode ? "dark" : "light"}`;
-  }
+  const themeCacheKey = themeToApply
+    ? `${themeToApply}__${darkMode ? "dark" : "light"}`
+    : undefined;
   let themeRules: ThemeVars = {};
 
   if (
