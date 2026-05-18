@@ -11,6 +11,9 @@ type ApplyThemesOnElement = (
 
 let _cachedApplyThemesOnElement: ApplyThemesOnElement | null | undefined;
 let _warnedApplyThemesLookupFailure = false;
+// Export trees from HA webpack modules are usually shallow (default export object
+// with 1-3 nested wrapper levels). Depth 4 is a practical cap to avoid expensive
+// recursion across many modules while still covering observed structures.
 const MAX_SCAN_DEPTH = 4;
 const WEBPACK_CHUNK_BRIDGE_PREFIX = "uix-theme-bridge";
 let _webpackBridgeChunkCounter = 0;
@@ -82,6 +85,7 @@ function getWebpackRequireFromRuntime() {
   let webpackRequire: any;
   try {
     // Inject a unique runtime chunk to access webpack's require function.
+    // This counter is safe as JS runs this section on the main thread.
     win[chunkKey].push([
       [
         `${WEBPACK_CHUNK_BRIDGE_PREFIX}-${++_webpackBridgeChunkCounter}`,
@@ -170,6 +174,7 @@ function resolveApplyThemesOnElement(): ApplyThemesOnElement | null {
   if (_cachedApplyThemesOnElement !== undefined) return _cachedApplyThemesOnElement;
 
   const win = window as any;
+  // Optional fast-path if HA/frontend or tooling exposes this helper globally.
   if (typeof win.applyThemesOnElement === "function") {
     _cachedApplyThemesOnElement = win.applyThemesOnElement;
     return _cachedApplyThemesOnElement;
