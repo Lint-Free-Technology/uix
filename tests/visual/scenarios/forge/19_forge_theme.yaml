@@ -1,0 +1,33 @@
+id: forge_theme
+description: "Theme spark applies a frontend theme to the forged element"
+view_path: forge-theme
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: theme
+        for: element
+        theme: uix-test-theme
+  element:
+    type: tile
+    entity: "light.bed_light"
+    name: "Theme spark"
+
+interactions:
+  - type: wait
+    ms: 500
+
+assertions:
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 0, 128)"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "color"
+    expected: "rgb(255, 255, 255)"
