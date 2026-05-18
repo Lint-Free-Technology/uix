@@ -86,6 +86,7 @@ function getWebpackRequireFromRuntime() {
   try {
     // Inject a unique runtime chunk to access webpack's require function.
     // This counter is safe as JS runs this section on the main thread.
+    // Webpack runtime expects [chunkIds, modulesObject, runtimeCallback].
     win[chunkKey].push([
       [
         `${WEBPACK_CHUNK_BRIDGE_PREFIX}-${++_webpackBridgeChunkCounter}`,
@@ -119,6 +120,7 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
   // This is a best-effort optimization path based on current HA internals.
   // Matching failure only affects scan order; resolver still uses the general
   // module/export scan and then falls back safely if nothing is found.
+  // The string checks below are intentionally loose and non-blocking.
   const preferEntitiesPath =
     entitiesUpdatedSource.includes("_config.theme") &&
     entitiesUpdatedSource.includes("_hass.themes");
@@ -132,6 +134,8 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
   const factories = webpackRequire.m ?? {};
   const moduleIds = Object.keys(factories);
   const moduleScore = new Map<string, number>();
+  // Sorting/scoring happens only during resolver initialization; once the
+  // function is found we cache it in _cachedApplyThemesOnElement.
   const prioritized = preferEntitiesPath
     ? moduleIds.sort((a, b) => {
       if (!moduleScore.has(a)) {

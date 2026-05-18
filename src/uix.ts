@@ -148,6 +148,11 @@ export class Uix extends LitElement {
     return this._styles;
   }
 
+  /**
+   * Sets a local theme override for this UIX node.
+   * When connected, style/theme processing runs immediately.
+   * When disconnected, processing is deferred until reconnect.
+   */
   set theme(theme: string | undefined) {
     if (this._theme === theme) return;
     this._theme = theme;
