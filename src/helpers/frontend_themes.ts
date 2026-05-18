@@ -36,6 +36,8 @@ function looksLikeApplyThemesOnElement(fn: Function): boolean {
   // resolution still fails safely and UIX falls back without crashing.
   const src = Function.prototype.toString.call(fn);
   return (
+    fn.length >= 2 &&
+    fn.length <= 5 &&
     src.includes("__themes") &&
     src.includes("themes") &&
     src.includes("style.setProperty")
@@ -82,7 +84,7 @@ function getWebpackRequireFromRuntime() {
     // Inject a unique runtime chunk to access webpack's require function.
     win[chunkKey].push([
       [
-        `${WEBPACK_CHUNK_BRIDGE_PREFIX}-${Date.now()}-${++_webpackBridgeChunkCounter}-${Math.random().toString(36).slice(2)}`,
+        `${WEBPACK_CHUNK_BRIDGE_PREFIX}-${++_webpackBridgeChunkCounter}`,
       ],
       {},
       (req: any) => {
@@ -107,6 +109,9 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
   const entitiesUpdatedSource = customElements
     .get("hui-entities-card")
     ?.prototype?.updated?.toString?.() ?? "";
+  if (!entitiesUpdatedSource) {
+    debugThemeBridge("hui-entities-card.updated source unavailable; using generic module scan");
+  }
   // This is a best-effort optimization path based on current HA internals.
   // Matching failure only affects scan order; resolver still uses the general
   // module/export scan and then falls back safely if nothing is found.
@@ -122,15 +127,28 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
 
   const factories = webpackRequire.m ?? {};
   const moduleIds = Object.keys(factories);
+  const moduleScore = new Map<string, number>();
   const prioritized = preferEntitiesPath
     ? moduleIds.sort((a, b) => {
-      const sa = String(factories[a]);
-      const sb = String(factories[b]);
-      const score = (s: string) =>
-        Number(s.includes("hui-entities-card")) +
-        Number(s.includes("_config.theme")) +
-        Number(s.includes("_hass.themes"));
-      return score(sb) - score(sa);
+      if (!moduleScore.has(a)) {
+        const sa = String(factories[a]);
+        moduleScore.set(
+          a,
+          Number(sa.includes("hui-entities-card")) +
+          Number(sa.includes("_config.theme")) +
+          Number(sa.includes("_hass.themes"))
+        );
+      }
+      if (!moduleScore.has(b)) {
+        const sb = String(factories[b]);
+        moduleScore.set(
+          b,
+          Number(sb.includes("hui-entities-card")) +
+          Number(sb.includes("_config.theme")) +
+          Number(sb.includes("_hass.themes"))
+        );
+      }
+      return (moduleScore.get(b) ?? 0) - (moduleScore.get(a) ?? 0);
     })
     : moduleIds;
 

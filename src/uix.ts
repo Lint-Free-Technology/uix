@@ -154,6 +154,8 @@ export class Uix extends LitElement {
     if (!this.isConnected) {
       // Theme application needs a concrete target element (parent/host), so defer
       // processing until the node is connected and the DOM context is available.
+      // Any previously applied local theme remains as-is while disconnected; once
+      // reconnected, _process_styles() re-applies or clears local theming.
       this._processStylesOnConnect = true;
       return;
     }
