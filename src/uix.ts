@@ -152,6 +152,8 @@ export class Uix extends LitElement {
     if (this._theme === theme) return;
     this._theme = theme;
     if (!this.isConnected) {
+      // Theme application needs a concrete target element (parent/host), so defer
+      // processing until the node is connected and the DOM context is available.
       this._processStylesOnConnect = true;
       return;
     }

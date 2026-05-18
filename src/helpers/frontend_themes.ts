@@ -1,4 +1,5 @@
 import { hass } from "./hass";
+import { normalizeThemeName } from "./theme_utils";
 
 type ApplyThemesOnElement = (
   element: HTMLElement,
@@ -10,6 +11,14 @@ type ApplyThemesOnElement = (
 
 let _cachedApplyThemesOnElement: ApplyThemesOnElement | null | undefined;
 let _warnedApplyThemesLookupFailure = false;
+const MAX_SCAN_DEPTH = 4;
+const WEBPACK_CHUNK_BRIDGE_PREFIX = "uix-theme-bridge";
+
+function debugThemeBridge(...args: any[]) {
+  if ((window as any)?.uixThemeDebug) {
+    console.debug("UIX Theme Bridge:", ...args);
+  }
+}
 
 function warnApplyThemesLookupFailureOnce() {
   if (_warnedApplyThemesLookupFailure) return;
@@ -18,12 +27,6 @@ function warnApplyThemesLookupFailureOnce() {
     "UIX: Unable to resolve Home Assistant applyThemesOnElement() from frontend runtime. " +
     "uix.theme local theme application is disabled for this session."
   );
-}
-
-function normalizeTheme(theme?: string): string | undefined {
-  if (typeof theme !== "string") return undefined;
-  const trimmed = theme.trim();
-  return trimmed.length ? trimmed : undefined;
 }
 
 function looksLikeApplyThemesOnElement(fn: Function): boolean {
@@ -40,7 +43,7 @@ function scanExportTreeForApplyThemes(
   seen = new Set<any>(),
   depth = 0
 ): ApplyThemesOnElement | undefined {
-  if (!value || seen.has(value) || depth > 4) return undefined;
+  if (!value || seen.has(value) || depth > MAX_SCAN_DEPTH) return undefined;
   seen.add(value);
 
   if (typeof value === "function") {
@@ -72,14 +75,17 @@ function getWebpackRequireFromRuntime() {
 
   let webpackRequire: any;
   try {
+    // Inject a unique runtime chunk to access webpack's require function.
+    // Date.now() is sufficient here since resolution is one-shot and cached.
     win[chunkKey].push([
-      [`uix-theme-bridge-${Date.now()}`],
+      [`${WEBPACK_CHUNK_BRIDGE_PREFIX}-${Date.now()}`],
       {},
       (req: any) => {
         webpackRequire = req;
       },
     ]);
-  } catch (_e) {
+  } catch (e) {
+    debugThemeBridge("Failed to extract webpack require from runtime chunk push", e);
     return undefined;
   }
 
@@ -123,7 +129,8 @@ function resolveApplyThemesOnElementFromWebpack(): ApplyThemesOnElement | undefi
   for (const id of prioritized) {
     try {
       webpackRequire(id);
-    } catch (_e) {
+    } catch (e) {
+      debugThemeBridge(`Error requiring webpack module ${id} during applyThemes resolver`, e);
       continue;
     }
     const found = scanExportTreeForApplyThemes(webpackRequire.c?.[id]?.exports);
@@ -161,7 +168,7 @@ export async function applyFrontendThemeOnElement(
   if (!hs?.themes) return false;
 
   try {
-    applyThemesOnElement(element, hs.themes, normalizeTheme(selectedTheme));
+    applyThemesOnElement(element, hs.themes, normalizeThemeName(selectedTheme));
     return true;
   } catch (e) {
     console.error("UIX: Error applying local theme on element:", element, e);

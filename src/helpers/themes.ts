@@ -4,6 +4,7 @@ import { Uix } from "../uix";
 import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
 import { nextAnimationFrame } from "./raf";
+import { normalizeThemeName } from "./theme_utils";
 
 function cssValueIsTrue(v: string): boolean {
   if (!v) return false;
@@ -16,11 +17,6 @@ function cssValueIsTrue(v: string): boolean {
 const _themeInFlight = new WeakMap<Uix, Promise<UixStyle>>();
 const _themeMacrosInFlight = new WeakMap<Uix, Promise<Record<string, MacroConfig | string>>>();
 
-function normalizeTheme(theme?: string): string {
-  if (typeof theme !== "string") return "";
-  return theme.trim();
-}
-
 export function getThemeTargetElement(root: Uix): HTMLElement {
   if (root.parentElement) return root.parentElement;
   const shadowHost = (root.parentNode as any)?.host;
@@ -30,11 +26,17 @@ export function getThemeTargetElement(root: Uix): HTMLElement {
 
 function getCssThemeName(root: Uix): string {
   const cs = window.getComputedStyle(getThemeTargetElement(root));
-  return normalizeTheme(cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme"));
+  return normalizeThemeName(
+    cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme")
+  ) ?? "";
 }
 
 export function getEffectiveThemeName(root: Uix): string {
-  return normalizeTheme(root.theme) || normalizeTheme(root.uix_parent?.theme) || getCssThemeName(root);
+  return (
+    normalizeThemeName(root.theme) ||
+    normalizeThemeName(root.uix_parent?.theme) ||
+    getCssThemeName(root)
+  );
 }
 
 export async function get_theme(root: Uix): Promise<UixStyle> {
