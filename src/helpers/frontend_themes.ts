@@ -20,7 +20,8 @@ type HassThemes = {
   themes?: Record<string, ThemeDefinition>;
 };
 
-let PROCESSED_THEMES: Record<string, ProcessedTheme> = {};
+let processedThemesCache: Record<string, ProcessedTheme> = {};
+const MAX_PROCESSED_THEME_CACHE = 128;
 
 function hexToRgb(value: string): [number, number, number] | undefined {
   const hex = value.trim();
@@ -71,12 +72,16 @@ const processTheme = (
     keys[prefixedRgbKey] = "";
   }
 
-  PROCESSED_THEMES[cacheKey] = { styles, keys };
+  if (Object.keys(processedThemesCache).length >= MAX_PROCESSED_THEME_CACHE) {
+    processedThemesCache = {};
+  }
+  processedThemesCache[cacheKey] = { styles, keys };
   return { styles, keys };
 };
 
 // Vendored/adapted from Home Assistant frontend:
-// src/common/dom/apply_themes_on_element.ts (60c5bea6e007b1e6e7ce9e9a86be4659b9565ab3)
+// src/common/dom/apply_themes_on_element.ts (60c5bea6e007b1e6e7ce9e9a86be4659b9565ab3),
+// synced in UIX on 2026-05-18.
 export const applyThemesOnElement = (
   element: HTMLElement,
   themes: HassThemes,
@@ -91,7 +96,8 @@ export const applyThemesOnElement = (
       ? themeSettings.dark
       : themes?.darkMode || false;
 
-  let cacheKey = themeToApply;
+  // Cache key for processed CSS variable maps of the selected theme/mode.
+  let themeCacheKey = themeToApply;
   let themeRules: ThemeVars = {};
 
   if (
@@ -115,8 +121,8 @@ export const applyThemesOnElement = (
   }
 
   const newTheme =
-    Object.keys(themeRules).length && cacheKey
-      ? PROCESSED_THEMES[cacheKey] || processTheme(cacheKey, themeRules)
+    Object.keys(themeRules).length && themeCacheKey
+      ? processedThemesCache[themeCacheKey] || processTheme(themeCacheKey, themeRules)
       : undefined;
 
   const styles: Record<string, string> = {
@@ -124,7 +130,7 @@ export const applyThemesOnElement = (
     ...(newTheme?.styles || {}),
   };
 
-  target.__themes = { cacheKey, keys: newTheme?.keys };
+  target.__themes = { cacheKey: themeCacheKey, keys: newTheme?.keys };
 
   for (const styleName of Object.keys(styles)) {
     element.style.setProperty(styleName, styles[styleName]);
