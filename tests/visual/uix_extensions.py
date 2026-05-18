@@ -219,7 +219,7 @@ def _set_theme_file(page: "Page | None", interaction: dict[str, Any], ha: Any = 
         ha_config_path = os.environ.get("HA_CONFIG_PATH")
         if not ha_config_path:
             raise RuntimeError(
-                "set_theme_file requires HA_CONFIG_PATH to be set so tests can read base themes.yaml"
+                "set_theme_file requires HA_CONFIG_PATH to locate the base themes.yaml for theme updates"
             )
         themes_path = Path(ha_config_path) / "themes.yaml"
         base_content = themes_path.read_text(encoding="utf-8")
