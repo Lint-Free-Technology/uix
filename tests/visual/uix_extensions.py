@@ -216,7 +216,12 @@ def _set_theme_file(page: "Page | None", interaction: dict[str, Any], ha: Any = 
         theme_name = interaction["theme"]
         values = interaction["values"]
 
-        themes_path = Path(os.environ["HA_CONFIG_PATH"]) / "themes.yaml"
+        ha_config_path = os.environ.get("HA_CONFIG_PATH")
+        if not ha_config_path:
+            raise RuntimeError(
+                "set_theme_file requires HA_CONFIG_PATH to be set so tests can read base themes.yaml"
+            )
+        themes_path = Path(ha_config_path) / "themes.yaml"
         base_content = themes_path.read_text(encoding="utf-8")
         themes_data = yaml.safe_load(base_content) or {}
 
@@ -225,7 +230,9 @@ def _set_theme_file(page: "Page | None", interaction: dict[str, Any], ha: Any = 
             theme_data = {}
             themes_data[theme_name] = theme_data
         if not isinstance(theme_data, dict):
-            raise ValueError(f"Theme {theme_name!r} is not a mapping in themes.yaml")
+            raise ValueError(
+                f"Theme {theme_name!r} must be a mapping, got {type(theme_data).__name__}"
+            )
 
         theme_data.update(values)
         content = yaml.safe_dump(themes_data, sort_keys=False)
