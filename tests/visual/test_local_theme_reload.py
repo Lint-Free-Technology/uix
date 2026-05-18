@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from playwright.sync_api import Page
+import yaml
 
 from ha_testcontainer.visual.scenario_runner import (
     clear_scenario,
@@ -17,11 +18,23 @@ from ha_testcontainer.visual.scenario_runner import (
 THEMES_FILE = Path(__file__).parents[1] / "ha-config" / "themes.yaml"
 
 
-def _modified_themes_yaml(content: str) -> str:
-    return content.replace(
-        'uix-local-orange:\n  uix-theme: uix-local-orange\n  primary-color: "#ff7a00"\n  uix-card: |\n    ha-card {\n      background-color: rgb(255, 122, 0) !important;\n    }\n',
-        'uix-local-orange:\n  uix-theme: uix-local-orange\n  primary-color: "#ff00ff"\n  uix-card: |\n    ha-card {\n      background-color: rgb(255, 0, 255) !important;\n    }\n',
+def _modify_themes_yaml(content: str) -> str:
+    data = yaml.safe_load(content)
+    if not isinstance(data, dict) or "uix-local-orange" not in data:
+        return content
+
+    local_theme = data["uix-local-orange"]
+    if not isinstance(local_theme, dict):
+        return content
+
+    local_theme["primary-color"] = "#ff00ff"
+    local_theme["uix-card"] = (
+        "ha-card {\n"
+        "  background-color: rgb(255, 0, 255) !important;\n"
+        "}\n"
     )
+
+    return yaml.safe_dump(data, sort_keys=False)
 
 
 def test_local_theme_updates_after_theme_reload(
@@ -31,7 +44,7 @@ def test_local_theme_updates_after_theme_reload(
     ha_lovelace_url_path: str,
 ) -> None:
     original_themes = THEMES_FILE.read_text(encoding="utf-8")
-    updated_themes = _modified_themes_yaml(original_themes)
+    updated_themes = _modify_themes_yaml(original_themes)
 
     if original_themes == updated_themes:
         raise AssertionError("Expected uix-local-orange theme block not found in themes.yaml")
