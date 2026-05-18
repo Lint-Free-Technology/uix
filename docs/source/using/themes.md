@@ -172,7 +172,7 @@ red-theme:
 
 ## Local theme override with `uix.theme`
 
-You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme:
+You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme. `uix.theme` takes precedence over inherited/current theme for that UIX node.
 
 Main red row theme:
 
@@ -214,8 +214,8 @@ entities:
 
 ![UIX Theme override example](../assets/page-assets/using/theme-local-override.png){ width="500" }
 
-- `uix.theme` takes precedence over inherited/current theme for that UIX node.
-- UIX child style paths inherit the same effective theme unless they set their own `theme`.
+!!! warning "Take caution where you use theme overrides"
+    Styling and theming in Home Assistant can get quite complex. You may expect a CSS variable to apply and find it does not. For example, if you apply `--primary-text-color: color;` to an entities row either by direct UIX styling to `:host {}` or `uix.theme` override you may expect the entities text to be the color you have set to `--primary-text-color`. However in this case `color` style is set at the `ha-card` element of the entities card, so this override will have no effect.
 
 ## Updating `uix-<thing>` variable to `uix-<thing>-yaml` variable
 
