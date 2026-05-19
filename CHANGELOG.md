@@ -1,3 +1,10 @@
+## [7.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0...v7.4.0-beta.1) (2026-05-19)
+
+### ⭐ New Features
+
+* Add a UIX Forge `theme` spark for local frontend theme application ([#338](https://github.com/Lint-Free-Technology/uix/issues/338)) ([dceaeb6](https://github.com/Lint-Free-Technology/uix/commit/dceaeb62d574b885ce21608a0ce7990b056bf994))
+* **styling:** Apply theme override to element with `uix.theme` ([#337](https://github.com/Lint-Free-Technology/uix/issues/337)) ([ab02453](https://github.com/Lint-Free-Technology/uix/commit/ab02453a688343ed47007bbda08675eede905b94))
+
 ## [7.3.0](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0...v7.3.0) (2026-05-17)
 
 ### ⭐ New Features
