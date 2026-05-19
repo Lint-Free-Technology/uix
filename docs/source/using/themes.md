@@ -172,6 +172,9 @@ red-theme:
 
 ## Local theme override with `uix.theme`
 
+!!! info
+    Local theme override with `uix.theme` available in 7.4.0-beta.1
+
 You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme. `uix.theme` takes precedence over inherited/current theme for that UIX node.
 
 Main red row theme:

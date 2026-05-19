@@ -4,6 +4,9 @@ icon: material/palette
 ---
 # :material-palette: Theme Spark
 
+!!! info
+    Theme spark available in 7.4.0-beta.1
+
 The `theme` spark applies a frontend theme to a target element.
 
 Use it when you want a forged element to pick up an existing theme without adding extra UIX styling config.
