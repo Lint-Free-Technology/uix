@@ -1,0 +1,34 @@
+id: doc_spark_theme_basic
+description: "Doc image:: Theme spark basic usage (theme.md)"
+view_path: doc-spark-theme-basic
+
+interactions:
+  - type: set_theme_file
+    theme: doc-spark-theme-basic
+    values:
+      primary-text-color: blue
+      ha-card-border-radius: 20px
+      ha-card-background: lightpink
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 1200
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: theme
+        for: element
+        theme: doc-spark-theme-basic
+  element:
+    type: tile
+    entity: light.bed_light
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/theme-basic.png
+  root: hui-tile-card
+  padding: 16
+  threshold: 0.02

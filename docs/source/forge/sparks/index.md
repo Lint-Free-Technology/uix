@@ -19,3 +19,4 @@ Available sparks:
 - :material-map: [Map](map.md) — preserve the zoom level and centre of a map card across Home Assistant state updates.
 - :material-lock: [Lock](lock.md) — overlay a lock icon on any element to block interaction until the user passes a PIN, passphrase, or confirmation challenge.
 - :material-image-outline: [Background](background.md) — inject a background layer (colour, image, video, or live camera) behind any element within the forged element.
+- :material-palette: [Theme](theme.md) — apply a Frontend theme to the forged element or one of its descendants.
