@@ -22,15 +22,15 @@ Use it when you want a forged element to pick up an existing theme without addin
 !!! tip
     `theme` config supports templates. To revert the theme back to the main theme, have your template return an empty string `""`. This will apply the main theme to `for`. As themes are applied by setting inline style properties to the element, your override theme should include the same theme elements, or be a subset of elements of the main theme. If you are using theme sparks on a cascade of forged elements, it is best to have each theme override be a subset of the prior theme override, or unexpected results may occur.
 
-## Example
+## Example - basic
 
 Theme:
 
 ```yaml
 my-theme:
-  primary-text-color: blue
+  primary-text-color: red
   ha-card-border-radius: 20px
-  ha-card-background: lightpink
+  ha-card-background: antiquewhite
 ```
 
 UIX Forge:
@@ -49,6 +49,39 @@ element:
 ```
 
 ![Theme spark basic example](../../assets/page-assets/forge/sparks/theme-basic.png)
+
+## Example - template
+
+Themes:
+
+```yaml
+my-blue-theme:
+  primary-text-color: blue
+  ha-card-border-radius: 20px
+  ha-card-background: lightpink
+  
+my-red-theme:
+  primary-text-color: red
+  ha-card-border-radius: 20px
+  ha-card-background: antiquewhite
+```
+
+UIX Forge:
+
+```yaml
+type: "custom:uix-forge"
+forge:
+  mold: card
+  sparks:
+    - type: theme
+      for: element
+      theme: "{{ 'uix-doc-spark-theme-template-red' if is_state(config.element.entity, 'on') else 'uix-doc-spark-theme-template-blue' }}"
+element:
+  type: tile
+  entity: light.bed_light
+```
+
+![Theme spark template example](../../assets/page-assets/forge/sparks/theme-template.gif)
 
 !!! tip
     You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.

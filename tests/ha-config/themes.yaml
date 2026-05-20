@@ -164,3 +164,13 @@ uix-card-as-badge:
         gap: var(--ha-space-2);
         padding: 8px 10px;
       }
+
+uix-doc-spark-theme-template-blue:
+  primary-text-color: blue
+  ha-card-border-radius: 20px
+  ha-card-background: lightpink
+  
+uix-doc-spark-theme-template-red:
+  primary-text-color: red
+  ha-card-border-radius: 20px
+  ha-card-background: antiquewhite
