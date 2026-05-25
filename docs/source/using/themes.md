@@ -280,6 +280,7 @@ red-theme:
 - `uix-grid-section`
 - `uix-calendar`
 - `uix-history`
+- `uix-states-history-charts`
 - `uix-drawer`
 - `uix-view-background`
 - `uix-persistent-notification-item`
