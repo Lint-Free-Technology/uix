@@ -1,3 +1,9 @@
+## [7.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.4.0-beta.1...v7.4.0-beta.2) (2026-05-25)
+
+### ⭐ New Features
+
+* Allow to style states-history-charts by theme variable. ([7594b21](https://github.com/Lint-Free-Technology/uix/commit/7594b2173c1cf91c38ae53442339d5b1bff9e2e0)), closes [#342](https://github.com/Lint-Free-Technology/uix/issues/342)
+
 ## [7.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0...v7.4.0-beta.1) (2026-05-19)
 
 ### ⭐ New Features
