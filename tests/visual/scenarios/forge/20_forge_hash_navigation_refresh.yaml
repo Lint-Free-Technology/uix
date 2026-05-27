@@ -51,4 +51,4 @@ assertions:
   - type: text_startswith
     root: "ha-markdown"
     selector: "p"
-    expected: "content_"
+    expected: "content_front_bedroom"
