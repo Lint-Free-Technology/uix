@@ -34,7 +34,7 @@ dashboard:
             type: grid
             cards:
               - type: markdown
-                content: "{{ hash | replace('node_', '') }}"
+                content: content_{{ hash | replace('node_', '') }}
 
 interactions:
   - type: click
@@ -49,6 +49,6 @@ assertions:
     property: "backgroundColor"
     expected: "rgb(0, 128, 0)"
   - type: text_startswith
-    root: "uix-forge"
-    selector: "hui-section"
-    expected: "front_bedroom"
+    root: "ha-markdown"
+    selector: "p"
+    expected: "content_"

@@ -637,16 +637,8 @@ export class UixForge extends LitElement {
 
     }
     if (this._mold.isSection()) {
-      getLovelaceRoot(document).then((root) => {
-        if (!root) {
-          return;
-        }
-        const view = root._viewRoot?.querySelector("hui-view");
-        if (view && view._sections) {
-          view._rebuildSection?.(this.forgedElement, this.forgedElementConfig);
-        }
-        this.refreshForge(["hidden"]);
-      });
+      this.forgedElement.config = this.forgedElementConfig;
+      this.refreshForge(["hidden"]);
     }
     if (this._mold.isPictureElement()) {
       const config = {
@@ -719,6 +711,7 @@ export class UixForge extends LitElement {
         if (view && view._sections) {
           this.forgedElement = view.createSectionElement?.(this.forgedElementConfig);
         }
+        this.refreshForge(["hidden"]);
       });
       return;
     }
@@ -804,6 +797,9 @@ export class UixForge extends LitElement {
         this.refreshForge(["hidden"]);
       }
       if (this.preview && this._mold.isFooter()) {
+        this.refreshForge(["hidden"]);
+      }
+      if (this.preview && this._mold.isSection()) {
         this.refreshForge(["hidden"]);
       }
     }
