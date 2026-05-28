@@ -1,3 +1,10 @@
+## [7.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.4.0-beta.2...v7.4.0-beta.3) (2026-05-28)
+
+### 🐞 Bug Fixes
+
+* Refresh forge templates on has/panel updates. Correct related section mold visibility issues ([#348](https://github.com/Lint-Free-Technology/uix/issues/348)) ([3c9bed6](https://github.com/Lint-Free-Technology/uix/commit/3c9bed65d2d91371cfcea75a8c21bf7a72f59430)), closes [#347](https://github.com/Lint-Free-Technology/uix/issues/347)
+* Update hash/panel on all history state changes including pushState and replaceState ([97cd49e](https://github.com/Lint-Free-Technology/uix/commit/97cd49ee48af83119042e7c8acba089956d3bc04)), closes [#349](https://github.com/Lint-Free-Technology/uix/issues/349)
+
 ## [7.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.4.0-beta.1...v7.4.0-beta.2) (2026-05-25)
 
 ### ⭐ New Features
