@@ -11,6 +11,7 @@ export class ModdedElement extends LitElement {
       uix.variables = { config };
       uix.macros = config.uix?.macros || config.card_mod?.macros || {};
       uix.billets = config.uix?.billets || {};
+      uix.theme = config.uix?.theme ?? config.card_mod?.theme;
       uix.styles = config.uix?.style || config.card_mod?.style || {};
     });
   }
@@ -40,6 +41,7 @@ export interface MacroConfig {
 
 export interface UixConfig {
   style?: UixStyle;
+  theme?: string;
   class?: string | string[];
   debug?: boolean;
   prepend?: boolean;
@@ -359,7 +361,11 @@ export async function apply_uix_compatible(
   if (
     uix_config &&
     Object.keys(uix_config).length !== 0 &&
-    (uix_config?.style ?? uix_config?.class ?? uix_config?.debug ?? uix_config?.macros) === undefined
+    (uix_config?.style ??
+      uix_config?.theme ??
+      uix_config?.class ??
+      uix_config?.debug ??
+      uix_config?.macros) === undefined
   ) {
     // Old style call with object styles
     uix_config = { style: uix_config as UixStyle };
@@ -453,6 +459,7 @@ export async function apply_uix(
     uix.variables = variables;
     uix.macros = uix_config?.macros ?? {};
     uix.billets = uix_config?.billets ?? {};
+    uix.theme = uix_config?.theme;
     uix.styles = uix_config?.style ?? "";
   }, 1);
 

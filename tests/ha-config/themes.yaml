@@ -19,12 +19,28 @@ uix-test-theme:
 
 uix-doc-red-basic:
   uix-theme: uix-doc-red-basic
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
+
+uix-doc-row-red:
+  uix-theme: uix-doc-row-red
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: red;
+      }
+
+uix-doc-row-blue-override:
+  uix-theme: uix-doc-row-blue-override
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: blue;
+      }
 
 uix-doc-red-border:
   uix-theme: uix-doc-red-border
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {
@@ -34,7 +50,7 @@ uix-doc-red-border:
 
 uix-doc-red-template:
   uix-theme: uix-doc-red-template
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {
@@ -58,7 +74,7 @@ uix-test-view-bg-shorthand:
 
 uix-doc-red-classes:
   uix-theme: uix-doc-red-classes
-  primary-color: red
+  primary-text-color: red
   ha-card-border-radius: 20px
   uix-row: |
     :host {
@@ -88,6 +104,30 @@ uix-date-picker-selection:
       calendar-month::part(button):hover {
         background-color: rgba(255, 0, 0, 0.2) !important;
       }
+
+uix-global-blue:
+  uix-theme: uix-global-blue
+  primary-color: "#0000ff"
+  uix-card: |
+    ha-card {
+      background-color: rgb(0, 0, 255) !important;
+    }
+
+uix-local-orange:
+  uix-theme: uix-local-orange
+  primary-color: "#ff7a00"
+  uix-card: |
+    ha-card {
+      background-color: rgb(255, 122, 0) !important;
+    }
+
+uix-global-green:
+  uix-theme: uix-global-green
+  primary-color: "#00aa00"
+  uix-card: |
+    ha-card {
+      background-color: rgb(0, 170, 0) !important;
+    }
 
 uix-card-as-badge:
   uix-theme: uix-card-as-badge
@@ -124,3 +164,13 @@ uix-card-as-badge:
         gap: var(--ha-space-2);
         padding: 8px 10px;
       }
+
+uix-doc-spark-theme-template-blue:
+  primary-text-color: blue
+  ha-card-border-radius: 20px
+  ha-card-background: lightpink
+  
+uix-doc-spark-theme-template-red:
+  primary-text-color: red
+  ha-card-border-radius: 20px
+  ha-card-background: antiquewhite

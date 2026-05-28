@@ -56,6 +56,7 @@ export class UixForge extends LitElement {
   private _sparkController: UixForgeSparkController;
   private _disconnectTimeout?: number;
   private _foundryUpdateListener?: EventListener;
+  private _uixUpdateListener?: EventListener;
   private _resolvedUix?: any;
   private _delayedHass?: boolean;
   private _view: LovelaceElement;
@@ -379,6 +380,11 @@ export class UixForge extends LitElement {
     this._mold?.connectedCallback();
     this._sparkController.connectedCallback();
 
+    if (!this._uixUpdateListener) {
+      this._uixUpdateListener = (ev: Event) => this._onUixUpdate(ev);
+      document.addEventListener("uix_update", this._uixUpdateListener);
+    }
+
     // Listen for foundry updates from the coordinator
     if (this.config?.foundry && !this._foundryUpdateListener) {
       this._foundryUpdateListener = () => this._onFoundryUpdate();
@@ -430,6 +436,11 @@ export class UixForge extends LitElement {
     this._mold?.disconnectedCallback();
     this._sparkController.disconnectedCallback();
 
+    if (this._uixUpdateListener) {
+      document.removeEventListener("uix_update", this._uixUpdateListener);
+      this._uixUpdateListener = undefined;
+    }
+
     if (this._foundryUpdateListener) {
       window.removeEventListener("uix-foundries-updated", this._foundryUpdateListener);
       this._foundryUpdateListener = undefined;
@@ -466,6 +477,12 @@ export class UixForge extends LitElement {
       return;
     }
     // Otherwise refresh templates with updated foundry data
+    this.refreshForgeTemplates();
+  }
+
+  private _onUixUpdate(ev: Event) {
+    if (!(ev as CustomEvent).detail?.variablesChanged) return;
+    if (!this.config) return;
     this.refreshForgeTemplates();
   }
 
@@ -546,7 +563,14 @@ export class UixForge extends LitElement {
     delete forgeConfig.template_nesting;
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
-    this.forgedElementConfig = { ...resolved.element };
+    const elementConfig = { ...resolved.element };
+    if (this.config?.state_color !== undefined) {
+      elementConfig.state_color = this.config.state_color;
+    }
+    if (this.config?.entities !== undefined) {
+      elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+    this.forgedElementConfig = elementConfig;
     Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
@@ -613,16 +637,8 @@ export class UixForge extends LitElement {
 
     }
     if (this._mold.isSection()) {
-      getLovelaceRoot(document).then((root) => {
-        if (!root) {
-          return;
-        }
-        const view = root._viewRoot?.querySelector("hui-view");
-        if (view && view._sections) {
-          view._rebuildSection?.(this.forgedElement, this.forgedElementConfig);
-        }
-        this.refreshForge(["hidden"]);
-      });
+      this.forgedElement.config = this.forgedElementConfig;
+      this.refreshForge(["hidden"]);
     }
     if (this._mold.isPictureElement()) {
       const config = {
@@ -695,6 +711,7 @@ export class UixForge extends LitElement {
         if (view && view._sections) {
           this.forgedElement = view.createSectionElement?.(this.forgedElementConfig);
         }
+        this.refreshForge(["hidden"]);
       });
       return;
     }
@@ -780,6 +797,9 @@ export class UixForge extends LitElement {
         this.refreshForge(["hidden"]);
       }
       if (this.preview && this._mold.isFooter()) {
+        this.refreshForge(["hidden"]);
+      }
+      if (this.preview && this._mold.isSection()) {
         this.refreshForge(["hidden"]);
       }
     }

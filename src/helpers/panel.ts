@@ -143,7 +143,7 @@ export function getPanelState(): Promise<any> {
 
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
-  ["popstate", "location-changed"].forEach((event) => {
+  ["popstate", "location-changed", "historystatechanged"].forEach((event) => {
     window.addEventListener(event, async () => {
       PanelState = null;
       _panel_state_update();
@@ -154,4 +154,20 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
       });
     });
   });
+  (function() {
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function(...args) {
+      const ret = originalPushState.apply(this, args);
+      window.dispatchEvent(new Event('historystatechanged'));
+      return ret;
+    };
+
+    history.replaceState = function(...args) {
+      const ret = originalReplaceState.apply(this, args);
+      window.dispatchEvent(new Event('historystatechanged'));
+      return ret;
+    };
+  })();
 });

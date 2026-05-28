@@ -170,6 +170,53 @@ red-theme:
 !!! tip "Theme variables MUST be strings"
     While the value of the `uix-<thing>-yaml` variable is actually yaml, as far as the theme is concerned it MUST be a string, which in turn contains more strings.
 
+## Local theme override with `uix.theme`
+
+You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme. `uix.theme` takes precedence over inherited/current theme for that UIX node.
+
+Main red row theme:
+
+```yaml
+row-red:
+  uix-theme: row-red
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: red;
+      }
+
+```
+
+Override blue row theme:
+
+```yaml
+row-blue-override:
+  uix-theme: row-blue-override
+  uix-row-yaml: |
+    hui-generic-entity-row $: |
+      .info{
+        color: blue;
+      }
+```
+
+Entities card with theme override for one row:
+
+```yaml
+type: entities
+title: Lights
+entities:
+  - entity: light.bed_light
+  - entity: light.ceiling_lights
+  - entity: light.kitchen_lights
+    uix:
+      theme: row-blue-override
+```
+
+![UIX Theme override example](../assets/page-assets/using/theme-local-override.png){ width="500" }
+
+!!! warning "Take caution where you use theme overrides"
+    Styling and theming in Home Assistant can get quite complex. You may expect a CSS variable to apply and find it does not. For example, if you apply `--primary-text-color: color;` to an entities row either by direct UIX styling to `:host {}` or `uix.theme` override you may expect the entities text to be the color you have set to `--primary-text-color`. However in this case `color` style is set at the `ha-card` element of the entities card, so this override will have no effect.
+
 ## Updating `uix-<thing>` variable to `uix-<thing>-yaml` variable
 
 !!! tip "UIX theme variable precedence"
@@ -230,6 +277,7 @@ red-theme:
 - `uix-grid-section`
 - `uix-calendar`
 - `uix-history`
+- `uix-states-history-charts`
 - `uix-drawer`
 - `uix-view-background`
 - `uix-persistent-notification-item`
