@@ -4,6 +4,7 @@ import type { Uix } from "../uix";
 import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
 import { nextAnimationFrame } from "./raf";
+import { normalizeThemeName } from "./theme_utils";
 
 function cssValueIsTrue(v: string): boolean {
   if (!v) return false;
@@ -15,6 +16,33 @@ function cssValueIsTrue(v: string): boolean {
 // uix-nodes don't each schedule their own rAF-based style read.
 const _themeInFlight = new WeakMap<Uix, Promise<UixStyle>>();
 const _themeMacrosInFlight = new WeakMap<Uix, Promise<Record<string, MacroConfig | string>>>();
+
+export function getThemeTargetElement(root: Uix): HTMLElement {
+  if (root.parentElement) return root.parentElement;
+  const shadowHost = (root.parentNode as any)?.host;
+  if (shadowHost instanceof HTMLElement) return shadowHost;
+  return root;
+}
+
+function getCssThemeName(root: Uix): string {
+  const cs = window.getComputedStyle(getThemeTargetElement(root));
+  return normalizeThemeName(
+    cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme")
+  ) ?? "";
+}
+
+export function getEffectiveThemeName(root: Uix): string {
+  // Precedence order:
+  // 1) Explicit local `uix.theme` on this node
+  // 2) Current CSS theme variables from the styled element context
+  // Parent UIX nodes do not pass down their local `uix.theme`.
+  // normalizeThemeName() returns undefined for empty/whitespace inputs, so
+  // blank values never block fallback to the next precedence level.
+  return (
+    normalizeThemeName(root.theme) ||
+    getCssThemeName(root)
+  );
+}
 
 export async function get_theme(root: Uix): Promise<UixStyle> {
   if (!root.type) return null;
@@ -28,9 +56,9 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
       // Wait for next animation frame before computing styles: batches reflow reads
       await nextAnimationFrame();
 
-      const el = root.parentElement ? root.parentElement : root;
+      const el = getThemeTargetElement(root);
       const cs = window.getComputedStyle(el);
-      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+      const theme = getEffectiveThemeName(root);
 
       // Determine debug flag from CSS variables.
       // Checked patterns:
@@ -89,9 +117,7 @@ export async function get_theme_macros(root: Uix): Promise<Record<string, MacroC
       // Wait for next animation frame before computing styles: batches reflow reads
       await nextAnimationFrame();
 
-      const el = root.parentElement ? root.parentElement : root;
-      const cs = window.getComputedStyle(el);
-      const theme = cs.getPropertyValue("--uix-theme") || cs.getPropertyValue("--card-mod-theme");
+      const theme = getEffectiveThemeName(root);
 
       const hs = await hass();
       if (!hs) return {};

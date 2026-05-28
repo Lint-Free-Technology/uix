@@ -26,16 +26,19 @@ element:
   square: false
   cards:
     - type: tile
-      entity: light.living_room
+      entity: light.living_room_rgbww_lights
+      name: Living Room
     - type: tile
-      entity: light.bedroom
+      entity: light.bed_light
+      name: Bedroom
     - type: tile
-      entity: light.kitchen
+      entity: light.ceiling_lights
+      name: Ceiling
 ```
 
 `columns: 3` expands to `grid-template-columns: repeat(3, 1fr)`.
 
----
+![Grid spark basic example](../../assets/page-assets/forge/sparks/grid-basic.png)
 
 !!! tip
     When using grid spark with a grid card in a section, it is best to set the section to `column_span: 4` and then `columns` of `grid_options` in forge mold to `columns: full`.
@@ -95,194 +98,162 @@ Each entry in `media_queries` has a required `query` key plus any subset of the 
 !!! tip
     Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) console helper to find the exact DOM selector for your target container.
 
----
-
 ## Examples
 
-### Equal-width columns with a gap
+??? example "Equal-width columns with a gap"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: grid
+          for: "hui-grid-card $ #root"
+          columns: repeat(4, minmax(0, 1fr))
+          gap: 8
+    element:
+      type: grid
+      square: false
+      cards:
+        - type: tile
+          entity: light.living_room_rgbww_lights
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.kitchen_lights
+        - type: tile
+          entity: light.office_rgbw_lights
+    ```
 
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  grid_options:
-    columns: full
-  sparks:
-    - type: grid
-      for: "hui-grid-card $ #root"
-      columns: 4
-      gap: 8
-element:
-  type: grid
-  square: false
-  cards:
-    - type: tile
-      entity: light.living_room
-    - type: tile
-      entity: light.bedroom
-    - type: tile
-      entity: light.kitchen
-    - type: tile
-      entity: light.office
-```
+    ![Grid spark gap example](../../assets/page-assets/forge/sparks/grid-gap.png)
 
-### Custom column widths
+??? example "Custom column widths"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: grid
+          for: "hui-grid-card $ #root"
+          columns: 200px minmax(0, 1fr) 200px
+          gap: 8px 16px
+    element:
+      type: grid
+      square: false
+      cards:
+        - type: tile
+          entity: light.living_room_rgbww_lights
+        - type: tile
+          entity: light.bed_light
+        - type: tile
+          entity: light.kitchen_lights
+    ```
 
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  grid_options:
-    columns: full
-  sparks:
-    - type: grid
-      for: "hui-grid-card $ #root"
-      columns: 200px 1fr 200px
-      gap: 8px 16px
-element:
-  type: grid
-  cards:
-    - type: tile
-      entity: light.living_room
-    - type: tile
-      entity: light.bedroom
-    - type: tile
-      entity: light.kitchen
-```
+    ![Grid spark custom widths example](../../assets/page-assets/forge/sparks/grid-custom-widths.png)
 
-### Template areas and elements
-
-Use `areas` to define named regions and `elements` to assign those names to child elements (in order):
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  grid_options:
-    columns: full
-  sparks:
-    - type: grid
-      for: "hui-grid-card $ #root"
-      columns: auto 150px
-      gap: 8
-      areas: '"header header" "main sidebar"'
-      elements:
-        - header
-        - main
-        - sidebar
-element:
-  type: grid
-  square: false
-  cards:
-    - type: markdown
-      content: "# Header"     # → grid-area: header (spans full width)
-    - type: tile
-      entity: light.living_room  # → grid-area: main
-    - type: tile
-      entity: light.bedroom      # → grid-area: sidebar
-```
-
-Each name in `elements` is applied to the corresponding child element via CSS `grid-area`.  The area name simply needs to match a region defined in `areas`.
-
-!!! tip
-    You can repeat an area name in `areas` across multiple cells to make a child element span those cells (e.g. `"header header"` makes `header` span both columns).
-
-### Responsive template areas
-
-Override `areas` at a larger breakpoint to change the layout while keeping the same element assignments:
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  grid_options:
-    columns: full
-  sparks:
-    - type: grid
-      for: "hui-grid-card $ #root"
-      columns: 1
-      gap: 8
-      areas: '"header" "main" "sidebar"'
-      elements:
-        - header
-        - main
-        - sidebar
-      media_queries:
-        - query: "(min-width: 768px)"
-          columns: 2
+??? example "Template areas and elements"
+    Use `areas` to define named regions and `elements` to assign those names to child elements (in order):
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: grid
+          for: "hui-grid-card $ #root"
+          columns: auto 150px
+          gap: 8
           areas: '"header header" "main sidebar"'
-        - query: "(min-width: 1200px)"
-          columns: 3
-          areas: '"header header header" "main main sidebar"'
-element:
-  type: grid
-  square: false
-  cards:
-    - type: markdown
-      content: "# Header"
-    - type: tile
-      entity: light.living_room
-    - type: tile
-      entity: light.bedroom
-```
+          elements:
+            - header
+            - main
+            - sidebar
+    element:
+      type: grid
+      square: false
+      cards:
+        - type: markdown
+          content: "# Header"     # → grid-area: header (spans full width)
+        - type: tile
+          entity: light.living_room_rgbww_lights  # → grid-area: main
+        - type: tile
+          entity: light.bed_light      # → grid-area: sidebar
+    ```
+    Each name in `elements` is applied to the corresponding child element via CSS `grid-area`.  The area name simply needs to match a region defined in `areas`.
 
-### Responsive columns with media queries
+    ![Grid spark template areas example](../../assets/page-assets/forge/sparks/grid-template-areas.png)
 
-Start with 1 column on small screens and expand to 2 or 3 columns at larger breakpoints:
+    !!! tip
+        You can repeat an area name in `areas` across multiple cells to make a child element span those cells (e.g. `"header header"` makes `header` span both columns).
 
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  grid_options:
-    columns: full
-  sparks:
-    - type: grid
-      for: "hui-grid-card $ #root"
-      columns: 1
-      gap: 8
-      media_queries:
-        - query: "(min-width: 600px)"
-          columns: 2
-        - query: "(min-width: 1200px)"
-          columns: 3
-          gap: 16
-element:
-  type: grid
-  square: false
-  cards:
-    - type: tile
-      entity: light.living_room
-    - type: tile
-      entity: light.bedroom
-    - type: tile
-      entity: light.kitchen
-```
+??? example "Responsive template areas with media queries"
+    Override `areas` at a larger breakpoint to change the layout while keeping the same element assignments:
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: grid
+          for: "hui-grid-card $ #root"
+          columns: 1
+          gap: 8
+          areas: '"header" "main" "sidebar"'
+          elements:
+            - header
+            - main
+            - sidebar
+          media_queries:
+            - query: "(min-width: 768px)"
+              columns: 2
+              areas: '"header header" "main sidebar"'
+            - query: "(min-width: 1200px)"
+              columns: 3
+              areas: '"header header header" "main main sidebar"'
+    element:
+      type: grid
+      square: false
+      cards:
+        - type: markdown
+          content: "# Header"
+        - type: tile
+          entity: light.living_room_rgbww_lights
+        - type: tile
+          entity: light.bed_light
+    ```
 
-### Wrapping entity icons in a picture-glance card
+    ![Grid spark media queries example](../../assets/page-assets/forge/sparks/grid-media-queries.gif)
 
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: grid
-      for: hui-picture-glance-card $ div.row:nth-of-type(2)
-      columns: 4
-element:
-  type: picture-glance
-  title: Kitchen
-  image: https://demo.home-assistant.io/stub_config/kitchen.png
-  entities:
-    - sun.sun
-    - sun.sun
-    - sun.sun
-    - sun.sun
-    - sun.sun
-    - sun.sun
-    - sun.sun
-    - sun.sun
-```
+??? example "Wrapping entity icons in a picture-glance card"
+    ```yaml
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: grid
+          for: hui-picture-glance-card $ div.row:nth-of-type(2)
+          columns: 4
+    element:
+      type: picture-glance
+      title: Kitchen
+      image: https://demo.home-assistant.io/stub_config/kitchen.png
+      entities:
+        - sun.sun
+        - sun.sun
+        - sun.sun
+        - sun.sun
+        - sun.sun
+        - sun.sun
+        - sun.sun
+        - sun.sun
+    ```
+
+    ![Grid spark wrap entities example](../../assets/page-assets/forge/sparks/grid-wrap-entities.png)
 
 !!! note
     - The spark sets `display: grid` automatically — you do not need to set it yourself.

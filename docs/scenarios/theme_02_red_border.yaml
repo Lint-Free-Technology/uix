@@ -3,6 +3,23 @@ description: "Doc image: red theme with black row borders via uix-row (themes.md
 view_path: doc-theme-red-border
 theme: uix-doc-red-border
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.ceiling_lights
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.kitchen_lights
+
 card:
   type: entities
   title: Lights

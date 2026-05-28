@@ -1,0 +1,86 @@
+id: doc_spark_grid_media_queries
+description: "Doc image: Forge Grid spark with media queries (grid.md)"
+view_path: doc-spark-grid-media-queries
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.living_room_rgbww_lights
+      brightness: 255
+  - type: set_viewport
+    width: 1200
+    height: 800
+    settle_ms: 1000
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 4
+      title: Test Grid
+      path: test-grid
+      sections:
+        - type: grid
+          column_span: 4
+          cards:
+            - type: custom:uix-forge
+              forge:
+                mold: card
+                grid_options:
+                  columns: full
+                sparks:
+                  - type: grid
+                    for: "hui-grid-card $ #root"
+                    columns: 1
+                    gap: 8
+                    areas: '"header" "main" "sidebar"'
+                    elements:
+                      - header
+                      - main
+                      - sidebar
+                    media_queries:
+                      - query: "(min-width: 768px)"
+                        columns: 2
+                        areas: '"header header" "main sidebar"'
+                      - query: "(min-width: 1200px)"
+                        columns: 3
+                        areas: '"header header header" "main main sidebar"'
+              element:
+                type: grid
+                square: false
+                cards:
+                  - type: markdown
+                    content: "# Header"
+                  - type: tile
+                    entity: light.living_room_rgbww_lights
+                  - type: tile
+                    entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/grid-media-queries.gif
+  root: home-assistant-main
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 28   # ~2 s
+    - interactions:
+        - type: set_viewport
+          width: 800
+          height: 800
+      frames: 42   # ~3 s
+
+teardown:
+  - type: set_viewport
+    width: 1200
+    height: 800
+    settle_ms: 500

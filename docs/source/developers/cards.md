@@ -32,8 +32,11 @@ customElements.whenDefined("uix-node").then((uix) => {
 The UIX configuration is an object with the following optional properties:
 
 - `style` - UIX style definition (string or object)
+- `theme` - Home Assistant theme name applied only to this styled element subtree (`uix.theme` takes precedence over inherited/current theme)
 - `class` - string or array of classes to apply to the element
 - `debug` - boolean to enable debugging mode for the element (default `false`)
+
+When `theme` is set, UIX applies Home Assistant frontend-style `applyThemesOnElement()` logic directly on the target element before processing UIX theme styles/macros.
 
 ## Example
 

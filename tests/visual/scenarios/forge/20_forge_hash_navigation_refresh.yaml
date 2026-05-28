@@ -1,0 +1,54 @@
+id: forge_hash_navigation_refresh
+description: "Hash-only Home Assistant navigate action refreshes forge templates and UIX styling"
+view_path: forge-hash-navigation-refresh
+
+dashboard:
+  title: "HA Test Scenario: forge_hash_navigation_refresh"
+  views:
+    - title: "Hash navigation refresh"
+      path: forge-hash-navigation-refresh
+      type: sections
+      sections:
+        - type: grid
+          cards:
+            - type: button
+              name: "Show node section"
+              icon: mdi:link
+              tap_action:
+                action: navigate
+                navigation_path: "#node_front_bedroom"
+              uix:
+                style: |
+                  ha-card {
+                    {% if hash.startswith('node_') %}
+                    background: rgb(0, 128, 0) !important;
+                    {% else %}
+                    background: rgb(128, 0, 0) !important;
+                    {% endif %}
+                  }
+        - type: custom:uix-forge
+          forge:
+            mold: section
+            hidden: "{{ not hash.startswith('node_') }}"
+          element:
+            type: grid
+            cards:
+              - type: markdown
+                content: content_{{ hash | replace('node_', '') }}
+
+interactions:
+  - type: click
+    root: "hui-button-card"
+    selector: "ha-card"
+    settle_ms: 2000
+
+assertions:
+  - type: css_property
+    root: "hui-button-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(0, 128, 0)"
+  - type: text_startswith
+    root: "ha-markdown"
+    selector: "p"
+    expected: "content_front_bedroom"

@@ -21,6 +21,7 @@ export class UixForgeMoldSection extends UixForgeMoldBase {
       this._hidden = !event.detail?.value;
     }
     const parent = this.forge.parentElement as any;
+    if (!parent) return;
     if (this.forge.hidden && parent?.getAttribute("hidden") === null) {
       parent.setAttribute("hidden", "");
     } else if (!this.forge.hidden && parent?.getAttribute("hidden") !== null) {

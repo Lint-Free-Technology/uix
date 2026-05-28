@@ -6,7 +6,13 @@ import {
   unbind_template,
 } from "./helpers/templates";
 import pjson from "../package.json";
-import { get_theme, get_theme_macros, get_theme_foundry } from "./helpers/themes";
+import {
+  get_theme,
+  get_theme_macros,
+  get_theme_foundry,
+  getThemeTargetElement,
+} from "./helpers/themes";
+import { normalizeThemeName } from "./helpers/theme_utils";
 import { selectTree } from "./helpers/selecttree";
 import {
   apply_uix,
@@ -18,6 +24,7 @@ import {
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
+import { applyFrontendThemeOnElement } from "./helpers/frontend_themes";
 import { UixForgeSparkController } from "./forge/sparks/uix-spark-controller";
 import { UixElementSparkHost } from "./forge/sparks/uix-element-spark-host";
 
@@ -37,6 +44,8 @@ export class Uix extends LitElement {
   classes: string[] = [];
   macros: Record<string, MacroConfig | string> = {};
   billets: BilletConfig = {};
+  private _theme?: string;
+  private _themeAppliedByUix: boolean = false;
 
   debug: boolean = false;
 
@@ -160,6 +169,30 @@ export class Uix extends LitElement {
     return this._styles;
   }
 
+  /**
+   * Sets a local theme override for this UIX node.
+   * When connected, style/theme processing runs immediately.
+   * When disconnected, processing is deferred until reconnect.
+   */
+  set theme(theme: string | undefined) {
+    if (this._theme === theme) return;
+    this._theme = theme;
+    if (!this.isConnected) {
+      // Theme application needs a concrete target element (parent/host), so defer
+      // processing until the node is connected and the DOM context is available.
+      // Any previously applied local theme remains as-is while disconnected; once
+      // reconnected, _process_styles() re-applies or clears local theming based
+      // on the latest configured/inherited theme value.
+      this._processStylesOnConnect = true;
+      return;
+    }
+    this._process_styles(this.uix_input);
+  }
+
+  get theme(): string | undefined {
+    return this._theme;
+  }
+
   refresh() {
     this._connect();
     // Notify any foundry-based spark controller that the host element has updated.
@@ -178,6 +211,18 @@ export class Uix extends LitElement {
   private async _process_styles(stl) {
     let styles =
       typeof stl === "string" || stl === undefined ? { ".": stl ?? "" } : JSON.parse(JSON.stringify(stl));
+
+    const localTheme = normalizeThemeName(this.theme);
+    if (localTheme || this._themeAppliedByUix) {
+      const styleHost = getThemeTargetElement(this);
+      const restoreMainTheme = !localTheme && this._themeAppliedByUix;
+      const applied = await applyFrontendThemeOnElement(
+        styleHost,
+        localTheme,
+        restoreMainTheme
+      );
+      this._themeAppliedByUix = applied && !!localTheme;
+    }
 
     // Merge uix styles with theme styles
     const theme_styles = await get_theme(this);
@@ -219,7 +264,12 @@ export class Uix extends LitElement {
       const uix = await apply_uix(
         ch,
         `${this.type}-child`,
-        { style, debug: this.debug, macros: this._fixed_macros, billets: this.billets },
+        {
+          style,
+          debug: this.debug,
+          macros: this._fixed_macros,
+          billets: this.billets,
+        },
         this.variables,
         false
       );

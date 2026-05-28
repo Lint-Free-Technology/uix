@@ -1,3 +1,28 @@
+## [7.4.0](https://github.com/Lint-Free-Technology/uix/compare/v7.3.0...v7.4.0) (2026-05-28)
+
+### ⭐ New Features
+
+* Add a UIX Forge `theme` spark for local frontend theme application ([#338](https://github.com/Lint-Free-Technology/uix/issues/338)) ([dceaeb6](https://github.com/Lint-Free-Technology/uix/commit/dceaeb62d574b885ce21608a0ce7990b056bf994))
+* Allow to style states-history-charts by theme variable. ([7594b21](https://github.com/Lint-Free-Technology/uix/commit/7594b2173c1cf91c38ae53442339d5b1bff9e2e0)), closes [#342](https://github.com/Lint-Free-Technology/uix/issues/342)
+* **styling:** Apply theme override to element with `uix.theme` ([#337](https://github.com/Lint-Free-Technology/uix/issues/337)) ([ab02453](https://github.com/Lint-Free-Technology/uix/commit/ab02453a688343ed47007bbda08675eede905b94))
+
+### 🐞 Bug Fixes
+
+* Refresh forge templates on hash/panel updates. Correct related section mold visibility issues ([#348](https://github.com/Lint-Free-Technology/uix/issues/348)) ([3c9bed6](https://github.com/Lint-Free-Technology/uix/commit/3c9bed65d2d91371cfcea75a8c21bf7a72f59430)), closes [#347](https://github.com/Lint-Free-Technology/uix/issues/347)
+* Update hash/panel on all history state changes including pushState and replaceState ([97cd49e](https://github.com/Lint-Free-Technology/uix/commit/97cd49ee48af83119042e7c8acba089956d3bc04)), closes [#349](https://github.com/Lint-Free-Technology/uix/issues/349)
+
+## [7.3.0](https://github.com/Lint-Free-Technology/uix/compare/v7.2.0...v7.3.0) (2026-05-17)
+
+### ⭐ New Features
+
+* Apply UIX to history panel so it can be styled by `uix-history(-yaml)` theme variable ([d1cdb80](https://github.com/Lint-Free-Technology/uix/commit/d1cdb80d5a762581f2ee436ba19dc97b10f94fc7))
+
+### 🐞 Bug Fixes
+
+* `uix_path`/`uix_forge_path` false positives across shadow-root boundaries, particularly on panels not patched by UIX where uix-top-app-bar-fixed is incorrectly reported as a UIX parent ([#332](https://github.com/Lint-Free-Technology/uix/issues/332)) ([793321e](https://github.com/Lint-Free-Technology/uix/commit/793321ed90800400182752bac96cdb94a29540ca))
+* Console errors and broken forged element when returning to a view containing a row in entities card with `state_color` set or forged elements via `auto-entities`. ([913e97a](https://github.com/Lint-Free-Technology/uix/commit/913e97a1edc3816cf48d91e39009abdc84f7949f))
+* Exclude history and calendar UIX types from suggesting non-theme boilerplate for UIX DOM helpers ([97c33fb](https://github.com/Lint-Free-Technology/uix/commit/97c33fb85f4bc9fb816cf2943d522056f584b30b))
+
 ## [7.2.0](https://github.com/Lint-Free-Technology/uix/compare/v7.1.0...v7.2.0) (2026-05-14)
 
 ### ⭐ New Features

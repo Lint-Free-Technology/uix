@@ -1,0 +1,83 @@
+id: doc_spark_event_other_forge_ids
+description: "Doc image: Forge Event other forge ids (event.md)"
+view_path: doc-spark-event-other-forge-ids
+
+cards:
+  - type: button
+    name: Card A
+    tap_action:
+      action: fire-dom-event
+      uix_forge:
+        - forge_id: card_a
+          data:
+            selected: Selected
+  - type: button
+    name: Card B
+    tap_action:
+      action: fire-dom-event
+      uix_forge:
+        - forge_id: card_b
+          data:
+            selected: Selected
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: event
+          other_forge_ids:
+            - card_a
+            - card_b
+    element:
+      type: markdown
+      content: |
+        card_a selected: {{ uixForge.event.card_a.selected if "card_a" in
+        uixForge.event else 'none' | default('none') }} 
+        card_b selected: {{ uixForge.event.card_b.selected if "card_b" in 
+        uixForge.event else 'none' | default('none') }}
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/event_other_forge_ids.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: 
+            - div.card:nth-of-type(1) hui-button-card
+          selector: ha-card
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: 
+            - div.card:nth-of-type(1) hui-button-card
+          selector: ha-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: 
+            - div.card:nth-of-type(2) hui-button-card
+          selector: ha-card
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: 
+            - div.card:nth-of-type(2) hui-button-card
+          selector: ha-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s

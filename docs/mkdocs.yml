@@ -100,6 +100,7 @@ nav:
           - forge/sparks/map.md
           - forge/sparks/lock.md
           - forge/sparks/background.md
+          - forge/sparks/theme.md
   - UIX Extras:
       - extras/index.md
       - extras/frontend-states-throttling.md

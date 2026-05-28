@@ -1,0 +1,75 @@
+id: local_theme_external_reload
+description: "uix.theme re-applies local theme vars and uix styles after themes.yaml changes and reload"
+
+theme: uix-global-blue
+
+view_path: local-theme-external-reload
+
+card:
+  type: entities
+  title: "Local Theme External Reload"
+  entities:
+    - light.bed_light
+  uix:
+    theme: uix-local-orange
+    style: |
+      ha-card {
+        color: var(--primary-color) !important;
+      }
+
+setup:
+  - type: set_theme_file
+    theme: uix-local-orange
+    values:
+      primary-color: "#ff7a00"
+      uix-card: |
+        ha-card {
+          background-color: rgb(255, 122, 0) !important;
+        }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 1200
+
+interactions:
+  - type: set_theme_file
+    theme: uix-local-orange
+    values:
+      primary-color: "#ff00ff"
+      uix-card: |
+        ha-card {
+          background-color: rgb(255, 0, 255) !important;
+        }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 1200
+
+assertions:
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 0, 255)"
+  - type: css_property
+    root: "hui-entities-card"
+    selector: "ha-card"
+    property: "color"
+    expected: "rgb(255, 0, 255)"
+
+teardown:
+  - type: set_theme_file
+    theme: uix-local-orange
+    values:
+      primary-color: "#ff7a00"
+      uix-card: |
+        ha-card {
+          background-color: rgb(255, 122, 0) !important;
+        }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 1200

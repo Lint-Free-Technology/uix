@@ -1,0 +1,32 @@
+id: doc_spark_grid_wrap_entities
+description: "Doc image: Forge Grid spark with wrap entities (grid.md)"
+view_path: doc-spark-grid-wrap-entities
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: grid
+        for: hui-picture-glance-card $ div.row:nth-of-type(2)
+        columns: 4
+  element:
+    type: picture-glance
+    title: Kitchen
+    image: https://demo.home-assistant.io/stub_config/kitchen.png
+    entities:
+      - sun.sun
+      - sun.sun
+      - sun.sun
+      - sun.sun
+      - sun.sun
+      - sun.sun
+      - sun.sun
+      - sun.sun
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/grid-wrap-entities.png
+  root: hui-picture-glance-card
+  padding: 16
