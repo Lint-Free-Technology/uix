@@ -59,7 +59,7 @@ Only the **first** element matched by `for` gets the tooltip.
 | `without_arrow` | boolean | | `false` | Set to `true` to hide the directional arrow. |
 
 !!! tip
-    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.
+    You can use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) DOM helper to take the guesswork out of finding the right path for `for`.
 
 ## Templates in content
 

@@ -45,7 +45,7 @@ element:
 ![Button spark basic](../../assets/page-assets/forge/sparks/button-basic.gif)
 
 !!! tip
-    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `after`/`before`.
+    You can use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) DOM helper to take the guesswork out of finding the right path for `after`/`before`.
 
 ## Configuration
 

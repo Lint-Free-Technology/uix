@@ -373,9 +373,11 @@ uix_style_path($0)
 
     The **Path** line shows the YAML key including the required `:`. The **Suggested CSS selector** is followed by a clickable element reference that jumps to the element in DevTools.
 
-### `uix_forge_path($0)` — forge helper
+### `uix_spark_path($0)` — spark helper
 
-Reports the path from the closest `uix-forge` forge to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config.
+Reports the path from the closest UIX parent with a spark controller to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config. Works with both `uix-forge` elements and theme-driven foundry sparks.
+
+`uix_forge_path($0)` is a backwards-compatible alias for `uix_spark_path($0)`.
 
 !!! tip "Debugging `for` selectors"
     When a `for` selector does not match — especially host/element path selectors (`&…`) that filter by element type or property — no log is produced by default.
@@ -383,22 +385,22 @@ Reports the path from the closest `uix-forge` forge to the selected element. Use
 
 | Section | What it shows |
 | ------- | ------------- |
-| **📦 Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element. |
-| **📍 Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the forged element to `$0`. |
+| **📦 Closest UIX Spark Parent** | The nearest ancestor element that owns an active spark controller — either a `uix-forge` element or a themed element with foundry sparks. |
+| **📍 Forge Path to Target** | The selector path (using `$` for shadow-root crossings) from the spark root to `$0`. |
 | **📝 Boilerplate Spark YAML** | A paste-ready spark YAML snippet showing how to use the path. |
 
 ```js
-uix_forge_path($0)
+uix_spark_path($0)
 ```
 
 !!! warning
     If you are adding a spark element of the same type, e.g. a tile icon **before** `ha-tile-icon` then pay particular attention to the documentation for that spark which will provide guidance on path specificity so as to not select the spark element itself during updates.
 
 ??? example
-    After selecting `ha-tile-icon` in a tile card and running `uix_forge_path($0)`
+    After selecting `ha-tile-icon` in a tile card and running `uix_spark_path($0)`
 
     ```
-    📦 Closest UIX Forge Parent
+    📦 Closest UIX Spark Parent
       Element: <uix-forge class=​"type-custom-uix-forge">​…​</uix-forge>​
     📍 Forge Path to Target
       Path: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"

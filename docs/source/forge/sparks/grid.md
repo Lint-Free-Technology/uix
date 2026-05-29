@@ -96,7 +96,7 @@ Each entry in `media_queries` has a required `query` key plus any subset of the 
 | *(grid props)* | — | | Any of `columns`, `rows`, `gap`, `column_gap`, `row_gap`, `auto_rows`, `auto_columns`, `auto_flow`, `justify_items`, `align_items`, `justify_content`, `align_content`, `place_items`, `place_content`, `areas`. |
 
 !!! tip
-    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) console helper to find the exact DOM selector for your target container.
+    Use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) console helper to find the exact DOM selector for your target container.
 
 ## Examples
 

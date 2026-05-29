@@ -42,7 +42,7 @@ element:
 | `actions` | `object` | | `{}` | Mutations to apply to each matching element. See [Actions](#actions) below. |
 
 !!! tip
-    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) console helper to find the exact selector for `for`.
+    Use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) console helper to find the exact selector for `for`.
 
 ### Actions
 

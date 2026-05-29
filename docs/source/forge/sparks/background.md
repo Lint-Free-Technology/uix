@@ -64,7 +64,7 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | `class` | string | — | Extra CSS class(es) added to the background container `<div>`. |
 
 !!! tip
-    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) browser console helper to find the exact `for` selector path to any element inside the forged element.
+    Use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) browser console helper to find the exact `for` selector path to any element inside the forged element.
 
 ### `background` sub-property mapping
 

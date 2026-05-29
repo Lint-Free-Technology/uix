@@ -422,4 +422,4 @@ Like all spark config, `locks` entries are processed as Jinja2 templates, so you
 ```
 
 !!! tip
-    Use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) helper in your browser DevTools console to find the right `for` selector for any element you want to lock.
+    Use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) helper in your browser DevTools console to find the right `for` selector for any element you want to lock.

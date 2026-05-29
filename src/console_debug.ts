@@ -13,9 +13,12 @@
  *
  *   uix_path($0)        – Shorthand alias for uix_style_path().
  *
- *   uix_forge_path($0)  – Forge helper: reports the path from the closest uix-forge parent's
- *                         forged element to the selected element, for use as the `for`,
- *                         `before`, or `after` value in a forge spark config.
+ *   uix_spark_path($0)  – Spark helper: reports the path from the closest UIX parent with a
+ *                         spark controller to the selected element, for use as the `for`,
+ *                         `before`, or `after` value in a forge spark config.  Works with
+ *                         both uix-forge elements and theme-driven foundry sparks.
+ *
+ *   uix_forge_path($0)  – Alias for uix_spark_path() (kept for backwards compatibility).
  */
 
 interface UixParentInfo {
@@ -400,22 +403,41 @@ async function getActiveChildren(
 }
 
 // ---------------------------------------------------------------------------
-// Find the closest ancestor (or self) that is a uix-forge element
+// Find the closest ancestor (or self) that has an active spark controller.
+//
+// Covers two cases:
+//   1. A uix-forge element — the spark root is its forgedElement.
+//   2. A plain element whose UIX node has a _sparkController (theme-driven
+//      foundry sparks) — the spark root is the element itself.
 // ---------------------------------------------------------------------------
 
-interface UixForgeParentInfo {
-  forgeEl: Element;
-  forgedEl: Element | null;
+interface UixSparkParentInfo {
+  /** The element that owns the spark controller (uix-forge, or the themed element). */
+  hostEl: Element;
+  /** The element from which `for` selector paths are measured. */
+  rootEl: Element;
 }
 
-function findUixForgeParent(element: Element): UixForgeParentInfo | null {
+function findUixSparkParent(element: Element): UixSparkParentInfo | null {
   for (const node of domAncestorsAndSelf(element)) {
     if (!(node instanceof Element)) continue;
+
+    // Case 1: uix-forge element with a forgedElement and its own _sparkController.
     if (node.localName === "uix-forge") {
       const forgedEl: Element | null = (node as any).forgedElement ?? null;
       if (forgedEl && isNodeWithinScope(element, forgedEl)) {
-        return { forgeEl: node, forgedEl };
+        return { hostEl: node, rootEl: forgedEl };
       }
+    }
+
+    // Case 2: element whose UIX node(s) have a _sparkController
+    // (theme-driven foundry sparks applied via uix-node).
+    const uixNodes: any[] = (node as any)._uix ?? [];
+    const withSpark = uixNodes.filter(
+      (u: any) => u.type && !u.type.endsWith("-child") && u._sparkController
+    );
+    if (withSpark.length > 0 && isNodeWithinScope(element, uixContext(node, withSpark))) {
+      return { hostEl: node, rootEl: node };
     }
   }
   return null;
@@ -687,53 +709,48 @@ function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | nu
 (window as any).uix_path = (window as any).uix_style_path;
 
 // ---------------------------------------------------------------------------
-// uix_forge_path($0) – UIX Forge path helper
+// uix_spark_path($0) – UIX Spark path helper
+// uix_forge_path($0) – Alias for backwards compatibility
 // ---------------------------------------------------------------------------
 
-(window as any).uix_forge_path = function uix_forge_path(element: Element) {
+(window as any).uix_spark_path = function uix_spark_path(element: Element) {
   if (!element) {
     console.error(
-      "UIX Debug: provide a DOM element – e.g. uix_forge_path($0) where $0 is the element selected in the Elements panel."
+      "UIX Debug: provide a DOM element – e.g. uix_spark_path($0) where $0 is the element selected in the Elements panel."
     );
     return;
   }
 
   const TITLE_STYLE = "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;";
   const SECTION_STYLE = "color:#888;font-weight:bold;";
-  console.group("%c💡 UIX Forge Path 💡", TITLE_STYLE);
+  console.group("%c💡 UIX Spark Path 💡", TITLE_STYLE);
   console.log("Target element:", element);
 
-  const info = findUixForgeParent(element);
+  const info = findUixSparkParent(element);
   if (!info) {
-    console.warn("No uix-forge parent found for this element.");
+    console.warn("No UIX spark parent found for this element. Make sure the element is inside a uix-forge or a themed element with foundry sparks.");
     console.groupEnd();
     return;
   }
 
-  const { forgeEl, forgedEl } = info;
+  const { hostEl, rootEl } = info;
 
-  // --- UIX Forge Parent ---
-  console.log("%c📦 Closest UIX Forge Parent", SECTION_STYLE);
-  console.log("  Element:", forgeEl);
+  // --- UIX Spark Parent ---
+  console.log("%c📦 Closest UIX Spark Parent", SECTION_STYLE);
+  console.log("  Element:", hostEl);
 
-  if (!forgedEl) {
-    console.warn("The uix-forge element has no forged element yet (templates may still be loading).");
-    console.groupEnd();
-    return;
-  }
-
-  // --- Forge Path ---
-  const forgePath = buildForgeSelectorPath(forgedEl, element);
-  if (forgePath === null) {
+  // --- Spark Path ---
+  const sparkPath = buildForgeSelectorPath(rootEl, element);
+  if (sparkPath === null) {
     console.warn(
-      "Could not build a forge path: the element may not be a descendant of the forged element."
+      "Could not build a spark path: the element may not be a descendant of the spark root element."
     );
     console.groupEnd();
     return;
   }
 
   console.log("%c📍 Forge Path to Target", SECTION_STYLE);
-  console.log("  Path:", `"${forgePath}"`);
+  console.log("  Path:", `"${sparkPath}"`);
   console.log("  Use this path as the value of `for`, `before`, or `after` in a spark config.");
 
   // --- Boilerplate Spark YAML ---
@@ -741,11 +758,11 @@ function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | nu
     `forge:\n` +
     `  sparks:\n` +
     `    - type: tooltip\n` +
-    `      for: "${forgePath}"\n` +
+    `      for: "${sparkPath}"\n` +
     `      content: "..."\n` +
     `    # for tile-icon / state-badge sparks:\n` +
     `    # - type: tile-icon\n` +
-    `    #   before: "${forgePath}"\n` +
+    `    #   before: "${sparkPath}"\n` +
     `    #   icon: mdi:home`;
 
   console.log("%c📝 Boilerplate Spark YAML", SECTION_STYLE);
@@ -753,3 +770,6 @@ function buildForgeSelectorPath(rootEl: Element, targetEl: Element): string | nu
 
   console.groupEnd();
 };
+
+// uix_forge_path is a backwards-compatible alias for uix_spark_path.
+(window as any).uix_forge_path = (window as any).uix_spark_path;

@@ -18,7 +18,7 @@ The `attribute` spark lets you **replace** or **remove** an HTML attribute on an
 | `value` | `string` | | `""` | The new attribute value. Only used when `action` is `replace`. Supports [Jinja2 templates](../../using/templates.md). |
 
 !!! tip
-    You can use the [`uix_forge_path()`](../../concepts/dom.md#uix_forge_path0-forge-helper) DOM helper to take the guesswork out of finding the right path for `for`.
+    You can use the [`uix_spark_path()`](../../concepts/dom.md#uix_spark_path0-spark-helper) DOM helper to take the guesswork out of finding the right path for `for`.
 
 ## Usage
 
