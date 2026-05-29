@@ -38,6 +38,10 @@ export abstract class UixForgeSparkBase {
     this.config = config;
   }
 
+  get forDebug(): boolean {
+    return !!this.config.for_debug;
+  }
+
   /** Cancel all pending async operations (e.g. target resolution retries). */
   protected _cancelPending(): void {
     this._cancel.forEach((c) => c());

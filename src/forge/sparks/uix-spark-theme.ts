@@ -64,7 +64,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
 
   private async _apply(generation: number) {
     if (!this._theme) return;
-    const elements = await this.controller.target(this._for, this._cancel);
+    const elements = await this.controller.target(this._for, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;

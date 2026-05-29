@@ -64,7 +64,7 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     if (!selector) return;
     if (!this.entity && !this.overrideIcon && !this.overrideImage) return;
 
-    const elements = await this.controller.target(selector, this._cancel);
+    const elements = await this.controller.target(selector, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;

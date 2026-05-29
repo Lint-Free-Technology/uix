@@ -192,7 +192,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
 
   private async _attach(generation: number) {
     const target = this._for || "element";
-    const elements = await this.controller.target(target, this._cancel);
+    const elements = await this.controller.target(target, this._cancel, this.forDebug);
     const element = elements?.[0] as HTMLElement | undefined;
     if (!element) return;
     if (generation !== this._callGeneration) return;

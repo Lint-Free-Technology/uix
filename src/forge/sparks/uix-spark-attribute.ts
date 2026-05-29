@@ -63,7 +63,7 @@ export class UixForgeSparkAttribute extends UixForgeSparkBase {
 
   private async _apply(generation: number) {
     if (!this.attribute) return;
-    const elements = await this.controller.target(this.selector, this._cancel);
+    const elements = await this.controller.target(this.selector, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;

@@ -437,7 +437,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     // later renders the <img> at 0 height.  updated() fires again once
     // templatesReady flips to true (forge becomes visible), so we simply defer.
     if (this.controller.forge.hidden) return;
-    const elements = await this.controller.target(this._for, this._cancel);
+    const elements = await this.controller.target(this._for, this._cancel, this.forDebug);
     const forEl = elements?.[0];
     if (!forEl) return;
     if (generation !== this._callGeneration) return;

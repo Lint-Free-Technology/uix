@@ -377,6 +377,10 @@ uix_style_path($0)
 
 Reports the path from the closest `uix-forge` forge to the selected element. Use the reported path as the value of `for`, `before`, or `after` in a forge spark config.
 
+!!! tip "Debugging `for` selectors"
+    When a `for` selector does not match — especially host/element path selectors (`&…`) that filter by element type or property — no log is produced by default.
+    Add `for_debug: true` to the spark config to enable console logging when no elements are found, which helps confirm whether the selector is reaching any elements at all.
+
 | Section | What it shows |
 | ------- | ------------- |
 | **📦 Closest UIX Forge Parent** | The nearest ancestor `uix-forge` element. |

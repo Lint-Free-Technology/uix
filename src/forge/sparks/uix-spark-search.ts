@@ -126,7 +126,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
       return;
     }
 
-    const containers = await this.controller.target(this._for, this._cancel);
+    const containers = await this.controller.target(this._for, this._cancel, this.forDebug);
     const container = containers?.[0] as Element | ShadowRoot | undefined;
     if (!container) return;
 

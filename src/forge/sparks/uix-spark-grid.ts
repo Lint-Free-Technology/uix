@@ -255,7 +255,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   private async _apply(generation: number): Promise<void> {
     if (!this._hasGridConfig()) return;
 
-    const elements = await this.controller.target(this._for, this._cancel);
+    const elements = await this.controller.target(this._for, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;

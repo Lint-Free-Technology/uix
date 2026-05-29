@@ -58,7 +58,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   private async _attach(generation: number) {
-    const elements = await this.controller.target(this.for, this._cancel);
+    const elements = await this.controller.target(this.for, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;

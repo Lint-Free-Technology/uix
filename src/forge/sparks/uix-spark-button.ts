@@ -128,7 +128,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
     const selector = this.after || this.before;
     if (!selector) return;
 
-    const elements = await this.controller.target(selector, this._cancel);
+    const elements = await this.controller.target(selector, this._cancel, this.forDebug);
     const element = elements?.[0];
     if (!element) return;
     if (generation !== this._callGeneration) return;
