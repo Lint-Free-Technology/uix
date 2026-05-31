@@ -1,3 +1,9 @@
+## [7.4.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.4.1-beta.1...v7.4.1-beta.2) (2026-05-31)
+
+### 🐞 Bug Fixes
+
+* **forge:** Serialize forge template refreshes to prevent transient default-value rendering ([#356](https://github.com/Lint-Free-Technology/uix/issues/356)) ([bf5c259](https://github.com/Lint-Free-Technology/uix/commit/bf5c259aebfb840f5e8451cee13c95fdd057fcf1))
+
 ## [7.4.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.0...v7.4.1-beta.1) (2026-05-30)
 
 ### 🐞 Bug Fixes
