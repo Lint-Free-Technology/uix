@@ -295,7 +295,18 @@ export class UixForge extends LitElement {
     }
 
     this.forgedElementConfig = elementConfig;
-    Promise.all([
+    this._refreshForgeTemplatesInFlight = true;
+    this._refreshForgeTemplatesPending = false;
+    const completeRefresh = () => {
+      this._refreshForgeTemplatesInFlight = false;
+      if (this._refreshForgeTemplatesPending) {
+        this._refreshForgeTemplatesPending = false;
+        void Promise.resolve()
+          .then(() => this.refreshForgeTemplates())
+          .catch((err) => console.error("UIX Forge: Error queuing forge template refresh:", err));
+      }
+    };
+    void Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
       this._forgeConfig.configIsReady(),
@@ -307,7 +318,9 @@ export class UixForge extends LitElement {
       this.templatesReady = true;
       this.refreshForge([]);
       this._sparkController.setConfig(this.forgeConfig.sparks);
-    });
+    }).catch((err) => {
+      console.error("UIX Forge: Error applying forge config:", err);
+    }).then(completeRefresh);
   }
 
   private _mergeForgeMacros(uixConfig?: UixConfig): UixConfig | undefined {
