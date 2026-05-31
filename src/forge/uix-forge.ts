@@ -586,7 +586,9 @@ export class UixForge extends LitElement {
       this._refreshForgeTemplatesInFlight = false;
       if (this._refreshForgeTemplatesPending) {
         this._refreshForgeTemplatesPending = false;
-        this.refreshForgeTemplates();
+        void Promise.resolve()
+          .then(() => this.refreshForgeTemplates())
+          .catch((err) => console.error("UIX Forge: Error queuing forge template refresh:", err));
       }
     };
     void Promise.all([
@@ -597,7 +599,9 @@ export class UixForge extends LitElement {
     ]).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
-    }).then(completeRefresh, completeRefresh);
+    }).catch((err) => {
+      console.error("UIX Forge: Error refreshing forge templates:", err);
+    }).then(completeRefresh);
   }
 
   refreshForge(path: UixForgeConfigPath) {
