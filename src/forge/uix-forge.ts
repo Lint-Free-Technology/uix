@@ -303,7 +303,7 @@ export class UixForge extends LitElement {
         this._refreshForgeTemplatesPending = false;
         void Promise.resolve()
           .then(() => this.refreshForgeTemplates())
-          .catch((err) => console.error("UIX Forge: Error queuing forge template refresh:", err));
+          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
       }
     };
     void Promise.all([
@@ -318,7 +318,7 @@ export class UixForge extends LitElement {
       this.templatesReady = true;
       this.refreshForge([]);
       this._sparkController.setConfig(this.forgeConfig.sparks);
-    }).catch((err) => {
+    }, (err) => {
       console.error("UIX Forge: Error applying forge config:", err);
     }).then(completeRefresh);
   }
@@ -601,7 +601,7 @@ export class UixForge extends LitElement {
         this._refreshForgeTemplatesPending = false;
         void Promise.resolve()
           .then(() => this.refreshForgeTemplates())
-          .catch((err) => console.error("UIX Forge: Error queuing forge template refresh:", err));
+          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
       }
     };
     void Promise.all([
@@ -612,7 +612,7 @@ export class UixForge extends LitElement {
     ]).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
-    }).catch((err) => {
+    }, (err) => {
       console.error("UIX Forge: Error refreshing forge templates:", err);
     }).then(completeRefresh);
   }
