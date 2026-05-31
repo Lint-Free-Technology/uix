@@ -60,6 +60,8 @@ export class UixForge extends LitElement {
   private _resolvedUix?: any;
   private _delayedHass?: boolean;
   private _view: LovelaceElement;
+  private _refreshForgeTemplatesInFlight = false;
+  private _refreshForgeTemplatesPending = false;
 
   constructor() {
       super();
@@ -293,7 +295,18 @@ export class UixForge extends LitElement {
     }
 
     this.forgedElementConfig = elementConfig;
-    Promise.all([
+    this._refreshForgeTemplatesInFlight = true;
+    this._refreshForgeTemplatesPending = false;
+    const completeRefresh = () => {
+      this._refreshForgeTemplatesInFlight = false;
+      if (this._refreshForgeTemplatesPending) {
+        this._refreshForgeTemplatesPending = false;
+        void Promise.resolve()
+          .then(() => this.refreshForgeTemplates())
+          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
+      }
+    };
+    void Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
       this._forgeConfig.configIsReady(),
@@ -305,7 +318,9 @@ export class UixForge extends LitElement {
       this.templatesReady = true;
       this.refreshForge([]);
       this._sparkController.setConfig(this.forgeConfig.sparks);
-    });
+    }, (err) => {
+      console.error("UIX Forge: Error applying forge config:", err);
+    }).then(completeRefresh);
   }
 
   private _mergeForgeMacros(uixConfig?: UixConfig): UixConfig | undefined {
@@ -542,9 +557,18 @@ export class UixForge extends LitElement {
   }
 
   refreshForgeTemplates() {
+    if (this._refreshForgeTemplatesInFlight) {
+      this._refreshForgeTemplatesPending = true;
+      return;
+    }
+    this._refreshForgeTemplatesInFlight = true;
+    this._refreshForgeTemplatesPending = false;
     this.templatesReady = false;
     const resolved = this._resolveFoundry({ ...this.config });
-    if (!resolved) return;
+    if (!resolved) {
+      this._refreshForgeTemplatesInFlight = false;
+      return;
+    }
     this._resolvedUix = resolved.forge?.uix;
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
@@ -571,7 +595,16 @@ export class UixForge extends LitElement {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
     }
     this.forgedElementConfig = elementConfig;
-    Promise.all([
+    const completeRefresh = () => {
+      this._refreshForgeTemplatesInFlight = false;
+      if (this._refreshForgeTemplatesPending) {
+        this._refreshForgeTemplatesPending = false;
+        void Promise.resolve()
+          .then(() => this.refreshForgeTemplates())
+          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
+      }
+    };
+    void Promise.all([
       this.bindTemplates(this._forgeConfig),
       this.bindTemplates(this._forgedElementConfig),
       this._forgeConfig.configIsReady(),
@@ -579,7 +612,9 @@ export class UixForge extends LitElement {
     ]).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
-    });
+    }, (err) => {
+      console.error("UIX Forge: Error refreshing forge templates:", err);
+    }).then(completeRefresh);
   }
 
   refreshForge(path: UixForgeConfigPath) {
