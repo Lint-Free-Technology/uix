@@ -17,3 +17,16 @@ Templates are supported for all CSS variables.
         --uix-icon: mdi:bed;
       }
 ```
+
+Special care needs to be taken for elements that use more than the single entity icon in the `:host`, like input_select. In that case one sets the `--uix-icon` styling to:
+
+```yaml
+- entity: input_select.select_your_option
+  uix:
+    style:
+      "hui-generic-entity-row $ state-badge $ ha-state-icon $": |
+        ha-svg-icon {
+          --uix-icon:
+          {{your_icon_template}};
+        }
+```
