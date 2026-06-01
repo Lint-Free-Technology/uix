@@ -181,7 +181,7 @@ export class UixForgeConfigBuilder {
   private checkReady() {
     const _checkReady = (value, nestingOpen: string[]) => {
       for (const key of Object.keys(value)) {
-        if (key === "uix") return true;
+        if (key === "uix") continue;
         const val = value[key];
         // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
         if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
