@@ -24,8 +24,8 @@ Special care needs to be taken for elements that use more than the single entity
 - entity: input_select.select_your_option
   uix:
     style:
-      "hui-generic-entity-row $ state-badge $ ha-state-icon $": |
-        ha-svg-icon {
+      "hui-generic-entity-row $ state-badge $": |
+        ha-state-icon {
           --uix-icon:
           {{your_icon_template}};
         }
