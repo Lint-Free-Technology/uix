@@ -150,8 +150,25 @@ export class UixForgeConfigBuilder {
     return value;
   }
 
+  private _stripNestedTemplateMarker(value: any): any {
+    if (typeof value === "string") {
+      return value.split(UIX_FORGE_NESTED_TEMPLATE_MARKER).join("");
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => this._stripNestedTemplateMarker(item));
+    }
+    if (value !== null && typeof value === "object") {
+      const result: any = {};
+      for (const key of Object.keys(value)) {
+        result[key] = this._stripNestedTemplateMarker(value[key]);
+      }
+      return result;
+    }
+    return value;
+  }
+
   set config(config: any) {
-    this._config = config;
+    this._config = this._stripNestedTemplateMarker(config);
     this.ready = false;
     this.checkReady();
   };
