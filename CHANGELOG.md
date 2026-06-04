@@ -1,3 +1,9 @@
+## [7.4.2-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.1...v7.4.2-beta.1) (2026-06-04)
+
+### 🐞 Bug Fixes
+
+* Strip internal nested-template readiness marker during forge config assignment ([#364](https://github.com/Lint-Free-Technology/uix/issues/364)) ([5882b6c](https://github.com/Lint-Free-Technology/uix/commit/5882b6c698b1c1ed3438db70a83d7ab1a50fce2d)), closes [#361](https://github.com/Lint-Free-Technology/uix/issues/361)
+
 ## [7.4.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.0...v7.4.1) (2026-06-01)
 
 ### 🐞 Bug Fixes
