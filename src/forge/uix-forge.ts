@@ -504,10 +504,7 @@ export class UixForge extends LitElement {
   }
 
   private async bindTemplatesBase(base: any): Promise<void> {
-    return new Promise(async (resolve) => {
-      await this.bindTemplates(base);
-      resolve();
-    });
+    await this.bindTemplates(base);
   }
 
   private async bindTemplates(base: any, current: any = undefined, path: string[] = []) {
