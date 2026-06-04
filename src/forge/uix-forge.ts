@@ -307,11 +307,12 @@ export class UixForge extends LitElement {
       }
     };
     void Promise.all([
-      this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._forgedElementConfig),
+      this.bindTemplatesBase(this._forgeConfig),
+      this.bindTemplatesBase(this._forgedElementConfig)
+    ]).then(() => Promise.all([
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
-    ]).then(() => {
+    ])).then(() => {
       if (!this.forgedElement) {
         this.forgeElement();
       }
@@ -434,11 +435,12 @@ export class UixForge extends LitElement {
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...elementConfig };
       Promise.all([
-        this.bindTemplates(this._forgeConfig),
-        this.bindTemplates(this._forgedElementConfig),
+        this.bindTemplatesBase(this._forgeConfig),
+        this.bindTemplatesBase(this._forgedElementConfig)
+      ]).then(() => Promise.all([
         this._forgeConfig.configIsReady(),
         this._forgedElementConfig.configIsReady()
-      ]).then(() => {
+      ])).then(() => {
         this.templatesReady = true;
         this.refreshForge([]);
         this._sparkController.setConfig(this.forgeConfig.sparks);
@@ -501,10 +503,19 @@ export class UixForge extends LitElement {
     this.refreshForgeTemplates();
   }
 
+  private async bindTemplatesBase(base: any): Promise<void> {
+    return new Promise(async (resolve) => {
+      await this.bindTemplates(base);
+      resolve();
+    });
+  }
+
   private async bindTemplates(base: any, current: any = undefined, path: string[] = []) {
     const hs = await hass();
+    let topLevel = false;
     if (current === undefined) {
       current = base.config;
+      topLevel = true;
     }
     for (const k of Object.keys(current)) {
       if (current[k] === undefined) continue;
@@ -553,6 +564,10 @@ export class UixForge extends LitElement {
       } else if (typeof current[k] === "string") {
         base.nested = { keys: currentPath, value: translate(hs, current[k]) };
       }
+    }
+    if (topLevel) {
+      // If top level, check if forge is ready after initial bind (for templates that were already resolved to static values)
+      base.checkReady();
     }
   }
 
@@ -605,11 +620,12 @@ export class UixForge extends LitElement {
       }
     };
     void Promise.all([
-      this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._forgedElementConfig),
+      this.bindTemplatesBase(this._forgeConfig),
+      this.bindTemplatesBase(this._forgedElementConfig)
+    ]).then(() => Promise.all([
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
-    ]).then(() => {
+    ])).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
     }, (err) => {
