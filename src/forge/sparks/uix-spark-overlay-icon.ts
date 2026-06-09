@@ -171,11 +171,12 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
 
     const elements = await this.controller.target(this._for, this._cancel);
-    const element = elements?.[0] as HTMLElement | undefined;
-    if (!element) return;
+    const target = elements?.[0] as HTMLElement | ShadowRoot | undefined;
+    if (!target) return;
     if (generation !== this._callGeneration) return;
+    const element = (target instanceof ShadowRoot ? target.host : target) as HTMLElement;
 
-    const existingOverlay = element.querySelector(
+    const existingOverlay = target.querySelector(
       `[${OVERLAY_ICON_ID_ATTR}="${this._id}"]`
     ) as HTMLElement | null;
 
@@ -202,7 +203,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       overlay.style.setProperty("justify-content", "center");
       overlay.style.setProperty("pointer-events", "none");
 
-      element.appendChild(overlay);
+      target.appendChild(overlay);
     }
 
     const targetChanged = this._targetElement !== element;
