@@ -9,6 +9,7 @@ import {
 
 const OVERLAY_ICON_ID_ATTR = "data-uix-forge-overlay-icon-id";
 const ROW_DEFAULT_ICON_POSITION = { top: "6px", left: "30px" } as const;
+const MEDIA_SOURCE_PREFIX = "media-source://";
 
 interface IconPosition {
   top?: string;
@@ -124,6 +125,25 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     return this._targetAdapter?.defaultIconBackground() ?? "none";
   }
 
+  private async _resolveMediaSourceUrl(url: string): Promise<string> {
+    if (!url.startsWith(MEDIA_SOURCE_PREFIX)) return url;
+    const hass = this.controller.forge.hass;
+    if (!hass) return url;
+    try {
+      const result = await hass.callWS({
+        type: "media_source/resolve_media",
+        media_content_id: url,
+      });
+      return (result as { url?: string })?.url ?? url;
+    } catch (e) {
+      console.warn(
+        `UIX Forge overlay-icon spark: failed to resolve media source '${url}'.`,
+        e
+      );
+      return url;
+    }
+  }
+
   updated(_changedProperties: PropertyValues): void {
     const gen = this._beginUpdate();
     this._attach(gen);
@@ -201,7 +221,12 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
 
     this._ensureIconElement(overlay);
-    this._updateOverlay(overlay);
+    const resolvedImageUrl = this._imageUrl && !this._entity
+      ? await this._resolveMediaSourceUrl(this._imageUrl)
+      : "";
+    if (generation !== this._callGeneration) return;
+
+    this._updateOverlay(overlay, resolvedImageUrl);
 
     this._overlayElement = overlay;
   }
@@ -219,7 +244,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     this._iconElement = current;
   }
 
-  private _updateOverlay(overlay: HTMLElement) {
+  private _updateOverlay(overlay: HTMLElement, resolvedImageUrl: string) {
     const isRow = this.controller.forge.mold?.isRow() === true;
     const defaultOpacity = this._targetElement?.tagName.toLowerCase() === "ha-tile-icon" ? "1" : "0.5";
     overlay.style.setProperty("display", "var(--uix-overlay-icon-display, block)");
@@ -292,8 +317,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       `var(--uix-overlay-icon-color, ${this._getEffectiveIconColor(stateObj)})`
     );
 
-    if (this._imageUrl && !this._entity) {
-      this._iconElement.style.setProperty("background-image", `url("${this._imageUrl}")`);
+    if (resolvedImageUrl && !this._entity) {
+      this._iconElement.style.setProperty("background-image", `url("${resolvedImageUrl}")`);
       this._iconElement.style.setProperty("background-repeat", "no-repeat");
       this._iconElement.style.setProperty("background-position", "center");
       this._iconElement.style.setProperty("background-size", "contain");
