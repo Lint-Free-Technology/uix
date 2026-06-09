@@ -221,8 +221,9 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _updateOverlay(overlay: HTMLElement) {
     const isRow = this.controller.forge.mold?.isRow() === true;
+    const defaultOpacity = this._targetElement?.tagName.toLowerCase() === "ha-tile-icon" ? "1" : "0.5";
     overlay.style.setProperty("display", "var(--uix-overlay-icon-display, block)");
-    overlay.style.setProperty("opacity", "var(--uix-overlay-icon-opacity, 0.5)");
+    overlay.style.setProperty("opacity", `var(--uix-overlay-icon-opacity, ${defaultOpacity})`);
     overlay.style.setProperty(
       "border-radius",
       isRow

@@ -10,7 +10,7 @@ card:
         mold: row
         sparks:
           - type: overlay-icon
-            icon: mdi:sparkles
+            icon: mdi:shimmer
       element:
         entity: light.bed_light
 

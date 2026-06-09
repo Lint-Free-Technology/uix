@@ -26,7 +26,7 @@ forge:
   sparks:
     - type: overlay-icon
       for: hui-tile-card $ ha-tile-icon
-      icon: mdi:sparkles
+      icon: mdi:shimmer
 element:
   type: tile
   entity: light.bed_light
@@ -59,7 +59,7 @@ The overlay icon respects CSS custom properties. Set these on the forged element
 |---|---|---|
 | `--uix-overlay-icon-z-index` | `10` | Stack order of the overlay. |
 | `--uix-overlay-icon-display` | `block` | CSS display of the overlay. |
-| `--uix-overlay-icon-opacity` | `0.5` | Opacity of the overlay (icon and background combined). |
+| `--uix-overlay-icon-opacity` | `1` when target is `ha-tile-icon`; `0.5` otherwise | Opacity of the overlay (icon and background combined). |
 | `--uix-overlay-icon-border-radius` | `inherit` | Border radius of the overlay (inherits the target's). |
 | `--uix-overlay-icon-row-border-radius` | `--uix-overlay-icon-border-radius` | Border radius of the overlay when the forge mold is `row`. |
 | `--uix-overlay-icon-border` | `unset` | Border style CSS. |
