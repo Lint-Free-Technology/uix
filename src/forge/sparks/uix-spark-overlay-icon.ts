@@ -18,6 +18,10 @@ interface IconPosition {
   right?: string;
 }
 
+interface MediaSourceResolveResult {
+  url?: string;
+}
+
 export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   type = "overlay-icon";
 
@@ -134,7 +138,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
         type: "media_source/resolve_media",
         media_content_id: url,
       });
-      return (result as { url?: string })?.url ?? url;
+      return (result as MediaSourceResolveResult)?.url ?? url;
     } catch (e) {
       console.warn(
         `UIX Forge overlay-icon spark: failed to resolve media source '${url}', using original URL.`,
@@ -221,8 +225,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
 
     this._ensureIconElement(overlay);
-    const shouldResolveImageUrl = !!this._imageUrl && !this._entity;
-    const resolvedImageUrl = shouldResolveImageUrl
+    const hasCustomImageUrl = !!this._imageUrl && !this._entity;
+    const resolvedImageUrl = hasCustomImageUrl
       ? await this._resolveMediaSourceUrl(this._imageUrl)
       : null;
     if (generation !== this._callGeneration) return;
