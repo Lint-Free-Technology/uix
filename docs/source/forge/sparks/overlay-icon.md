@@ -48,7 +48,7 @@ element:
 | `value` | string | — | If `entity` is provided you can override the state value used to generate the icon. |
 | `state_color` | boolean | `true` | If `entity` is provided whether state color is used for the icon. |
 | `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, `var(--primary-color)` otherwise | CSS color for the icon. Overrides state color if set. |
-| `icon_position` | object | when forge mold is row: `{top: '8px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_position` | object | when target is `hui-generic-entity-row`: `{top: '8px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}`; otherwise not set | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
 | `icon_size` | number or string | `12px` when target is `ha-tile-icon`, `24px` otherwise | Size of the icon. Numbers are treated as pixels; strings are passed through as-is. |
 | `icon_background` | CSS background | `var(--primary-color)` when target is `ha-tile-icon`, otherwise not set | Explicit CSS background for the icon (overrides the default background-color behavior). |
 
@@ -168,7 +168,7 @@ forge:
         {{ icon(config.element.entity) }}
       icon_size: 36px
       icon_color: |
-        {{ "var(--state-active-color)" if is_state(config.element.entity, "on")  else "var(--inative-color)" }}
+        {{ "var(--state-active-color)" if is_state(config.element.entity, "on")  else "var(--state-inactive-color)" }}
       icon_position:
         left: calc(100% - 36px - 6px)
         top: 6px

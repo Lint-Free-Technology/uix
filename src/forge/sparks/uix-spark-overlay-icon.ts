@@ -34,6 +34,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   private _iconPosition: IconPosition | null = null;
   private _iconSize: string | null = null;
   private _iconBackground: string | null = null;
+  private _resolvedImageUrlSource: string | null = null;
+  private _resolvedImageUrl: string | null = null;
 
   private _overlayElement: HTMLElement | null = null;
   private _iconElement: HTMLElement | null = null;
@@ -74,10 +76,12 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     this._stateColor = config.state_color !== undefined ? config.state_color !== false : true;
     this._iconColor = config.icon_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
-    this._iconSize = config.icon_size !== undefined
+    this._iconSize = config.icon_size !== undefined && config.icon_size !== null
       ? (typeof config.icon_size === "number" ? `${config.icon_size}px` : String(config.icon_size))
       : null;
-    this._iconBackground = config.icon_background !== undefined ? String(config.icon_background) : null;
+    this._iconBackground = config.icon_background !== undefined && config.icon_background !== null
+      ? String(config.icon_background)
+      : null;
   }
 
   private _parseIconPosition(raw: any): IconPosition | null {
@@ -214,9 +218,23 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
     this._ensureIconElement(overlay);
     const hasCustomImageUrl = !!this._imageUrl && !this._entity;
-    const resolvedImageUrl = hasCustomImageUrl
-      ? await this._resolveMediaSourceUrl(this._imageUrl)
-      : null;
+    let resolvedImageUrl: string | null = null;
+    if (hasCustomImageUrl) {
+      if (this._resolvedImageUrlSource === this._imageUrl && this._resolvedImageUrl !== null) {
+        resolvedImageUrl = this._resolvedImageUrl;
+      } else {
+        const imageUrl = this._imageUrl;
+        resolvedImageUrl = await this._resolveMediaSourceUrl(imageUrl);
+        if (generation !== this._callGeneration) return;
+        if (this._imageUrl === imageUrl) {
+          this._resolvedImageUrlSource = imageUrl;
+          this._resolvedImageUrl = resolvedImageUrl;
+        }
+      }
+    } else {
+      this._resolvedImageUrlSource = null;
+      this._resolvedImageUrl = null;
+    }
     if (generation !== this._callGeneration) return;
 
     this._updateOverlay(overlay, resolvedImageUrl);
