@@ -19,9 +19,14 @@ card:
         sparks:
           - type: overlay-icon
             for: $ hui-generic-entity-row
-            entity: sensor.door_battery
+            entity: sensor.outside_temperature_battery
             state_color: true
-            value: "5"
+            value: "10"
+        uix:
+          style: |
+            :host {
+              --uix-overlay-icon-opacity: 1;
+            }
       element:
         entity: light.bed_light
 

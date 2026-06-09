@@ -1,0 +1,117 @@
+id: doc_spark_overlay_icon_button
+description: "Doc image: Forge overlay icon spark in button (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-button
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.all_lights
+      brightness: 255
+
+cards:
+  - type: custom:uix-forge
+    forge:
+      macros:
+        icon:
+          params:
+            - group_id
+          template: |
+            {% set icons = 
+              { 0: 'mdi:numeric-0-circle',
+                1: 'mdi:numeric-1-circle',
+                2: 'mdi:numeric-2-circle',
+                3: 'mdi:numeric-3-circle',
+                4: 'mdi:numeric-4-circle',
+                5: 'mdi:numeric-5-circle',
+                6: 'mdi:numeric-6-circle',
+                7: 'mdi:numeric-7-circle',
+                8: 'mdi:numeric-8-circle',
+                9: 'mdi:numeric-9-circle',
+              }
+            %}
+            {% set lights = state_attr(group_id, 'entity_id') 
+              | expand 
+              | selectattr('state', 'eq', 'on') 
+              | list 
+              | count %}
+            {% set iconIndex = [lights, 9] | min %}
+            {{ icons[iconIndex] }}
+      mold: card
+      sparks:
+        - type: overlay-icon
+          icon: |
+            {{ icon(config.element.entity) }}
+          icon_size: 36px
+          icon_color: |
+            {{ "var(--state-active-color)" if is_state(config.element.entity, "on")  else "var(--state-inactive-color)" }}
+          icon_position:
+            left: calc(100% - 36px - 6px)
+            top: 6px
+    element:
+      show_name: true
+      show_icon: true
+      type: button
+      entity: light.all_lights
+  - type: button
+    entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-button.gif
+  root: hui-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: div.card:nth-child(1) hui-card uix-forge
+          selector: hui-button-card
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: div.card:nth-child(1) hui-card uix-forge
+          selector: hui-button-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: div.card:nth-child(1) hui-card uix-forge
+          selector: hui-button-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+      - type: hover
+        root: div.card:nth-child(2) hui-card hui-button-card
+        selector: ha-card
+        settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+      - type: click
+        root: div.card:nth-child(2) hui-card hui-button-card
+        selector: ha-card
+        settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+      - type: click
+        root: div.card:nth-child(2) hui-card hui-button-card
+        selector: ha-card
+        settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s

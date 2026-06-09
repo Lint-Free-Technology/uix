@@ -114,9 +114,70 @@ entities:
       sparks:
         - type: overlay-icon
           for: $ hui-generic-entity-row
-          entity: sensor.door_battery
+          entity: sensor.outside_temperature_battery
           state_color: true
-          value: "5"
+          value: "10"
+      uix:
+        style: |
+          :host {
+            --uix-overlay-icon-opacity: 1;
+          }
     element:
       entity: light.bed_light
 ```
+
+![Example with entity as row with state_color true](../../assets/page-assets/forge/sparks/overlay-icon-entity-row.png)
+
+### Overlay icon on a button showing the number of lights on (max 9)
+
+Uses a macro to translate number of lights on to a circle number icon.
+
+*An extra button is used to change the state of one light for the animated example.*
+
+```yaml
+type: custom:uix-forge
+forge:
+  macros:
+    icon:
+      params:
+        - group_id
+      template: |
+        {% set icons = 
+           { 0: 'mdi:numeric-0-circle',
+             1: 'mdi:numeric-1-circle',
+             2: 'mdi:numeric-2-circle',
+             3: 'mdi:numeric-3-circle',
+             4: 'mdi:numeric-4-circle',
+             5: 'mdi:numeric-5-circle',
+             6: 'mdi:numeric-6-circle',
+             7: 'mdi:numeric-7-circle',
+             8: 'mdi:numeric-8-circle',
+             9: 'mdi:numeric-9-circle',
+           }
+        %}
+        {% set lights = state_attr(group_id, 'entity_id') 
+          | expand 
+          | selectattr('state', 'eq', 'on') 
+          | list 
+          | count %}
+        {% set iconIndex = [lights, 9] | min %}
+        {{ icons[iconIndex] }}
+  mold: card
+  sparks:
+    - type: overlay-icon
+      icon: |
+        {{ icon(config.element.entity) }}
+      icon_size: 36px
+      icon_color: |
+        {{ "var(--state-active-color)" if is_state(config.element.entity, "on")  else "var(--inative-color)" }}
+      icon_position:
+        left: calc(100% - 36px - 6px)
+        top: 6px
+element:
+  show_name: true
+  show_icon: true
+  type: button
+  entity: light.all_lights
+```
+
+![Example button with macro](../../assets/page-assets/forge/sparks/overlay-icon-button.gif)
