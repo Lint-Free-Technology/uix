@@ -180,3 +180,33 @@ element:
 ```
 
 ![Example button with macro](../../assets/page-assets/forge/sparks/overlay-icon-button.gif)
+
+### Overlay icon with media source image_url and styling to show as a popover style badge
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: overlay-icon
+      for: hui-button-card $ ha-card $
+      icon_size: 36
+      image_url: media-source://media_source/local/daniel_craig_cropped.jpg
+  uix:
+    style: |
+      :host {
+        --uix-overlay-icon-opacity: 1;
+        --uix-overlay-icon-icon-border-radius: 50%;
+        --uix-overlay-icon-position: 0px -16px;
+      }
+element:
+  type: button
+  entity: light.bed_light
+  uix:
+    style: |
+      ha-card {
+        overflow: visible !important;
+      }
+```
+
+![Example button with image in a popover style](../../assets/page-assets/forge/sparks/overlay-icon-button-popover-style.png)
