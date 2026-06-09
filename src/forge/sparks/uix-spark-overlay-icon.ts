@@ -137,7 +137,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       return (result as { url?: string })?.url ?? url;
     } catch (e) {
       console.warn(
-        `UIX Forge overlay-icon spark: failed to resolve media source '${url}'.`,
+        `UIX Forge overlay-icon spark: failed to resolve media source '${url}', using original URL.`,
         e
       );
       return url;
@@ -221,8 +221,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
 
     this._ensureIconElement(overlay);
-    const hasImageUrlSource = !!this._imageUrl && !this._entity;
-    const resolvedImageUrl = hasImageUrlSource
+    const shouldResolveImageUrl = !!this._imageUrl && !this._entity;
+    const resolvedImageUrl = shouldResolveImageUrl
       ? await this._resolveMediaSourceUrl(this._imageUrl)
       : null;
     if (generation !== this._callGeneration) return;
