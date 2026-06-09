@@ -57,11 +57,11 @@ class HaTileIconOverlayIconAdapter implements OverlayIconTargetAdapter {
   }
 
   defaultIconColor(): string {
-    return "var(--white-color)";
+    return "var(--white-color, #ffffff)";
   }
 
   defaultIconBackground(): string | null {
-    return "var(--primary-color)";
+    return "var(--primary-color, #03a9f4)";
   }
 }
 
@@ -83,7 +83,7 @@ class HuiGenericEntityRowOverlayIconAdapter implements OverlayIconTargetAdapter 
   }
 
   defaultIconColor(): string {
-    return "var(--primary-color)";
+    return "var(--primary-color, #03a9f4)";
   }
 
   defaultIconBackground(): string | null {

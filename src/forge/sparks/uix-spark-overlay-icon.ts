@@ -116,7 +116,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       const stateColor = stateColorCss(stateObj, state);
       if (stateColor) return stateColor;
     }
-    return this._targetAdapter?.defaultIconColor() ?? "var(--primary-color)";
+    return this._targetAdapter?.defaultIconColor() ?? "var(--primary-color, #03a9f4)";
   }
 
   private _getEffectiveIconBackground(): string {
