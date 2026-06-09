@@ -1,0 +1,35 @@
+id: forge_spark_overlay_icon_media_source_shadowroot
+description: "Overlay icon spark resolves media-source image_url and attaches to ShadowRoot targets"
+view_path: forge-spark-overlay-icon-media-source-shadowroot
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-tile-card $
+        image_url: "media-source://media_source/local/test_uix_bg.png"
+  element:
+    type: tile
+    entity: "light.bed_light"
+    name: "Media source overlay icon"
+
+interactions:
+  - type: wait
+    ms: 2000
+
+assertions:
+  - type: element_present
+    root: "hui-tile-card"
+    selector: '[data-uix-forge-overlay-icon-id] > div'
+
+  - type: css_property_not_equals
+    root: "hui-tile-card"
+    selector: '[data-uix-forge-overlay-icon-id] > div'
+    property: "backgroundImage"
+    unexpected: "none"
+
+  - type: snapshot
+    name: "24_forge_spark_overlay_icon_media_source_shadowroot"
+    threshold: 0.02

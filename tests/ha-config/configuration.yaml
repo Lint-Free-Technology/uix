@@ -26,3 +26,14 @@ input_boolean:
 person:
   - name: James Bond 007
     id: james_bond007
+
+light:
+  - platform: group
+    name: "All Lights"
+    entities:
+      - light.bed_light
+      - light.ceiling_lights
+      - light.kitchen_lights
+      - light.living_room_rgbww_lights
+      - light.office_rgbw_lights
+      - light.entrance_color_white_lights
