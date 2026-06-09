@@ -221,12 +221,13 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
 
     this._ensureIconElement(overlay);
-    const resolvedImageUrl = this._imageUrl && !this._entity
+    const hasImageUrlSource = !!this._imageUrl && !this._entity;
+    const resolvedImageUrl = hasImageUrlSource
       ? await this._resolveMediaSourceUrl(this._imageUrl)
       : "";
     if (generation !== this._callGeneration) return;
 
-    this._updateOverlay(overlay, resolvedImageUrl);
+    this._updateOverlay(overlay, resolvedImageUrl, hasImageUrlSource);
 
     this._overlayElement = overlay;
   }
@@ -244,7 +245,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     this._iconElement = current;
   }
 
-  private _updateOverlay(overlay: HTMLElement, resolvedImageUrl: string) {
+  private _updateOverlay(overlay: HTMLElement, resolvedImageUrl: string, hasImageUrlSource: boolean) {
     const isRow = this.controller.forge.mold?.isRow() === true;
     const defaultOpacity = this._targetElement?.tagName.toLowerCase() === "ha-tile-icon" ? "1" : "0.5";
     overlay.style.setProperty("display", "var(--uix-overlay-icon-display, block)");
@@ -317,7 +318,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       `var(--uix-overlay-icon-color, ${this._getEffectiveIconColor(stateObj)})`
     );
 
-    if (resolvedImageUrl && !this._entity) {
+    if (hasImageUrlSource && resolvedImageUrl) {
       this._iconElement.style.setProperty("background-image", `url("${resolvedImageUrl}")`);
       this._iconElement.style.setProperty("background-repeat", "no-repeat");
       this._iconElement.style.setProperty("background-position", "center");
