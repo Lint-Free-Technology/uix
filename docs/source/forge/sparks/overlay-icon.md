@@ -32,6 +32,8 @@ element:
   entity: light.bed_light
 ```
 
+![Basic example](../../assets/page-assets/forge/sparks/overlay-icon-basic.png)
+
 ## Configuration reference
 
 ### Top-level keys
@@ -88,11 +90,14 @@ forge:
     - type: overlay-icon
       for: hui-tile-card $ ha-tile-icon
       icon: mdi:check-decagram
-      icon_background: green
+      icon_color: white
+      icon_background: "#22b922"
 element:
   type: tile
   entity: light.bed_light
 ```
+
+![Badge example](../../assets/page-assets/forge/sparks/overlay-icon-badge.png)
 
 !!! note
     For non-entity overlays, when multiple icon source keys are set the spark resolves precedence as:
@@ -101,16 +106,17 @@ element:
 ### Entity-driven overlay icon with value override
 
 ```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: overlay-icon
-      for: hui-tile-card $ ha-tile-icon
+type: entities
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: row
+      sparks:
+        - type: overlay-icon
+          for: $ hui-generic-entity-row
+          entity: sensor.door_battery
+          state_color: true
+          value: "5"
+    element:
       entity: light.bed_light
-      value: "on"
-      state_color: true
-element:
-  type: tile
-  entity: light.bed_light
 ```

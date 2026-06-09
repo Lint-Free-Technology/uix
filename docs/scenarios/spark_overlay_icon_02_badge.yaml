@@ -1,0 +1,32 @@
+id: doc_spark_overlay_icon_badge
+description: "Doc image: Forge overlay icon spark as badge (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-badge
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-tile-card $ ha-tile-icon
+        icon: mdi:check-decagram
+        icon_color: white
+        icon_background: "#22b922"
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-badge.png
+  root: hui-tile-card
+  padding: 16
