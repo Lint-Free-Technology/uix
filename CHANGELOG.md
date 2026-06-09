@@ -1,3 +1,9 @@
+## [7.5.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.2...v7.5.0-beta.1) (2026-06-09)
+
+### ⭐ New Features
+
+* UIX Forge Overlay icon spark  ([#369](https://github.com/Lint-Free-Technology/uix/issues/369)) ([98ad150](https://github.com/Lint-Free-Technology/uix/commit/98ad1508e12e4bd4cc75e3e2a3b05b5f5a4c555e)), closes [#368](https://github.com/Lint-Free-Technology/uix/issues/368)
+
 ## [7.4.2](https://github.com/Lint-Free-Technology/uix/compare/v7.4.1...v7.4.2) (2026-06-05)
 
 ### 🐞 Bug Fixes
