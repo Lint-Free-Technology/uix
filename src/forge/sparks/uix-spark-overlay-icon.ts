@@ -312,7 +312,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       "padding",
       `var(--uix-overlay-icon-padding, ${defaultPadding})`
     );
-    this._iconElement.style.setProperty("line-height", "normal");
+    this._iconElement.style.setProperty("line-height", this._getEffectiveIconSize());
     this._iconElement.style.setProperty("display", "inline-flex");
     this._iconElement.style.setProperty("translate", "var(--uix-overlay-icon-position, none)");
     this._iconElement.style.setProperty(
