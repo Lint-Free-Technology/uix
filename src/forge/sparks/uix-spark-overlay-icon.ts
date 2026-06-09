@@ -197,7 +197,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       overlay.setAttribute(OVERLAY_ICON_ID_ATTR, this._id);
       overlay.style.setProperty("position", "absolute");
       overlay.style.setProperty("inset", "0");
-      overlay.style.setProperty("z-index", "var(--uix-overlay-icon-z-index, 10)");
+      overlay.style.setProperty("z-index", "var(--uix-overlay-icon-z-index, 1)");
       overlay.style.setProperty("display", "var(--uix-overlay-icon-display, block)");
       overlay.style.setProperty("align-items", "center");
       overlay.style.setProperty("justify-content", "center");
