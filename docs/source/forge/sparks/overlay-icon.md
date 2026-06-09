@@ -13,7 +13,6 @@ The `overlay-icon` spark overlays an icon on any element inside a [UIX Forge](..
 The icon can come from:
 
 - a fixed MDI icon (`icon`)
-- an SVG path (`icon_path`)
 - an image URL (`image_url`)
 - an entity state icon (`entity`)
 
@@ -42,10 +41,9 @@ element:
 |---|---|---|---|
 | `type` | string | — | Must be `overlay-icon`. |
 | `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
-| `icon` | string | — | MDI/custom to show. Use one of `icon`, `icon_path` or `image_url`. |
-| `icon_path` | string | — | SVG path data string of icon to show (e.g. `M12 2C6.48...`). Use one of `icon`, `icon_path` or `image_url`. |
-| `image_url` | string | — | Static image applied as overlay. Supports `media-source://` URIs. Use one of `icon`, `icon_path` or `image_url`. |
-| `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). When `entity` is set, `icon`, `icon_path`, and `image_url` are ignored. |
+| `icon` | string | — | MDI/custom to show. Use one of `icon` or `image_url` |
+| `image_url` | string | — | Static image applied as overlay. Supports `media-source://` URIs. Use one of `icon` or `image_url`. |
+| `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). When `entity` is set, `icon` and `image_url` are ignored. |
 | `value` | string | — | If `entity` is provided you can override the state value used to generate the icon. |
 | `state_color` | boolean | `true` | If `entity` is provided whether state color is used for the icon. |
 | `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, `var(--primary-color)` otherwise | CSS color for the icon. Overrides state color if set. |
@@ -101,7 +99,7 @@ element:
 
 !!! note
     For non-entity overlays, when multiple icon source keys are set the spark resolves precedence as:
-    `image_url` → `icon_path` → `icon`.
+    `image_url` → `icon`.
 
 ### Entity-driven overlay icon with value override
 

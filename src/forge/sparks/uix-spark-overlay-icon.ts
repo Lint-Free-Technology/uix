@@ -26,7 +26,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _for: string = "";
   private _icon: string = "";
-  private _iconPath: string = "";
   private _imageUrl: string = "";
   private _entity: string = "";
   private _value: string = "";
@@ -57,25 +56,17 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     this._for = config.for || "element";
     this._entity = config.entity || "";
     const rawIcon = config.icon || "";
-    const rawIconPath = config.icon_path || "";
     const rawImageUrl = config.image_url || "";
 
     if (this._entity) {
       // Entity mode always renders a ha-state-icon; static icon sources are ignored.
       this._icon = "";
-      this._iconPath = "";
       this._imageUrl = "";
     } else if (rawImageUrl) {
       this._icon = "";
-      this._iconPath = "";
       this._imageUrl = rawImageUrl;
-    } else if (rawIconPath) {
-      this._icon = "";
-      this._iconPath = rawIconPath;
-      this._imageUrl = "";
     } else {
       this._icon = rawIcon;
-      this._iconPath = "";
       this._imageUrl = "";
     }
     // Preserve explicit empty-string overrides while treating null/undefined as "no override".
@@ -170,7 +161,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   }
 
   private _hasSource(): boolean {
-    return !!(this._entity || this._icon || this._iconPath || this._imageUrl);
+    return !!(this._entity || this._icon || this._imageUrl);
   }
 
   private async _attach(generation: number) {
@@ -275,7 +266,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       }
     } else {
       iconEl.icon = this._icon || undefined;
-      iconEl.path = this._iconPath || undefined;
     }
 
     this._iconElement.style.setProperty("pointer-events", "none");
@@ -327,7 +317,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       this._iconElement.style.setProperty("background-size", "contain");
       this._iconElement.style.setProperty("color", "transparent");
       iconEl.icon = undefined;
-      iconEl.path = undefined;
     } else {
       this._iconElement.style.removeProperty("background-image");
       this._iconElement.style.removeProperty("background-repeat");
