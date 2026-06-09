@@ -22,6 +22,7 @@ export interface OverlayIconTargetAdapter {
 }
 
 const TILE_ICON_DEFAULT_ICON_POSITION = { top: "2px", left: "30px" } as const;
+const ROW_DEFAULT_ICON_POSITION = { top: "8px", left: "30px" } as const;
 
 /**
  * Returns an adapter for the given target element, or `null` if no special
@@ -79,7 +80,9 @@ class HuiGenericEntityRowOverlayIconAdapter implements OverlayIconTargetAdapter 
   }
 
   defaultIconPosition(): AdapterIconPosition | null {
-    return null;
+    // Rows use a compact inline layout; this offset places the overlay icon
+    // between the leading state badge/icon and the row name.
+    return { ...ROW_DEFAULT_ICON_POSITION };
   }
 
   defaultIconColor(): string {

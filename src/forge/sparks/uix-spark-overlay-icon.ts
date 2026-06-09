@@ -8,7 +8,6 @@ import {
 } from "./overlay-icon-target-adapters";
 
 const OVERLAY_ICON_ID_ATTR = "data-uix-forge-overlay-icon-id";
-const ROW_DEFAULT_ICON_POSITION = { top: "6px", left: "30px" } as const;
 const MEDIA_SOURCE_PREFIX = "media-source://";
 
 interface IconPosition {
@@ -103,9 +102,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _getEffectiveIconPosition(): AdapterIconPosition | null {
     if (this._iconPosition !== null) return this._iconPosition;
-    // Rows use a compact inline layout; this offset places the overlay icon
-    // between the leading state badge/icon and the row name.
-    if (this.controller.forge.mold?.isRow()) return { ...ROW_DEFAULT_ICON_POSITION };
     return this._targetAdapter?.defaultIconPosition() ?? null;
   }
 
