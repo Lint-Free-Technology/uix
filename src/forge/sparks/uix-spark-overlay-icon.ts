@@ -288,8 +288,10 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       `var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()})`
     );
     if (this._iconBackground !== null) {
+      this._iconElement.style.removeProperty("background-attachment");
+      this._iconElement.style.removeProperty("background-origin");
+      this._iconElement.style.removeProperty("background-clip");
       this._iconElement.style.setProperty("background", this._iconBackground);
-      this._iconElement.style.removeProperty("background-color");
     } else {
       const defaultBackground = this._getEffectiveIconBackground();
       const defaultBackgroundColor = defaultBackground === "none"
