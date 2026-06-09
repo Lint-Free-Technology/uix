@@ -1,0 +1,42 @@
+id: forge_spark_overlay_icon_tile_entity
+description: "Overlay icon spark renders ha-state-icon on ha-tile-icon targets when entity is configured"
+view_path: forge-spark-overlay-icon-tile-entity
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-tile-card $ ha-tile-icon
+        entity: light.bed_light
+        value: "on"
+        state_color: false
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions:
+  - type: element_present
+    root: "hui-tile-card"
+    selector: 'ha-tile-icon [data-uix-forge-overlay-icon-id] > ha-state-icon'
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: 'ha-tile-icon [data-uix-forge-overlay-icon-id] > ha-state-icon'
+    property: "top"
+    expected: "2px"
+
+  - type: css_property
+    root: "hui-tile-card"
+    selector: 'ha-tile-icon [data-uix-forge-overlay-icon-id] > ha-state-icon'
+    property: "left"
+    expected: "30px"

@@ -1,0 +1,32 @@
+id: forge_spark_overlay_icon_row_defaults
+description: "Overlay icon spark uses row-default position and renders ha-icon without entity"
+view_path: forge-spark-overlay-icon-row-defaults
+
+card:
+  type: entities
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: overlay-icon
+            icon: mdi:sparkles
+      element:
+        entity: light.bed_light
+
+assertions:
+  - type: element_present
+    root: "hui-entities-card"
+    selector: 'uix-forge [data-uix-forge-overlay-icon-id] > ha-icon'
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: 'uix-forge [data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "top"
+    expected: "6px"
+
+  - type: css_property
+    root: "hui-entities-card"
+    selector: 'uix-forge [data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "left"
+    expected: "30px"
