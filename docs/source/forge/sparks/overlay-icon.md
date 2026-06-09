@@ -13,7 +13,7 @@ The `overlay-icon` spark overlays an icon on any element inside a [UIX Forge](..
 
 The icon can come from:
 
-- a fixed MDI icon (`icon`)
+- a fixed MDI or custom icon (`icon`)
 - an image URL (`image_url`)
 - an entity state icon (`entity`)
 
