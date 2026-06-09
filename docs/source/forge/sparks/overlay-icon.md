@@ -1,5 +1,5 @@
 ---
-description: Use the overlay-icon spark to overlay a ha-icon or ha-state-icon on any target element within a UIX Forge element.
+description: Use the overlay-icon spark to overlay a ha-icon, image div, or ha-state-icon on any target element within a UIX Forge element.
 icon: material/star-four-points-outline
 ---
 
@@ -8,6 +8,7 @@ icon: material/star-four-points-outline
 The `overlay-icon` spark overlays an icon on any element inside a [UIX Forge](../index.md) forged element.
 
 - If `entity` is set, the spark renders a `ha-state-icon`.
+- If `image_url` is set, the spark renders a `div` with the image as `background-image`.
 - Otherwise it renders a `ha-icon`.
 
 The icon can come from:

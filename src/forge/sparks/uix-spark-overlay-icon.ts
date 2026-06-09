@@ -224,7 +224,11 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   }
 
   private _ensureIconElement(overlay: HTMLElement) {
-    const expectedTag = this._entity ? "ha-state-icon" : "ha-icon";
+    const expectedTag = this._entity
+      ? "ha-state-icon"
+      : this._imageUrl
+        ? "div"
+        : "ha-icon";
     const current = overlay.firstElementChild as HTMLElement | null;
     if (!current || current.tagName.toLowerCase() !== expectedTag) {
       current?.remove();
@@ -316,12 +320,18 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       this._iconElement.style.setProperty("background-position", "center");
       this._iconElement.style.setProperty("background-size", "contain");
       this._iconElement.style.setProperty("color", "transparent");
-      iconEl.icon = undefined;
+      this._iconElement.style.setProperty("width", `var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()})`);
+      this._iconElement.style.setProperty("height", `var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()})`);
+      if ("icon" in iconEl) {
+        iconEl.icon = undefined;
+      }
     } else {
       this._iconElement.style.removeProperty("background-image");
       this._iconElement.style.removeProperty("background-repeat");
       this._iconElement.style.removeProperty("background-position");
       this._iconElement.style.removeProperty("background-size");
+      this._iconElement.style.removeProperty("width");
+      this._iconElement.style.removeProperty("height");
     }
 
     const iconPos = this._getEffectiveIconPosition();
