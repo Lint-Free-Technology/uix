@@ -41,13 +41,13 @@ element:
 | `type` | string | — | Must be `overlay-icon`. |
 | `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
 | `icon` | string | — | MDI/custom to show. Use one of `icon`, `icon_path` or `image_url`. |
-| `icon_path` | string | — | SVG path of icon to show. Use one of `icon`, `icon_path` or `image_url`. |
+| `icon_path` | string | — | SVG path data string of icon to show (e.g. `M12 2C6.48...`). Use one of `icon`, `icon_path` or `image_url`. |
 | `image_url` | string | — | Static image applied as overlay. Supports `media-source://` URIs. Use one of `icon`, `icon_path` or `image_url`. |
-| `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). |
+| `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). When `entity` is set, `icon`, `icon_path`, and `image_url` are ignored. |
 | `value` | string | — | If `entity` is provided you can override the state value used to generate the icon. |
 | `state_color` | boolean | `true` | If `entity` is provided whether state color is used for the icon. |
 | `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, `var(--primary-color)` otherwise | CSS color for the icon. Overrides state color if set. |
-| `icon_position` | object | when forge mold is row: `{top: 6, left: 30}`; when target is `ha-tile-icon`: `{top: 2, left: 30}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_position` | object | when forge mold is row: `{top: '6px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
 | `icon_size` | number or string | `12px` when target is `ha-tile-icon`, `24px` otherwise | Size of the icon. Numbers are treated as pixels; strings are passed through as-is. |
 | `icon_background` | CSS background | `var(--primary-color)` when target is `ha-tile-icon`, otherwise not set | Background of the icon. |
 
@@ -73,6 +73,9 @@ The overlay icon respects CSS custom properties. Set these on the forged element
 !!! warning
     As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements displayed inline. This means overlay-icon spark can only apply to an entire entity row.
 
+!!! note
+    Overlay-based sparks set `position: relative` on the targeted element when its computed position is `static`, so the absolute overlay can be anchored correctly.
+
 ## Examples
 
 ### Tile icon overlay badge
@@ -90,6 +93,10 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+!!! note
+    For non-entity overlays, when multiple icon source keys are set the spark resolves precedence as:
+    `image_url` → `icon_path` → `icon`.
 
 ### Entity-driven overlay icon with value override
 

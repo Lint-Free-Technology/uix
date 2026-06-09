@@ -8,6 +8,7 @@ import {
 } from "./overlay-icon-target-adapters";
 
 const OVERLAY_ICON_ID_ATTR = "data-uix-forge-overlay-icon-id";
+const ROW_DEFAULT_ICON_POSITION = { top: "6px", left: "30px" } as const;
 
 interface IconPosition {
   top?: string;
@@ -50,11 +51,31 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _applyConfig(config: Record<string, any>) {
     this._for = config.for || "element";
-    this._icon = config.icon || "";
-    this._iconPath = config.icon_path || "";
-    this._imageUrl = config.image_url || "";
     this._entity = config.entity || "";
-    this._value = config.value !== undefined ? String(config.value) : "";
+    const rawIcon = config.icon || "";
+    const rawIconPath = config.icon_path || "";
+    const rawImageUrl = config.image_url || "";
+
+    if (this._entity) {
+      // Entity mode always renders a ha-state-icon; static icon sources are ignored.
+      this._icon = "";
+      this._iconPath = "";
+      this._imageUrl = "";
+    } else if (rawImageUrl) {
+      this._icon = "";
+      this._iconPath = "";
+      this._imageUrl = rawImageUrl;
+    } else if (rawIconPath) {
+      this._icon = "";
+      this._iconPath = rawIconPath;
+      this._imageUrl = "";
+    } else {
+      this._icon = rawIcon;
+      this._iconPath = "";
+      this._imageUrl = "";
+    }
+    // Preserve explicit empty-string overrides while treating null/undefined as "no override".
+    this._value = config.value !== undefined && config.value !== null ? String(config.value) : "";
     this._stateColor = config.state_color !== undefined ? config.state_color !== false : true;
     this._iconColor = config.icon_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
@@ -77,7 +98,9 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _getEffectiveIconPosition(): AdapterIconPosition | null {
     if (this._iconPosition !== null) return this._iconPosition;
-    if (this.controller.forge.mold?.isRow()) return { top: "6px", left: "30px" };
+    // Rows use a compact inline layout; this offset places the overlay icon
+    // between the leading state badge/icon and the row name.
+    if (this.controller.forge.mold?.isRow()) return { ...ROW_DEFAULT_ICON_POSITION };
     return this._targetAdapter?.defaultIconPosition() ?? null;
   }
 
@@ -203,7 +226,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     overlay.style.setProperty(
       "border-radius",
       isRow
-        ? "var(--uix-overlay-icon-row-border-radius, var(--uix-overlay-icon-border-radius-row-border-radius, var(--uix-overlay-icon-border-radius, inherit)))"
+        ? "var(--uix-overlay-icon-row-border-radius, var(--uix-overlay-icon-border-radius, inherit))"
         : "var(--uix-overlay-icon-border-radius, inherit)"
     );
     overlay.style.setProperty("border", "var(--uix-overlay-icon-border, unset)");
@@ -223,7 +246,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       } else {
         iconEl.stateObj = undefined;
       }
-      iconEl.icon = this._icon || undefined;
     } else {
       iconEl.icon = this._icon || undefined;
       iconEl.path = this._iconPath || undefined;

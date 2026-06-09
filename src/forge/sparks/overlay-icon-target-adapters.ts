@@ -21,6 +21,8 @@ export interface OverlayIconTargetAdapter {
   defaultIconBackground(): string | null;
 }
 
+const TILE_ICON_DEFAULT_ICON_POSITION = { top: "2px", left: "30px" } as const;
+
 /**
  * Returns an adapter for the given target element, or `null` if no special
  * handling is required for this element type.
@@ -51,7 +53,7 @@ class HaTileIconOverlayIconAdapter implements OverlayIconTargetAdapter {
 
   defaultIconPosition(): AdapterIconPosition | null {
     // Move to the right of the tile icon, similar to tile badges.
-    return { top: "2px", left: "30px" };
+    return { ...TILE_ICON_DEFAULT_ICON_POSITION };
   }
 
   defaultIconColor(): string {
