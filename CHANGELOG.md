@@ -1,3 +1,9 @@
+## [7.5.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.2...v7.5.0-beta.3) (2026-06-10)
+
+### ⭐ New Features
+
+* Support UIX styling by theme on todo panel. ([1c0b6a8](https://github.com/Lint-Free-Technology/uix/commit/1c0b6a8ecfd59353df3f859f0aa03476d94ba1a3))
+
 ## [7.5.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.1...v7.5.0-beta.2) (2026-06-10)
 
 ### 🐞 Bug Fixes
