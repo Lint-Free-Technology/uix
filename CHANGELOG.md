@@ -1,3 +1,9 @@
+## [7.5.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.1...v7.5.0-beta.2) (2026-06-10)
+
+### 🐞 Bug Fixes
+
+* Correct CSS var `--uix-overlay-icon-border-radius`. Add example for button card noting shadowRoot requirement. ([92dfffb](https://github.com/Lint-Free-Technology/uix/commit/92dfffb672814289a89a2786977c5569dfbfee3b))
+
 ## [7.5.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.2...v7.5.0-beta.1) (2026-06-09)
 
 ### ⭐ New Features
