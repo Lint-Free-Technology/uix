@@ -318,7 +318,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     const defaultBorderRadius = this._targetAdapter?.defaultIconBorderRadius() ?? "none";
     this._iconElement.style.setProperty(
       "border-radius",
-      `var(--uix-overlay-icon-icon-border-radius, ${defaultBorderRadius})`
+      `var(--uix-overlay-icon-border-radius, ${defaultBorderRadius})`
     );
     const defaultPadding = this._targetAdapter?.defaultIconPadding() ?? "0";
     this._iconElement.style.setProperty(

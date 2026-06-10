@@ -23,7 +23,7 @@ card:
       style: |
         :host {
           --uix-overlay-icon-opacity: 1;
-          --uix-overlay-icon-icon-border-radius: 50%;
+          --uix-overlay-icon-border-radius: 50%;
           --uix-overlay-icon-position: 0px -16px;
         }
   element:

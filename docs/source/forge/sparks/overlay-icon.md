@@ -70,7 +70,7 @@ The overlay icon respects CSS custom properties. Set these on the forged element
 | `--uix-overlay-icon-size` | `24px`; `12px` when target is `ha-tile-icon` | Size of the icon. Overrides `icon_size` from spark config. |
 | `--uix-overlay-icon-color` | `var(--primary-color)`; `var(--white-color)` when target is `ha-tile-icon` | Icon color. |
 | `--uix-overlay-icon-background` | `transparent`; `var(--primary-color)` when target is `ha-tile-icon` | Background color of the icon element when `icon_background` is not explicitly set. |
-| `--uix-overlay-icon-icon-border-radius` | `none`; `50%` when target is `ha-tile-icon` | Border radius of the icon element. |
+| `--uix-overlay-icon-border-radius` | `none`; `50%` when target is `ha-tile-icon` | Border radius of the icon element. |
 | `--uix-overlay-icon-padding` | `0`; `2px` when target is `ha-tile-icon` | Padding around the icon. |
 | `--uix-overlay-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). |
 
@@ -199,7 +199,7 @@ forge:
     style: |
       :host {
         --uix-overlay-icon-opacity: 1;
-        --uix-overlay-icon-icon-border-radius: 50%;
+        --uix-overlay-icon-border-radius: 50%;
         --uix-overlay-icon-position: 0px -16px;
       }
 element:
@@ -213,3 +213,34 @@ element:
 ```
 
 ![Example button with image in a popover style](../../assets/page-assets/forge/sparks/overlay-icon-button-popover-style.png)
+
+### Overlay icon on button icon
+
+!!! tip
+    If the icon does not show check if the icon should be applied to the target shadowRoot. e.g. overlay icon will not show with `for: hui-button-card $ ha-state-icon` but will show with `for: hui-button-card $ ha-state-icon $`. For the former, it will add to DOM but will not show due to DOM structure.
+
+```yaml
+type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-button-card $ ha-state-icon $
+        icon: mdi:shimmer
+        icon_color: white
+        icon_background: "#22b922"
+    uix:
+      style: |
+        :host {
+          --uix-overlay-icon-border-radius: 50%;
+          --uix-overlay-icon-position: 20px;
+          --uix-overlay-icon-opacity: 0.9;
+        }
+  element:
+    show_name: true
+    show_icon: true
+    type: button
+    entity: light.bed_light
+```
+
+![Example with button card icon](../../assets/page-assets/forge/sparks/overlay-icon-button-icon.png)
