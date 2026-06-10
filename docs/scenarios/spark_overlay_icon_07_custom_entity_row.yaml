@@ -1,0 +1,42 @@
+id: doc_spark_overlay_icon_custom_entity_row
+description: "Doc image: Forge overlay icon spark in custom entity row (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-custom-entity-row
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: entities
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: overlay-icon
+            for: $
+            entity: sensor.outside_temperature_battery
+            state_color: true
+            value: "10"
+            icon_position:
+              top: 8px
+              left: 30px
+        uix:
+          style: |
+            :host {
+              --uix-overlay-icon-opacity: 1;
+            }
+      element:
+        type: custom:template-entity-row
+        entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-custom-entity-row.png
+  root: hui-entities-card
+  padding: 16
