@@ -1,6 +1,14 @@
 import { selectTree } from "./selecttree";
 
 var PanelState: Promise<any> | null = null;
+var LastDispatchedPanelState: string | null = null;
+
+function _panelStateKey(panelState: any): string {
+  return JSON.stringify({
+    hash: panelState?.hash || "",
+    panel: panelState?.panel || {},
+  });
+}
 
 async function _getPanel(document) {
   let _panel = await _getPanel(document);
@@ -137,6 +145,9 @@ function _panel_state_update() {
 export function getPanelState(): Promise<any> {
   if (!PanelState) {
     _panel_state_update();
+    PanelState.then((panelState) => {
+      LastDispatchedPanelState = _panelStateKey(panelState);
+    });
   }
   return PanelState as Promise<any>;
 }
@@ -147,7 +158,12 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     window.addEventListener(event, async () => {
       PanelState = null;
       _panel_state_update();
-      PanelState.then(() => {
+      PanelState.then((panelState) => {
+        const panelStateKey = _panelStateKey(panelState);
+        if (panelStateKey === LastDispatchedPanelState) {
+          return;
+        }
+        LastDispatchedPanelState = panelStateKey;
         document.dispatchEvent(
           new CustomEvent("uix_update", { detail: { variablesChanged: true } })
         );
@@ -160,13 +176,13 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
 
     history.pushState = function(...args) {
       const ret = originalPushState.apply(this, args);
-      window.dispatchEvent(new Event('historystatechanged'));
+      window.dispatchEvent(new Event("historystatechanged"));
       return ret;
     };
 
     history.replaceState = function(...args) {
       const ret = originalReplaceState.apply(this, args);
-      window.dispatchEvent(new Event('historystatechanged'));
+      window.dispatchEvent(new Event("historystatechanged"));
       return ret;
     };
   })();
