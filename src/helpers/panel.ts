@@ -157,16 +157,22 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
   (function() {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
+    const shouldDispatchHistoryStateChanged = (state: any) =>
+      !(state && typeof state === "object" && state.opensDialog);
 
     history.pushState = function(...args) {
       const ret = originalPushState.apply(this, args);
-      window.dispatchEvent(new Event('historystatechanged'));
+      if (shouldDispatchHistoryStateChanged(args[0])) {
+        window.dispatchEvent(new Event("historystatechanged"));
+      }
       return ret;
     };
 
     history.replaceState = function(...args) {
       const ret = originalReplaceState.apply(this, args);
-      window.dispatchEvent(new Event('historystatechanged'));
+      if (shouldDispatchHistoryStateChanged(args[0])) {
+        window.dispatchEvent(new Event("historystatechanged"));
+      }
       return ret;
     };
   })();
