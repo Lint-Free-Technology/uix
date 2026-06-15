@@ -145,6 +145,9 @@ function _panel_state_update() {
 export function getPanelState(): Promise<any> {
   if (!PanelState) {
     _panel_state_update();
+    PanelState.then((panelState) => {
+      LastDispatchedPanelState = _panelStateKey(panelState);
+    });
   }
   return PanelState as Promise<any>;
 }
