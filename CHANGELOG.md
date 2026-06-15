@@ -1,3 +1,9 @@
+## [7.5.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.3...v7.5.0-beta.4) (2026-06-15)
+
+### 🐞 Bug Fixes
+
+* Only force UIX updates when panel state has actually change. Avoids forge refreshes on more-info dialog history state changes ([#373](https://github.com/Lint-Free-Technology/uix/issues/373)) ([5d04b30](https://github.com/Lint-Free-Technology/uix/commit/5d04b30f844763f34f3634914b475b255bddcd9a)), closes [#372](https://github.com/Lint-Free-Technology/uix/issues/372)
+
 ## [7.5.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.2...v7.5.0-beta.3) (2026-06-10)
 
 ### ⭐ New Features
