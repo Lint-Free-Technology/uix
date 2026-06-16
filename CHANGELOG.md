@@ -1,3 +1,9 @@
+## [7.5.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.4...v7.5.0-beta.5) (2026-06-16)
+
+### ⭐ New Features
+
+* Add integration option to disable hash variable and hash-driven UIX template/Forge refreshes ([#376](https://github.com/Lint-Free-Technology/uix/issues/376)) ([bfa0814](https://github.com/Lint-Free-Technology/uix/commit/bfa0814beb4d72dae9190b67d2c4eac40c21d89c)), closes [#375](https://github.com/Lint-Free-Technology/uix/issues/375)
+
 ## [7.5.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.3...v7.5.0-beta.4) (2026-06-15)
 
 ### 🐞 Bug Fixes
