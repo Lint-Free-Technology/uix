@@ -151,18 +151,18 @@ function _panel_state_update() {
 }
 
 function _refresh_panel_state(dispatchOnChange = true) {
-  PanelState = null;
   _panel_state_update();
   PanelState.then((panelState) => {
     const panelStateKey = _panelStateKey(panelState);
-    if (dispatchOnChange && panelStateKey !== LastDispatchedPanelState) {
+    const changed = panelStateKey !== LastDispatchedPanelState;
+    if (dispatchOnChange && changed) {
       LastDispatchedPanelState = panelStateKey;
       document.dispatchEvent(
         new CustomEvent("uix_update", { detail: { variablesChanged: true } })
       );
-      return;
+    } else if (LastDispatchedPanelState === null) {
+      LastDispatchedPanelState = panelStateKey;
     }
-    LastDispatchedPanelState = panelStateKey;
   });
 }
 
@@ -178,13 +178,15 @@ export function getPanelState(): Promise<any> {
 
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
+  const onPanelLocationChange = () => _refresh_panel_state(true);
   ["popstate", "location-changed", "historystatechanged"].forEach((event) => {
-    window.addEventListener(event, async () => _refresh_panel_state(true));
+    window.addEventListener(event, onPanelLocationChange);
   });
   const coordinator = (window as any).uixCoordinator;
-  coordinator?.addEventListener("uix-config-update", () =>
-    _refresh_panel_state(LastDispatchedPanelState !== null)
-  );
+  coordinator?.addEventListener("uix-config-update", () => {
+    const dispatchOnChange = LastDispatchedPanelState !== null;
+    _refresh_panel_state(dispatchOnChange);
+  });
   (function() {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
