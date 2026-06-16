@@ -8,7 +8,7 @@ By default, UIX exposes `hash` as a template variable and updates templates when
 
 ## Enabling via the integration UI
 
-The option is **disabled by default**. To enable it:
+The option is **unset by default**. To set the option:
 
 1. In Home Assistant, go to **Settings → Devices & Services → UI eXtension → Configure**.
 2. Select **Performance settings** from the menu.

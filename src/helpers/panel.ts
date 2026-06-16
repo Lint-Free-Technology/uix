@@ -150,6 +150,22 @@ function _panel_state_update() {
   PanelState = new Promise((resolve) => resolve(update()));
 }
 
+function _refresh_panel_state(dispatchOnChange = true) {
+  PanelState = null;
+  _panel_state_update();
+  PanelState.then((panelState) => {
+    const panelStateKey = _panelStateKey(panelState);
+    if (dispatchOnChange && panelStateKey !== LastDispatchedPanelState) {
+      LastDispatchedPanelState = panelStateKey;
+      document.dispatchEvent(
+        new CustomEvent("uix_update", { detail: { variablesChanged: true } })
+      );
+      return;
+    }
+    LastDispatchedPanelState = panelStateKey;
+  });
+}
+
 export function getPanelState(): Promise<any> {
   if (!PanelState) {
     _panel_state_update();
@@ -163,21 +179,12 @@ export function getPanelState(): Promise<any> {
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   ["popstate", "location-changed", "historystatechanged"].forEach((event) => {
-    window.addEventListener(event, async () => {
-      PanelState = null;
-      _panel_state_update();
-      PanelState.then((panelState) => {
-        const panelStateKey = _panelStateKey(panelState);
-        if (panelStateKey === LastDispatchedPanelState) {
-          return;
-        }
-        LastDispatchedPanelState = panelStateKey;
-        document.dispatchEvent(
-          new CustomEvent("uix_update", { detail: { variablesChanged: true } })
-        );
-      });
-    });
+    window.addEventListener(event, async () => _refresh_panel_state(true));
   });
+  const coordinator = (window as any).uixCoordinator;
+  coordinator?.addEventListener("uix-config-update", () =>
+    _refresh_panel_state(LastDispatchedPanelState !== null)
+  );
   (function() {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
