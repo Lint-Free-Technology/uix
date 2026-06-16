@@ -53,7 +53,7 @@
                     "hass_throttle_enable": "When enabled, reduces the frequency at which the dashboard root re-renders when entity states change rapidly.",
                     "hass_throttle_ms": "Minimum time between entity state update re-renders. Only applies when throttling is enabled.",
                     "dialog_apply_after_show": "When enabled, UIX styles for dialogs are applied after the dialog's open animation completes rather than immediately. This can reduce visual flicker on slower devices.",
-                    "disable_hash_template_variable": "When enabled, hash (the part after # in the URL)  template variable is not available and hash changes do not trigger UIX template rebinds or UIX Forge updates."
+                    "disable_hash_template_variable": "When enabled, hash (the part after # in the URL) template variable is not available and hash changes do not trigger UIX template rebinds or UIX Forge updates."
                 }
             },
             "add_foundry": {
