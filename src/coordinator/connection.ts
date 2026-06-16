@@ -12,6 +12,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _foundries: Record<string, any> = {};
     private _hassThrottleOverride: { enable?: boolean; ms?: number } | null = null;
     private _dialogApplyAfterShowOverride: boolean | null = null;
+    private _disableHashTemplateVariableOverride: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -240,6 +241,13 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.dialog_apply_after_show ?? false;
     }
 
+    get disableHashTemplateVariable(): boolean {
+      if (this._disableHashTemplateVariableOverride !== null) {
+        return this._disableHashTemplateVariableOverride;
+      }
+      return this._data?.disable_hash_template_variable ?? false;
+    }
+
     /**
      * Set a client-side override for the hass throttle settings.
      *
@@ -288,6 +296,19 @@ export const ConnectionMixin = (SuperClass) => {
      */
     public setDialogApplyAfterShowOverride(value: boolean | null = null): void {
       this._dialogApplyAfterShowOverride = value;
+    }
+
+    /**
+     * Set a client-side override for hash template variable updates.
+     *
+     * This allows integrations to disable hash-based template updates for the
+     * current browser session without changing backend settings.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     */
+    public setDisableHashTemplateVariableOverride(value: boolean | null = null): void {
+      this._disableHashTemplateVariableOverride = value;
     }
   }
 

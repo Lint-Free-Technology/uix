@@ -4,10 +4,13 @@ var PanelState: Promise<any> | null = null;
 var LastDispatchedPanelState: string | null = null;
 
 function _panelStateKey(panelState: any): string {
-  return JSON.stringify({
-    hash: panelState?.hash || "",
+  const key: { panel: any; hash?: string } = {
     panel: panelState?.panel || {},
-  });
+  };
+  if (panelState?.hash !== undefined) {
+    key.hash = panelState?.hash || "";
+  }
+  return JSON.stringify(key);
 }
 
 async function _getPanel(document) {
@@ -88,6 +91,8 @@ async function _viewAttributes(panel) {
 }
 
 async function _current_panel_state() {
+  const coordinator = (window as any).uixCoordinator;
+  const includeHash = !coordinator?.disableHashTemplateVariable;
   const panel = await _getPanel(document);
   const panelAttributes = _panelAttributes(panel);
   const viewAttributes = await _viewAttributes(panel);
@@ -105,8 +110,7 @@ async function _current_panel_state() {
   if (viewAttributes.viewUrlPath) {
     fullUrlPath.push(viewAttributes.viewUrlPath);
   }
-  return {
-    hash: location.hash.substr(1) || "",
+  const panelState: any = {
     panel: {
       title: fullTitle.join(" - "),
       fullUrlPath: fullUrlPath.join("/"),
@@ -114,6 +118,10 @@ async function _current_panel_state() {
       ...viewAttributes,
     },
   };
+  if (includeHash) {
+    panelState.hash = location.hash.substr(1) || "";
+  }
+  return panelState;
 }
 
 function _panel_state_update() {
@@ -142,6 +150,22 @@ function _panel_state_update() {
   PanelState = new Promise((resolve) => resolve(update()));
 }
 
+function _refresh_panel_state(dispatchOnChange = true) {
+  _panel_state_update();
+  PanelState.then((panelState) => {
+    const panelStateKey = _panelStateKey(panelState);
+    const changed = panelStateKey !== LastDispatchedPanelState;
+    if (dispatchOnChange && changed) {
+      LastDispatchedPanelState = panelStateKey;
+      document.dispatchEvent(
+        new CustomEvent("uix_update", { detail: { variablesChanged: true } })
+      );
+    } else if (LastDispatchedPanelState === null) {
+      LastDispatchedPanelState = panelStateKey;
+    }
+  });
+}
+
 export function getPanelState(): Promise<any> {
   if (!PanelState) {
     _panel_state_update();
@@ -154,21 +178,14 @@ export function getPanelState(): Promise<any> {
 
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
+  const onPanelLocationChange = () => _refresh_panel_state(true);
   ["popstate", "location-changed", "historystatechanged"].forEach((event) => {
-    window.addEventListener(event, async () => {
-      PanelState = null;
-      _panel_state_update();
-      PanelState.then((panelState) => {
-        const panelStateKey = _panelStateKey(panelState);
-        if (panelStateKey === LastDispatchedPanelState) {
-          return;
-        }
-        LastDispatchedPanelState = panelStateKey;
-        document.dispatchEvent(
-          new CustomEvent("uix_update", { detail: { variablesChanged: true } })
-        );
-      });
-    });
+    window.addEventListener(event, onPanelLocationChange);
+  });
+  const coordinator = (window as any).uixCoordinator;
+  coordinator?.addEventListener("uix-config-update", () => {
+    const dispatchOnChange = LastDispatchedPanelState !== null;
+    _refresh_panel_state(dispatchOnChange);
   });
   (function() {
     const originalPushState = history.pushState;

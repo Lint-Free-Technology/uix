@@ -106,6 +106,7 @@ nav:
       - extras/index.md
       - extras/frontend-states-throttling.md
       - extras/dialog-styling-delay.md
+      - extras/hash-template-variable-updates.md
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix
