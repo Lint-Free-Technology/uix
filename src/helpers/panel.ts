@@ -7,7 +7,7 @@ function _panelStateKey(panelState: any): string {
   const key: { panel: any; hash?: string } = {
     panel: panelState?.panel || {},
   };
-  if (Object.prototype.hasOwnProperty.call(panelState ?? {}, "hash")) {
+  if (panelState?.hash !== undefined) {
     key.hash = panelState?.hash || "";
   }
   return JSON.stringify(key);
