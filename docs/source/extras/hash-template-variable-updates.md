@@ -6,7 +6,7 @@ description: Learn how to disable hash template variable updates and when to use
 
 By default, UIX exposes `hash` as a template variable and updates templates when the URL hash (`#...`) changes. UIX provides an option to disable this behavior to avoid hash-driven rebinds and Forge updates.
 
-## Enabling via the integration UI
+## Setting via the integration UI
 
 The option is **unset by default**. To set the option:
 
@@ -17,13 +17,13 @@ The option is **unset by default**. To set the option:
 
 The setting takes effect immediately across all connected browser sessions — no page reload required.
 
-## Behavior when enabled
+## Behavior when set
 
-When this option is enabled:
+When this option is set:
 
 - The `hash` template variable is **not available**.
 - Hash-only URL changes do **not** trigger UIX template rebinds.
 - Hash-only URL changes do **not** trigger UIX Forge updates.
 
 !!! warning
-    Any template that references `hash` will error while this option is enabled because `hash` is unavailable.
+    Any template that references `hash` without default will error while this option is set because `hash` variable is unavailable. If you wish to have this option both set and unset you will need to set a default if you use `hash` variable in templates. e.g. `{{ hash | default("") }}` or is using in more complex templates set a local variable and then use that variable. `{% set hashWithDefault = hash | default("") %}`
