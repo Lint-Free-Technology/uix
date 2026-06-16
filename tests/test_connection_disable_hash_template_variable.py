@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CONNECTION_TS = REPO_ROOT / "src" / "coordinator" / "connection.ts"
+CONNECTION_TS_PATH = REPO_ROOT / "src" / "coordinator" / "connection.ts"
 
 
 def test_disable_hash_template_variable_setting_and_override() -> None:
@@ -43,7 +43,7 @@ def test_disable_hash_template_variable_setting_and_override() -> None:
                 "const afterClear = inst.disableHashTemplateVariable;"
                 "process.stdout.write(JSON.stringify({ fromConfig, fromOverride, afterClear }));"
             ),
-            str(CONNECTION_TS),
+            str(CONNECTION_TS_PATH),
         ],
         cwd=REPO_ROOT,
         text=True,

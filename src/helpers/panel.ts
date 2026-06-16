@@ -4,7 +4,7 @@ var PanelState: Promise<any> | null = null;
 var LastDispatchedPanelState: string | null = null;
 
 function _panelStateKey(panelState: any): string {
-  const key: any = {
+  const key: { panel: any; hash?: string } = {
     panel: panelState?.panel || {},
   };
   if (Object.prototype.hasOwnProperty.call(panelState ?? {}, "hash")) {
