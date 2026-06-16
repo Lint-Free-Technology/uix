@@ -4,6 +4,9 @@ description: Learn how to disable hash template variable updates and when to use
 ---
 # Disable hash template variable and updates
 
+!!! info
+    Disabling of hash template variable and updates available in 7.5.0-beta.5
+
 By default, UIX exposes `hash` as a template variable and updates templates when the URL hash (`#...`) changes. UIX provides an option to disable this behavior to avoid hash-driven rebinds and Forge updates.
 
 ## Setting via the integration UI
