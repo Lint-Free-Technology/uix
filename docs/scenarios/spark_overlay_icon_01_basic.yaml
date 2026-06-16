@@ -1,0 +1,30 @@
+id: doc_spark_overlay_icon_basic
+description: "Doc image: Forge overlay icon spark (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-tile-card $ ha-tile-icon
+        icon: mdi:shimmer
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-basic.png
+  root: hui-tile-card
+  padding: 16

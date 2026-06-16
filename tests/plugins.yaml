@@ -18,3 +18,7 @@
 - repo: selvalt7/badge-horizontal-container-card
   asset: badge-horizontal-container-card.js
   filename: badge-horizontal-container-card.js
+
+- repo: Lint-Free-Technology/lovelace-template-entity-row
+  asset: template-entity-row.js
+  filename: template-entity-row.js

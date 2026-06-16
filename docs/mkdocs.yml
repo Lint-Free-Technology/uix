@@ -99,12 +99,14 @@ nav:
           - forge/sparks/search.md
           - forge/sparks/map.md
           - forge/sparks/lock.md
+          - forge/sparks/overlay-icon.md
           - forge/sparks/background.md
           - forge/sparks/theme.md
   - UIX Extras:
       - extras/index.md
       - extras/frontend-states-throttling.md
       - extras/dialog-styling-delay.md
+      - extras/hash-template-variable-updates.md
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix

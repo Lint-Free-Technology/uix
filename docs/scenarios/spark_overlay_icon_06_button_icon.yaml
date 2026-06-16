@@ -1,0 +1,40 @@
+id: doc_spark_overlay_icon_button_icon
+description: "Doc image: Forge overlay icon spark on button showing number of active lights (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-button-icon
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-button-card $ ha-state-icon $
+        icon: mdi:shimmer
+        icon_color: white
+        icon_background: "#22b922"
+    uix:
+      style: |
+        :host {
+          --uix-overlay-icon-border-radius: 50%;
+          --uix-overlay-icon-position: 20px;
+          --uix-overlay-icon-opacity: 0.9;
+        }
+  element:
+    show_name: true
+    show_icon: true
+    type: button
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-button-icon.png
+  root: hui-button-card
+  padding: 16

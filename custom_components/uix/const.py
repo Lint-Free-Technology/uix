@@ -17,6 +17,7 @@ CONF_HASS_THROTTLE_MS = "hass_throttle_ms"
 DEFAULT_HASS_THROTTLE_MS = 200
 
 CONF_DIALOG_APPLY_AFTER_SHOW = "dialog_apply_after_show"
+CONF_DISABLE_HASH_TEMPLATE_VARIABLE = "disable_hash_template_variable"
 
 WS_GET_FOUNDRIES = f"{DOMAIN}/get_foundries"
 WS_SET_FOUNDRY = f"{DOMAIN}/set_foundry"

@@ -1,0 +1,43 @@
+id: doc_spark_overlay_icon_button_popover_style
+description: "Doc image: Forge overlay icon spark on button with popover styling (overlay-icon.md)"
+view_path: doc-spark-overlay-icon-button-popover-style
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-button-card $ ha-card $
+        icon_size: 36
+        image_url: media-source://media_source/local/daniel_craig_cropped.jpg
+    uix:
+      style: |
+        :host {
+          --uix-overlay-icon-opacity: 1;
+          --uix-overlay-icon-border-radius: 50%;
+          --uix-overlay-icon-position: 0px -16px;
+        }
+  element:
+    type: button
+    entity: light.bed_light
+    uix:
+      style: |
+        ha-card {
+          overflow: visible !important;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/overlay-icon-button-popover-style.png
+  root: hui-button-card
+  padding: 16

@@ -25,6 +25,7 @@ from .const import (
     CONF_HASS_THROTTLE_MS,
     DEFAULT_HASS_THROTTLE_MS,
     CONF_DIALOG_APPLY_AFTER_SHOW,
+    CONF_DISABLE_HASH_TEMPLATE_VARIABLE,
     EVENT_FOUNDRIES_UPDATED,
 )
 
@@ -58,17 +59,20 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     throttle_enable = False
                     throttle_ms = DEFAULT_HASS_THROTTLE_MS
                     dialog_apply_after_show = False
+                    disable_hash_template_variable = False
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
                         file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
                         throttle_enable = entries[0].options.get(CONF_HASS_THROTTLE_ENABLE, False)
                         throttle_ms = int(entries[0].options.get(CONF_HASS_THROTTLE_MS, DEFAULT_HASS_THROTTLE_MS))
                         dialog_apply_after_show = entries[0].options.get(CONF_DIALOG_APPLY_AFTER_SHOW, False)
+                        disable_hash_template_variable = entries[0].options.get(CONF_DISABLE_HASH_TEMPLATE_VARIABLE, False)
                     send_update({
                         CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths),
                         CONF_HASS_THROTTLE_ENABLE: throttle_enable,
                         CONF_HASS_THROTTLE_MS: throttle_ms,
                         CONF_DIALOG_APPLY_AFTER_SHOW: dialog_apply_after_show,
+                        CONF_DISABLE_HASH_TEMPLATE_VARIABLE: disable_hash_template_variable,
                     })
                 except Exception:
                     _LOGGER.exception("Error pushing foundry update to client")
@@ -87,14 +91,17 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         throttle_enable = False
         throttle_ms = DEFAULT_HASS_THROTTLE_MS
         dialog_apply_after_show = False
+        disable_hash_template_variable = False
         if entries:
             throttle_enable = entries[0].options.get(CONF_HASS_THROTTLE_ENABLE, False)
             throttle_ms = int(entries[0].options.get(CONF_HASS_THROTTLE_MS, DEFAULT_HASS_THROTTLE_MS))
             dialog_apply_after_show = entries[0].options.get(CONF_DIALOG_APPLY_AFTER_SHOW, False)
+            disable_hash_template_variable = entries[0].options.get(CONF_DISABLE_HASH_TEMPLATE_VARIABLE, False)
         send_update({
             CONF_HASS_THROTTLE_ENABLE: throttle_enable,
             CONF_HASS_THROTTLE_MS: throttle_ms,
             CONF_DIALOG_APPLY_AFTER_SHOW: dialog_apply_after_show,
+            CONF_DISABLE_HASH_TEMPLATE_VARIABLE: disable_hash_template_variable,
         })
     
     @websocket_api.websocket_command(

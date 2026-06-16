@@ -10,7 +10,7 @@ UI eXtension also makes the following variables available for templates:
 - `config` - The entire configuration of the card, entity or badge - (`config.entity` may be of special interest)
 - `user` - The name of the currently logged in user
 - `browser` - The `browser_id` of your browser, if you have [browser_mod](https://github.com/thomasloven/hass-browser_mod) installed
-- `hash` - Whatever comes after `#` in the current URL. UIX watches for location changes through `location-changed` and `popstate` events so templates will be rebound with the updated `hash`
+- `hash` - Whatever comes after `#` in the current URL. UIX watches for location changes through `location-changed` and `popstate` events so templates will be rebound with the updated `hash` (this can be disabled in Integration Options → Performance settings via **Disable hash template variable and updates**, which also makes `hash` unavailable)
 - `panel` - various information about the panel in view, be it a lovelace dashboard or another panel view. `panel` is a dictionary containing the following panel attributes with example values shown.
   - `panel.fullUrlPath`: "uix/another-test-view"
   - `panel.panelComponentName`: "lovelace"

@@ -276,6 +276,7 @@ red-theme:
 - `uix-developer-tools`
 - `uix-grid-section`
 - `uix-calendar`
+- `uix-todo`
 - `uix-history`
 - `uix-states-history-charts`
 - `uix-drawer`
