@@ -11,36 +11,6 @@
 * Correct CSS var `--uix-overlay-icon-border-radius`. Add example for button card noting shadowRoot requirement. ([92dfffb](https://github.com/Lint-Free-Technology/uix/commit/92dfffb672814289a89a2786977c5569dfbfee3b))
 * Only force UIX updates when panel state has actually change. Avoids forge refreshes on more-info dialog history state changes ([#373](https://github.com/Lint-Free-Technology/uix/issues/373)) ([5d04b30](https://github.com/Lint-Free-Technology/uix/commit/5d04b30f844763f34f3634914b475b255bddcd9a)), closes [#372](https://github.com/Lint-Free-Technology/uix/issues/372)
 
-## [7.5.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.4...v7.5.0-beta.5) (2026-06-16)
-
-### ⭐ New Features
-
-* Add integration option to disable hash variable and hash-driven UIX template/Forge refreshes ([#376](https://github.com/Lint-Free-Technology/uix/issues/376)) ([bfa0814](https://github.com/Lint-Free-Technology/uix/commit/bfa0814beb4d72dae9190b67d2c4eac40c21d89c)), closes [#375](https://github.com/Lint-Free-Technology/uix/issues/375)
-
-## [7.5.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.3...v7.5.0-beta.4) (2026-06-15)
-
-### 🐞 Bug Fixes
-
-* Only force UIX updates when panel state has actually change. Avoids forge refreshes on more-info dialog history state changes ([#373](https://github.com/Lint-Free-Technology/uix/issues/373)) ([5d04b30](https://github.com/Lint-Free-Technology/uix/commit/5d04b30f844763f34f3634914b475b255bddcd9a)), closes [#372](https://github.com/Lint-Free-Technology/uix/issues/372)
-
-## [7.5.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.2...v7.5.0-beta.3) (2026-06-10)
-
-### ⭐ New Features
-
-* Support UIX styling by theme on todo panel. ([1c0b6a8](https://github.com/Lint-Free-Technology/uix/commit/1c0b6a8ecfd59353df3f859f0aa03476d94ba1a3))
-
-## [7.5.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0-beta.1...v7.5.0-beta.2) (2026-06-10)
-
-### 🐞 Bug Fixes
-
-* Correct CSS var `--uix-overlay-icon-border-radius`. Add example for button card noting shadowRoot requirement. ([92dfffb](https://github.com/Lint-Free-Technology/uix/commit/92dfffb672814289a89a2786977c5569dfbfee3b))
-
-## [7.5.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.4.2...v7.5.0-beta.1) (2026-06-09)
-
-### ⭐ New Features
-
-* UIX Forge Overlay icon spark  ([#369](https://github.com/Lint-Free-Technology/uix/issues/369)) ([98ad150](https://github.com/Lint-Free-Technology/uix/commit/98ad1508e12e4bd4cc75e3e2a3b05b5f5a4c555e)), closes [#368](https://github.com/Lint-Free-Technology/uix/issues/368)
-
 ## [7.4.2](https://github.com/Lint-Free-Technology/uix/compare/v7.4.1...v7.4.2) (2026-06-05)
 
 ### 🐞 Bug Fixes
