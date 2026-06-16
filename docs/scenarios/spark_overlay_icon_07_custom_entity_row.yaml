@@ -18,7 +18,7 @@ card:
         mold: row
         sparks:
           - type: overlay-icon
-            for: $
+            for: "$ #wrapper"
             entity: sensor.outside_temperature_battery
             state_color: true
             value: "10"

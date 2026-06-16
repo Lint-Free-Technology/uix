@@ -247,8 +247,8 @@ type: custom:uix-forge
 
 ### Overlay icon in custom:template-entity-row
 
-!!!tip
-    Sometimes the target may just be the element shadowRoot. To place an overlay icon in `custom:template-entity-row` use `for: $`. YOu will need to adjust the position to match the position applied automatically by the hui-generic-entity-row target adapter.
+!!! tip
+    Sometimes the target may just be the element shadowRoot or a div under the shadowRoot. To place an overlay icon in `custom:template-entity-row` use `for: $ #wrapper`. You will need to adjust the position to match the position applied automatically by the hui-generic-entity-row target adapter.
 
 ```yaml
 type: entities
@@ -258,7 +258,7 @@ type: entities
         mold: row
         sparks:
           - type: overlay-icon
-            for: $
+            for: "$ #wrapper"
             entity: sensor.outside_temperature_battery
             state_color: true
             value: "10"
