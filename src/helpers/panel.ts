@@ -4,10 +4,13 @@ var PanelState: Promise<any> | null = null;
 var LastDispatchedPanelState: string | null = null;
 
 function _panelStateKey(panelState: any): string {
-  return JSON.stringify({
-    hash: panelState?.hash || "",
+  const key: any = {
     panel: panelState?.panel || {},
-  });
+  };
+  if (Object.prototype.hasOwnProperty.call(panelState ?? {}, "hash")) {
+    key.hash = panelState?.hash || "";
+  }
+  return JSON.stringify(key);
 }
 
 async function _getPanel(document) {
@@ -88,6 +91,8 @@ async function _viewAttributes(panel) {
 }
 
 async function _current_panel_state() {
+  const coordinator = (window as any).uixCoordinator;
+  const includeHash = !coordinator?.disableHashTemplateVariable;
   const panel = await _getPanel(document);
   const panelAttributes = _panelAttributes(panel);
   const viewAttributes = await _viewAttributes(panel);
@@ -105,8 +110,7 @@ async function _current_panel_state() {
   if (viewAttributes.viewUrlPath) {
     fullUrlPath.push(viewAttributes.viewUrlPath);
   }
-  return {
-    hash: location.hash.substr(1) || "",
+  const panelState: any = {
     panel: {
       title: fullTitle.join(" - "),
       fullUrlPath: fullUrlPath.join("/"),
@@ -114,6 +118,10 @@ async function _current_panel_state() {
       ...viewAttributes,
     },
   };
+  if (includeHash) {
+    panelState.hash = location.hash.substr(1) || "";
+  }
+  return panelState;
 }
 
 function _panel_state_update() {

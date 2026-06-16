@@ -26,6 +26,7 @@ from .const import (
     CONF_HASS_THROTTLE_MS,
     DEFAULT_HASS_THROTTLE_MS,
     CONF_DIALOG_APPLY_AFTER_SHOW,
+    CONF_DISABLE_HASH_TEMPLATE_VARIABLE,
     EVENT_FOUNDRIES_UPDATED,
 )
 from .helpers import validate_foundry_file
@@ -151,6 +152,7 @@ class UixOptionsFlow(OptionsFlow):
                     CONF_HASS_THROTTLE_ENABLE: user_input[CONF_HASS_THROTTLE_ENABLE],
                     CONF_HASS_THROTTLE_MS: int(user_input[CONF_HASS_THROTTLE_MS]),
                     CONF_DIALOG_APPLY_AFTER_SHOW: user_input[CONF_DIALOG_APPLY_AFTER_SHOW],
+                    CONF_DISABLE_HASH_TEMPLATE_VARIABLE: user_input[CONF_DISABLE_HASH_TEMPLATE_VARIABLE],
                 },
             )
 
@@ -177,6 +179,10 @@ class UixOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_DIALOG_APPLY_AFTER_SHOW,
                         default=self._config_entry.options.get(CONF_DIALOG_APPLY_AFTER_SHOW, False),
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_DISABLE_HASH_TEMPLATE_VARIABLE,
+                        default=self._config_entry.options.get(CONF_DISABLE_HASH_TEMPLATE_VARIABLE, False),
                     ): BooleanSelector(),
                 }
             ),
