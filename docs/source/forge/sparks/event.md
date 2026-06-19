@@ -26,17 +26,18 @@ When the event spark is active, an `event` key is added to the `uixForge` templa
 | `uixForge.event.<key>` | Data keys from events matching `forge_id`, spread directly into `uixForge.event`. |
 | `uixForge.event.<other_id>.<key>` | Data from events matching an ID listed in `other_forge_ids`, nested under that ID. |
 
-Data accumulates across events — each new event is deep-merged into the existing state.
+By default, data accumulates across events — each new event is deep-merged into the existing state. To have the event data replaced use `replace: true`.
 
 ## Firing an event
 
-Any Home Assistant element that supports `tap_action` can fire an event using `action: fire-dom-event`. Add a `uix_forge` key alongside `action` containing a list of forge event objects:
+Any Home Assistant element that supports `tap_action` can fire an event using `action: fire-dom-event`. Add a `uix_forge` key alongside `action` containing a list of forge event objects.
 
 ```yaml
 tap_action:
   action: fire-dom-event
   uix_forge:
     - forge_id: my_card
+      # replace: false
       data:
         selected: living_room
 ```
