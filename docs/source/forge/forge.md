@@ -10,7 +10,7 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 - **Add sparks** — self-contained behaviours that augment the forged element.
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
-!!! tip "Warp in UIX Forge"
+!!! tip "Wrap in UIX Forge"
     Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element, card-feature to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element.
 
 ## Basic structure
@@ -662,7 +662,7 @@ features_position: inline
 
 ![Inline card feature example](../assets/page-assets/forge/card-feature-inline.png)
 
-If you are using multiple card features in bottom position and using `hidden` template, you will need to use auto row height to prevent the host card occupying the additional space when the card feature is hidden.
+If you are using multiple card features in bottom position and using `hidden` template, you will need to use auto row height to prevent the host card from occupying the additional space when the card feature is hidden.
 
 ```yaml
 type: tile

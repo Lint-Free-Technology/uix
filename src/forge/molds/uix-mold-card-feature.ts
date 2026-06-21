@@ -5,7 +5,7 @@ export class UixForgeMoldCardFeature extends UixForgeMoldBase {
   type = "card-feature";
 
   isError(): boolean {
-    return (this.forge.forgedElement as HuiCard)?._element?.tagName?.toLowerCase() === "hui-error-card" ? true : false;
+    return (this.forge.forgedElement as HuiCardFeature)?._element?.tagName?.toLowerCase() === "hui-error-card" ? true : false;
   }
 
   templateVariables() {

@@ -312,14 +312,3 @@ export interface HuiCardFeature extends LovelaceElement {
     position?: string;
     _element?: LovelaceElement;
 }
-
-export interface UixForgeMold {
-    type: string;
-    refresh(path: UixForgeConfigPath): void;
-    connectedCallback?(): void;
-    disconnectedCallback?(): void;
-    hidden?(): boolean;
-    getGridOptions?(): Record<string, any>;
-    isPreview?(): boolean;
-    cardHelpers?(): Promise<any>;
-}

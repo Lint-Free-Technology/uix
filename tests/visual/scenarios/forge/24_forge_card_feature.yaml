@@ -37,5 +37,5 @@ assertions:
     selector: "uix-forge"
 
   - type: snapshot
-    name: "27_forge_card_feature_bottom_hidden.png"
+    name: "27_forge_card_feature_bottom_hidden"
     threshold: 0.02
