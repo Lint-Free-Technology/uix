@@ -80,8 +80,11 @@ export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: 
 }
 
 export const UIX_FORGE_ARRAY_MERGE_STRATEGIES = {
-  sparks: "type",
-};
+  sparks: {
+    idKeys: ["id", "spark_id"],
+    requireTypeMatch: true,
+  },
+} as const;
 
 export interface UixForgeForge {
     type?: string;

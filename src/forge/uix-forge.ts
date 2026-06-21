@@ -14,54 +14,44 @@ declare global {
 }
 
 function _mergeFoundryConfig(foundry: any, local: any, key?: string): any {
-  if (!foundry) return local ?? {};
-  if (!local) return foundry ?? {};
+  if (foundry === undefined || foundry === null) return local ?? {};
+  if (local === undefined || local === null) return foundry ?? {};
 
   if (Array.isArray(foundry) && Array.isArray(local)) {
-    // An explicit empty list should override/clear the foundry list.
+    // Explicit local empty array clears inherited entries.
     if (local.length === 0) return [];
-    const mergeKey = key && UIX_FORGE_ARRAY_MERGE_STRATEGIES[key];
-      const result: any[] = [];
-      const matchedFvIndices = new Set<number>();
 
-      const getIdentifier = (item: any, idKey: string) => {
-        if (item && typeof item === "object" && !Array.isArray(item)) {
-          if (idKey in item && item[idKey] !== undefined && item[idKey] !== null) {
-            return item[idKey];
-          }
-        }
-        return null;
+    const mergeKey = key && UIX_FORGE_ARRAY_MERGE_STRATEGIES[key];
+    if (mergeKey) {
+      const result: any[] = [...foundry];
+      const strategy = typeof mergeKey === "string"
+        ? { idKeys: [mergeKey], requireTypeMatch: false }
+        : mergeKey;
+
+      const getIds = (item: any, idKeys: string[]): Array<{ key: string; value: any }> => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+        return idKeys
+          .filter((idKey) => idKey in item && item[idKey] !== undefined && item[idKey] !== null)
+          .map((idKey) => ({ key: idKey, value: item[idKey] }));
       };
 
-      for (const lv_item of local) {
-        const lv_id = getIdentifier(lv_item, mergeKey);
-        if (lv_id) {
-          let foundIndex = -1;
-          for (let i = 0; i < foundry.length; i++) {
-            if (matchedFvIndices.has(i)) continue;
-            const fv_item = foundry[i];
-            const fv_id = getIdentifier(fv_item, mergeKey);
-            if (fv_id && fv_id === lv_id) {
-              foundIndex = i;
-              break;
-            }
-          }
-
-          if (foundIndex !== -1) {
-            result.push(_mergeFoundryConfig(foundry[foundIndex], lv_item, key));
-            matchedFvIndices.add(foundIndex);
-          } else {
-            result.push(lv_item);
-          }
-        } else {
-          result.push(lv_item);
+      for (const localItem of local) {
+        const localIds = getIds(localItem, strategy.idKeys);
+        if (localIds.length === 0) {
+          result.push(localItem);
+          continue;
         }
-      }
 
-      // Add all unmatched foundry items
-      for (let i = 0; i < foundry.length; i++) {
-        if (!matchedFvIndices.has(i)) {
-          result.push(foundry[i]);
+        const foundIndex = result.findIndex((foundryItem) => {
+          if (!foundryItem || typeof foundryItem !== "object" || Array.isArray(foundryItem)) return false;
+          if (strategy.requireTypeMatch && foundryItem.type !== localItem.type) return false;
+          return localIds.some(({ key: idKey, value }) => foundryItem[idKey] === value);
+        });
+
+        if (foundIndex === -1) {
+          result.push(localItem);
+        } else {
+          result[foundIndex] = _mergeFoundryConfig(result[foundIndex], localItem, key);
         }
       }
 

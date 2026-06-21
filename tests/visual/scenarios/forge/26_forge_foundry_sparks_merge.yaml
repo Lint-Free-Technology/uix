@@ -1,5 +1,5 @@
 id: forge_foundry_sparks_merge
-description: "UIX Forge correctly merges sparks arrays from both a base foundry and local config"
+description: "UIX Forge merges foundry sparks using stable ids, supports duplicates by type, and preserves event reactivity"
 view_path: forge-foundry-sparks-merge
 
 setup:
@@ -15,15 +15,24 @@ setup:
       forge:
         mold: card
         sparks:
-          - type: tooltip
+          - id: merged-event
+            type: event
+            forge_id: "merge_event_target"
+          - id: tile-tooltip
+            type: tooltip
             for: hui-tile-card
             content: "Foundry Tooltip Original"
-          - type: button
+          - id: foundry-toggle
+            type: button
             after: "hui-tile-card $ ha-tile-icon"
             label: "Toggle"
-            entity: "light.bed_light"
             tap_action:
-              action: toggle
+              action: fire-dom-event
+              uix_forge:
+                - forge_id: merge_event_target
+                  data:
+                    source: "foundry"
+                    clicks: 1
       element:
         type: tile
         entity: "light.bed_light"
@@ -33,18 +42,42 @@ card:
   foundry: uix-test-foundry-sparks-merge
   forge:
     sparks:
-      - type: tooltip
+      - id: tile-tooltip
+        type: tooltip
         content: "Foundry Tooltip Overridden!"
-      - type: attribute
+      - id: local-state-button
+        type: button
+        after: "hui-tile-card $ div[data-uix-forge-button-id]:nth-of-type(1)"
+        label: "Set State"
+        tap_action:
+          action: fire-dom-event
+          uix_forge:
+            - forge_id: merge_event_target
+              data:
+                status: "armed"
+      - id: local-attribute
+        type: attribute
         for: hui-tile-card
         attribute: "data-local-attribute-ok"
         action: replace
-        value: "indeed"
+        value: "{{ uixForge.event.clicks | default(0) }}-{{ uixForge.event.status | default('none') }}"
 
 interactions:
   - type: hover
     selector: uix-forge
     settle_ms: 800
+  - type: click
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(1) ha-button"
+    settle_ms: 500
+  - type: click
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(2) ha-button"
+    settle_ms: 500
 
 assertions:
   # Check overridden tooltip spark from foundry is active and contains local content
@@ -62,19 +95,33 @@ assertions:
     root:
       - "uix-forge"
       - "hui-tile-card"
-    selector: "ha-button"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(1) ha-button"
 
   - type: text_equals
     root:
       - "uix-forge"
       - "hui-tile-card"
-    selector: "ha-button"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(1) ha-button"
     expected: "Toggle"
 
-  # Check new attribute spark from local is active
+  # Check appended local button spark (same type as foundry button) is active
+  - type: element_present
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(2) ha-button"
+
+  - type: text_equals
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "div[data-uix-forge-button-id]:nth-of-type(2) ha-button"
+    expected: "Set State"
+
+  # Check event spark state is reflected in templated attribute after both clicks
   - type: element_present
     root: "uix-forge"
-    selector: "hui-tile-card[data-local-attribute-ok='indeed']"
+    selector: "hui-tile-card[data-local-attribute-ok='1-armed']"
 
 teardown:
   - type: delete_foundry
