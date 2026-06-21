@@ -9,6 +9,10 @@ setup:
     data:
       entity_id: light.bed_light
       brightness_pct: 50
+      rgb_color:
+        - 255
+        - 137
+        - 14
 
 card:
   type: tile
