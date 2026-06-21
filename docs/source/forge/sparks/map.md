@@ -148,7 +148,7 @@ When active, the spark:
 
 1. Renders a horizontal `ha-slider` control in a capsule-shaped overlay container.
 2. If `tour` is also active and at the default position, the slider is automatically shifted leftwards to prevent visual overlapping.
-3. Automatically sets, clamps, and updates `hui-map-card` `_config.hoursToShow` based on slider drags and releases to fetch history records in real-time.
+3. Automatically sets, clamps, and updates `hui-map-card` `_config.hours_to_show` based on slider drags and releases to fetch history records in real-time.
 4. Smoothly preserves the user's selected value across template-driven forge re-renders.
 
 !!! note
