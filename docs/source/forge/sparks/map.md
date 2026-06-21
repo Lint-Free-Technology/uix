@@ -5,13 +5,12 @@ icon: material/map
 
 # :material-map: Map spark
 
-
-The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports three modes:
+The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports four modes:
 
 - **Memory mode** (`memory: true`): Captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved. Without it, every forge template update causes the map to reset to its default zoom level and centre position.
 - **Fit map mode** (`fit_map: true`): Fits the map view when map card does not auto fit on load when used in custom cards which may hide the map initially. e.g. `custom: auto-entities`.
 - **Tour mode** (`tour: true | object`): Automatically moves the map between a list of points of interest. A pause/play button is injected into the map. When `tour: true` all defaults are used; pass an object to customise behaviour.
-
+- **Hours to show slider mode** (`hours_to_show: true | object`): Injects an interactive `ha-slider` overlay into the map allowing users to adjust the hours of history loaded and rendered in real-time.
 
 ## Basic usage
 
@@ -36,6 +35,7 @@ element:
 | `memory` | boolean | false | Save/restore zoom and centre before/after each update. |
 | `fit_map` | boolean | false | Fit map view to all entities once map is visible (useful for cards hidden on load). |
 | `tour` | boolean or object | false | Enable tour mode. `true` uses all defaults; pass an object to customise (see below). |
+| `hours_to_show` | boolean or object | false | Enable hours to show slider overlay. `true` uses all defaults; pass an object to customise (see below). |
 
 ### Tour sub-keys
 
@@ -57,6 +57,16 @@ Each `poi` list entry may contain:
 | `longitude` | number | Longitude (required when `entity` is not set). |
 | `zoom` | number | Per-POI zoom override. |
 
+### Hours to Show sub-keys
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `min` | number | `0` | Minimum hours to show on the slider. |
+| `max` | number | `24` | Maximum hours to show on the slider. |
+| `step` | number | `1` | Increment step size of the slider. |
+| `position` | object | `{bottom: 10px, right: 10px}` | CSS position of the slider capsule. Accepts `top`, `bottom`, `left`, and `right` keys (numbers are treated as pixels). |
+| `tooltip_distance` | number | `20` | Distance in pixels of slider tooltip away from thumb. |
+
 ### Tour CSS variables
 
 The pause/play button can be styled using CSS variables placed on the `ha-card` or any ancestor:
@@ -70,6 +80,39 @@ The pause/play button can be styled using CSS variables placed on the `ha-card` 
 | `--uix-map-tour-icon-height` | `auto` | Button height. |
 | `--uix-map-tour-icon-border-radius` | `9999px` | Button border radius (pill by default). |
 | `--uix-map-tour-icon-z-index` | `1000` | Button z-index (Leaflet controls use 1000). |
+
+### Hours to Show CSS variables
+
+The history duration slider can be styled using CSS variables placed on the `ha-card` or any ancestor:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `--uix-map-slider-background` | `rgba(255,255,255,0.8)` | Background color of slider container. |
+| `--uix-map-slider-text-color` | `var(--primary-text-color, #212121)` | Color of the duration label next to the slider. |
+| `--uix-map-slider-width` | `100px` | Explicit width of the slider component. |
+| `--uix-map-slider-border-radius` | `20px` | Rounded corner styling for the background capsule. |
+| `--uix-map-slider-padding` | `4px 12px` | Padding of the capsule container. |
+| `--uix-map-slider-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
+| `--uix-map-slider-z-index` | `1000` | Controls overlay depth of the slider capsule. |
+| `--uix-map-slider-label-min-width` | `28px` | Minimum width of the duration label. |
+| `--uix-map-slider-thumb-size` | *(unset)* | Height and width of the slider thumb. |
+| `--uix-map-slider-thumb-height` | `16px` | Height of the slider thumb component structure (defaults to thumb-size if set). |
+| `--uix-map-slider-thumb-width` | `16px` | Width of the slider thumb component structure (defaults to thumb-size if set). |
+| `--uix-map-slider-track-size` | `4px` | Thickness of the slider track. |
+| `--uix-map-slider-track-color` | `var(--disabled-color)` | Background base track color. |
+| `--uix-map-slider-indicator-color` | `var(--primary-color)` | Color of the active indicator bar. |
+| `--uix-map-slider-thumb-color` | `var(--uix-map-slider-indicator-color)` | Color of the circular slider thumb. |
+| `--uix-map-slider-thumb-hover-opacity` | `0.08` | Hover opacity surrounding the thumb. |
+| `--uix-map-slider-thumb-pressed-opacity` | `0.12` | Opacity of thumb halo while active/pressed. |
+| `--uix-map-slider-thumb-box-shadow` | `inherit` | Custom shadow styling applied to the interactive thumb item. |
+| `--uix-map-slider-tooltip-color` | `var(--primary-text-color)` | Text color inside the popup thumb tooltip. |
+| `--uix-map-slider-tooltip-font-size` | `var(--ha-font-size-s)` | Font size of text inside the tooltip. |
+| `--uix-map-slider-tooltip-font-weight` | `var(--ha-font-weight-normal)` | Font thickness of elements inside tooltip. |
+| `--uix-map-slider-tooltip-background-color` | `var(--secondary-background-color)` | Background color of popup tooltip bubble. |
+| `--uix-map-slider-tooltip-border-radius` | `var(--ha-border-radius-sm)` | Corner rounding of tooltip bubble. |
+| `--uix-map-slider-tooltip-border-width` | `0px` | Border thickness of tooltip. |
+| `--uix-map-slider-tooltip-border-color` | `currentColor` | Border color of tooltip bubble. |
+| `--uix-map-slider-tooltip-border-style` | `none` | Border line style. |
 
 ## How it works
 
@@ -99,8 +142,17 @@ After the map is ready (and after `fit_map` completes if both are configured), t
 
 When `memory: true` and `tour` are both active, hass-update memory restores are suppressed while the tour is playing so that the tour animation is not interrupted.
 
+**Hours to show slider mode:**
+
+When active, the spark:
+
+1. Renders a horizontal `ha-slider` control in a capsule-shaped overlay container.
+2. If `tour` is also active and at the default position, the slider is automatically shifted leftwards to prevent visual overlapping.
+3. Automatically sets, clamps, and updates `hui-map-card` `_config.hours_to_show` based on slider drags and releases to fetch history records in real-time.
+4. Smoothly preserves the user's selected value across template-driven forge re-renders.
+
 !!! note
-    The spark targets the `hui-map-card` element inside the forged element and then the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), none of the modes have any effect.
+    The spark targets the `hui-map-card` element inside the forged element as well as the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), none of the modes have any effect.
 
 ## Examples
 
@@ -209,3 +261,25 @@ element:
       }
 ```
 
+### Hours to show history slider
+
+Enable a customizable history duration slider to load between 0 (shows all points) and 48 hours of tracker data on the map:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: map
+      hours_to_show:
+        min: 0
+        max: 48
+        step: 2
+        position:
+          bottom: 15px
+          left: 15px
+element:
+  type: map
+  entities:
+    - device_tracker.phone
+```

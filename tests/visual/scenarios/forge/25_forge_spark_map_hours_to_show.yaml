@@ -1,0 +1,70 @@
+id: forge_spark_map_hours_to_show
+description: "Map spark in hours_to_show mode renders an interactive slider control"
+view_path: forge-spark-map-hours-to-show
+
+setup:
+  - type: mock_history
+    entity_id: device_tracker.uix_test_person_slider
+    points:
+      - lat: 51.5200
+        lng: -0.1300
+        age_hours: 12
+      - lat: 51.5210
+        lng: -0.1290
+        age_hours: 6
+      - lat: 51.5220
+        lng: -0.1280
+        age_hours: 2
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_test_person_slider
+      gps:
+        - 51.5220
+        - -0.1280
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        hours_to_show:
+          min: 0
+          max: 48
+          step: 2
+  element:
+    type: map
+    hours_to_show: 3
+    entities:
+      - entity: device_tracker.uix_test_person_slider
+
+interactions:
+  - type: wait
+    ms: 1000
+  - type: click
+    root: ["hui-map-card", "ha-map"]
+    selector: "ha-slider"
+    settle_ms: 2000
+
+assertions:
+  - type: element_present
+    root: ["hui-map-card", "ha-map"]
+    selector: "div.uix-map-slider-control"
+
+  - type: element_present
+    root: ["hui-map-card", "ha-map"]
+    selector: "ha-slider"
+
+  - type: text_equals
+    root: ["hui-map-card", "ha-map"]
+    selector: ".uix-map-slider-control span"
+    expected: "24h"
+
+  - type: snapshot
+    name: "28_forge_spark_map_hours_to_show"
+    threshold: 0.05
