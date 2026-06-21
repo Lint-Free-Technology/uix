@@ -942,6 +942,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._sliderEl.max = this._hoursToShowConfig.max;
       this._sliderEl.step = this._hoursToShowConfig.step;
       this._sliderEl.value = this._hoursToShowValue;
+
+      const tooltip = this._sliderEl.shadowRoot?.querySelector("wa-tooltip");
+      if (tooltip) {
+        tooltip.setAttribute("distance", String(this._hoursToShowConfig.tooltip_distance));
+      }
+
       this._updateLabelText();
     }
   }
