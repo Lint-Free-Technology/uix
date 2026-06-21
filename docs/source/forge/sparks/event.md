@@ -251,3 +251,44 @@ element:
     - All string values in the `element` config are processed as templates, so `uixForge.event` is available throughout the element config.
     - If no matching event has been received yet, `uixForge.event` will be empty (or absent) — use `| default(...)` in your templates to handle this gracefully.
     - Data from successive events is **deep-merged**, not replaced. Sending a second event with `{ forge_id: "my_card", data: { count: 2 } }` after a first one with `{ score: 10 }` results in `uixForge.event` containing both `count` and `score`.
+
+### Using a shortcut badge to control expander-card states
+
+This example is used as a badge in dashboard header and will toggle all `custom:expander-card` cards which have `expander-card-id` of `id_of_target_cards`.
+
+```yaml
+  - type: custom:uix-forge
+    forge:
+      mold: badge
+      billets:
+        expander_card_id: id_of_target_cards
+        expand_txt: Expand All
+        collapse_txt: Collapse All
+      macros:
+        expanded:
+          returns: true
+          template: "{% do returns(uixForge.event.details | default(false)) %}"
+      sparks:
+        - type: event
+          forge_id: "{{expander_card_id}}"
+        - type: tooltip
+          content: "{{ collapse_txt if expanded() else expand_txt }}"
+    element:
+      type: shortcut
+      text: " "
+      icon: >-
+        {{ 'mdi:collapse-all-outline' if expanded() else
+        'mdi:expand-all-outline' }}
+      tap_action:
+        action: fire-dom-event
+        expander-card:
+          data:
+            expander-card-id: "{{expander_card_id}}"
+            action: "{{ 'close' if expanded() else 'open' }}"
+        uix_forge:
+          - forge_id: "{{expander_card_id}}"
+            data:
+              details: "{{ not expanded() }}"
+```
+
+![Badge using event spark to toggle expander-cards](../../assets/page-assets/forge/sparks/event_badge_example.gif)
