@@ -804,7 +804,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         --thumb-height: var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-height, 16px));
         --thumb-width: var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-width, 16px));
         --track-size: var(--uix-map-slider-track-size, var(--ha-slider-track-size, 4px));
-        padding: var(--uix-map-slider-padding, 0 calc(var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-width, 16px)) / 2));
+        padding: 0 calc(var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-width, 16px)) / 2);
       }
       ha-slider::part(track) {
         background: var(--uix-map-slider-track-color, var(--ha-slider-track-color, var(--disabled-color)));
