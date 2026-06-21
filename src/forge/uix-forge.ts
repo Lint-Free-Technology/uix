@@ -709,8 +709,13 @@ export class UixForge extends LitElement {
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isCardFeature()) {
-      (this.forgedElement as HuiCardFeature)._element = undefined;
-      (this.forgedElement as HuiCardFeature).feature = this.forgedElementConfig;
+      const cardFeature = this.forgedElement as HuiCardFeature;
+      cardFeature._element = undefined;
+      cardFeature.feature = this.forgedElementConfig;
+      cardFeature.hass = this.hass;
+      cardFeature.color = this.color;
+      cardFeature.position = this.position;
+      cardFeature.context = this.context;
       this.refreshForge(["hidden"]);
     }
   }
