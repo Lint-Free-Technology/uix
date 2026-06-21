@@ -888,8 +888,17 @@ export class UixForge extends LitElement {
     if (_changedProperties.has("templatesReady")) {
       this.refreshForgedElement([]);
     }
-    if (this._mold.isCardFeature() && this._mold.isPreview()) {
-      this.refreshForgedElement(["hidden"]);
+    if (this._mold.isCardFeature()) {
+      if (
+        _changedProperties.has("context") ||
+        _changedProperties.has("color") ||
+        _changedProperties.has("position")
+      ) {
+        this.refreshForgeTemplates();
+      }
+      if (this._mold.isPreview()) {
+        this.refreshForgedElement(["hidden"]);
+      }
     }
     this._sparkController.updated(_changedProperties);
   }
