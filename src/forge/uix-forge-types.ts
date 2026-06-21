@@ -79,6 +79,10 @@ export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: 
   };
 }
 
+export const UIX_FORGE_ARRAY_MERGE_STRATEGIES = {
+  sparks: "type",
+};
+
 export interface UixForgeForge {
     type?: string;
     mold?: string;

@@ -1,0 +1,81 @@
+id: forge_foundry_sparks_merge
+description: "UIX Forge correctly merges sparks arrays from both a base foundry and local config"
+view_path: forge-foundry-sparks-merge
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+  - type: add_foundry
+    name: uix-test-foundry-sparks-merge
+    config:
+      forge:
+        mold: card
+        sparks:
+          - type: tooltip
+            for: hui-tile-card
+            content: "Foundry Tooltip Original"
+          - type: button
+            after: "hui-tile-card $ ha-tile-icon"
+            label: "Toggle"
+            entity: "light.bed_light"
+            tap_action:
+              action: toggle
+      element:
+        type: tile
+        entity: "light.bed_light"
+
+card:
+  type: custom:uix-forge
+  foundry: uix-test-foundry-sparks-merge
+  forge:
+    sparks:
+      - type: tooltip
+        content: "Foundry Tooltip Overridden!"
+      - type: attribute
+        for: hui-tile-card
+        attribute: "data-local-attribute-ok"
+        action: replace
+        value: "indeed"
+
+interactions:
+  - type: hover
+    selector: uix-forge
+    settle_ms: 800
+
+assertions:
+  # Check overridden tooltip spark from foundry is active and contains local content
+  - type: element_present
+    root: uix-forge
+    selector: wa-tooltip
+
+  - type: text_startswith
+    root: uix-forge
+    selector: wa-tooltip
+    expected: "Foundry Tooltip Overridden!"
+
+  # Check preserved button spark from foundry is active
+  - type: element_present
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "ha-button"
+
+  - type: text_equals
+    root:
+      - "uix-forge"
+      - "hui-tile-card"
+    selector: "ha-button"
+    expected: "Toggle"
+
+  # Check new attribute spark from local is active
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-tile-card[data-local-attribute-ok='indeed']"
+
+teardown:
+  - type: delete_foundry
+    name: uix-test-foundry-sparks-merge

@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig, UIX_FORGE_ARRAY_MERGE_STRATEGIES } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -13,24 +13,85 @@ declare global {
   }
 }
 
-function _mergeFoundryConfig(foundry: any, local: any): any {
+function _mergeFoundryConfig(foundry: any, local: any, key?: string): any {
   if (!foundry) return local ?? {};
   if (!local) return foundry ?? {};
+
+  if (Array.isArray(foundry) && Array.isArray(local)) {
+    const mergeKey = key && UIX_FORGE_ARRAY_MERGE_STRATEGIES[key];
+    if (mergeKey) {
+      const result: any[] = [];
+      const matchedFvIndices = new Set<number>();
+
+      const getIdentifier = (item: any, idKey: string) => {
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          if (idKey in item && item[idKey] !== undefined && item[idKey] !== null) {
+            return item[idKey];
+          }
+        }
+        return null;
+      };
+
+      for (const lv_item of local) {
+        const lv_id = getIdentifier(lv_item, mergeKey);
+        if (lv_id) {
+          let foundIndex = -1;
+          for (let i = 0; i < foundry.length; i++) {
+            if (matchedFvIndices.has(i)) continue;
+            const fv_item = foundry[i];
+            const fv_id = getIdentifier(fv_item, mergeKey);
+            if (fv_id && fv_id === lv_id) {
+              foundIndex = i;
+              break;
+            }
+          }
+
+          if (foundIndex !== -1) {
+            result.push(_mergeFoundryConfig(foundry[foundIndex], lv_item, key));
+            matchedFvIndices.add(foundIndex);
+          } else {
+            result.push(lv_item);
+          }
+        } else {
+          result.push(lv_item);
+        }
+      }
+
+      // Add all unmatched foundry items
+      for (let i = 0; i < foundry.length; i++) {
+        if (!matchedFvIndices.has(i)) {
+          result.push(foundry[i]);
+        }
+      }
+
+      return result;
+    } else {
+      return local;
+    }
+  }
+
+  if (
+    typeof foundry !== "object" ||
+    typeof local !== "object" ||
+    Array.isArray(foundry) ||
+    Array.isArray(local)
+  ) {
+    return local;
+  }
+
   const result = { ...foundry };
-  for (const key of Object.keys(local)) {
-    const lv = local[key];
-    const fv = result[key];
+  for (const k of Object.keys(local)) {
+    const lv = local[k];
+    const fv = result[k];
     if (
       lv !== null &&
       typeof lv === "object" &&
-      !Array.isArray(lv) &&
       fv !== null &&
-      typeof fv === "object" &&
-      !Array.isArray(fv)
+      typeof fv === "object"
     ) {
-      result[key] = _mergeFoundryConfig(fv, lv);
+      result[k] = _mergeFoundryConfig(fv, lv, k);
     } else {
-      result[key] = lv;
+      result[k] = lv;
     }
   }
   return result;
