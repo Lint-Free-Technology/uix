@@ -1,0 +1,41 @@
+id: forge_card_feature_bottom_hidden
+description: "UIX Forge wrapping a card feature with the feature hidden when the light is off, positioned at the bottom of a tile card"
+view_path: forge-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness_pct: 50
+
+card:
+  type: tile
+  entity: light.bed_light
+  grid_options:
+    columns: 12
+    rows: auto
+  features:
+    - type: toggle
+    - type: custom:uix-forge
+      entity: light.bed_light
+      forge:
+        mold: card-feature
+        hidden: |
+          {{ is_state(context.entity_id, "off") }}
+      element:
+        type: light-brightness
+  features_position: bottom
+
+assertions:
+  # uix-forge must be in the DOM
+  - type: element_present
+    root: 
+      - hui-card-features
+      - hui-card-feature:nth-child(2)
+    selector: "uix-forge"
+
+  - type: snapshot
+    name: "27_forge_card_feature_bottom_hidden.png"
+    threshold: 0.02

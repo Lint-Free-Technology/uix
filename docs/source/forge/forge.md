@@ -11,7 +11,7 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
 !!! tip "Warp in UIX Forge"
-    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element.
+    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element, card-feature to easily wrap the existing elements's code in UIX Forge to quickly get started form a base element.
 
 ## Basic structure
 
@@ -32,7 +32,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -642,6 +642,48 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+## Card features
+
+Use `mold: card-feature` when using UIX Forge as a card feature. Templates will have an additional `context` variable available which is provided by the host card. `context` usually includes `entity_id` which is the entity set on the host card.
+
+```yaml
+type: tile
+entity: light.bed_light
+features:
+  - type: custom:uix-forge
+    forge:
+      mold: card-feature
+    element:
+      type: |
+        {{ "light-brightness" if is_state(context.entity_id, "on") else "toggle" }}
+features_position: inline
+```
+
+![Inline card feature example](../assets/page-assets/forge/card-feature-inline.png)
+
+If you are using multiple card features in bottom position and using `hidden` template, you will need to use auto row height to prevent the host card occupying the additional space when the card feature is hidden.
+
+```yaml
+type: tile
+entity: light.bed_light
+grid_options:
+  columns: 12
+  rows: auto
+features:
+  - type: toggle
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card-feature
+      hidden: |
+        {{ is_state(context.entity_id, "off") }}
+    element:
+      type: light-brightness
+features_position: bottom
+```
+
+![Bottom hidden template card feature example](../assets/page-assets/forge/card-feature-bottom-hidden.png)
 
 ## Cross-context molds
 

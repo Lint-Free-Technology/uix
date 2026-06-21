@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -42,6 +42,10 @@ export class UixForge extends LitElement {
   @property({attribute: false}) layout: boolean;
   @property({attribute: false}) connectedWhileHidden: boolean;
   @property({attribute: false}) lovelace: any;
+  // Properties passed through by hui-card-feature for card-feature mold
+  @property({attribute: false}) context: any;
+  @property({attribute: false}) color: any;
+  @property({attribute: false}) position: any;
   @state() config: UixForgeConfig;
   @state() forgedElement: LovelaceElement;
   @state() templatesReady: boolean;
@@ -546,7 +550,7 @@ export class UixForge extends LitElement {
         bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
-          { config: this.config, uixForge: this._sparkController.templateVariables() },
+          { config: this.config, uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
         base.setBinding(bindingPath, callback);
@@ -634,7 +638,8 @@ export class UixForge extends LitElement {
           forge: this.forgeConfig, 
           element: this.forgedElementConfig 
         }, 
-        uixForge: this._sparkController.templateVariables() 
+        uixForge: this._sparkController.templateVariables(),
+        ...this._mold.templateVariables() 
       },
       true,
       "type-custom-uix-forge"
@@ -701,6 +706,11 @@ export class UixForge extends LitElement {
     if (this._mold.isFooter()) {
       (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
       this.forgedElement.hass = this.hass;
+      this.refreshForge(["hidden"]);
+    }
+    if (this._mold.isCardFeature()) {
+      (this.forgedElement as HuiCardFeature)._element = undefined;
+      (this.forgedElement as HuiCardFeature).feature = this.forgedElementConfig;
       this.refreshForge(["hidden"]);
     }
   }
@@ -798,6 +808,16 @@ export class UixForge extends LitElement {
       });
       return;
     }
+    if (this._mold.isCardFeature()) {
+      this.forgedElement = document.createElement("hui-card-feature") as LovelaceElement;
+      (this.forgedElement as HuiCardFeature).feature = this.forgedElementConfig;
+      (this.forgedElement as HuiCardFeature).hass = this.hass;
+      (this.forgedElement as HuiCardFeature).color = this.color;
+      (this.forgedElement as HuiCardFeature).position = this.position;
+      (this.forgedElement as HuiCardFeature).context = this.context;
+      this.refreshForge(["hidden"]);
+      return;
+    }
   }
 
   private hiddenByConfig() {
@@ -862,6 +882,9 @@ export class UixForge extends LitElement {
     }
     if (_changedProperties.has("templatesReady")) {
       this.refreshForgedElement([]);
+    }
+    if (this._mold.isCardFeature() && this._mold.isPreview()) {
+      this.refreshForgedElement(["hidden"]);
     }
     this._sparkController.updated(_changedProperties);
   }

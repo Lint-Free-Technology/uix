@@ -41,6 +41,7 @@ export const UIX_FORGE_FORGE_MOLDS = [
   "section",
   "picture-element",
   "footer",
+  "card-feature",
 ];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
@@ -302,4 +303,23 @@ export interface HuiCard extends LovelaceElement {
 export interface HuiBadge extends LovelaceElement {
     load(): void;
     _element?: LovelaceElement;
+}
+
+export interface HuiCardFeature extends LovelaceElement {
+    context?: Record<string, any>;
+    feature?: Record<string, any>;
+    color?: string;
+    position?: string;
+    _element?: LovelaceElement;
+}
+
+export interface UixForgeMold {
+    type: string;
+    refresh(path: UixForgeConfigPath): void;
+    connectedCallback?(): void;
+    disconnectedCallback?(): void;
+    hidden?(): boolean;
+    getGridOptions?(): Record<string, any>;
+    isPreview?(): boolean;
+    cardHelpers?(): Promise<any>;
 }
