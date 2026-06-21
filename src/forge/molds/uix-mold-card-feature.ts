@@ -1,4 +1,4 @@
-import { HuiCard, HuiCardFeature, UixForgeConfigPath } from "../uix-forge-types";
+import { HuiCardFeature, UixForgeConfigPath } from "../uix-forge-types";
 import { UixForgeMoldBase } from "./uix-mold-base";
 
 export class UixForgeMoldCardFeature extends UixForgeMoldBase {
