@@ -246,12 +246,6 @@ element:
 
 ![Event spark fire multiple example](../../assets/page-assets/forge/sparks//event_fire_multiple.gif)
 
-!!! note
-    - The event spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.
-    - All string values in the `element` config are processed as templates, so `uixForge.event` is available throughout the element config.
-    - If no matching event has been received yet, `uixForge.event` will be empty (or absent) — use `| default(...)` in your templates to handle this gracefully.
-    - Data from successive events is **deep-merged**, not replaced. Sending a second event with `{ forge_id: "my_card", data: { count: 2 } }` after a first one with `{ score: 10 }` results in `uixForge.event` containing both `count` and `score`.
-
 ### Using a shortcut badge to control expander-card states
 
 This example is used as a badge in dashboard header and will toggle all `custom:expander-card` cards which have `expander-card-id` of `id_of_target_cards`.
@@ -292,3 +286,9 @@ This example is used as a badge in dashboard header and will toggle all `custom:
 ```
 
 ![Badge using event spark to toggle expander-cards](../../assets/page-assets/forge/sparks/event_badge_example.gif)
+
+!!! note
+    - The event spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.
+    - All string values in the `element` config are processed as templates, so `uixForge.event` is available throughout the element config.
+    - If no matching event has been received yet, `uixForge.event` will be empty (or absent) — use `| default(...)` in your templates to handle this gracefully.
+    - Data from successive events is **deep-merged**, not replaced. Sending a second event with `{ forge_id: "my_card", data: { count: 2 } }` after a first one with `{ score: 10 }` results in `uixForge.event` containing both `count` and `score`.
