@@ -1,3 +1,9 @@
+## [7.6.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.1...v7.6.0-beta.2) (2026-06-21)
+
+### ⭐ New Features
+
+* UIX Forge `card-feature` mold ([#389](https://github.com/Lint-Free-Technology/uix/issues/389)) ([ef1fdc8](https://github.com/Lint-Free-Technology/uix/commit/ef1fdc868fb42807b0b487e6a7abbffa42a68396))
+
 ## [7.6.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0...v7.6.0-beta.1) (2026-06-19)
 
 ### ⭐ New Features
