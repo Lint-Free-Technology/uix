@@ -18,8 +18,9 @@ function _mergeFoundryConfig(foundry: any, local: any, key?: string): any {
   if (!local) return foundry ?? {};
 
   if (Array.isArray(foundry) && Array.isArray(local)) {
+    // An explicit empty list should override/clear the foundry list.
+    if (local.length === 0) return [];
     const mergeKey = key && UIX_FORGE_ARRAY_MERGE_STRATEGIES[key];
-    if (mergeKey) {
       const result: any[] = [];
       const matchedFvIndices = new Set<number>();
 
