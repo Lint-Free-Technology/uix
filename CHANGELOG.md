@@ -1,3 +1,19 @@
+## [7.6.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.1...v7.6.0-beta.2) (2026-06-21)
+
+### ⭐ New Features
+
+* UIX Forge `card-feature` mold ([#389](https://github.com/Lint-Free-Technology/uix/issues/389)) ([ef1fdc8](https://github.com/Lint-Free-Technology/uix/commit/ef1fdc868fb42807b0b487e6a7abbffa42a68396))
+
+## [7.6.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0...v7.6.0-beta.1) (2026-06-19)
+
+### ⭐ New Features
+
+* **forge:** Allow event spark data to replace existing data rather than deep merge. ([e08c9c4](https://github.com/Lint-Free-Technology/uix/commit/e08c9c4d56181bc86e6b1e53f77d6c132a66a365))
+
+### 📦 Dependency Upgrades
+
+* bump @babel/core from 7.29.7 to 8.0.1 and @babel/preset-env to 8.0.2 managing plugins overrides for rollup babel plugin([#382](https://github.com/Lint-Free-Technology/uix/issues/382)) ([d7e5074](https://github.com/Lint-Free-Technology/uix/commit/d7e50747dd6134814258a6964d81243b47a35ce9))
+
 ## [7.5.0](https://github.com/Lint-Free-Technology/uix/compare/v7.4.2...v7.5.0) (2026-06-16)
 
 ### ⭐ New Features

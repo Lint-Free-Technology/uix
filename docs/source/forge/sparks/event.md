@@ -26,17 +26,18 @@ When the event spark is active, an `event` key is added to the `uixForge` templa
 | `uixForge.event.<key>` | Data keys from events matching `forge_id`, spread directly into `uixForge.event`. |
 | `uixForge.event.<other_id>.<key>` | Data from events matching an ID listed in `other_forge_ids`, nested under that ID. |
 
-Data accumulates across events — each new event is deep-merged into the existing state.
+By default, data accumulates across events — each new event is deep-merged into the existing state. To have the event data replaced use `replace: true` (Available since 7.6.0-beta.1).
 
 ## Firing an event
 
-Any Home Assistant element that supports `tap_action` can fire an event using `action: fire-dom-event`. Add a `uix_forge` key alongside `action` containing a list of forge event objects:
+Any Home Assistant element that supports `tap_action` can fire an event using `action: fire-dom-event`. Add a `uix_forge` key alongside `action` containing a list of forge event objects.
 
 ```yaml
 tap_action:
   action: fire-dom-event
   uix_forge:
     - forge_id: my_card
+      # replace: false
       data:
         selected: living_room
 ```
@@ -244,6 +245,47 @@ element:
 ```
 
 ![Event spark fire multiple example](../../assets/page-assets/forge/sparks//event_fire_multiple.gif)
+
+### Using a shortcut badge to control expander-card states
+
+This example is used as a badge in dashboard header and will toggle all `custom:expander-card` cards which have `expander-card-id` of `id_of_target_cards`.
+
+```yaml
+  - type: custom:uix-forge
+    forge:
+      mold: badge
+      billets:
+        expander_card_id: id_of_target_cards
+        expand_txt: Expand All
+        collapse_txt: Collapse All
+      macros:
+        expanded:
+          returns: true
+          template: "{% do returns(uixForge.event.details | default(false)) %}"
+      sparks:
+        - type: event
+          forge_id: "{{expander_card_id}}"
+        - type: tooltip
+          content: "{{ collapse_txt if expanded() else expand_txt }}"
+    element:
+      type: shortcut
+      text: " "
+      icon: >-
+        {{ 'mdi:collapse-all-outline' if expanded() else
+        'mdi:expand-all-outline' }}
+      tap_action:
+        action: fire-dom-event
+        expander-card:
+          data:
+            expander-card-id: "{{expander_card_id}}"
+            action: "{{ 'close' if expanded() else 'open' }}"
+        uix_forge:
+          - forge_id: "{{expander_card_id}}"
+            data:
+              details: "{{ not expanded() }}"
+```
+
+![Badge using event spark to toggle expander-cards](../../assets/page-assets/forge/sparks/event_badge_example.gif)
 
 !!! note
     - The event spark is active as soon as the forge element is connected to the DOM and stops listening when it is removed.

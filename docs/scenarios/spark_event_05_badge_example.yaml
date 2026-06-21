@@ -1,0 +1,105 @@
+id: doc_spark_event_badge_example
+description: "Doc image: Forge Event spark badge example (event.md)"
+view_path: doc-spark-event-badge-example
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 10
+      title: Event Spark Badge Example
+      path: event-spark-badge-example
+      sections:
+        - type: grid
+          cards:
+            - type: custom:expander-card
+              expander-card-id: id_of_target_cards
+              title: Expander Card
+              cards:
+                - type: markdown
+                  content: Expander is open
+      cards: []
+      footer: {}
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: custom:uix-forge
+          forge:
+            mold: badge
+            billets:
+              expander_card_id: id_of_target_cards
+              expand_txt: Expand All
+              collapse_txt: Collapse All
+            macros:
+              expanded:
+                returns: true
+                template: "{% do returns(uixForge.event.details | default(false)) %}"
+            sparks:
+              - type: event
+                forge_id: "{{expander_card_id}}"
+              - type: tooltip
+                content: "{{ collapse_txt if expanded() else expand_txt }}"
+          element:
+            type: shortcut
+            text: " "
+            icon: >-
+              {{ 'mdi:collapse-all-outline' if expanded() else
+              'mdi:expand-all-outline' }}
+            tap_action:
+              action: fire-dom-event
+              expander-card:
+                data:
+                  expander-card-id: "{{expander_card_id}}"
+                  action: "{{ 'close' if expanded() else 'open' }}"
+              uix_forge:
+                - forge_id: "{{expander_card_id}}"
+                  data:
+                    details: "{{ not expanded() }}"
+
+interactions:
+  - type: set_viewport
+    width: 600
+    height: 300
+    settle_ms: 300
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/event_badge_example.gif
+  root: hui-view
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: 
+            - hui-view-badges
+          selector: uix-forge
+          settle_ms: 100
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: 
+            - hui-view-badges
+          selector: uix-forge
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: 
+            - hui-view-badges
+          selector: uix-forge
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s
+    - frames: 7   # ~0.5 s

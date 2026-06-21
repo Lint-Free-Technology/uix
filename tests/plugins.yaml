@@ -22,3 +22,7 @@
 - repo: Lint-Free-Technology/lovelace-template-entity-row
   asset: template-entity-row.js
   filename: template-entity-row.js
+
+- repo: MelleD/lovelace-expander-card
+  asset: expander-card.js
+  filename: expander-card.js
