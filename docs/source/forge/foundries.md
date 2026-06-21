@@ -237,7 +237,7 @@ When a foundry is resolved, keys are merged in this order — later entries win:
 1. **Foundry** — the stored foundry config.
 2. **Local forge** — keys defined directly on the forge config.
 
-For **object values** (e.g. `forge`, `element`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. For **array and scalar values**, the local value replaces the foundry value entirely.
+For **object values** (e.g. `forge`, `element`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `sparks` arrays in `forge` config which will merge using `type` as the merge property.
 
 ### Example
 
