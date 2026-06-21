@@ -645,6 +645,9 @@ element:
 
 ## Card features
 
+!!! info
+    `card-feature` mold available in version 7.6.0-beta.2
+
 Use `mold: card-feature` when using UIX Forge as a card feature. Templates will have an additional `context` variable available which is provided by the host card. `context` usually includes `entity_id` which is the entity set on the host card.
 
 ```yaml
