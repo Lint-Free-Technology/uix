@@ -1,0 +1,64 @@
+id: doc_forge_card_feature_inline
+description: "Doc image: forging an inline card feature with UIX Forge (forge.md)"
+view_path: doc-forge-card-feature-inline
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness_pct: 50
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.bed_light
+
+card:
+  type: tile
+  entity: light.bed_light
+  features:
+    - type: custom:uix-forge
+      forge:
+        mold: card-feature
+      element:
+        type: |
+          {{ "light-brightness" if is_state(context.entity_id, "on") else "toggle" }}
+  features_position: inline
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/card-feature-inline.png
+  root: hui-tile-card
+  padding: 16
+  interval_ms: 66
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s
