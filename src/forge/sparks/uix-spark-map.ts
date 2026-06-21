@@ -20,6 +20,23 @@ interface TourIconPosition {
   right?: string;
 }
 
+/** CSS position values for the slider container. */
+interface SliderPosition {
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+}
+
+/** Settings for the hours_to_show slider mode. */
+interface HoursToShowConfig {
+  min: number;
+  max: number;
+  step: number;
+  position: SliderPosition | null;
+  tooltip_distance: number;
+}
+
 /**
  * Map spark — provides memory mode, fit-map, and tour mode for map cards
  * used inside UIX Forge.
@@ -92,6 +109,17 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   /** Radius of the SVG countdown ring in viewBox units (viewBox is 48×48, centre 24,24). */
   private static readonly TOUR_RING_RADIUS = 21;
 
+  // ── Hours to show config ──────────────────────────────────────────────────
+  private _hoursToShowConfig: HoursToShowConfig | null = null;
+
+  // ── Slider runtime state ──────────────────────────────────────────────────
+  private _hoursToShowValue: number | null = null;
+  private _sliderStarted: boolean = false;
+  private _sliderSetupGen: number = 0;
+  private _sliderContainerEl: HTMLElement | null = null;
+  private _sliderEl: any = null;
+  private _sliderLabelEl: HTMLElement | null = null;
+
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
     this._applyConfig(config);
@@ -135,7 +163,43 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._tourPoi = Array.isArray(t.poi) ? (t.poi as TourPoi[]) : null;
     }
 
+    // ── Hours to show / Slider config ───────────────────────────────────────
+    const hoursToShowRaw = config.hours_to_show;
+    const hasHoursToShow = hoursToShowRaw === true || (!!hoursToShowRaw && typeof hoursToShowRaw === "object");
+
+    if (!hasHoursToShow) {
+      if (this._hoursToShowConfig !== null) {
+        this._stopSlider();
+      }
+      this._hoursToShowConfig = null;
+    } else {
+      const h: Record<string, any> = (hoursToShowRaw === true) ? {} : (hoursToShowRaw as Record<string, any>);
+      const min = h.min !== undefined ? Number(h.min) : 0;
+      const max = h.max !== undefined ? Number(h.max) : 24;
+      const step = h.step !== undefined ? Number(h.step) : 1;
+      const position = this._parseSliderPosition(h.position);
+      const tooltip_distance = h.tooltip_distance !== undefined ? Number(h.tooltip_distance) : 20;
+
+      this._hoursToShowConfig = { min, max, step, position, tooltip_distance };
+      if (this._hoursToShowValue !== null) {
+        // Clamp existing value within boundaries
+        if (this._hoursToShowValue < min) this._hoursToShowValue = min;
+        if (this._hoursToShowValue > max) this._hoursToShowValue = max;
+      }
+    }
+
     this._saveMapState();
+  }
+
+  private _parseSliderPosition(raw: any): SliderPosition | null {
+    if (!raw || typeof raw !== "object") return null;
+    const pos: SliderPosition = {};
+    const toPx = (v: any) => (typeof v === "number" ? `${v}px` : String(v));
+    if (raw.top !== undefined) pos.top = toPx(raw.top);
+    if (raw.bottom !== undefined) pos.bottom = toPx(raw.bottom);
+    if (raw.left !== undefined) pos.left = toPx(raw.left);
+    if (raw.right !== undefined) pos.right = toPx(raw.right);
+    return Object.keys(pos).length > 0 ? pos : null;
   }
 
   private _parseTourIconPosition(raw: any): TourIconPosition | null {
@@ -149,10 +213,15 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     return Object.keys(pos).length > 0 ? pos : null;
   }
 
+  /** Returns the parent `hui-map-card` element, or null. */
+  private _getHuiMapCard(): any {
+    const forgedElement = this.controller.forgedElement();
+    return forgedElement?.querySelector("hui-map-card") ?? null;
+  }
+
   /** Returns the `ha-map` element inside the forged element's shadow root, or null. */
   private _getHaMap(): any {
-    const forgedElement = this.controller.forgedElement();
-    const huiMap = forgedElement?.querySelector("hui-map-card");
+    const huiMap = this._getHuiMapCard();
     return huiMap?.shadowRoot?.querySelector("ha-map") ?? null;
   }
 
@@ -174,10 +243,11 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const needsMemory = this._memory && this._savedCenter !== null;
     const needsFit = this._fitMap;
     const needsTour = this._tour;
+    const needsSlider = this._hoursToShowConfig !== null;
 
-    if (!needsMemory && !needsFit && !needsTour) return;
+    if (!needsMemory && !needsFit && !needsTour && !needsSlider) return;
 
-    if (needsMemory || needsFit) {
+    if (needsMemory || needsFit || needsSlider) {
       const gen = this._beginUpdate();
 
       const savedCenter = this._savedCenter;
@@ -195,6 +265,19 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         // Skip memory restore when tour is playing — the tour manages map position.
         if (leafletMap && savedCenter && !(this._tour && this._tourPlaying)) {
           leafletMap.setView(savedCenter, savedZoom, { reset: true });
+        }
+      };
+
+      const doApplyHoursToShow = () => {
+        if (gen !== this._callGeneration) return;
+        const huiMap = this._getHuiMapCard();
+        if (huiMap && huiMap._config && this._hoursToShowValue !== null && this._hoursToShowValue !== undefined) {
+          if (huiMap._config.hours_to_show !== this._hoursToShowValue) {
+            huiMap._config = {
+              ...huiMap._config,
+              hours_to_show: this._hoursToShowValue
+            };
+          }
         }
       };
 
@@ -226,10 +309,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
           (haMap.updateComplete as Promise<boolean>).then(() => {
             if (needsMemory) doRestore();
             if (needsFit && !this._fitMapRunOnce) doFitMap();
+            if (needsSlider) doApplyHoursToShow();
           });
         } else {
           if (needsMemory) doRestore();
           if (needsFit && !this._fitMapRunOnce) doFitMap();
+          if (needsSlider) doApplyHoursToShow();
         }
       };
 
@@ -246,6 +331,13 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (needsTour && (!this._tourStarted || !this._tourContainerEl?.isConnected)) {
       this._setupTour();
     }
+
+    // ── Slider setup ────────────────────────────────────────────────────────
+    // Trigger setup when slider hasn't started yet, or when the slider element
+    // has been removed from the DOM (e.g. after a forged-element refresh).
+    if (needsSlider && (!this._sliderStarted || !this._sliderContainerEl?.isConnected)) {
+      this._setupSlider();
+    }
   }
 
   disconnectedCallback(): void {
@@ -254,6 +346,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._savedZoom = null;
     this._fitMapAbort = undefined;
     this._stopTour();
+    this._stopSlider();
   }
 
   // ── Tour methods ───────────────────────────────────────────────────────────
@@ -569,5 +662,293 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     return entities
       .map((e: any) => (typeof e === "string" ? e : e?.entity))
       .filter((id: any): id is string => typeof id === "string");
+  }
+
+  // ── Hours to show Slider Methods ──────────────────────────────────────────
+
+  /** Tear down the slider overlay, resetting runtime state. */
+  private _stopSlider(): void {
+    ++this._sliderSetupGen;
+    if (this._sliderContainerEl) {
+      this._sliderContainerEl.remove();
+      this._sliderContainerEl = null;
+      this._sliderEl = null;
+      this._sliderLabelEl = null;
+    }
+    this._sliderStarted = false;
+  }
+
+  /**
+   * Async setup for hours_to_show slider overlay mode. Uses a dedicated
+   * generation counter to coalesce updates.
+   */
+  private async _setupSlider(): Promise<void> {
+    const gen = ++this._sliderSetupGen;
+
+    // Wait for the Leaflet map to be fully initialised.
+    let haMap = this._getHaMap();
+    let tries = 0;
+    while ((!haMap?.leafletMap || !haMap?.Leaflet || haMap?.clientWidth === 0) && tries < 20) {
+      if (gen !== this._sliderSetupGen) return;
+      await new Promise(res => setTimeout(res, 50));
+      tries++;
+      haMap = this._getHaMap();
+    }
+
+    if (gen !== this._sliderSetupGen || !haMap?.leafletMap) return;
+
+    // Read initial hoursToShow value if we haven't selected one yet.
+    if (this._hoursToShowValue === null || this._hoursToShowValue === undefined) {
+      const huiMap = this._getHuiMapCard();
+      const cardActualHours = huiMap?._config?.hours_to_show;
+      const cardConfig = (this.controller.forge as any).forgedElementConfig;
+      const configHours = cardConfig?.hours_to_show;
+      const initialValue = cardActualHours !== undefined ? Number(cardActualHours) : (configHours !== undefined ? Number(configHours) : null);
+      const min = this._hoursToShowConfig?.min ?? 0;
+      this._hoursToShowValue = initialValue !== null ? initialValue : min;
+    }
+
+    this._ensureSlider(haMap);
+
+    // Initial state set on target map card
+    if (this._hoursToShowValue !== null) {
+      const huiMap = this._getHuiMapCard();
+      if (huiMap && huiMap._config && huiMap._config.hours_to_show !== this._hoursToShowValue) {
+        huiMap._config = {
+          ...huiMap._config,
+          hours_to_show: this._hoursToShowValue
+        };
+      }
+    }
+
+    this._sliderStarted = true;
+  }
+
+  /** Create the slider overlay or update its limits if it already exists. */
+  private _ensureSlider(haMap: any): void {
+    if (this._sliderContainerEl?.isConnected) {
+      this._applySliderPosition(this._sliderContainerEl);
+      this._updateSliderControl();
+      return;
+    }
+
+    if (this._sliderContainerEl) {
+      this._sliderContainerEl.remove();
+      this._sliderContainerEl = null;
+      this._sliderEl = null;
+      this._sliderLabelEl = null;
+    }
+
+    // Inject into Leaflet container of ha-map's open shadow root.
+    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
+    if (!leafletContainer) return;
+
+    // ── Container ───────────────────────────────────────────────────────────
+    const container = document.createElement("div");
+    container.classList.add("uix-map-slider-control");
+    container.style.setProperty("position", "absolute");
+    container.style.setProperty("z-index", "var(--uix-map-slider-z-index, 1000)");
+    container.style.setProperty("display", "flex");
+    container.style.setProperty("align-items", "center");
+    container.style.setProperty("gap", "8px");
+    container.style.setProperty("background", "var(--uix-map-slider-background, rgba(255,255,255,0.8))");
+    container.style.setProperty("padding", "var(--uix-map-slider-padding, 4px 12px)");
+    container.style.setProperty("border-radius", "var(--uix-map-slider-border-radius, 20px)");
+    container.style.setProperty("box-shadow", "var(--uix-map-slider-box-shadow, 0 1px 5px rgba(0,0,0,0.4))");
+    container.style.setProperty("pointer-events", "auto");
+    this._applySliderPosition(container);
+
+    // Stop Leaflet from intercepting navigation gestures (dragging/scrolling) on the slider container.
+    // We only stop propagation of mousedown/touchstart/pointerdown (which starts drags), click/dblclick (zoom/pan),
+    // and wheel/mousewheel (scroll-zoom). We MUST NOT stop mousemove/mouseup/pointermove/pointerup/touchmove/touchend,
+    // otherwise the document/window won't receive them, breaking standard dragging and release of the slider control!
+    const stopEvents = [
+      "mousedown",
+      "pointerdown",
+      "touchstart",
+      "click",
+      "dblclick",
+      "wheel",
+      "mousewheel"
+    ];
+    for (const name of stopEvents) {
+      container.addEventListener(name, (ev) => ev.stopPropagation());
+    }
+
+    // ── Label ───────────────────────────────────────────────────────────────
+    const label = document.createElement("span");
+    label.style.setProperty("color", "var(--uix-map-slider-text-color, var(--primary-text-color, #212121))");
+    label.style.setProperty("font-size", "12px");
+    label.style.setProperty("font-weight", "bold");
+    label.style.setProperty("user-select", "none");
+    label.style.setProperty("min-width", "var(--uix-map-slider-label-min-width, 28px)");
+    label.style.setProperty("text-align", "right");
+    label.style.setProperty("display", "inline-block");
+    this._sliderLabelEl = label;
+
+    // ── Slider ──────────────────────────────────────────────────────────────
+    const slider = document.createElement("ha-slider") as any;
+    slider.min = this._hoursToShowConfig?.min ?? 0;
+    slider.max = this._hoursToShowConfig?.max ?? 24;
+    slider.step = this._hoursToShowConfig?.step ?? 1;
+    slider.pin = true;
+    slider.value = this._hoursToShowValue;
+    slider.style.setProperty("width", "var(--uix-map-slider-width, 100px)");
+    slider.style.setProperty("display", "inline-block");
+
+    // Modern styling leveraging CSS shadow parts and fallback variables that copy slider-entity-row options
+    const styleEl = document.createElement("style");
+    styleEl.classList.add("uix-map-slider-styles");
+    styleEl.innerHTML = `
+      ha-slider {
+        --thumb-height: var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-height, 16px));
+        --thumb-width: var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-width, 16px));
+        --track-size: var(--uix-map-slider-track-size, var(--ha-slider-track-size, 4px));
+        padding: var(--uix-map-slider-padding, 0 calc(var(--uix-map-slider-thumb-size, var(--uix-map-slider-thumb-width, 16px)) / 2));
+      }
+      ha-slider::part(track) {
+        background: var(--uix-map-slider-track-color, var(--ha-slider-track-color, var(--disabled-color)));
+      }
+      ha-slider::part(indicator) {
+        background: var(--uix-map-slider-indicator-color, var(--ha-slider-indicator-color, var(--primary-color)));
+      }
+      ha-slider::part(thumb) {
+        background: var(--uix-map-slider-thumb-color, var(--uix-map-slider-indicator-color, var(--ha-slider-thumb-color, var(--primary-color))));
+        overflow: visible;
+      }
+      ha-slider::part(thumb)::before {
+        content: "";
+        border-radius: 50%;
+        position: absolute;
+        width: calc(var(--thumb-width, 16px) * 2 + 8px);
+        height: calc(var(--thumb-height, 16px) * 2 + 8px);
+        background-color: var(--uix-map-slider-thumb-color, var(--uix-map-slider-indicator-color, var(--ha-slider-thumb-color, var(--primary-color))));
+        left: calc(-50% - 4px);
+        top: calc(-50% - 4px);
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+      }
+      ha-slider::part(thumb):hover::before,
+      ha-slider::part(thumb):focus-visible::before {
+        opacity: var(--uix-map-slider-thumb-hover-opacity, var(--ha-ripple-hover-opacity, 0.08));
+      }
+      ha-slider::part(thumb):active::before {
+        opacity: var(--uix-map-slider-thumb-pressed-opacity, var(--ha-ripple-pressed-opacity, 0.12));
+      }
+      ha-slider::part(tooltip) {
+        --wa-tooltip-content-color: var(--uix-map-slider-tooltip-color, var(--ha-tooltip-text-color, var(--primary-text-color)));
+        --wa-tooltip-font-size: var(--uix-map-slider-tooltip-font-size, var(--ha-tooltip-font-size, var(--ha-font-size-s)));
+        --wa-tooltip-font-weight: var(--uix-map-slider-tooltip-font-weight, var(--ha-tooltip-font-weight, var(--ha-font-weight-normal)));
+        --wa-tooltip-background-color: var(--uix-map-slider-tooltip-background-color, var(--ha-tooltip-background-color, var(--secondary-background-color)));
+        --wa-tooltip-border-radius: var(--uix-map-slider-tooltip-border-radius, var(--ha-tooltip-border-radius, var(--ha-border-radius-sm)));
+        --wa-tooltip-border-width: var(--uix-map-slider-tooltip-border-width, 0px);
+        --wa-tooltip-border-color: var(--uix-map-slider-tooltip-border-color, currentColor);
+        --wa-tooltip-border-style: var(--uix-map-slider-tooltip-border-style, none);
+      }
+    `;
+    container.appendChild(styleEl);
+
+    // Apply thumb box shadow inside shadow root of custom element
+    if (slider.updateComplete) {
+      (slider.updateComplete as Promise<void>).then(() => {
+        if (!slider.shadowRoot) return;
+        if (!slider.shadowRoot.querySelector(".uix-map-slider-thumb-style")) {
+          const innerStyle = document.createElement("style");
+          innerStyle.classList.add("uix-map-slider-thumb-style");
+          innerStyle.innerHTML = `
+            span#thumb {
+              box-shadow: var(--uix-map-slider-thumb-box-shadow, inherit);
+            }
+            wa-tooltip {
+              --wa-tooltip-content-color: var(--uix-map-slider-tooltip-color, var(--ha-tooltip-text-color, var(--primary-text-color)));
+              --wa-tooltip-font-size: var(--uix-map-slider-tooltip-font-size, var(--ha-tooltip-font-size, var(--ha-font-size-s)));
+              --wa-tooltip-font-weight: var(--uix-map-slider-tooltip-font-weight, var(--ha-tooltip-font-weight, var(--ha-font-weight-normal)));
+              --wa-tooltip-background-color: var(--uix-map-slider-tooltip-background-color, var(--ha-tooltip-background-color, var(--secondary-background-color)));
+              --wa-tooltip-border-radius: var(--uix-map-slider-tooltip-border-radius, var(--ha-tooltip-border-radius, var(--ha-border-radius-sm)));
+              --wa-tooltip-border-width: var(--uix-map-slider-tooltip-border-width, 0px);
+              --wa-tooltip-border-color: var(--uix-map-slider-tooltip-border-color, currentColor);
+              --wa-tooltip-border-style: var(--uix-map-slider-tooltip-border-style, none);
+            }
+          `;
+          slider.shadowRoot.appendChild(innerStyle);
+        }
+        const tooltip = slider.shadowRoot.querySelector("wa-tooltip");
+        if (tooltip) {
+          tooltip.setAttribute("distance", String(this._hoursToShowConfig?.tooltip_distance ?? 20));
+        }
+      });
+    }
+
+    this._sliderEl = slider;
+
+    this._updateLabelText();
+
+    const updateHandler = (ev: any) => {
+      ev.stopPropagation();
+      const val = Number(ev.target.value);
+      this._hoursToShowValue = val;
+      this._updateLabelText();
+      const huiMap = this._getHuiMapCard();
+      if (huiMap && huiMap._config && huiMap._config.hours_to_show !== val) {
+        huiMap._config = {
+          ...huiMap._config,
+          hours_to_show: val
+        };
+      }
+    };
+    slider.addEventListener("change", updateHandler);
+    slider.addEventListener("input", updateHandler);
+
+    container.appendChild(slider);
+    container.appendChild(label);
+
+    leafletContainer.appendChild(container);
+
+    this._sliderContainerEl = container;
+  }
+
+  private _applySliderPosition(el: HTMLElement): void {
+    const isTourActive = this._tour;
+    const tourPos = this._tourIconPosition ?? { bottom: "10px", right: "10px" };
+    const sliderPos = this._hoursToShowConfig?.position;
+
+    el.style.removeProperty("top");
+    el.style.removeProperty("bottom");
+    el.style.removeProperty("left");
+    el.style.removeProperty("right");
+
+    if (sliderPos) {
+      if (sliderPos.top !== undefined) el.style.setProperty("top", sliderPos.top);
+      if (sliderPos.bottom !== undefined) el.style.setProperty("bottom", sliderPos.bottom);
+      if (sliderPos.left !== undefined) el.style.setProperty("left", sliderPos.left);
+      if (sliderPos.right !== undefined) el.style.setProperty("right", sliderPos.right);
+    } else {
+      // Default position is bottom-right. Detect defaults to avoid overlap.
+      const tourIsAtBottomRight = isTourActive && tourPos.bottom === "10px" && tourPos.right === "10px";
+      if (tourIsAtBottomRight) {
+        el.style.setProperty("bottom", "10px");
+        el.style.setProperty("right", "70px");
+      } else {
+        el.style.setProperty("bottom", "10px");
+        el.style.setProperty("right", "10px");
+      }
+    }
+  }
+
+  private _updateSliderControl(): void {
+    if (this._sliderEl && this._hoursToShowConfig) {
+      this._sliderEl.min = this._hoursToShowConfig.min;
+      this._sliderEl.max = this._hoursToShowConfig.max;
+      this._sliderEl.step = this._hoursToShowConfig.step;
+      this._sliderEl.value = this._hoursToShowValue;
+      this._updateLabelText();
+    }
+  }
+
+  private _updateLabelText(): void {
+    if (this._sliderLabelEl && this._hoursToShowValue !== null) {
+      this._sliderLabelEl.textContent = `${this._hoursToShowValue}h`;
+    }
   }
 }
