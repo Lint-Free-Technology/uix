@@ -79,6 +79,7 @@ The pause/play button can be styled using CSS variables placed on the `ha-card` 
 | `--uix-map-tour-icon-color` | `var(--primary-color)` | Icon colour. |
 | `--uix-map-tour-icon-ring-color` | `var(--uix-map-tour-icon-color)` | Countdown ring colour (defaults to icon colour). |
 | `--uix-map-tour-icon-background` | `rgba(255,255,255,0.8)` | Button background. |
+| `--uix-map-tour-icon-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the icon container. |
 | `--uix-map-tour-icon-width` | `auto` | Button width. |
 | `--uix-map-tour-icon-height` | `auto` | Button height. |
 | `--uix-map-tour-icon-border-radius` | `9999px` | Button border radius (pill by default). |
