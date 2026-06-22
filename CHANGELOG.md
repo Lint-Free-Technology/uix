@@ -1,3 +1,13 @@
+## [7.6.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.2...v7.6.0-beta.3) (2026-06-22)
+
+### ⭐ New Features
+
+* Map spark hours_to_show slider option ([#393](https://github.com/Lint-Free-Technology/uix/issues/393)) ([e6af7cf](https://github.com/Lint-Free-Technology/uix/commit/e6af7cf03b58230f0edb445d452607aa04372166)), closes [#392](https://github.com/Lint-Free-Technology/uix/issues/392)
+
+### 🐞 Bug Fixes
+
+* Allow for deep merge of sparks lists with nested foundries ([#394](https://github.com/Lint-Free-Technology/uix/issues/394)) ([a815887](https://github.com/Lint-Free-Technology/uix/commit/a8158872a1e7a3641a53d2fe215bbeff171f9cab)), closes [#390](https://github.com/Lint-Free-Technology/uix/issues/390)
+
 ## [7.6.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.1...v7.6.0-beta.2) (2026-06-21)
 
 ### ⭐ New Features
