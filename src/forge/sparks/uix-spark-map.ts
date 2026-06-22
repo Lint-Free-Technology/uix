@@ -455,6 +455,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.classList.add("uix-tour-control");
     container.style.setProperty("position", "absolute");
     container.style.setProperty("z-index", "var(--uix-map-tour-icon-z-index, 1000)");
+    container.style.setProperty("box-shadow", "var(--uix-map-tour-icon-box-shadow, 0 1px 5px rgba(0,0,0,0.4))");
+    container.style.setProperty("border-radius", "var(--uix-map-tour-icon-border-radius, 9999px)");
     this._applyTourButtonPosition(container);
 
     // ── Wrapper (relative positioning context for SVG ring overlay) ──────────
