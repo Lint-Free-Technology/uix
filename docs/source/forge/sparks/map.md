@@ -5,6 +5,9 @@ icon: material/map
 
 # :material-map: Map spark
 
+!!! info
+    Hours to show slider mode added in 7.6.0-beta.3
+
 The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports four modes:
 
 - **Memory mode** (`memory: true`): Captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved. Without it, every forge template update causes the map to reset to its default zoom level and centre position.
@@ -145,7 +148,7 @@ When `memory: true` and `tour` are both active, hass-update memory restores are 
 **Hours to show slider mode:**
 
 !!! info
-   Hours to show slider mode added in 7.6.0-beta.3
+    Hours to show slider mode added in 7.6.0-beta.3
 
 When active, the spark:
 
