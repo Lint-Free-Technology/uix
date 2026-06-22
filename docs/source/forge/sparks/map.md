@@ -144,6 +144,9 @@ When `memory: true` and `tour` are both active, hass-update memory restores are 
 
 **Hours to show slider mode:**
 
+!!! info
+   Hours to show slider mode added in 7.6.0-beta.3
+
 When active, the spark:
 
 1. Renders a horizontal `ha-slider` control in a capsule-shaped overlay container.
