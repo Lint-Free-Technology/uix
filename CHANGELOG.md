@@ -1,3 +1,9 @@
+## [7.6.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.3...v7.6.0-beta.4) (2026-06-22)
+
+### ⭐ New Features
+
+* Add box shadow to UIX Forge map spark tour icon ([#395](https://github.com/Lint-Free-Technology/uix/issues/395)) ([084d42d](https://github.com/Lint-Free-Technology/uix/commit/084d42da326d4f13c40510a71163848601802433))
+
 ## [7.6.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.2...v7.6.0-beta.3) (2026-06-22)
 
 ### ⭐ New Features
