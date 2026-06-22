@@ -232,6 +232,9 @@ For more information on HA secrets see <https://www.home-assistant.io/docs/confi
 
 ## Merge behaviour
 
+!!! info
+    `forge.sparks` merge merge exception added in 7.6.0-beta.3
+
 When a foundry is resolved, keys are merged in this order — later entries win:
 
 1. **Foundry** — the stored foundry config.
