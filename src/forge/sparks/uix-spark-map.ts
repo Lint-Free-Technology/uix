@@ -37,6 +37,25 @@ interface HoursToShowConfig {
   tooltip_distance: number;
 }
 
+/** CSS position values for the entity filter container. */
+interface EntityFilterPosition {
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+}
+
+/** Settings for the entity_filter mode. */
+interface EntityFilterConfig {
+  position: EntityFilterPosition | null;
+  size: string;
+  variant: string;
+  appearance: string;
+  icon: string;
+  label: string;
+  show_all_label: string;
+}
+
 /**
  * Map spark — provides memory mode, fit-map, and tour mode for map cards
  * used inside UIX Forge.
@@ -95,6 +114,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   private _tourPlaying: boolean = true;
   /** Index of the last POI the tour flew to (-1 = not yet started). */
   private _tourPoiIndex: number = -1;
+  /** ID of the last POI the tour flew to. */
+  private _lastTourPoiId: string | null = null;
   /** Whether the tour overlay and timer have been initialised. */
   private _tourStarted: boolean = false;
   /** Independent generation counter for tour setup retries. */
@@ -119,6 +140,18 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   private _sliderContainerEl: HTMLElement | null = null;
   private _sliderEl: any = null;
   private _sliderLabelEl: HTMLElement | null = null;
+
+  // ── Entity filter config ──────────────────────────────────────────────────
+  private _entityFilterConfig: EntityFilterConfig | null = null;
+
+  // ── Entity filter runtime state ───────────────────────────────────────────
+  private _selectedEntities: Set<string> | null = null;
+  private _lastKnownEntityIds: string[] | null = null;
+  private _fullMapEntityIds: string[] | null = null;
+  private _entityFilterStarted: boolean = false;
+  private _entityFilterSetupGen: number = 0;
+  private _entityFilterSettingUp: boolean = false;
+  private _entityFilterContainerEl: HTMLElement | null = null;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -188,7 +221,40 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       }
     }
 
+    // ── Entity filter config ────────────────────────────────────────────────
+    const entityFilterRaw = config.entity_filter;
+    const hasEntityFilter = entityFilterRaw === true || (!!entityFilterRaw && typeof entityFilterRaw === "object");
+
+    if (!hasEntityFilter) {
+      if (this._entityFilterConfig !== null) {
+        this._stopEntityFilter();
+      }
+      this._entityFilterConfig = null;
+    } else {
+      const e: Record<string, any> = (entityFilterRaw === true) ? {} : (entityFilterRaw as Record<string, any>);
+      const position = this._parseEntityFilterPosition(e.position);
+      const size = String(e.size || "s");
+      const variant = String(e.variant || "neutral");
+      const appearance = String(e.appearance || "plain");
+      const icon = String(e.icon !== undefined ? e.icon : "mdi:filter-variant");
+      const label = String(e.label !== undefined ? e.label : "Filter");
+      const show_all_label = String(e.show_all_label !== undefined ? e.show_all_label : "Show All");
+
+      this._entityFilterConfig = { position, size, variant, appearance, icon, label, show_all_label };
+    }
+
     this._saveMapState();
+  }
+
+  private _parseEntityFilterPosition(raw: any): EntityFilterPosition | null {
+    if (!raw || typeof raw !== "object") return null;
+    const pos: EntityFilterPosition = {};
+    const toPx = (v: any) => (typeof v === "number" ? `${v}px` : String(v));
+    if (raw.top !== undefined) pos.top = toPx(raw.top);
+    if (raw.bottom !== undefined) pos.bottom = toPx(raw.bottom);
+    if (raw.left !== undefined) pos.left = toPx(raw.left);
+    if (raw.right !== undefined) pos.right = toPx(raw.right);
+    return Object.keys(pos).length > 0 ? pos : null;
   }
 
   private _parseSliderPosition(raw: any): SliderPosition | null {
@@ -225,6 +291,42 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     return huiMap?.shadowRoot?.querySelector("ha-map") ?? null;
   }
 
+  private async _waitForMapToBeReady(gen: number, checkGen: () => boolean): Promise<any> {
+    let haMap = this._getHaMap();
+    let huiMap = this._getHuiMapCard();
+    let tries = 0;
+    const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+    const hasOriginalShowAll = originalConfig.show_all === true;
+
+    while (
+      (!haMap?.leafletMap ||
+        !haMap?.Leaflet ||
+        haMap?.clientWidth === 0 ||
+        !huiMap?._filteredMapEntities ||
+        (hasOriginalShowAll && huiMap._filteredMapEntities.length === 0)) &&
+      tries < 60
+    ) {
+      if (!checkGen()) return null;
+      await new Promise(res => setTimeout(res, 50));
+      tries++;
+      haMap = this._getHaMap();
+      huiMap = this._getHuiMapCard();
+    }
+    if (tries >= 60) {
+      console.warn("UIX Forge Map Spark: _waitForMapToBeReady timed out!", {
+        hasHaMap: !!haMap,
+        leafletMap: !!haMap?.leafletMap,
+        Leaflet: !!haMap?.Leaflet,
+        clientWidth: haMap?.clientWidth,
+        hasHuiMap: !!huiMap,
+        _filteredMapEntities: huiMap?._filteredMapEntities,
+        hasOriginalShowAll
+      });
+    }
+    if (!checkGen() || !haMap?.leafletMap || !huiMap?._filteredMapEntities) return null;
+    return haMap;
+  }
+
   private _saveMapState(): void {
     if (!this._memory) return;
     const haMap = this._getHaMap();
@@ -244,10 +346,11 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const needsFit = this._fitMap;
     const needsTour = this._tour;
     const needsSlider = this._hoursToShowConfig !== null;
+    const needsEntityFilter = this._entityFilterConfig !== null;
 
-    if (!needsMemory && !needsFit && !needsTour && !needsSlider) return;
+    if (!needsMemory && !needsFit && !needsTour && !needsSlider && !needsEntityFilter) return;
 
-    if (needsMemory || needsFit || needsSlider) {
+    if (needsMemory || needsFit || needsSlider || needsEntityFilter) {
       const gen = this._beginUpdate();
 
       const savedCenter = this._savedCenter;
@@ -281,6 +384,11 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         }
       };
 
+      const doApplyEntityFilter = () => {
+        if (gen !== this._callGeneration) return;
+        this._applyFilteredEntities();
+      };
+
       let fitMapAbort = this._fitMapAbort;
       this._fitMapAbort = { cancelled: false };
       fitMapAbort && (fitMapAbort.cancelled = true);
@@ -310,11 +418,15 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
             if (needsMemory) doRestore();
             if (needsFit && !this._fitMapRunOnce) doFitMap();
             if (needsSlider) doApplyHoursToShow();
+            if (needsEntityFilter) doApplyEntityFilter();
+            if (needsTour) this._syncTourPois();
           });
         } else {
           if (needsMemory) doRestore();
           if (needsFit && !this._fitMapRunOnce) doFitMap();
           if (needsSlider) doApplyHoursToShow();
+          if (needsEntityFilter) doApplyEntityFilter();
+          if (needsTour) this._syncTourPois();
         }
       };
 
@@ -338,6 +450,29 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (needsSlider && (!this._sliderStarted || !this._sliderContainerEl?.isConnected)) {
       this._setupSlider();
     }
+
+    // ── Entity filter setup ──────────────────────────────────────────────────
+    // Trigger setup when entity filter hasn't started yet, or when the container element
+    // has been removed from the DOM (e.g. after a forged-element refresh).
+    if (needsEntityFilter) {
+      this._syncSelectedEntities();
+      if ((!this._entityFilterStarted || !this._entityFilterContainerEl?.isConnected) && !this._entityFilterSettingUp) {
+        this._setupEntityFilter();
+      } else if (this._entityFilterStarted && this._entityFilterContainerEl?.isConnected) {
+        // If entity filter already started, check if the list of original entities changed.
+        // If so, we recreate the filter overlay UI to include the new entities!
+        const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+        const originalIds = this._getOriginalMapEntityIds();
+        const currentItemsCount = this._entityFilterContainerEl?.querySelectorAll("ha-check-list-item[value]").length || 0;
+        const expectedCount = originalIds.length + (originalConfig.show_all === true ? 1 : 0);
+        if (currentItemsCount !== expectedCount) {
+          const haMap = this._getHaMap();
+          if (haMap) {
+            this._ensureEntityFilter(haMap);
+          }
+        }
+      }
+    }
   }
 
   disconnectedCallback(): void {
@@ -347,6 +482,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._fitMapAbort = undefined;
     this._stopTour();
     this._stopSlider();
+    this._stopEntityFilter();
   }
 
   // ── Tour methods ───────────────────────────────────────────────────────────
@@ -396,17 +532,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
     if (gen !== this._tourSetupGen) return;
 
-    // Wait for the Leaflet map to be fully initialised.
-    let haMap = this._getHaMap();
-    let tries = 0;
-    while ((!haMap?.leafletMap || !haMap?.Leaflet || haMap?.clientWidth === 0) && tries < 20) {
-      if (gen !== this._tourSetupGen) return;
-      await new Promise(res => setTimeout(res, 50));
-      tries++;
-      haMap = this._getHaMap();
-    }
-
-    if (gen !== this._tourSetupGen || !haMap?.leafletMap) return;
+    // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+    const haMap = await this._waitForMapToBeReady(gen, () => gen === this._tourSetupGen);
+    if (!haMap) return;
 
     // Create or reconnect the pause/play button overlay.
     const buttonWasDisconnected = !this._tourContainerEl?.isConnected;
@@ -516,7 +644,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
     wrapperEl.appendChild(btnEl);
     container.appendChild(wrapperEl);
-    leafletContainer.appendChild(container);
+    this._mountBottomRightControl(container, "3", this._tourIconPosition, haMap);
 
     this._tourContainerEl = container;
     this._tourIconEl = iconEl;
@@ -524,6 +652,10 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _applyTourButtonPosition(el: HTMLElement): void {
     const pos = this._tourIconPosition ?? { bottom: "10px", right: "10px" };
+    const isDefault = pos.bottom === "10px" && pos.right === "10px";
+    if (isDefault) {
+      return;
+    }
     el.style.removeProperty("top");
     el.style.removeProperty("bottom");
     el.style.removeProperty("left");
@@ -596,7 +728,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const pois = this._getEffectivePois();
     if (pois.length === 0) return;
     this._tourPoiIndex = (this._tourPoiIndex + 1) % pois.length;
-    this._flyToPoi(pois[this._tourPoiIndex]);
+    const targetPoi = pois[this._tourPoiIndex];
+    this._lastTourPoiId = targetPoi.id;
+    this._flyToPoi(targetPoi);
   }
 
   private _flyToPoi(poi: { lat: number; lng: number; zoom?: number }): void {
@@ -615,12 +749,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
    * entity list).  Otherwise fall back to all entities on the ha-map card that
    * have `latitude`/`longitude` state attributes.
    */
-  private _getEffectivePois(): Array<{ lat: number; lng: number; zoom?: number }> {
+  private _getEffectivePois(): Array<{ lat: number; lng: number; zoom?: number; id: string }> {
     const hass = (this.controller.forge as any).hass;
 
     if (this._tourPoi && this._tourPoi.length > 0) {
       const mapEntityIds = this._getMapEntityIds();
-      const resolved: Array<{ lat: number; lng: number; zoom?: number }> = [];
+      const resolved: Array<{ lat: number; lng: number; zoom?: number; id: string }> = [];
       for (const poi of this._tourPoi) {
         if (poi.entity) {
           if (!mapEntityIds.includes(poi.entity)) {
@@ -634,9 +768,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
             console.warn(`UIX Forge Map Tour: entity '${poi.entity}' has no latitude/longitude attributes — skipping`);
             continue;
           }
-          resolved.push({ lat: Number(lat), lng: Number(lng), zoom: poi.zoom });
+          resolved.push({ lat: Number(lat), lng: Number(lng), zoom: poi.zoom, id: `entity:${poi.entity}` });
         } else if (poi.latitude !== undefined && poi.longitude !== undefined) {
-          resolved.push({ lat: Number(poi.latitude), lng: Number(poi.longitude), zoom: poi.zoom });
+          resolved.push({ lat: Number(poi.latitude), lng: Number(poi.longitude), zoom: poi.zoom, id: `coords:${poi.latitude},${poi.longitude}` });
         } else {
           console.warn("UIX Forge Map Tour: poi entry must have 'entity' or 'latitude'+'longitude' — skipping");
         }
@@ -645,25 +779,100 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     }
 
     // No poi list configured: derive POIs from the ha-map's entity list.
-    const pois: Array<{ lat: number; lng: number; zoom?: number }> = [];
+    const pois: Array<{ lat: number; lng: number; zoom?: number; id: string }> = [];
     for (const entityId of this._getMapEntityIds()) {
       const state = hass?.states?.[entityId];
       const lat = state?.attributes?.latitude;
       const lng = state?.attributes?.longitude;
       if (lat !== undefined && lng !== undefined) {
-        pois.push({ lat: Number(lat), lng: Number(lng) });
+        pois.push({ lat: Number(lat), lng: Number(lng), id: `entity:${entityId}` });
       }
     }
     return pois;
   }
 
-  /** Return the entity IDs declared in the forged element's map configuration. */
+  /** Return the entity IDs declared in the map. */
   private _getMapEntityIds(): string[] {
+    const huiMap = this._getHuiMapCard();
+    if (huiMap && Array.isArray(huiMap._filteredMapEntities)) {
+      return huiMap._filteredMapEntities
+        .map((e: any) => (typeof e === "string" ? e : (e?.entity_id || e?.entityId || e?.entity || e?.id)))
+        .filter((id: any): id is string => typeof id === "string");
+    }
+    // Fallback to configured entities
     const entities = (this.controller.forge as any).forgedElementConfig?.entities;
     if (!Array.isArray(entities)) return [];
     return entities
       .map((e: any) => (typeof e === "string" ? e : e?.entity))
       .filter((id: any): id is string => typeof id === "string");
+  }
+
+  private _getOriginalMapEntityIds(): string[] {
+    const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+    const originalEntities = originalConfig.entities;
+
+    if (originalConfig.show_all === true) {
+      const huiMap = this._getHuiMapCard();
+      // If we haven't captured _fullMapEntityIds yet, or it is empty, and we now have filtered map entities,
+      // let's capture them dynamically.
+      if (huiMap && Array.isArray(huiMap._filteredMapEntities) && huiMap._filteredMapEntities.length > 0) {
+        const ids = huiMap._filteredMapEntities
+          .map((e: any) => (typeof e === "string" ? e : (e?.entity_id || e?.entityId || e?.entity || e?.id)))
+          .filter((id: any): id is string => typeof id === "string");
+        if (ids.length > 0 && (this._fullMapEntityIds === null || this._fullMapEntityIds.length === 0)) {
+          this._fullMapEntityIds = ids;
+        }
+      }
+      if (this._fullMapEntityIds !== null) {
+        return this._fullMapEntityIds;
+      }
+    }
+
+    if (Array.isArray(originalEntities)) {
+      return originalEntities
+        .map((e: any) => (typeof e === "string" ? e : e?.entity))
+        .filter((id: any): id is string => typeof id === "string");
+    }
+
+    return [];
+  }
+
+  private _syncTourPois(): void {
+    if (!this._tour || !this._tourStarted) return;
+
+    const pois = this._getEffectivePois();
+    if (pois.length === 0) {
+      this._tourPoiIndex = -1;
+      this._lastTourPoiId = null;
+      this._clearTourTimer();
+      this._cancelRingAnimation();
+      return;
+    }
+
+    // Attempt to locate our last active POI in the new list
+    let newIndex = -1;
+    if (this._lastTourPoiId !== null) {
+      newIndex = pois.findIndex(p => p.id === this._lastTourPoiId);
+    }
+
+    if (newIndex !== -1) {
+      // Still present: update the index to match its position
+      this._tourPoiIndex = newIndex;
+    } else {
+      // Current POI is no longer displayed/available. Select a new active POI.
+      this._tourPoiIndex = 0;
+      const targetPoi = pois[0];
+      this._lastTourPoiId = targetPoi.id;
+
+      // Fly to the new POI immediately since the old one is gone.
+      this._flyToPoi(targetPoi);
+
+      // Reset the countdown ring and timer if the tour is playing
+      if (this._tourPlaying) {
+        this._startRingAnimation();
+        this._scheduleTourTick();
+      }
+    }
   }
 
   // ── Hours to show Slider Methods ──────────────────────────────────────────
@@ -687,17 +896,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   private async _setupSlider(): Promise<void> {
     const gen = ++this._sliderSetupGen;
 
-    // Wait for the Leaflet map to be fully initialised.
-    let haMap = this._getHaMap();
-    let tries = 0;
-    while ((!haMap?.leafletMap || !haMap?.Leaflet || haMap?.clientWidth === 0) && tries < 20) {
-      if (gen !== this._sliderSetupGen) return;
-      await new Promise(res => setTimeout(res, 50));
-      tries++;
-      haMap = this._getHaMap();
-    }
-
-    if (gen !== this._sliderSetupGen || !haMap?.leafletMap) return;
+    // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+    const haMap = await this._waitForMapToBeReady(gen, () => gen === this._sliderSetupGen);
+    if (!haMap) return;
 
     // Read initial hoursToShow value if we haven't selected one yet.
     if (this._hoursToShowValue === null || this._hoursToShowValue === undefined) {
@@ -905,15 +1106,17 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.appendChild(slider);
     container.appendChild(label);
 
-    leafletContainer.appendChild(container);
+    this._mountBottomRightControl(container, "2", this._hoursToShowConfig?.position, haMap);
 
     this._sliderContainerEl = container;
   }
 
   private _applySliderPosition(el: HTMLElement): void {
-    const isTourActive = this._tour;
-    const tourPos = this._tourIconPosition ?? { bottom: "10px", right: "10px" };
     const sliderPos = this._hoursToShowConfig?.position;
+    const isDefault = !sliderPos || (sliderPos.bottom === "10px" && sliderPos.right === "10px");
+    if (isDefault) {
+      return;
+    }
 
     el.style.removeProperty("top");
     el.style.removeProperty("bottom");
@@ -925,16 +1128,6 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       if (sliderPos.bottom !== undefined) el.style.setProperty("bottom", sliderPos.bottom);
       if (sliderPos.left !== undefined) el.style.setProperty("left", sliderPos.left);
       if (sliderPos.right !== undefined) el.style.setProperty("right", sliderPos.right);
-    } else {
-      // Default position is bottom-right. Detect defaults to avoid overlap.
-      const tourIsAtBottomRight = isTourActive && tourPos.bottom === "10px" && tourPos.right === "10px";
-      if (tourIsAtBottomRight) {
-        el.style.setProperty("bottom", "10px");
-        el.style.setProperty("right", "70px");
-      } else {
-        el.style.setProperty("bottom", "10px");
-        el.style.setProperty("right", "10px");
-      }
     }
   }
 
@@ -958,5 +1151,631 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (this._sliderLabelEl && this._hoursToShowValue !== null) {
       this._sliderLabelEl.textContent = `${this._hoursToShowValue}h`;
     }
+  }
+
+  // ── Entity filter methods ──────────────────────────────────────────────────
+
+  /** Tear down the entity filter overlay, resetting runtime state and restoring config. */
+  private _stopEntityFilter(): void {
+    ++this._entityFilterSetupGen;
+    if (this._entityFilterContainerEl) {
+      this._entityFilterContainerEl.remove();
+      this._entityFilterContainerEl = null;
+    }
+    this._entityFilterStarted = false;
+    this._entityFilterSettingUp = false;
+
+    // Restore original entities configuration
+    const huiMap = this._getHuiMapCard();
+    if (huiMap && huiMap._config) {
+      const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+      const newConfig = { ...huiMap._config };
+      if (originalConfig.show_all !== undefined) {
+        newConfig.show_all = originalConfig.show_all;
+      } else {
+        delete newConfig.show_all;
+      }
+      if (originalConfig.entities !== undefined) {
+        newConfig.entities = originalConfig.entities;
+      } else {
+        delete newConfig.entities;
+      }
+      huiMap.setConfig(newConfig);
+    }
+
+    this._selectedEntities = null;
+    this._lastKnownEntityIds = null;
+    this._fullMapEntityIds = null;
+  }
+
+  /**
+   * Async setup for entity_filter overlay mode. Uses a dedicated
+   * generation counter to coalesce updates.
+   */
+  private async _setupEntityFilter(): Promise<void> {
+    if (this._entityFilterSettingUp) return;
+    this._entityFilterSettingUp = true;
+    const gen = ++this._entityFilterSetupGen;
+
+    try {
+      // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+      const haMap = await this._waitForMapToBeReady(gen, () => gen === this._entityFilterSetupGen);
+      if (!haMap) return;
+
+      // Capture the initial full list of map entities before starting any filtering
+      const huiMap = this._getHuiMapCard();
+      if (huiMap && Array.isArray(huiMap._filteredMapEntities)) {
+        this._fullMapEntityIds = huiMap._filteredMapEntities
+          .map((e: any) => (typeof e === "string" ? e : (e?.entity_id || e?.entityId || e?.entity || e?.id)))
+          .filter((id: any): id is string => typeof id === "string");
+      }
+
+      this._syncSelectedEntities();
+
+      this._ensureEntityFilter(haMap);
+
+      this._entityFilterStarted = true;
+
+      // Initial state set on target map card
+      this._applyFilteredEntities();
+    } finally {
+      this._entityFilterSettingUp = false;
+    }
+  }
+
+  private _getOrCreateBottomRightControls(haMap: any): HTMLElement | null {
+    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
+    if (!leafletContainer) return null;
+
+    let controls = leafletContainer.querySelector(".uix-map-controls-bottom-right") as HTMLElement | null;
+    if (!controls) {
+      controls = document.createElement("div");
+      controls.classList.add("uix-map-controls-bottom-right");
+      controls.style.setProperty("position", "absolute");
+      controls.style.setProperty("bottom", "10px");
+      controls.style.setProperty("right", "10px");
+      controls.style.setProperty("z-index", "1000");
+      controls.style.setProperty("display", "flex");
+      controls.style.setProperty("align-items", "center");
+      controls.style.setProperty("gap", "8px");
+      controls.style.setProperty("pointer-events", "none");
+
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .uix-map-controls-bottom-right > div {
+          position: static !important;
+          pointer-events: auto !important;
+        }
+      `;
+      controls.appendChild(style);
+      leafletContainer.appendChild(controls);
+    }
+    return controls;
+  }
+
+  private _mountBottomRightControl(container: HTMLElement, order: string, positionConfig: any, haMap: any): void {
+    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
+    if (!leafletContainer) return;
+
+    const isDefault = !positionConfig || (positionConfig.bottom === "10px" && positionConfig.right === "10px");
+
+    if (isDefault) {
+      const controls = this._getOrCreateBottomRightControls(haMap);
+      if (controls) {
+        container.style.setProperty("order", order);
+        controls.appendChild(container);
+        return;
+      }
+    }
+
+    leafletContainer.appendChild(container);
+  }
+
+  /** Create the entity filter overlay or update its list if it already exists. */
+  private _ensureEntityFilter(haMap: any): void {
+    if (this._entityFilterContainerEl?.isConnected) {
+      this._applyEntityFilterPosition(this._entityFilterContainerEl);
+      this._updateEntityFilterControl();
+      return;
+    }
+
+    if (this._entityFilterContainerEl) {
+      this._entityFilterContainerEl.remove();
+      this._entityFilterContainerEl = null;
+    }
+
+    // Inject into Leaflet container of ha-map's open shadow root.
+    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
+    if (!leafletContainer) return;
+
+    // ── Container ───────────────────────────────────────────────────────────
+    const container = document.createElement("div");
+    container.classList.add("uix-map-entity-filter-control");
+    container.style.setProperty("position", "absolute");
+    container.style.setProperty("z-index", "var(--uix-map-entity-filter-z-index, 1000)");
+    container.style.setProperty("pointer-events", "auto");
+    this._applyEntityFilterPosition(container);
+
+    // Stop Leaflet from intercepting navigation gestures (dragging/scrolling) on the container.
+    const stopEvents = [
+      "mousedown",
+      "pointerdown",
+      "touchstart",
+      "click",
+      "dblclick",
+      "wheel",
+      "mousewheel"
+    ];
+    for (const name of stopEvents) {
+      container.addEventListener(name, (ev) => ev.stopPropagation());
+    }
+
+    // Modern styling leveraging CSS variables
+    const styleEl = document.createElement("style");
+    styleEl.classList.add("uix-map-entity-filter-styles");
+    styleEl.innerHTML = `
+      .uix-map-entity-filter-control {
+        background: var(--uix-map-entity-filter-background, rgba(255,255,255,0.8));
+        padding: var(--uix-map-entity-filter-padding, 4px);
+        border-radius: var(--uix-map-entity-filter-border-radius, 20px);
+        box-shadow: var(--uix-map-entity-filter-box-shadow, 0 1px 5px rgba(0,0,0,0.4));
+      }
+      ha-dropdown {
+        --mdc-menu-min-width: var(--uix-map-entity-filter-dropdown-min-width, 180px);
+      }
+      ha-check-list-item {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      .uix-map-divider {
+        height: 1px;
+        background-color: var(--divider-color, rgba(0, 0, 0, 0.12));
+        margin: 4px 0;
+        list-style-type: none;
+      }
+    `;
+    container.appendChild(styleEl);
+
+    // ── Dropdown ────────────────────────────────────────────────────────────
+    const dropdown = document.createElement("ha-dropdown") as any;
+    dropdown.setAttribute("size", this._entityFilterConfig?.size || "s");
+
+    // ── Trigger Button ──────────────────────────────────────────────────────
+    const button = document.createElement("ha-button") as any;
+    button.setAttribute("slot", "trigger");
+    button.setAttribute("size", this._entityFilterConfig?.size || "s");
+    button.setAttribute("variant", this._entityFilterConfig?.variant || "neutral");
+    button.setAttribute("appearance", this._entityFilterConfig?.appearance || "filled");
+
+    if (this._entityFilterConfig?.icon) {
+      const iconEl = document.createElement("ha-icon");
+      (iconEl as any).icon = this._entityFilterConfig.icon;
+      iconEl.setAttribute("slot", "start");
+      button.appendChild(iconEl);
+    }
+
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = this._entityFilterConfig?.label || "Filter";
+    button.appendChild(labelSpan);
+    dropdown.appendChild(button);
+
+    // ── Generate Check List Items ───────────────────────────────────────────
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    const isAllInitiallySelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
+
+    let showAllItem: any = null;
+    const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+    const hasOriginalShowAll = originalConfig.show_all === true;
+
+    if (hasOriginalShowAll) {
+      // Create the master "Show All" checkbox
+      showAllItem = document.createElement("ha-check-list-item") as any;
+      showAllItem.value = "show_all_toggle";
+      showAllItem.left = true;
+      showAllItem.setAttribute("left", "");
+      showAllItem.textContent = this._entityFilterConfig?.show_all_label || "Show All";
+      
+      showAllItem.selected = isAllInitiallySelected;
+      if ("checked" in showAllItem) {
+        showAllItem.checked = isAllInitiallySelected;
+      }
+      if (isAllInitiallySelected) {
+        showAllItem.setAttribute("selected", "");
+        showAllItem.setAttribute("checked", "");
+      } else {
+        showAllItem.removeAttribute("selected");
+        showAllItem.removeAttribute("checked");
+      }
+
+      showAllItem.addEventListener("click", (ev: Event) => {
+        ev.stopPropagation();
+        if (showAllItem.disabled) {
+          return;
+        }
+
+        // Show All can only be toggled ON directly. It is disabled when it is already ON.
+        // Therefore, clicking it will always turn it ON.
+        const nextState = true;
+        showAllItem.selected = nextState;
+        if ("checked" in showAllItem) {
+          showAllItem.checked = nextState;
+        }
+        showAllItem.setAttribute("selected", "");
+        showAllItem.setAttribute("checked", "");
+
+        if (this._selectedEntities) {
+          const allIds = this._getOriginalMapEntityIds();
+          allIds.forEach(id => this._selectedEntities!.add(id));
+          // Update all individual items in dropdown UI
+          const otherItems = dropdown.querySelectorAll("ha-check-list-item");
+          otherItems.forEach((it: any) => {
+            if (it.value !== "show_all_toggle") {
+              it.selected = true;
+              if ("checked" in it) {
+                it.checked = true;
+              }
+              it.setAttribute("selected", "");
+              it.setAttribute("checked", "");
+            }
+          });
+          this._updateDisabledStates(dropdown);
+          this._applyFilteredEntities();
+        }
+      });
+
+      const suppressCloseShowAll = (ev: Event) => {
+        ev.stopPropagation();
+      };
+      showAllItem.addEventListener("selected", suppressCloseShowAll);
+      showAllItem.addEventListener("select", suppressCloseShowAll);
+      showAllItem.addEventListener("action", suppressCloseShowAll);
+
+      dropdown.appendChild(showAllItem);
+
+      // Create a divider after Show All
+      const divider = document.createElement("li");
+      divider.classList.add("uix-map-divider");
+      divider.setAttribute("role", "separator");
+      dropdown.appendChild(divider);
+    }
+
+    // Create individual entity check items
+    for (const id of currentEntityIds) {
+      const item = document.createElement("ha-check-list-item") as any;
+      item.value = id;
+      item.left = true;
+      item.setAttribute("left", "");
+      
+      const isSelected = this._selectedEntities?.has(id) ?? true;
+      item.selected = isSelected;
+      if ("checked" in item) {
+        item.checked = isSelected;
+      }
+      if (isSelected) {
+        item.setAttribute("selected", "");
+        item.setAttribute("checked", "");
+      } else {
+        item.removeAttribute("selected");
+        item.removeAttribute("checked");
+      }
+
+      const friendlyName = this._formatEntityName(id);
+      item.textContent = friendlyName;
+
+      // Click event updates filter state to let custom element update and keep dropdown open.
+      item.addEventListener("click", (ev: Event) => {
+        ev.stopPropagation();
+        const isCurrentlyChecked = item.selected === true || item.checked === true || item.hasAttribute("selected") || item.hasAttribute("checked");
+        if (isCurrentlyChecked && this._selectedEntities && this._selectedEntities.size <= 1 && this._selectedEntities.has(id)) {
+          // Keep it selected; maps always need at least one entity
+          item.selected = true;
+          if ("checked" in item) {
+            item.checked = true;
+          }
+          item.setAttribute("selected", "");
+          item.setAttribute("checked", "");
+          return;
+        }
+
+        const nextState = !isCurrentlyChecked;
+        item.selected = nextState;
+        if ("checked" in item) {
+          item.checked = nextState;
+        }
+        if (nextState) {
+          item.setAttribute("selected", "");
+          item.setAttribute("checked", "");
+        } else {
+          item.removeAttribute("selected");
+          item.removeAttribute("checked");
+        }
+        if (this._selectedEntities) {
+          if (nextState) {
+            this._selectedEntities.add(id);
+          } else {
+            this._selectedEntities.delete(id);
+          }
+
+          // Recalculate and update the "Show All" checkbox state
+          if (showAllItem) {
+            const allIds = this._getOriginalMapEntityIds();
+            const allSelected = allIds.length > 0 && allIds.every(otherId => this._selectedEntities!.has(otherId));
+            showAllItem.selected = allSelected;
+            if ("checked" in showAllItem) {
+              showAllItem.checked = allSelected;
+            }
+            if (allSelected) {
+              showAllItem.setAttribute("selected", "");
+              showAllItem.setAttribute("checked", "");
+            } else {
+              showAllItem.removeAttribute("selected");
+              showAllItem.removeAttribute("checked");
+            }
+          }
+
+          this._updateDisabledStates(dropdown);
+          this._applyFilteredEntities();
+        }
+      });
+
+      // Prevent checklist selection events from bubbling to dropdown and closing it.
+      const suppressClose = (ev: Event) => {
+        ev.stopPropagation();
+      };
+      item.addEventListener("selected", suppressClose);
+      item.addEventListener("select", suppressClose);
+      item.addEventListener("action", suppressClose);
+
+      dropdown.appendChild(item);
+    }
+
+    container.appendChild(dropdown);
+    this._mountBottomRightControl(container, "1", this._entityFilterConfig?.position, haMap);
+
+    this._updateDisabledStates(dropdown);
+
+    this._entityFilterContainerEl = container;
+  }
+
+  private _updateDisabledStates(dropdown: any): void {
+    const items = dropdown.querySelectorAll("ha-check-list-item");
+    const selectedCount = this._selectedEntities ? this._selectedEntities.size : 0;
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    const allSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
+
+    items.forEach((item: any) => {
+      const id = item.value;
+      if (id === "show_all_toggle") {
+        if (allSelected) {
+          item.disabled = true;
+          item.setAttribute("disabled", "");
+        } else {
+          item.disabled = false;
+          item.removeAttribute("disabled");
+        }
+      } else if (id && this._selectedEntities) {
+        if (selectedCount <= 1 && this._selectedEntities.has(id)) {
+          item.disabled = true;
+          item.setAttribute("disabled", "");
+        } else {
+          item.disabled = false;
+          item.removeAttribute("disabled");
+        }
+      }
+    });
+  }
+
+  private _applyEntityFilterPosition(el: HTMLElement): void {
+    const filterPos = this._entityFilterConfig?.position;
+    const isDefault = !filterPos || (filterPos.bottom === "10px" && filterPos.right === "10px");
+    if (isDefault) {
+      return;
+    }
+
+    el.style.removeProperty("top");
+    el.style.removeProperty("bottom");
+    el.style.removeProperty("left");
+    el.style.removeProperty("right");
+
+    if (filterPos) {
+      if (filterPos.top !== undefined) el.style.setProperty("top", filterPos.top);
+      if (filterPos.bottom !== undefined) el.style.setProperty("bottom", filterPos.bottom);
+      if (filterPos.left !== undefined) el.style.setProperty("left", filterPos.left);
+      if (filterPos.right !== undefined) el.style.setProperty("right", filterPos.right);
+    }
+  }
+
+  private _updateEntityFilterControl(): void {
+    if (!this._entityFilterContainerEl) return;
+    const dropdown = this._entityFilterContainerEl.querySelector("ha-dropdown");
+    if (!dropdown) return;
+
+    // Refresh check states for list items
+    const items = dropdown.querySelectorAll("ha-check-list-item");
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    const allSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
+
+    items.forEach((item: any) => {
+      const id = item.value;
+      if (id === "show_all_toggle") {
+        item.selected = allSelected;
+        if ("checked" in item) {
+          item.checked = allSelected;
+        }
+        if (allSelected) {
+          item.setAttribute("selected", "");
+          item.setAttribute("checked", "");
+        } else {
+          item.removeAttribute("selected");
+          item.removeAttribute("checked");
+        }
+      } else if (id && this._selectedEntities) {
+        const isSel = this._selectedEntities.has(id);
+        item.selected = isSel;
+        if ("checked" in item) {
+          item.checked = isSel;
+        }
+        if (isSel) {
+          item.setAttribute("selected", "");
+          item.setAttribute("checked", "");
+        } else {
+          item.removeAttribute("selected");
+          item.removeAttribute("checked");
+        }
+      }
+    });
+
+    this._updateDisabledStates(dropdown);
+
+    // Refresh trigger button attributes in case config changed on the fly
+    const button = dropdown.querySelector("ha-button") as any;
+    if (button && this._entityFilterConfig) {
+      button.setAttribute("size", this._entityFilterConfig.size);
+      button.setAttribute("variant", this._entityFilterConfig.variant);
+      button.setAttribute("appearance", this._entityFilterConfig.appearance);
+
+      const span = button.querySelector("span");
+      if (span) span.textContent = this._entityFilterConfig.label;
+
+      const icon = button.querySelector("ha-icon") as any;
+      if (icon) icon.icon = this._entityFilterConfig.icon;
+    }
+  }
+
+  private _getFilteredEntities(originalEntities: any[]): any[] {
+    if (!Array.isArray(originalEntities)) return [];
+    return originalEntities.filter(e => {
+      const id = typeof e === "string" ? e : e?.entity;
+      return typeof id === "string" && this._selectedEntities && this._selectedEntities.has(id);
+    });
+  }
+
+  private _syncSelectedEntities(): void {
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    if (currentEntityIds.length === 0) {
+      // If the map has no entities (e.g. not loaded or empty config), do not wipe out our selections.
+      return;
+    }
+
+    if (!this._selectedEntities) {
+      this._selectedEntities = new Set();
+    }
+
+    if (this._lastKnownEntityIds === null) {
+      // First run: select all entities by default
+      for (const id of currentEntityIds) {
+        this._selectedEntities.add(id);
+      }
+    } else {
+      // Add any new entities that have appeared
+      const oldSet = new Set(this._lastKnownEntityIds);
+      for (const id of currentEntityIds) {
+        if (!oldSet.has(id)) {
+          this._selectedEntities.add(id);
+        }
+      }
+      // Remove stale entities that are no longer in original map config
+      for (const id of this._selectedEntities) {
+        if (!currentEntityIds.includes(id)) {
+          this._selectedEntities.delete(id);
+        }
+      }
+    }
+    this._lastKnownEntityIds = currentEntityIds;
+  }
+
+  private _applyFilteredEntities(): void {
+    if (!this._entityFilterStarted) return;
+
+    const huiMap = this._getHuiMapCard();
+    if (!huiMap || !huiMap._config) return;
+
+    const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
+    const originalEntities = originalConfig.entities || [];
+    const hasOriginalShowAll = originalConfig.show_all === true;
+
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    const isAllSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
+
+    const newConfig = { ...huiMap._config };
+
+    if (hasOriginalShowAll) {
+      if (isAllSelected) {
+        // Reset show_all to true and restore original config as is to avoid loops
+        if (originalConfig.show_all !== undefined) {
+          newConfig.show_all = originalConfig.show_all;
+        } else {
+          delete newConfig.show_all;
+        }
+        if (originalConfig.entities !== undefined) {
+          newConfig.entities = originalEntities;
+        } else {
+          delete newConfig.entities;
+        }
+      } else {
+        // When we filter, we remove show_all from config as having in config generates an error
+        delete newConfig.show_all;
+        const allKnown = this._getOriginalMapEntityIds();
+        newConfig.entities = allKnown
+          .filter(id => this._selectedEntities && this._selectedEntities.has(id))
+          .map(id => {
+            const orig = Array.isArray(originalEntities) ? originalEntities.find((e: any) => (typeof e === "string" ? e === id : e?.entity === id)) : null;
+            return orig || id;
+          });
+      }
+    } else {
+      // Normal filtering (for show_all: false/undefined case)
+      delete newConfig.show_all;
+      if (isAllSelected) {
+        newConfig.entities = originalEntities;
+      } else {
+        newConfig.entities = originalEntities.filter((e: any) => {
+          const id = typeof e === "string" ? e : e?.entity;
+          return typeof id === "string" && this._selectedEntities && this._selectedEntities.has(id);
+        });
+      }
+    }
+
+    if (!newConfig.show_all && (!newConfig.entities || newConfig.entities.length === 0)) {
+      // Prevent setting an empty entities list which would crash the card
+      return;
+    }
+
+    const currentEntities = huiMap._config.entities;
+    const currentShowAll = huiMap._config.show_all;
+
+    const hasChanged = JSON.stringify(currentEntities) !== JSON.stringify(newConfig.entities) ||
+                        currentShowAll !== newConfig.show_all ||
+                        !("entities" in newConfig) !== !("entities" in huiMap._config) ||
+                        !("show_all" in newConfig) !== !("show_all" in huiMap._config);
+
+    if (hasChanged) {
+      huiMap.setConfig(newConfig);
+      if (this._tour && this._tourStarted) {
+        if (huiMap.updateComplete) {
+          (huiMap.updateComplete as Promise<void>).then(() => {
+            this._syncTourPois();
+          });
+        } else {
+          setTimeout(() => this._syncTourPois(), 100);
+        }
+      }
+    }
+  }
+
+  private _formatEntityName(entityId: string): string {
+    const hass = (this.controller.forge as any).hass;
+    const stateObj = hass?.states?.[entityId];
+    if (stateObj) {
+      if (typeof hass?.formatEntityName === "function") {
+        try {
+          return hass.formatEntityName(stateObj, { type: "entity" });
+        } catch (e) {
+          console.error("UIX Forge Map Entity Filter: failed to call hass.formatEntityName", e);
+        }
+      }
+      return stateObj.attributes?.friendly_name || stateObj.entity_id || entityId;
+    }
+    return entityId;
   }
 }

@@ -1,0 +1,63 @@
+id: forge_spark_map_entity_filter
+description: "Map spark in entity_filter mode renders an interactive dropdown checklist"
+view_path: forge-spark-map-entity-filter
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_one
+      gps:
+        - 51.5200
+        - -0.1300
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_two
+      gps:
+        - 51.5210
+        - -0.1295
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        entity_filter: true
+  element:
+    type: map
+    entities:
+      - entity: device_tracker.uix_tracker_one
+      - entity: device_tracker.uix_tracker_two
+
+interactions:
+  - type: wait
+    ms: 1000
+  - type: click
+    root: ["hui-map-card", "ha-map"]
+    selector: "ha-button"
+    settle_ms: 2000
+
+assertions:
+  - type: element_present
+    root: ["hui-map-card", "ha-map"]
+    selector: "div.uix-map-entity-filter-control"
+
+  - type: element_present
+    root: ["hui-map-card", "ha-map"]
+    selector: "ha-dropdown"
+
+  - type: element_present
+    root: ["hui-map-card", "ha-map"]
+    selector: "ha-check-list-item"
+
+  - type: snapshot
+    name: "29_forge_spark_map_entity_filter"
+    threshold: 0.05
