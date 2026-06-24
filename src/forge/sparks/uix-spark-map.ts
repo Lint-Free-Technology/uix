@@ -1322,6 +1322,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         margin: 4px 0;
         list-style-type: none;
       }
+      ha-button::part(base) {
+        padding-inline-end: var(--ha-space-2);
+      }
     `;
     container.appendChild(styleEl);
 
@@ -1340,11 +1343,15 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       const iconEl = document.createElement("ha-icon");
       (iconEl as any).icon = this._entityFilterConfig.icon;
       iconEl.setAttribute("slot", "start");
+      if (this._entityFilterConfig?.label == "") {
+        // Icon-only button: add aria-label for accessibility
+        iconEl.style.setProperty("margin-inline-end", "0");
+      }
       button.appendChild(iconEl);
     }
 
     const labelSpan = document.createElement("span");
-    labelSpan.textContent = this._entityFilterConfig?.label || "Filter";
+    labelSpan.textContent = (this._entityFilterConfig?.label !== undefined ? this._entityFilterConfig.label : "Filter");
     button.appendChild(labelSpan);
     dropdown.appendChild(button);
 
@@ -1627,7 +1634,10 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       if (span) span.textContent = this._entityFilterConfig.label;
 
       const icon = button.querySelector("ha-icon") as any;
-      if (icon) icon.icon = this._entityFilterConfig.icon;
+      if (icon) {
+        icon.icon = this._entityFilterConfig.icon;
+        icon.style.setProperty("margin-inline-end", this._entityFilterConfig.icon && this._entityFilterConfig.label !== "" ? "var(--ha-space-1)" : "0");
+      }
     }
   }
 

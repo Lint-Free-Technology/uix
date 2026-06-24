@@ -81,7 +81,7 @@ Each `poi` list entry may contain:
 | `variant` | string | `neutral` | Button variant brand/style (e.g. `brand`, `neutral`, `danger`, `warning`, `success`). |
 | `appearance` | string | `filled` | Button presentation appearance (e.g. `accent`, `filled`, `plain`). |
 | `icon` | string | `mdi:filter-variant` | Trigger button start-icon representation. |
-| `label` | string | `Filter` | Trigger button label string. |
+| `label` | string | `Filter` | Trigger button label string. Set to empty string to disable. |
 
 ### Tour CSS variables
 
