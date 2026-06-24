@@ -1,3 +1,9 @@
+## [7.6.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.4...v7.6.0-beta.5) (2026-06-24)
+
+### ⭐ New Features
+
+* UIX Forge map spark `entity_filter` option. ([#400](https://github.com/Lint-Free-Technology/uix/issues/400)) ([fb9988c](https://github.com/Lint-Free-Technology/uix/commit/fb9988c65a9b6f47cfeb8518183521a5e7acd567)), closes [#399](https://github.com/Lint-Free-Technology/uix/issues/399)
+
 ## [7.6.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.3...v7.6.0-beta.4) (2026-06-22)
 
 ### ⭐ New Features
