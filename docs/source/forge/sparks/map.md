@@ -7,6 +7,7 @@ icon: material/map
 
 !!! info
     Hours to show slider mode added in 7.6.0-beta.3
+    Entity filter mode added in 7.6.0-beta.5
 
 The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports five modes:
 
@@ -185,6 +186,9 @@ When active, the spark:
 4. Smoothly preserves the user's selected value across template-driven forge re-renders.
 
 **Entity filter overlay mode:**
+
+!!! info
+    Entity filter mode added in 7.6.0-beta.5
 
 When active, the spark:
 
