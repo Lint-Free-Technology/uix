@@ -945,7 +945,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.style.setProperty("gap", "8px");
     container.style.setProperty("background", "var(--uix-map-slider-background, rgba(255,255,255,0.8))");
     container.style.setProperty("padding", "var(--uix-map-slider-padding, 4px 12px)");
-    container.style.setProperty("border-radius", "var(--uix-map-slider-border-radius, 20px)");
+    container.style.setProperty("border-radius", "var(--uix-map-slider-border-radius, 9999px)");
     container.style.setProperty("box-shadow", "var(--uix-map-slider-box-shadow, 0 1px 5px rgba(0,0,0,0.4))");
     container.style.setProperty("pointer-events", "auto");
     this._applySliderPosition(container);
@@ -1306,7 +1306,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       .uix-map-entity-filter-control {
         background: var(--uix-map-entity-filter-background, rgba(255,255,255,0.8));
         padding: var(--uix-map-entity-filter-padding, 4px);
-        border-radius: var(--uix-map-entity-filter-border-radius, 20px);
+        border-radius: var(--uix-map-entity-filter-border-radius, 9999px);
         box-shadow: var(--uix-map-entity-filter-box-shadow, 0 1px 5px rgba(0,0,0,0.4));
       }
       ha-dropdown {

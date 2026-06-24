@@ -107,7 +107,7 @@ The history duration slider can be styled using CSS variables placed on the `ha-
 | `--uix-map-slider-background` | `rgba(255,255,255,0.8)` | Background color of slider container. |
 | `--uix-map-slider-text-color` | `var(--primary-text-color, #212121)` | Color of the duration label next to the slider. |
 | `--uix-map-slider-width` | `100px` | Explicit width of the slider component. |
-| `--uix-map-slider-border-radius` | `20px` | Rounded corner styling for the background capsule. |
+| `--uix-map-slider-border-radius` | `9999px` | Slider container border radius (pill by default). |
 | `--uix-map-slider-padding` | `4px 12px` | Padding of the capsule container. |
 | `--uix-map-slider-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
 | `--uix-map-slider-z-index` | `1000` | Controls overlay depth of the slider capsule. |
@@ -139,7 +139,7 @@ The entity filter dropdown can be styled using CSS variables placed on the `ha-c
 | --- | --- | --- |
 | `--uix-map-entity-filter-background` | `rgba(255,255,255,0.8)` | Background color of entity filter container. |
 | `--uix-map-entity-filter-padding` | `4px` | Padding of the filter capsule container. |
-| `--uix-map-entity-filter-border-radius` | `20px` | Rounded corner styling for the background capsule. |
+| `--uix-map-entity-filter-border-radius` | `9999px` | Entity filter container border radius (pill by default). |
 | `--uix-map-entity-filter-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
 | `--uix-map-entity-filter-z-index` | `1000` | Controls overlay depth of the filter capsule. |
 | `--uix-map-entity-filter-dropdown-min-width` | `180px` | Minimum width of the opened dropdown menu list. |
