@@ -1,0 +1,73 @@
+id: forge_spark_map_entity_filter_show_all
+description: "Map spark in entity_filter mode works with show_all: true"
+view_path: forge-spark-map-entity-filter-show-all
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_show_all_one
+      gps:
+        - 51.5200
+        - -0.1300
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_show_all_two
+      gps:
+        - 51.5210
+        - -0.1295
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        entity_filter: true
+  element:
+    type: map
+    show_all: true
+
+interactions:
+  - type: wait
+    ms: 3000
+  - type: click
+    root:
+      - hui-map-card
+      - ha-map
+    selector: ha-button
+    settle_ms: 2000
+
+assertions:
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: div.uix-map-entity-filter-control
+
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: ha-dropdown
+
+  # The "Show All" master toggle checkbox should exist
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: "ha-check-list-item[disabled]"
+
+  - type: text_equals
+    root:
+      - hui-map-card
+      - ha-map
+    selector: "ha-check-list-item[disabled]"
+    expected: "Show All"

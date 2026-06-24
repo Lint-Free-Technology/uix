@@ -8,12 +8,13 @@ icon: material/map
 !!! info
     Hours to show slider mode added in 7.6.0-beta.3
 
-The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports four modes:
+The `map` spark adds advanced map state management to a map card used inside a [UIX Forge](../index.md) forged element. It supports five modes:
 
 - **Memory mode** (`memory: true`): Captures the current Leaflet zoom and centre before each update and restores them afterwards, so the user's view is always preserved. Without it, every forge template update causes the map to reset to its default zoom level and centre position.
 - **Fit map mode** (`fit_map: true`): Fits the map view when map card does not auto fit on load when used in custom cards which may hide the map initially. e.g. `custom: auto-entities`.
 - **Tour mode** (`tour: true | object`): Automatically moves the map between a list of points of interest. A pause/play button is injected into the map. When `tour: true` all defaults are used; pass an object to customise behaviour.
 - **Hours to show slider mode** (`hours_to_show: true | object`): Injects an interactive `ha-slider` overlay into the map allowing users to adjust the hours of history loaded and rendered in real-time.
+- **Entity filter overlay mode** (`entity_filter: true | object`): Injects an interactive checkable dropdown checklist overlay into the map allowing users to toggle visible entities on the map in real-time.
 
 ## Basic usage
 
@@ -39,6 +40,7 @@ element:
 | `fit_map` | boolean | false | Fit map view to all entities once map is visible (useful for cards hidden on load). |
 | `tour` | boolean or object | false | Enable tour mode. `true` uses all defaults; pass an object to customise (see below). |
 | `hours_to_show` | boolean or object | false | Enable hours to show slider overlay. `true` uses all defaults; pass an object to customise (see below). |
+| `entity_filter` | boolean or object | false | Enable entity filter checklist dropdown overlay. `true` uses all defaults; pass an object to customise (see below). |
 
 ### Tour sub-keys
 
@@ -70,6 +72,17 @@ Each `poi` list entry may contain:
 | `position` | object | `{bottom: 10px, right: 10px}` | CSS position of the slider capsule. Accepts `top`, `bottom`, `left`, and `right` keys (numbers are treated as pixels). |
 | `tooltip_distance` | number | `20` | Distance in pixels of slider tooltip away from thumb. |
 
+### Entity Filter sub-keys
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `position` | object | `{bottom: 10px, right: 10px}` | CSS position of the filter button capsule. Accepts `top`, `bottom`, `left`, and `right` keys (numbers are treated as pixels). |
+| `size` | string | `s` | Button size (e.g. `s`, `m`, `l`). |
+| `variant` | string | `neutral` | Button variant brand/style (e.g. `brand`, `neutral`, `danger`, `warning`, `success`). |
+| `appearance` | string | `filled` | Button presentation appearance (e.g. `accent`, `filled`, `plain`). |
+| `icon` | string | `mdi:filter-variant` | Trigger button start-icon representation. |
+| `label` | string | `Filter` | Trigger button label string. Set to empty string to disable. |
+
 ### Tour CSS variables
 
 The pause/play button can be styled using CSS variables placed on the `ha-card` or any ancestor:
@@ -94,7 +107,7 @@ The history duration slider can be styled using CSS variables placed on the `ha-
 | `--uix-map-slider-background` | `rgba(255,255,255,0.8)` | Background color of slider container. |
 | `--uix-map-slider-text-color` | `var(--primary-text-color, #212121)` | Color of the duration label next to the slider. |
 | `--uix-map-slider-width` | `100px` | Explicit width of the slider component. |
-| `--uix-map-slider-border-radius` | `20px` | Rounded corner styling for the background capsule. |
+| `--uix-map-slider-border-radius` | `9999px` | Slider container border radius (pill by default). |
 | `--uix-map-slider-padding` | `4px 12px` | Padding of the capsule container. |
 | `--uix-map-slider-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
 | `--uix-map-slider-z-index` | `1000` | Controls overlay depth of the slider capsule. |
@@ -117,6 +130,19 @@ The history duration slider can be styled using CSS variables placed on the `ha-
 | `--uix-map-slider-tooltip-border-width` | `0px` | Border thickness of tooltip. |
 | `--uix-map-slider-tooltip-border-color` | `currentColor` | Border color of tooltip bubble. |
 | `--uix-map-slider-tooltip-border-style` | `none` | Border line style. |
+
+### Entity Filter CSS variables
+
+The entity filter dropdown can be styled using CSS variables placed on the `ha-card` or any ancestor:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `--uix-map-entity-filter-background` | `rgba(255,255,255,0.8)` | Background color of entity filter container. |
+| `--uix-map-entity-filter-padding` | `4px` | Padding of the filter capsule container. |
+| `--uix-map-entity-filter-border-radius` | `9999px` | Entity filter container border radius (pill by default). |
+| `--uix-map-entity-filter-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
+| `--uix-map-entity-filter-z-index` | `1000` | Controls overlay depth of the filter capsule. |
+| `--uix-map-entity-filter-dropdown-min-width` | `180px` | Minimum width of the opened dropdown menu list. |
 
 ## How it works
 
@@ -157,6 +183,17 @@ When active, the spark:
 2. If `tour` is also active and at the default position, the slider is automatically shifted leftwards to prevent visual overlapping.
 3. Automatically sets, clamps, and updates `hui-map-card` `_config.hours_to_show` based on slider drags and releases to fetch history records in real-time.
 4. Smoothly preserves the user's selected value across template-driven forge re-renders.
+
+**Entity filter overlay mode:**
+
+When active, the spark:
+
+1. Renders a dropdown overlay using `ha-dropdown` with a trigger `ha-button`.
+2. Resolves and displays each map entity as a checkbox using Friendly Name.
+3. Directly filters visible entities. As a map card will error with no entities, deselecting any last selected entity is disabled.
+4. If the `show_all: true` is set in forged map card config, a `Show All` option will also show in the dropdown. While entities are filtered, any new map entities will not show until `Show All` is selected.
+5. If `tour`or `hours_to_show` is also active and at the default position, the slider is automatically shifted leftwards to prevent visual overlapping.
+6. If `tour` is also active, changing filtered entities will cause the map tour to restart.
 
 !!! note
     The spark targets the `hui-map-card` element inside the forged element as well as the `ha-map` element within its shadow root. It relies on the `leafletMap` property exposed by `ha-map`. If the forged element is not a map card (or is wrapped in another element that does not expose `hui-map-card`), none of the modes have any effect.
@@ -289,4 +326,44 @@ element:
   type: map
   entities:
     - device_tracker.phone
+```
+
+### Entity selection filter dropdown
+
+Enable an interactive dropdown to toggle entity tracks visibility in real-time:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: map
+      entity_filter: true
+element:
+  type: map
+  entities:
+    - device_tracker.phone
+    - device_tracker.tablet
+    - device_tracker.watch
+```
+
+Customise the trigger button text, size, color and icon styling:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: map
+      entity_filter:
+        label: "Trackers"
+        icon: "mdi:account-multiple"
+        size: "m"
+        variant: "brand"
+        appearance: "filled"
+element:
+  type: map
+  entities:
+    - device_tracker.phone
+    - device_tracker.tablet
 ```
