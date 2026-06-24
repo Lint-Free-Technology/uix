@@ -34,9 +34,6 @@ card:
   element:
     type: map
     show_all: true
-    entities:
-      - entity: device_tracker.uix_tracker_show_all_one
-      - entity: device_tracker.uix_tracker_show_all_two
 
 interactions:
   - type: wait
@@ -66,11 +63,11 @@ assertions:
     root:
       - hui-map-card
       - ha-map
-    selector: "ha-check-list-item[value='show_all_toggle']"
+    selector: "ha-check-list-item[disabled]"
 
   - type: text_equals
     root:
       - hui-map-card
       - ha-map
-    selector: "ha-check-list-item[value='show_all_toggle']"
+    selector: "ha-check-list-item[disabled]"
     expected: "Show All"

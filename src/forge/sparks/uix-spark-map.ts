@@ -312,17 +312,6 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       haMap = this._getHaMap();
       huiMap = this._getHuiMapCard();
     }
-    if (tries >= 60) {
-      console.warn("UIX Forge Map Spark: _waitForMapToBeReady timed out!", {
-        hasHaMap: !!haMap,
-        leafletMap: !!haMap?.leafletMap,
-        Leaflet: !!haMap?.Leaflet,
-        clientWidth: haMap?.clientWidth,
-        hasHuiMap: !!huiMap,
-        _filteredMapEntities: huiMap?._filteredMapEntities,
-        hasOriginalShowAll
-      });
-    }
     if (!checkGen() || !haMap?.leafletMap || !huiMap?._filteredMapEntities) return null;
     return haMap;
   }
