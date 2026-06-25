@@ -1,3 +1,9 @@
+## [7.6.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.5...v7.6.0-beta.6) (2026-06-25)
+
+### ⭐ New Features
+
+* Allow grouping for UIX Forge map spark entity filter using `group` config. ([#402](https://github.com/Lint-Free-Technology/uix/issues/402)) ([3d3789a](https://github.com/Lint-Free-Technology/uix/commit/3d3789a646eed5f3fc79ba0a241815e6e975c54d))
+
 ## [7.6.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.4...v7.6.0-beta.5) (2026-06-24)
 
 ### ⭐ New Features
