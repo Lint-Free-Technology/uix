@@ -461,7 +461,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         // If so, we recreate the filter overlay UI to include the new entities!
         const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
         const originalIds = this._getOriginalMapEntityIds();
-        const currentItemsCount = this._entityFilterContainerEl?.querySelectorAll("ha-dropdown-item[value]").length || 0;
+        const currentItemsCount = this._entityFilterContainerEl
+          ? Array.from(this._entityFilterContainerEl.querySelectorAll("ha-dropdown-item")).filter((it: any) => !!it.value).length
+          : 0;
         const expectedCount = originalIds.length + (originalConfig.show_all === true ? 1 : 0);
         if (currentItemsCount !== expectedCount) {
           const haMap = this._getHaMap();
