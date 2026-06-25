@@ -1,0 +1,70 @@
+id: forge_spark_map_entity_filter_show_all_group
+description: "Map spark in entity_filter mode works with show_all and group: true"
+view_path: forge-spark-map-entity-filter-show-all
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_one
+      gps:
+        - 51.5200
+        - -0.1300
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_tracker_two
+      gps:
+        - 51.5210
+        - -0.1295
+      gps_accuracy: 1
+  - type: wait
+    ms: 2000
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        entity_filter:
+          group: true
+  element:
+    type: map
+    show_all: true
+
+interactions:
+  - type: wait
+    ms: 3000
+  - type: click
+    root:
+      - hui-map-card
+      - ha-map
+    selector: ha-button
+    settle_ms: 2000
+
+assertions:
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: div.uix-map-entity-filter-control
+
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: "ha-dropdown-item[data-group-trigger=\"trackers\"]"
+
+  - type: element_present
+    root:
+      - hui-map-card
+      - ha-map
+    selector: "ha-dropdown-item[data-group-trigger=\"zones\"]"
+
+  - type: snapshot
+    name: "31_forge_spark_map_entity_filter_show_all_group"
+    threshold: 0.05

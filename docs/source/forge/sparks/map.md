@@ -382,3 +382,21 @@ element:
     - device_tracker.phone
     - device_tracker.tablet
 ```
+
+Display entity filter grouped by domain with custom labels
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: map
+      entity_filter:
+        group:
+          persons: Household
+          trackers: Phones
+          zones: Places
+element:
+  type: map
+  show_all: true
+```
