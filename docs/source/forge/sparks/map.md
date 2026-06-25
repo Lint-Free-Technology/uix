@@ -83,6 +83,15 @@ Each `poi` list entry may contain:
 | `appearance` | string | `filled` | Button presentation appearance (e.g. `accent`, `filled`, `plain`). |
 | `icon` | string | `mdi:filter-variant` | Trigger button start-icon representation. |
 | `label` | string | `Filter` | Trigger button label string. Set to empty string to disable. |
+| `group` | boolean or object | false | Group entities according to their domain. Set to `true` to use defaults, or an object to set labels for each entity domain grouping. |
+
+#### Entity filter group sub-keys
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `persons` | string | `Persons` | Label for the `person` domain entity grouping. |
+| `trackers` | string | `Trackers` | Label for the `device_tracker` domain entity grouping. |
+| `zones` | string | `Zones` | Label for the `zone` domain entity grouping. |
 
 ### Tour CSS variables
 
@@ -90,8 +99,8 @@ The pause/play button can be styled using CSS variables placed on the `ha-card` 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `--uix-map-tour-icon-color` | `var(--primary-color)` | Icon colour. |
-| `--uix-map-tour-icon-ring-color` | `var(--uix-map-tour-icon-color)` | Countdown ring colour (defaults to icon colour). |
+| `--uix-map-tour-icon-color` | `var(--primary-color)` | Icon color. |
+| `--uix-map-tour-icon-ring-color` | `var(--uix-map-tour-icon-color)` | Countdown ring color (defaults to icon color). |
 | `--uix-map-tour-icon-background` | `rgba(255,255,255,0.8)` | Button background. |
 | `--uix-map-tour-icon-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the icon container. |
 | `--uix-map-tour-icon-width` | `auto` | Button width. |
@@ -144,6 +153,8 @@ The entity filter dropdown can be styled using CSS variables placed on the `ha-c
 | `--uix-map-entity-filter-box-shadow` | `0 1px 5px rgba(0,0,0,0.4)` | Box shadow of the container element. |
 | `--uix-map-entity-filter-z-index` | `1000` | Controls overlay depth of the filter capsule. |
 | `--uix-map-entity-filter-dropdown-min-width` | `180px` | Minimum width of the opened dropdown menu list. |
+| `--uix-map-entity-filter-item-icon-color` | `var(--ha-color-fill-neutral-loud-resting)` | Color of the check icon of entity filter list items. |
+| `--uix-map-entity-filter-item-icon-checked-color` | `var(--uix-map-entity-filter-item-icon-color, var(--primary-color))` | Color of the check icon of entity filter items when checked. |
 
 ## How it works
 
@@ -370,4 +381,22 @@ element:
   entities:
     - device_tracker.phone
     - device_tracker.tablet
+```
+
+Display entity filter grouped by domain with custom labels
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: map
+      entity_filter:
+        group:
+          persons: Household
+          trackers: Phones
+          zones: Places
+element:
+  type: map
+  show_all: true
 ```

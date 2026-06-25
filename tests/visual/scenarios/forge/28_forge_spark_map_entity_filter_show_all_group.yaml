@@ -1,5 +1,5 @@
-id: forge_spark_map_entity_filter_show_all
-description: "Map spark in entity_filter mode works with show_all: true"
+id: forge_spark_map_entity_filter_show_all_group
+description: "Map spark in entity_filter mode works with show_all and group: true"
 view_path: forge-spark-map-entity-filter-show-all
 
 setup:
@@ -30,7 +30,8 @@ card:
     mold: card
     sparks:
       - type: map
-        entity_filter: true
+        entity_filter:
+          group: true
   element:
     type: map
     show_all: true
@@ -56,22 +57,14 @@ assertions:
     root:
       - hui-map-card
       - ha-map
-    selector: ha-dropdown
+    selector: "ha-dropdown-item[data-group-trigger=\"trackers\"]"
 
-  # The "Show All" master toggle checkbox should exist
   - type: element_present
     root:
       - hui-map-card
       - ha-map
-    selector: "ha-dropdown-item[data-show-all-toggle]"
-
-  - type: text_equals
-    root:
-      - hui-map-card
-      - ha-map
-    selector: "ha-dropdown-item[data-show-all-toggle]"
-    expected: "Show All"
+    selector: "ha-dropdown-item[data-group-trigger=\"zones\"]"
 
   - type: snapshot
-    name: "30_forge_spark_map_entity_filter_show_all"
+    name: "31_forge_spark_map_entity_filter_show_all_group"
     threshold: 0.05

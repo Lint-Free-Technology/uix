@@ -54,6 +54,7 @@ interface EntityFilterConfig {
   icon: string;
   label: string;
   show_all_label: string;
+  group: boolean | Record<string, string>;
 }
 
 /**
@@ -240,7 +241,15 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       const label = String(e.label !== undefined ? e.label : "Filter");
       const show_all_label = String(e.show_all_label !== undefined ? e.show_all_label : "Show All");
 
-      this._entityFilterConfig = { position, size, variant, appearance, icon, label, show_all_label };
+      const groupRaw = e.group;
+      let group: boolean | Record<string, string> = false;
+      if (groupRaw === true) {
+        group = true;
+      } else if (!!groupRaw && typeof groupRaw === "object") {
+        group = { ...groupRaw };
+      }
+
+      this._entityFilterConfig = { position, size, variant, appearance, icon, label, show_all_label, group };
     }
 
     this._saveMapState();
@@ -452,7 +461,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         // If so, we recreate the filter overlay UI to include the new entities!
         const originalConfig = (this.controller.forge as any).forgedElementConfig || {};
         const originalIds = this._getOriginalMapEntityIds();
-        const currentItemsCount = this._entityFilterContainerEl?.querySelectorAll("ha-check-list-item[value]").length || 0;
+        const currentItemsCount = this._entityFilterContainerEl
+          ? Array.from(this._entityFilterContainerEl.querySelectorAll("ha-dropdown-item")).filter((it: any) => !!it.value).length
+          : 0;
         const expectedCount = originalIds.length + (originalConfig.show_all === true ? 1 : 0);
         if (currentItemsCount !== expectedCount) {
           const haMap = this._getHaMap();
@@ -1312,9 +1323,12 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       ha-dropdown {
         --mdc-menu-min-width: var(--uix-map-entity-filter-dropdown-min-width, 180px);
       }
-      ha-check-list-item {
-        padding-left: 12px;
-        padding-right: 12px;
+      ha-dropdown-item {
+        --icon-primary-color: var(--uix-map-entity-filter-item-icon-color, var(--ha-color-fill-neutral-loud-resting));
+      }
+      ha-dropdown-item[checked],
+      ha-dropdown-item[aria-checked="true"] {
+        --icon-primary-color: var(--uix-map-entity-filter-item-icon-checked-color, var(--uix-map-entity-filter-item-icon-color, var(--primary-color)));
       }
       .uix-map-divider {
         height: 1px;
@@ -1365,21 +1379,17 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
     if (hasOriginalShowAll) {
       // Create the master "Show All" checkbox
-      showAllItem = document.createElement("ha-check-list-item") as any;
+      showAllItem = document.createElement("ha-dropdown-item") as any;
+      showAllItem.setAttribute("type", "checkbox");
+      showAllItem.setAttribute("variant", "default");
+      showAllItem.setAttribute("data-show-all-toggle", "true");
       showAllItem.value = "show_all_toggle";
-      showAllItem.left = true;
-      showAllItem.setAttribute("left", "");
       showAllItem.textContent = this._entityFilterConfig?.show_all_label || "Show All";
       
-      showAllItem.selected = isAllInitiallySelected;
-      if ("checked" in showAllItem) {
-        showAllItem.checked = isAllInitiallySelected;
-      }
+      showAllItem.checked = isAllInitiallySelected;
       if (isAllInitiallySelected) {
-        showAllItem.setAttribute("selected", "");
         showAllItem.setAttribute("checked", "");
       } else {
-        showAllItem.removeAttribute("selected");
         showAllItem.removeAttribute("checked");
       }
 
@@ -1392,28 +1402,35 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         // Show All can only be toggled ON directly. It is disabled when it is already ON.
         // Therefore, clicking it will always turn it ON.
         const nextState = true;
-        showAllItem.selected = nextState;
-        if ("checked" in showAllItem) {
-          showAllItem.checked = nextState;
-        }
-        showAllItem.setAttribute("selected", "");
+        showAllItem.checked = nextState;
         showAllItem.setAttribute("checked", "");
 
         if (this._selectedEntities) {
           const allIds = this._getOriginalMapEntityIds();
           allIds.forEach(id => this._selectedEntities!.add(id));
           // Update all individual items in dropdown UI
-          const otherItems = dropdown.querySelectorAll("ha-check-list-item");
+          const otherItems = dropdown.querySelectorAll("ha-dropdown-item");
           otherItems.forEach((it: any) => {
             if (it.value !== "show_all_toggle") {
-              it.selected = true;
-              if ("checked" in it) {
-                it.checked = true;
-              }
-              it.setAttribute("selected", "");
+              it.checked = true;
               it.setAttribute("checked", "");
             }
           });
+
+          // Also update submenu triggers
+          const triggers = dropdown.querySelectorAll("ha-dropdown-item[data-group-trigger]");
+          triggers.forEach((tr: any) => {
+            tr.checked = true;
+            tr.setAttribute("checked", "");
+          });
+
+          // Also update submenu nested items
+          const subItems = dropdown.querySelectorAll("ha-dropdown-item[data-group]");
+          subItems.forEach((it: any) => {
+            it.checked = true;
+            it.setAttribute("checked", "");
+          });
+
           this._updateDisabledStates(dropdown);
           this._applyFilteredEntities();
         }
@@ -1435,23 +1452,253 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       dropdown.appendChild(divider);
     }
 
-    // Create individual entity check items
-    for (const id of currentEntityIds) {
-      const item = document.createElement("ha-check-list-item") as any;
+    const groupOpt = this._entityFilterConfig?.group;
+    const hasGroup = groupOpt !== undefined && groupOpt !== false;
+
+    let personsLabel = "Persons";
+    let trackersLabel = "Trackers";
+    let zonesLabel = "Zones";
+
+    if (typeof groupOpt === "object" && groupOpt !== null) {
+      const obj = groupOpt as Record<string, any>;
+      for (const k of Object.keys(obj)) {
+        const lowerK = k.toLowerCase();
+        if (lowerK === "persons" || lowerK === "person" || lowerK === "person.*") {
+          personsLabel = String(obj[k]);
+        } else if (lowerK === "trackers" || lowerK === "tracker" || lowerK === "device_tracker" || lowerK === "device_tracker.*") {
+          trackersLabel = String(obj[k]);
+        } else if (lowerK === "zones" || lowerK === "zone" || lowerK === "zone.*") {
+          zonesLabel = String(obj[k]);
+        }
+      }
+    }
+
+    const persons: string[] = [];
+    const trackers: string[] = [];
+    const zones: string[] = [];
+    const others: string[] = [];
+
+    if (hasGroup) {
+      for (const id of currentEntityIds) {
+        if (id.startsWith("person.")) {
+          persons.push(id);
+        } else if (id.startsWith("device_tracker.")) {
+          trackers.push(id);
+        } else if (id.startsWith("zone.")) {
+          zones.push(id);
+        } else {
+          others.push(id);
+        }
+      }
+    } else {
+      others.push(...currentEntityIds);
+    }
+
+    const closeSubmenu = (item: any) => {
+      if (!item) return;
+      item.closeSubmenu();
+    };
+
+    const buildSubMenu = (groupName: string, groupLabel: string, groupEntityIds: string[]) => {
+      if (groupEntityIds.length === 0) return;
+
+      const groupItem = document.createElement("ha-dropdown-item") as any;
+      groupItem.setAttribute("type", "checkbox");
+      groupItem.setAttribute("variant", "default");
+      groupItem.setAttribute("data-group-trigger", groupName);
+      groupItem.textContent = groupLabel;
+
+      const allSelected = groupEntityIds.every(id => this._selectedEntities?.has(id));
+      groupItem.checked = allSelected;
+      if (allSelected) {
+        groupItem.setAttribute("checked", "");
+      } else {
+        groupItem.removeAttribute("checked");
+      }
+
+      const suppressCloseGroup = (ev: Event) => {
+        ev.stopPropagation();
+      };
+
+      groupItem.addEventListener("mouseenter", () => {
+        const otherTriggers = dropdown.querySelectorAll("ha-dropdown-item[data-group-trigger]");
+        otherTriggers.forEach((tr: any) => {
+          if (tr !== groupItem) {
+            closeSubmenu(tr);
+          }
+        });
+      });
+
+      groupItem.addEventListener("click", (ev: Event) => {
+        ev.stopPropagation();
+
+        const otherTriggers = dropdown.querySelectorAll("ha-dropdown-item[data-group-trigger]");
+        otherTriggers.forEach((tr: any) => {
+          if (tr !== groupItem) {
+            closeSubmenu(tr);
+          }
+        });
+        
+        const isCurrentlyChecked = groupItem.checked === true || groupItem.hasAttribute("checked");
+        const nextState = !isCurrentlyChecked;
+
+        groupItem.checked = nextState;
+        if (nextState) {
+          groupItem.setAttribute("checked", "");
+        } else {
+          groupItem.removeAttribute("checked");
+        }
+
+        if (this._selectedEntities) {
+          if (!nextState) {
+            // Ensure at least one remains selected overall on the map
+            const otherSelectedCount = [...this._selectedEntities].filter(id => !groupEntityIds.includes(id)).length;
+            if (otherSelectedCount === 0) {
+              groupItem.checked = false;
+              groupItem.removeAttribute("checked");
+
+              const firstId = groupEntityIds[0];
+              groupEntityIds.forEach(id => {
+                if (id === firstId) {
+                  this._selectedEntities!.add(id);
+                } else {
+                  this._selectedEntities!.delete(id);
+                }
+              });
+
+              const childItems = dropdown.querySelectorAll(`ha-dropdown-item[data-group="${groupName}"]`);
+              childItems.forEach((it: any) => {
+                const id = it.getAttribute("data-entity-id");
+                const nextVal = (id === firstId);
+                it.checked = nextVal;
+                if (nextVal) {
+                  it.setAttribute("checked", "");
+                } else {
+                  it.removeAttribute("checked");
+                }
+              });
+
+              this._syncShowAllState(dropdown);
+              this._updateDisabledStates(dropdown);
+              this._applyFilteredEntities();
+              return;
+            }
+          }
+
+          groupEntityIds.forEach(id => {
+            if (nextState) {
+              this._selectedEntities!.add(id);
+            } else {
+              this._selectedEntities!.delete(id);
+            }
+          });
+
+          const childItems = dropdown.querySelectorAll(`ha-dropdown-item[data-group="${groupName}"]`);
+          childItems.forEach((it: any) => {
+            it.checked = nextState;
+            if (nextState) {
+              it.setAttribute("checked", "");
+            } else {
+              it.removeAttribute("checked");
+            }
+          });
+
+          this._syncShowAllState(dropdown);
+          this._updateDisabledStates(dropdown);
+          this._applyFilteredEntities();
+        }
+      });
+
+      groupItem.addEventListener("selected", suppressCloseGroup);
+      groupItem.addEventListener("select", suppressCloseGroup);
+      groupItem.addEventListener("action", suppressCloseGroup);
+
+      for (const id of groupEntityIds) {
+        const item = document.createElement("ha-dropdown-item") as any;
+        item.setAttribute("slot", "submenu");
+        item.setAttribute("type", "checkbox");
+        item.setAttribute("variant", "default");
+        item.setAttribute("data-group", groupName);
+        item.setAttribute("data-entity-id", id);
+        item.value = id;
+
+        const isSelected = this._selectedEntities?.has(id) ?? true;
+        item.checked = isSelected;
+        if (isSelected) {
+          item.setAttribute("checked", "");
+        } else {
+          item.removeAttribute("checked");
+        }
+
+        item.textContent = this._formatEntityName(id);
+
+        item.addEventListener("click", (ev: Event) => {
+          ev.stopPropagation();
+          const isCurrentlyChecked = item.checked === true || item.hasAttribute("checked");
+
+          if (isCurrentlyChecked && this._selectedEntities && this._selectedEntities.size <= 1 && this._selectedEntities.has(id)) {
+            item.checked = true;
+            item.setAttribute("checked", "");
+            return;
+          }
+
+          const nextState = !isCurrentlyChecked;
+          item.checked = nextState;
+          if (nextState) {
+            item.setAttribute("checked", "");
+          } else {
+            item.removeAttribute("checked");
+          }
+
+          if (this._selectedEntities) {
+            if (nextState) {
+              this._selectedEntities.add(id);
+            } else {
+              this._selectedEntities.delete(id);
+            }
+
+            const allGroupSelected = groupEntityIds.every(gid => this._selectedEntities!.has(gid));
+            groupItem.checked = allGroupSelected;
+            if (allGroupSelected) {
+              groupItem.setAttribute("checked", "");
+            } else {
+              groupItem.removeAttribute("checked");
+            }
+
+            this._syncShowAllState(dropdown);
+            this._updateDisabledStates(dropdown);
+            this._applyFilteredEntities();
+          }
+        });
+
+        item.addEventListener("selected", suppressCloseGroup);
+        item.addEventListener("select", suppressCloseGroup);
+        item.addEventListener("action", suppressCloseGroup);
+
+        groupItem.appendChild(item);
+      }
+
+      dropdown.appendChild(groupItem);
+    };
+
+    if (hasGroup) {
+      buildSubMenu("persons", personsLabel, persons);
+      buildSubMenu("trackers", trackersLabel, trackers);
+      buildSubMenu("zones", zonesLabel, zones);
+    }
+
+    // Create ungrouped/other individual entity check items
+    for (const id of others) {
+      const item = document.createElement("ha-dropdown-item") as any;
       item.value = id;
-      item.left = true;
-      item.setAttribute("left", "");
+      item.setAttribute("type", "checkbox");
+      item.setAttribute("variant", "default");
       
       const isSelected = this._selectedEntities?.has(id) ?? true;
-      item.selected = isSelected;
-      if ("checked" in item) {
-        item.checked = isSelected;
-      }
+      item.checked = isSelected;
       if (isSelected) {
-        item.setAttribute("selected", "");
         item.setAttribute("checked", "");
       } else {
-        item.removeAttribute("selected");
         item.removeAttribute("checked");
       }
 
@@ -1461,28 +1708,23 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       // Click event updates filter state to let custom element update and keep dropdown open.
       item.addEventListener("click", (ev: Event) => {
         ev.stopPropagation();
-        const isCurrentlyChecked = item.selected === true || item.checked === true || item.hasAttribute("selected") || item.hasAttribute("checked");
+        const isCurrentlyChecked = item.checked === true || item.hasAttribute("checked");
         if (isCurrentlyChecked && this._selectedEntities && this._selectedEntities.size <= 1 && this._selectedEntities.has(id)) {
           // Keep it selected; maps always need at least one entity
-          item.selected = true;
           if ("checked" in item) {
             item.checked = true;
           }
-          item.setAttribute("selected", "");
           item.setAttribute("checked", "");
           return;
         }
 
         const nextState = !isCurrentlyChecked;
-        item.selected = nextState;
         if ("checked" in item) {
           item.checked = nextState;
         }
         if (nextState) {
-          item.setAttribute("selected", "");
           item.setAttribute("checked", "");
         } else {
-          item.removeAttribute("selected");
           item.removeAttribute("checked");
         }
         if (this._selectedEntities) {
@@ -1492,23 +1734,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
             this._selectedEntities.delete(id);
           }
 
-          // Recalculate and update the "Show All" checkbox state
-          if (showAllItem) {
-            const allIds = this._getOriginalMapEntityIds();
-            const allSelected = allIds.length > 0 && allIds.every(otherId => this._selectedEntities!.has(otherId));
-            showAllItem.selected = allSelected;
-            if ("checked" in showAllItem) {
-              showAllItem.checked = allSelected;
-            }
-            if (allSelected) {
-              showAllItem.setAttribute("selected", "");
-              showAllItem.setAttribute("checked", "");
-            } else {
-              showAllItem.removeAttribute("selected");
-              showAllItem.removeAttribute("checked");
-            }
-          }
-
+          this._syncShowAllState(dropdown);
           this._updateDisabledStates(dropdown);
           this._applyFilteredEntities();
         }
@@ -1533,8 +1759,23 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._entityFilterContainerEl = container;
   }
 
+  private _syncShowAllState(dropdown: any): void {
+    const showAllItem = dropdown.querySelector('ha-dropdown-item[data-show-all-toggle="true"]');
+    if (!showAllItem) return;
+
+    const currentEntityIds = this._getOriginalMapEntityIds();
+    const allSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
+    
+    showAllItem.checked = allSelected;
+    if (allSelected) {
+      showAllItem.setAttribute("checked", "");
+    } else {
+      showAllItem.removeAttribute("checked");
+    }
+  }
+
   private _updateDisabledStates(dropdown: any): void {
-    const items = dropdown.querySelectorAll("ha-check-list-item");
+    const items = dropdown.querySelectorAll("ha-dropdown-item");
     const selectedCount = this._selectedEntities ? this._selectedEntities.size : 0;
     const currentEntityIds = this._getOriginalMapEntityIds();
     const allSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
@@ -1550,6 +1791,44 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
           item.removeAttribute("disabled");
         }
       } else if (id && this._selectedEntities) {
+        if (selectedCount <= 1 && this._selectedEntities.has(id)) {
+          item.disabled = true;
+          item.setAttribute("disabled", "");
+        } else {
+          item.disabled = false;
+          item.removeAttribute("disabled");
+        }
+      }
+    });
+
+    // Submenu parent triggers (ha-dropdown-item[data-group-trigger])
+    const triggers = dropdown.querySelectorAll("ha-dropdown-item[data-group-trigger]");
+    triggers.forEach((trigger: any) => {
+      const groupName = trigger.getAttribute("data-group-trigger");
+      const groupItems = dropdown.querySelectorAll(`ha-dropdown-item[data-group="${groupName}"]`);
+      const groupEntityIds: string[] = [];
+      groupItems.forEach((it: any) => {
+        const eid = it.getAttribute("data-entity-id");
+        if (eid) groupEntityIds.push(eid);
+      });
+
+      const selectedInGroupCount = groupEntityIds.filter(id => this._selectedEntities?.has(id)).length;
+      const otherGroupSelectedCount = this._selectedEntities ? [...this._selectedEntities].filter(id => !groupEntityIds.includes(id)).length : 0;
+
+      if (trigger.checked && otherGroupSelectedCount === 0 && selectedInGroupCount === 1) {
+        trigger.disabled = true;
+        trigger.setAttribute("disabled", "");
+      } else {
+        trigger.disabled = false;
+        trigger.removeAttribute("disabled");
+      }
+    });
+
+    // Nested submenu items (ha-dropdown-item[data-group])
+    const nestedItems = dropdown.querySelectorAll("ha-dropdown-item[data-group]");
+    nestedItems.forEach((item: any) => {
+      const id = item.getAttribute("data-entity-id");
+      if (id && this._selectedEntities) {
         if (selectedCount <= 1 && this._selectedEntities.has(id)) {
           item.disabled = true;
           item.setAttribute("disabled", "");
@@ -1587,38 +1866,62 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     if (!dropdown) return;
 
     // Refresh check states for list items
-    const items = dropdown.querySelectorAll("ha-check-list-item");
+    const items = dropdown.querySelectorAll("ha-dropdown-item");
     const currentEntityIds = this._getOriginalMapEntityIds();
     const allSelected = this._selectedEntities && currentEntityIds.length > 0 && currentEntityIds.every(id => this._selectedEntities!.has(id));
 
     items.forEach((item: any) => {
       const id = item.value;
       if (id === "show_all_toggle") {
-        item.selected = allSelected;
-        if ("checked" in item) {
-          item.checked = allSelected;
-        }
+        item.checked = allSelected;
         if (allSelected) {
-          item.setAttribute("selected", "");
           item.setAttribute("checked", "");
         } else {
-          item.removeAttribute("selected");
           item.removeAttribute("checked");
         }
       } else if (id && this._selectedEntities) {
         const isSel = this._selectedEntities.has(id);
-        item.selected = isSel;
-        if ("checked" in item) {
-          item.checked = isSel;
-        }
+        item.checked = isSel;
         if (isSel) {
-          item.setAttribute("selected", "");
           item.setAttribute("checked", "");
         } else {
-          item.removeAttribute("selected");
           item.removeAttribute("checked");
         }
       }
+    });
+
+    // Update group triggers and nested child states
+    const triggers = dropdown.querySelectorAll("ha-dropdown-item[data-group-trigger]");
+    triggers.forEach((trigger: any) => {
+      const groupName = trigger.getAttribute("data-group-trigger");
+      const groupItems = dropdown.querySelectorAll(`ha-dropdown-item[data-group="${groupName}"]`);
+      const groupEntityIds: string[] = [];
+      groupItems.forEach((it: any) => {
+        const eid = it.getAttribute("data-entity-id");
+        if (eid) groupEntityIds.push(eid);
+      });
+
+      const allGroupSelected = groupEntityIds.every(gid => this._selectedEntities?.has(gid));
+      trigger.checked = allGroupSelected;
+      if (allGroupSelected) {
+        trigger.setAttribute("checked", "");
+      } else {
+        trigger.removeAttribute("checked");
+      }
+
+      // child items
+      groupItems.forEach((item: any) => {
+        const eid = item.getAttribute("data-entity-id");
+        if (eid && this._selectedEntities) {
+          const isSelected = this._selectedEntities.has(eid);
+          item.checked = isSelected;
+          if (isSelected) {
+            item.setAttribute("checked", "");
+          } else {
+            item.removeAttribute("checked");
+          }
+        }
+      });
     });
 
     this._updateDisabledStates(dropdown);

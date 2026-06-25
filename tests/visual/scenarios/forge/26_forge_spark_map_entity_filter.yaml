@@ -56,7 +56,7 @@ assertions:
 
   - type: element_present
     root: ["hui-map-card", "ha-map"]
-    selector: "ha-check-list-item"
+    selector: "ha-dropdown-item"
 
   - type: snapshot
     name: "29_forge_spark_map_entity_filter"
