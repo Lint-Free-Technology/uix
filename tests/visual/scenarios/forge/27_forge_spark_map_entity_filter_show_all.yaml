@@ -7,7 +7,7 @@ setup:
     domain: device_tracker
     service: see
     data:
-      dev_id: uix_tracker_show_all_one
+      dev_id: uix_tracker_one
       gps:
         - 51.5200
         - -0.1300
@@ -16,7 +16,7 @@ setup:
     domain: device_tracker
     service: see
     data:
-      dev_id: uix_tracker_show_all_two
+      dev_id: uix_tracker_two
       gps:
         - 51.5210
         - -0.1295
@@ -63,11 +63,15 @@ assertions:
     root:
       - hui-map-card
       - ha-map
-    selector: "ha-check-list-item[disabled]"
+    selector: "ha-dropdown-item[data-show-all-toggle]"
 
   - type: text_equals
     root:
       - hui-map-card
       - ha-map
-    selector: "ha-check-list-item[disabled]"
+    selector: "ha-dropdown-item[data-show-all-toggle]"
     expected: "Show All"
+
+  - type: snapshot
+    name: "30_forge_spark_map_entity_filter_show_all"
+    threshold: 0.05
