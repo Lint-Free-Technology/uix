@@ -1326,6 +1326,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       ha-dropdown-item {
         --icon-primary-color: var(--uix-map-entity-filter-item-icon-color, var(--ha-color-fill-neutral-loud-resting));
       }
+      ha-dropdown-item[checked],
       ha-dropdown-item[aria-checked="true"] {
         --icon-primary-color: var(--uix-map-entity-filter-item-icon-checked-color, var(--uix-map-entity-filter-item-icon-color, var(--primary-color)));
       }
