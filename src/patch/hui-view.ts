@@ -19,7 +19,10 @@ class HuiViewPatch extends ModdedElement {
     _orig?.(changedProperties);
     if (changedProperties.has("narrow") || 
         changedProperties.has("lovelace") ||
-        changedProperties.has("index")) {
+        changedProperties.has("index") ||
+        changedProperties.has("_cards") ||
+        changedProperties.has("_badges") ||
+        changedProperties.has("_sections")) {
       apply_uix(this, "view", undefined, {}, false);
     }
   }

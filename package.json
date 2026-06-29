@@ -1,7 +1,7 @@
 {
   "name": "uix",
   "private": true,
-  "version": "7.5.0",
+  "version": "7.6.0-beta.7",
   "description": "UIX - UI eXtension for Home Assistant",
   "scripts": {
     "build": "rollup -c",
@@ -15,8 +15,8 @@
   "author": "Darryn Capes-Davis",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
     "@rollup/plugin-babel": "^7.1.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
@@ -25,7 +25,7 @@
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
     "conventional-changelog-conventionalcommits": "^9.3.1",
-    "rollup": "^4.62.0",
+    "rollup": "^4.62.2",
     "rollup-plugin-typescript2": "^0.37.0",
     "semantic-release": "^25.0.5",
     "typescript": "^6.0.3"
@@ -38,5 +38,11 @@
     "memoize-one": "^6.0.0",
     "parse-duration": "^2.1.6",
     "tslib": "^2.8.1"
+  },
+  "overrides": {
+    "@babel/core": "$@babel/core"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   }
 }

@@ -1,5 +1,5 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig } from "./uix-forge-types";
+import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig, UIX_FORGE_ARRAY_MERGE_STRATEGIES } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -13,24 +13,76 @@ declare global {
   }
 }
 
-function _mergeFoundryConfig(foundry: any, local: any): any {
-  if (!foundry) return local ?? {};
-  if (!local) return foundry ?? {};
+function _mergeFoundryConfig(foundry: any, local: any, key?: string): any {
+  if (foundry === undefined || foundry === null) return local ?? {};
+  if (local === undefined || local === null) return foundry ?? {};
+
+  if (Array.isArray(foundry) && Array.isArray(local)) {
+    // Explicit local empty array clears inherited entries.
+    if (local.length === 0) return [];
+
+    const mergeKey = key && UIX_FORGE_ARRAY_MERGE_STRATEGIES[key];
+    if (mergeKey) {
+      const result: any[] = [...foundry];
+      const strategy = typeof mergeKey === "string"
+        ? { idKeys: [mergeKey], requireTypeMatch: false }
+        : mergeKey;
+
+      const getIds = (item: any, idKeys: string[]): Array<{ key: string; value: any }> => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+        return idKeys
+          .filter((idKey) => idKey in item && item[idKey] !== undefined && item[idKey] !== null)
+          .map((idKey) => ({ key: idKey, value: item[idKey] }));
+      };
+
+      for (const localItem of local) {
+        const localIds = getIds(localItem, strategy.idKeys);
+        if (localIds.length === 0) {
+          result.push(localItem);
+          continue;
+        }
+
+        const foundIndex = result.findIndex((foundryItem) => {
+          if (!foundryItem || typeof foundryItem !== "object" || Array.isArray(foundryItem)) return false;
+          if (strategy.requireTypeMatch && foundryItem.type !== localItem.type) return false;
+          return localIds.some(({ key: idKey, value }) => foundryItem[idKey] === value);
+        });
+
+        if (foundIndex === -1) {
+          result.push(localItem);
+        } else {
+          result[foundIndex] = _mergeFoundryConfig(result[foundIndex], localItem, key);
+        }
+      }
+
+      return result;
+    } else {
+      return local;
+    }
+  }
+
+  if (
+    typeof foundry !== "object" ||
+    typeof local !== "object" ||
+    Array.isArray(foundry) ||
+    Array.isArray(local)
+  ) {
+    return local;
+  }
+
   const result = { ...foundry };
-  for (const key of Object.keys(local)) {
-    const lv = local[key];
-    const fv = result[key];
+  for (const k of Object.keys(local)) {
+    const lv = local[k];
+    const fv = result[k];
     if (
       lv !== null &&
       typeof lv === "object" &&
-      !Array.isArray(lv) &&
       fv !== null &&
-      typeof fv === "object" &&
-      !Array.isArray(fv)
+      typeof fv === "object"
     ) {
-      result[key] = _mergeFoundryConfig(fv, lv);
+      result[k] = _mergeFoundryConfig(fv, lv, k);
     } else {
-      result[key] = lv;
+      result[k] = lv;
     }
   }
   return result;
@@ -42,6 +94,10 @@ export class UixForge extends LitElement {
   @property({attribute: false}) layout: boolean;
   @property({attribute: false}) connectedWhileHidden: boolean;
   @property({attribute: false}) lovelace: any;
+  // Properties passed through by hui-card-feature for card-feature mold
+  @property({attribute: false}) context: any;
+  @property({attribute: false}) color: any;
+  @property({attribute: false}) position: any;
   @state() config: UixForgeConfig;
   @state() forgedElement: LovelaceElement;
   @state() templatesReady: boolean;
@@ -546,7 +602,7 @@ export class UixForge extends LitElement {
         bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
-          { config: this.config, uixForge: this._sparkController.templateVariables() },
+          { config: this.config, uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
         base.setBinding(bindingPath, callback);
@@ -634,7 +690,8 @@ export class UixForge extends LitElement {
           forge: this.forgeConfig, 
           element: this.forgedElementConfig 
         }, 
-        uixForge: this._sparkController.templateVariables() 
+        uixForge: this._sparkController.templateVariables(),
+        ...this._mold.templateVariables() 
       },
       true,
       "type-custom-uix-forge"
@@ -701,6 +758,16 @@ export class UixForge extends LitElement {
     if (this._mold.isFooter()) {
       (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
       this.forgedElement.hass = this.hass;
+      this.refreshForge(["hidden"]);
+    }
+    if (this._mold.isCardFeature()) {
+      const cardFeature = this.forgedElement as HuiCardFeature;
+      cardFeature._element = undefined;
+      cardFeature.feature = this.forgedElementConfig;
+      cardFeature.hass = this.hass;
+      cardFeature.color = this.color;
+      cardFeature.position = this.position;
+      cardFeature.context = this.context;
       this.refreshForge(["hidden"]);
     }
   }
@@ -798,6 +865,16 @@ export class UixForge extends LitElement {
       });
       return;
     }
+    if (this._mold.isCardFeature()) {
+      this.forgedElement = document.createElement("hui-card-feature") as LovelaceElement;
+      (this.forgedElement as HuiCardFeature).feature = this.forgedElementConfig;
+      (this.forgedElement as HuiCardFeature).hass = this.hass;
+      (this.forgedElement as HuiCardFeature).color = this.color;
+      (this.forgedElement as HuiCardFeature).position = this.position;
+      (this.forgedElement as HuiCardFeature).context = this.context;
+      this.refreshForge(["hidden"]);
+      return;
+    }
   }
 
   private hiddenByConfig() {
@@ -862,6 +939,18 @@ export class UixForge extends LitElement {
     }
     if (_changedProperties.has("templatesReady")) {
       this.refreshForgedElement([]);
+    }
+    if (this._mold.isCardFeature()) {
+      if (
+        _changedProperties.has("context") ||
+        _changedProperties.has("color") ||
+        _changedProperties.has("position")
+      ) {
+        this.refreshForgeTemplates();
+      }
+      if (this._mold.isPreview()) {
+        this.refreshForgedElement(["hidden"]);
+      }
     }
     this._sparkController.updated(_changedProperties);
   }

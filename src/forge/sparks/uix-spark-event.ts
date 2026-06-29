@@ -25,13 +25,17 @@ export class UixForgeSparkDomEvents extends UixForgeSparkBase {
       customEvent.detail.uix_forge.forEach((forgeEvent: any) => {
         const eventForgeId = forgeEvent?.forge_id;
         const eventData = forgeEvent?.data || {};
+        const replace = forgeEvent?.replace || false;
         if (!eventForgeId) return; // Ignore events without forge_id
         if ( (this.uixForgeMyId && eventForgeId != this.uixForgeMyId) && 
           (!this.uixForgeOthersIds || !this.uixForgeOthersIds.includes(eventForgeId))) {
           return;
         }
-        this._eventData = this.controller.mergeDeep(this._eventData, { [eventForgeId]: eventData });
-        (this._eventData, { [eventForgeId]: eventData });
+        if (replace) {
+          this._eventData[eventForgeId] = eventData;
+        } else {
+          this._eventData = this.controller.mergeDeep(this._eventData, { [eventForgeId]: eventData });
+        }
         refreshNeeded = true;
       });
       if (refreshNeeded) {

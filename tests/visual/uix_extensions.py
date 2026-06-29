@@ -246,6 +246,148 @@ def _set_theme_file(page: "Page | None", interaction: dict[str, Any], ha: Any = 
     )
 
 
+def _mock_history(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Inject location history mock script on page load via page.add_init_script."""
+    import json
+    import time
+
+    if page is None:
+        raise ValueError(
+            "mock_history interaction requires the playwright page — "
+            "make sure it is run in a visual/page test context."
+        )
+
+    entity_id: str = interaction["entity_id"]
+    points: list[dict[str, Any]] = interaction.get("points", [])
+
+    # Calculate actual epoch timestamps for historical records based on age_hours
+    now = time.time()
+    mock_points = []
+    for p in points:
+        lat = p["lat"]
+        lng = p["lng"]
+        age_hours = p.get("age_hours", 0)
+        timestamp = now - (age_hours * 3600)
+
+        mock_points.append({
+            "a": {
+                "latitude": lat,
+                "longitude": lng,
+                "source_type": "gps",
+                "gps_accuracy": p.get("accuracy", 1),
+            },
+            "s": p.get("state", "not_home"),
+            "lc": timestamp,
+            "lu": timestamp
+        })
+
+    # JS script generation
+    js_script = f"""
+    (() => {{
+      const entityId = {json.dumps(entity_id)};
+      const mockPoints = {json.dumps(mock_points)};
+
+      if (!window.__uixMockHistory) {{
+        window.__uixMockHistory = {{}};
+      }}
+      window.__uixMockHistory[entityId] = mockPoints;
+
+      if (window.__uixWebSocketMocked) {{
+        return;
+      }}
+      window.__uixWebSocketMocked = true;
+
+      const OriginalWS = window.WebSocket;
+      window.WebSocket = class extends OriginalWS {{
+        constructor(...args) {{
+          super(...args);
+          
+          const originalSend = this.send;
+          this.send = (data) => {{
+            let parsed;
+            try {{
+              parsed = JSON.parse(data);
+            }} catch (e) {{
+              originalSend.call(this, data);
+              return;
+            }}
+
+            if (parsed && (parsed.type === "history/stream" || parsed.type === "history/history_during_period")) {{
+              const subId = parsed.id;
+              const entityIds = parsed.entity_ids || [];
+              
+              const mockedStates = {{}};
+              let anyMocked = false;
+              
+              for (const entId of entityIds) {{
+                if (window.__uixMockHistory && window.__uixMockHistory[entId]) {{
+                  mockedStates[entId] = window.__uixMockHistory[entId];
+                  anyMocked = true;
+                }}
+              }}
+
+              if (anyMocked) {{
+                console.log("[UIX Mock History] Intercepted mock history call:", parsed.type, entityIds);
+                const triggerMessage = (payloadStr) => {{
+                  const event = new MessageEvent("message", {{ data: payloadStr }});
+                  this.dispatchEvent(event);
+                  if (typeof this.onmessage === "function") {{
+                    this.onmessage(event);
+                  }}
+                }};
+
+                if (parsed.type === "history/history_during_period") {{
+                  setTimeout(() => {{
+                    triggerMessage(JSON.stringify({{
+                      id: subId,
+                      type: "result",
+                      success: true,
+                      result: mockedStates
+                    }}));
+                  }}, 15);
+                }} else {{
+                  // history/stream
+                  // 1. Success response
+                  setTimeout(() => {{
+                    triggerMessage(JSON.stringify({{
+                      id: subId,
+                      type: "result",
+                      success: true,
+                      result: null
+                    }}));
+                  }}, 10);
+
+                  // 2. Data response
+                  setTimeout(() => {{
+                    const startTimeStr = parsed.start_time || new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+                    const endTimeStr = parsed.end_time || new Date().toISOString();
+                    
+                    triggerMessage(JSON.stringify({{
+                      id: subId,
+                      type: "event",
+                      event: {{
+                        states: mockedStates,
+                        start_time: startTimeStr,
+                        end_time: endTimeStr
+                      }}
+                    }}));
+                  }}, 30);
+                }}
+                
+                return;
+              }}
+            }}
+
+            originalSend.call(this, data);
+          }};
+        }}
+      }};
+    }})();
+    """
+
+    page.add_init_script(js_script)
+
+
 # ---------------------------------------------------------------------------
 # Registration — executed at import time
 # ---------------------------------------------------------------------------
@@ -256,3 +398,4 @@ register_interaction_type("add_foundry_file", _add_foundry_file)
 register_interaction_type("remove_foundry_file", _remove_foundry_file)
 register_interaction_type("reload_foundry_files", _reload_foundry_files)
 register_interaction_type("set_theme_file", _set_theme_file)
+register_interaction_type("mock_history", _mock_history)

@@ -41,6 +41,7 @@ export const UIX_FORGE_FORGE_MOLDS = [
   "section",
   "picture-element",
   "footer",
+  "card-feature",
 ];
 
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
@@ -77,6 +78,13 @@ export function getNestedTemplateRawDelimiters(nestingOpen: string): { openRaw: 
     closeRaw: UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_OUTPUT,
   };
 }
+
+export const UIX_FORGE_ARRAY_MERGE_STRATEGIES = {
+  sparks: {
+    idKeys: ["id", "spark_id"],
+    requireTypeMatch: true,
+  },
+} as const;
 
 export interface UixForgeForge {
     type?: string;
@@ -301,5 +309,13 @@ export interface HuiCard extends LovelaceElement {
 
 export interface HuiBadge extends LovelaceElement {
     load(): void;
+    _element?: LovelaceElement;
+}
+
+export interface HuiCardFeature extends LovelaceElement {
+    context?: Record<string, any>;
+    feature?: Record<string, any>;
+    color?: string;
+    position?: string;
     _element?: LovelaceElement;
 }

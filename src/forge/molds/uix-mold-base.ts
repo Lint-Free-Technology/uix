@@ -10,6 +10,10 @@ export abstract class UixForgeMoldBase {
     this.forge = forge;
   }
 
+  templateVariables() {
+    return {};
+  }
+
   hasStyle(): boolean {
     return false;
   }
@@ -40,6 +44,10 @@ export abstract class UixForgeMoldBase {
 
   isPictureElement(): boolean {
     return this.type === "picture-element";
+  }
+
+  isCardFeature(): boolean {
+    return this.type === "card-feature";
   }
 
   isRows(): boolean {
