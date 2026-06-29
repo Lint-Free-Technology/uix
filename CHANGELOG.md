@@ -1,3 +1,23 @@
+## [7.6.0](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0...v7.6.0) (2026-06-29)
+
+### ⭐ New Features
+
+* Add box shadow to UIX Forge map spark tour icon ([#395](https://github.com/Lint-Free-Technology/uix/issues/395)) ([084d42d](https://github.com/Lint-Free-Technology/uix/commit/084d42da326d4f13c40510a71163848601802433))
+* Allow grouping for UIX Forge map spark entity filter using `group` config. ([#402](https://github.com/Lint-Free-Technology/uix/issues/402)) ([3d3789a](https://github.com/Lint-Free-Technology/uix/commit/3d3789a646eed5f3fc79ba0a241815e6e975c54d))
+* **forge:** Allow event spark data to replace existing data rather than deep merge. ([e08c9c4](https://github.com/Lint-Free-Technology/uix/commit/e08c9c4d56181bc86e6b1e53f77d6c132a66a365))
+* Map spark hours_to_show slider option ([#393](https://github.com/Lint-Free-Technology/uix/issues/393)) ([e6af7cf](https://github.com/Lint-Free-Technology/uix/commit/e6af7cf03b58230f0edb445d452607aa04372166)), closes [#392](https://github.com/Lint-Free-Technology/uix/issues/392)
+* UIX Forge `card-feature` mold ([#389](https://github.com/Lint-Free-Technology/uix/issues/389)) ([ef1fdc8](https://github.com/Lint-Free-Technology/uix/commit/ef1fdc868fb42807b0b487e6a7abbffa42a68396))
+* UIX Forge map spark `entity_filter` option. ([#400](https://github.com/Lint-Free-Technology/uix/issues/400)) ([fb9988c](https://github.com/Lint-Free-Technology/uix/commit/fb9988c65a9b6f47cfeb8518183521a5e7acd567)), closes [#399](https://github.com/Lint-Free-Technology/uix/issues/399)
+
+### 🐞 Bug Fixes
+
+* Allow for deep merge of sparks lists with nested foundries ([#394](https://github.com/Lint-Free-Technology/uix/issues/394)) ([a815887](https://github.com/Lint-Free-Technology/uix/commit/a8158872a1e7a3641a53d2fe215bbeff171f9cab)), closes [#390](https://github.com/Lint-Free-Technology/uix/issues/390)
+* UIX may not always apply `uix-view(-yaml)` on strategy dashboards. ([a69721f](https://github.com/Lint-Free-Technology/uix/commit/a69721fa75f22e47a7f22f4f2d130a6fb853272f))
+
+### 📦 Dependency Upgrades
+
+* bump @babel/core from 7.29.7 to 8.0.1 and @babel/preset-env to 8.0.2 managing plugins overrides for rollup babel plugin([#382](https://github.com/Lint-Free-Technology/uix/issues/382)) ([d7e5074](https://github.com/Lint-Free-Technology/uix/commit/d7e50747dd6134814258a6964d81243b47a35ce9))
+
 ## [7.6.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.6...v7.6.0-beta.7) (2026-06-27)
 
 ### 🐞 Bug Fixes
