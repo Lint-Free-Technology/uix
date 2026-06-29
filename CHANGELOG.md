@@ -1,3 +1,9 @@
+## [7.6.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.6...v7.6.0-beta.7) (2026-06-27)
+
+### 🐞 Bug Fixes
+
+* UIX may not always apply `uix-view(-yaml)` on strategy dashboards. ([a69721f](https://github.com/Lint-Free-Technology/uix/commit/a69721fa75f22e47a7f22f4f2d130a6fb853272f))
+
 ## [7.6.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0-beta.5...v7.6.0-beta.6) (2026-06-25)
 
 ### ⭐ New Features
