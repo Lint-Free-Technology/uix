@@ -26,7 +26,7 @@ When the event spark is active, an `event` key is added to the `uixForge` templa
 | `uixForge.event.<key>` | Data keys from events matching `forge_id`, spread directly into `uixForge.event`. |
 | `uixForge.event.<other_id>.<key>` | Data from events matching an ID listed in `other_forge_ids`, nested under that ID. |
 
-By default, data accumulates across events — each new event is deep-merged into the existing state. To have the event data replaced use `replace: true` (Available since 7.6.0-beta.1).
+By default, data accumulates across events — each new event is deep-merged into the existing state. To have the event data replaced use `replace: true`.
 
 ## Firing an event
 
