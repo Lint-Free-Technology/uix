@@ -1,4 +1,4 @@
-## 7.6.1-beta.1 (https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1-beta.1) (2026-06-30)
+## [7.6.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1-beta.1) (2026-06-30)
 
 ### 🐞 Bug Fixes
 
