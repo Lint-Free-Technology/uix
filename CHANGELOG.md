@@ -1,5 +1,13 @@
-## [7.6.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1-beta.1) (2026-06-30)
+## 7.6.1-beta.1 (https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1-beta.1) (2026-06-30)
 
+### 🐞 Bug Fixes
+
+    * Patch row element editor to allow use of visual row editor when UIX config exists ([8431bef](https://github.com/Lint-Free-Technology/uix/commit/8431bef31430d6fa7cdf771964e51638daf35921))
+    * UIX config removed from entities config when Home Assistant upgrades `format` to `time_format` ([5631aea](https://github.com/Lint-Free-Technology/uix/commit/5631aeaabf3822ac50f0c5956fc29dc23ab08aac))
+
+### 📦 Dependency Upgrades
+
+    * Update npm to 11.18. Also updates undici to resolve security vulnerability in dev tools. ([a6c68f3](https://github.com/Lint-Free-Technology/uix/commit/a6c68f3130ffaf5f3dc289b3b4cc18bc7f4691af))
 ## [7.6.0](https://github.com/Lint-Free-Technology/uix/compare/v7.5.0...v7.6.0) (2026-06-29)
 
 ### ⭐ New Features
