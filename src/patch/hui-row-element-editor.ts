@@ -1,13 +1,55 @@
 import { LitElement } from "lit";
-import { patch_element } from "../helpers/patch_function";
+import { patch_element, patch_object } from "../helpers/patch_function";
 
 const UIX_FORGE_BTN_ID = "uix-forge-wrap-btn";
 const UIX_FORGE_TOOLTIP_ID = "uix-forge-wrap-btn-tooltip";
 const UIX_FORGE_MOLD_TOOLTIP = "Wrap in UIX Forge";
 
+class ConfigRowElementPatch extends LitElement {
+  _uixData?;
+
+  setConfig(_orig, config, ...rest) {
+    const newConfig = JSON.parse(JSON.stringify(config));
+
+    // Save uix config
+    this._uixData = {
+      uix: undefined,
+      card_mod: undefined
+    };
+    if (newConfig.uix) {
+      this._uixData.uix = newConfig.uix;
+    } else if (newConfig.card_mod) {
+      this._uixData.card_mod = newConfig.card_mod;
+    }
+    delete newConfig.uix;
+    delete newConfig.card_mod;
+
+    _orig(newConfig, ...rest);
+  }
+
+  _valueChanged(_orig, ev, ...rest) {
+    const uixData = this._uixData;
+    if (uixData && (uixData.uix)) {
+      ev.detail.value.uix = uixData.uix;
+    }
+    if (uixData && uixData.card_mod) {
+      ev.detail.value.card_mod = uixData.card_mod;
+    }
+    _orig(ev, ...rest);
+  }
+}
+
 @patch_element("hui-row-element-editor")
 class HuiRowElementEditorPatch extends LitElement {
   _yamlEditor?: LitElement;
+
+  async getConfigElement(_orig, ...args) {
+    const retval = await _orig(...args);
+
+    patch_object(retval, ConfigRowElementPatch);
+
+    return retval;
+  }
 
   updated(_orig, ...args) {
     _orig?.(...args);
@@ -96,7 +138,7 @@ class HuiRowElementEditorPatch extends LitElement {
     const forgeYaml =
       `type: custom:uix-forge\n` +
       `forge:\n` +
-      `  mold: row\n` +
+      `  mold: row111\n` +
       `element:\n` +
       `${indented}\n`;
 
