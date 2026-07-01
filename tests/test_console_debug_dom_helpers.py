@@ -127,6 +127,37 @@ def test_uix_path_ignores_shadow_only_parent_for_light_dom_target(page: Page) ->
     assert not _has_message(messages, "📦 Closest UIX Parent", "log")
 
 
+def test_uix_path_uses_matching_context_when_parent_has_multiple_uix_nodes(page: Page) -> None:
+    _load_console_debug(page)
+    messages = _run_helper(
+        page,
+        "uix_path",
+        """(() => {
+          const drawer = document.createElement("ha-drawer");
+          const shadow = drawer.attachShadow({ mode: "open" });
+          shadow.append(document.createElement("uix-node"));
+
+          const notificationDrawer = document.createElement("notification-drawer");
+          const child = document.createElement("button");
+          child.id = "notification-target";
+          notificationDrawer.append(child);
+          drawer.append(notificationDrawer);
+
+          drawer._uix = [
+            { type: "drawer", parentNode: shadow, variables: {} },
+            { type: "dialog", parentNode: drawer, variables: {} },
+          ];
+          document.body.append(drawer);
+          return child;
+        })()""",
+    )
+
+    assert not _has_message(messages, "No UIX parent found for this element.", "warn")
+    assert _has_message(messages, "📦 Closest UIX Parent", "log")
+    assert _has_message(messages, "UIX type: dialog", "log")
+    assert _has_message(messages, 'Path: "."', "log")
+
+
 def test_uix_forge_path_finds_forged_subtree_target(page: Page) -> None:
     _load_console_debug(page)
     messages = _run_helper(
