@@ -51,9 +51,6 @@ plugins:
             section: 📔 Documentation
           - type: deps
             section: 📦 Dependency Upgrades
-          - type: chore
-            section: Chores
-            hidden: true
           - type: refactor
             section: ⚙️ Miscellaneous
           - type: test
