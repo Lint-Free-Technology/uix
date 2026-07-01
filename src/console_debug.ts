@@ -63,13 +63,22 @@ function findUixParent(element: Element): UixParentInfo | null {
     const nonChild = uixNodes.filter(
       (u: any) => u.type && !u.type.endsWith("-child")
     );
-    // Only match a UIX parent when the target is inside the scope that its
-    // uix-node actually styles, not merely somewhere in the host's light DOM.
-    if (nonChild.length > 0 && isNodeWithinScope(element, uixContext(node, nonChild))) {
+    // Only match a UIX parent when the target is inside the scope of one of
+    // its non-child uix-nodes. When multiple nodes exist on one host (for
+    // example ha-drawer shadow + light DOM contexts), keep the matching node
+    // first so later context-dependent helpers resolve correctly.
+    const matchingUix = nonChild.find((u: any) =>
+      isNodeWithinScope(element, uixContext(node, [u]))
+    );
+    if (matchingUix) {
+      const orderedUixNodes = [
+        matchingUix,
+        ...nonChild.filter((u: any) => u !== matchingUix),
+      ];
       return {
         element: node,
-        uixNodes: nonChild,
-        primaryType: nonChild[0].type,
+        uixNodes: orderedUixNodes,
+        primaryType: matchingUix.type,
       };
     }
   }
