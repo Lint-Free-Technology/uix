@@ -1,3 +1,9 @@
+## [7.6.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.1-beta.1...v7.6.1-beta.2) (2026-07-01)
+
+### 🐞 Bug Fixes
+
+* `uix_style_path` (`uix_path`) context selection for dual-scope shadowDom and light DOM parents ([#410](https://github.com/Lint-Free-Technology/uix/issues/410)) ([c61b8e3](https://github.com/Lint-Free-Technology/uix/commit/c61b8e342306db5d9b28b41d4fbb70a83053f80c)), references [#409](https://github.com/Lint-Free-Technology/uix/issues/409)
+
 ## [7.6.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1-beta.1) (2026-06-30)
 
 ### 🐞 Bug Fixes
