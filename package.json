@@ -1,7 +1,7 @@
 {
   "name": "uix",
   "private": true,
-  "version": "7.6.0",
+  "version": "7.6.1-beta.2",
   "description": "UIX - UI eXtension for Home Assistant",
   "scripts": {
     "build": "rollup -c",
@@ -24,7 +24,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
-    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "conventional-changelog-conventionalcommits": "^10.2.0",
     "rollup": "^4.62.2",
     "rollup-plugin-typescript2": "^0.37.0",
     "semantic-release": "^25.0.5",
@@ -40,7 +40,11 @@
     "tslib": "^2.8.1"
   },
   "overrides": {
-    "@babel/core": "$@babel/core"
+    "@babel/core": "$@babel/core",
+    "conventional-changelog-angular": "^9.0.0",
+    "conventional-changelog-writer": "^9.0.0",
+    "conventional-commits-filter": "^6.0.0",
+    "conventional-commits-parser": "^7.0.0"
   },
   "allowScripts": {
     "fsevents@2.3.3": true

@@ -7,6 +7,7 @@ const UIX_FORGE_MOLD_TOOLTIP = "Wrap in UIX Forge";
 
 class ConfigCardElementPatch extends LitElement {
   _uixData?;
+  _config?;
 
   setConfig(_orig, config, ...rest) {
     const newConfig = JSON.parse(JSON.stringify(config));
@@ -41,9 +42,14 @@ class ConfigCardElementPatch extends LitElement {
 
     _orig(newConfig, ...rest);
 
+    // Home Assistant cards may migrate their config, 
+    // so we need to restore UIX config to that config and not the newConfig we just created. 
+    // This is why we use this._config instead of newConfig.
+    const newConfigAfter = (this._config ?? newConfig);
+
     // Restore UIX config for entities
-    if (Array.isArray(newConfig.entities)) {
-      for (const [i, e] of newConfig.entities?.entries?.()) {
+    if (Array.isArray(newConfigAfter.entities)) {
+      for (const [i, e] of newConfigAfter.entities?.entries?.()) {
         if (this._uixData?.entities[i]?.uix) {
           e.uix = this._uixData.entities[i].uix;
         }
