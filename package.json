@@ -40,7 +40,11 @@
     "tslib": "^2.8.1"
   },
   "overrides": {
-    "@babel/core": "$@babel/core"
+    "@babel/core": "$@babel/core",
+    "conventional-changelog-angular": "^9.0.0",
+    "conventional-changelog-writer": "^9.0.0",
+    "conventional-commits-filter": "^6.0.0",
+    "conventional-commits-parser": "^7.0.0"
   },
   "allowScripts": {
     "fsevents@2.3.3": true
