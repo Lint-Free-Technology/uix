@@ -56,7 +56,7 @@ def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
     assert config["nested"]["list"] == ["xy", "z"]
 
 
-def test_foundry_resolution_does_not_duplicate_foundry_sparks_without_local_sparks() -> None:
+def test_foundry_sparks_not_duplicated() -> None:
     output = subprocess.check_output(
         [
             "node",
