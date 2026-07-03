@@ -33,13 +33,13 @@ element:
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
-| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#variables-and-macros) |
+| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#template-variables-and-macros) |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape nested templates. A single setting controls both Jinja forms: with the default `<<>>`, use `<<...>>` for `{{...}}` and `<%...%>` for `{%...%}` in the same nested template. Use when the element config itself contains Jinja2-like syntax. When nesting multiple forge layers deep, add an extra `<>` pair per additional layer (e.g. `<<< >>>` and `<<% %>>` for two layers of nesting). |
-| `sparks` | list | ✅ | `[]` | List of [spark](#sparks) configurations to attach to the forged element. |
+| `sparks` | list | ✅ | `[]` | List of [spark](./sparks/index.md) configurations to attach to the forged element. |
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
 ## Element config
