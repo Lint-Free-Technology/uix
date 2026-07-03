@@ -82,6 +82,28 @@ element:
 
 ![Tooltip spark with template content](../../assets/page-assets/forge/sparks/tooltip-icon-template.gif)
 
+## Tooltip on a badge
+
+Here the tooltip works on `hui-badge` which is the element forged by UIX Forge. Hence `for:` is not required as the default `for: element` will select `hui-badge`, the forged element. Generally tooltips will work with the default `for: element` and you only need to be more specific based on your specific use case.
+
+```yaml
+# A badge placed in the dashboard header
+    badges:
+      - type: custom:uix-forge
+        forge:
+          mold: badge
+          sparks:
+            - type: tooltip
+              content: >-
+                {{ state_attr(config.element.entity, 'friendly_name') }} is
+                {{ states(config.element.entity) }}
+        element:
+          type: entity
+          entity: binary_sensor.movement_backyard
+```
+
+![Tooltip spark as applied to a badge](../../assets/page-assets/forge/sparks/tooltip-badge.gif)
+
 ## Customising tooltip appearance
 
 The tooltip spark injects CSS variables into the `wa-tooltip` element. Override them by setting `--uix-tooltip-*` variables on the forged element's `uix.style` (or in a theme).

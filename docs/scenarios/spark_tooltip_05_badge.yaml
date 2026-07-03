@@ -1,0 +1,59 @@
+id: doc_spark_tooltip_badge
+description: "Doc image: Forge Tooltip spark on badge (tooltip.md)"
+view_path: doc-spark-tooltip-badge
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.kitchen_lights
+      brightness: 255
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 10
+      title: Test Badge Tooltip
+      path: test-badge-tooltip
+      sections: []
+      cards: []
+      footer: {}
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: custom:uix-forge
+          forge:
+            mold: badge
+            sparks:
+              - type: tooltip
+                content: >-
+                  {{ state_attr(config.element.entity, 'friendly_name') }} is
+                  {{ states(config.element.entity) }}
+          element:
+            type: entity
+            entity: binary_sensor.movement_backyard
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/tooltip-badge.gif
+  root: uix-forge
+  padding: 32 48 16 48
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 7   # ~0.5 s with entity on
+    - interactions:
+        - type: hover
+          root: uix-forge
+          selector: hui-badge
+          settle_ms: 0
+      frames: 22   # ~1.5 s with entity off
+      cursor: pointer
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s with entity on
+      cursor: none
