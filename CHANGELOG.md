@@ -1,3 +1,9 @@
+## [7.6.2-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.1...v7.6.2-beta.1) (2026-07-03)
+
+### 🐞 Bug Fixes
+
+* duplicate sparks from Forge foundries when no sparks in local forge ([#421](https://github.com/Lint-Free-Technology/uix/issues/421)) ([2bfb6a6](https://github.com/Lint-Free-Technology/uix/commit/2bfb6a681a2acd49cc1a3d990ea45f3dbfac7f9f)), references [#420](https://github.com/Lint-Free-Technology/uix/issues/420)
+
 ## [7.6.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.0...v7.6.1) (2026-07-01)
 
 ### 🐞 Bug Fixes
