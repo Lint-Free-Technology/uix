@@ -295,24 +295,58 @@ See UIX guide [Styling dialogs with UI eXtension](https://uix-guides.lf.technolo
 
 Themes can define reusable Jinja2 macros available to all cards that use the theme. Macros are specified under the `uix-macros-yaml` theme key as a YAML dictionary of macro definitions — see [Templates - Macros](templates.md#macros) for the full macro configuration reference.
 
-    ```yaml
-    my-awesome-theme:
-      uix-theme: my-awesome-theme
+```yaml
+my-awesome-theme:
+  uix-theme: my-awesome-theme
 
-      uix-macros-yaml: |
-        is_on:
-          params:
-            - entity_id
-          returns: true
-          template: "{%- do returns(is_state(entity_id, 'on')) -%}"
-        badge_color:
-          params:
-            - entity_id
-            - name: color_on
-              default: "'yellow'"
-            - name: color_off
-              default: "'gray'"
-          template: "{{ color_on if is_state(entity_id, 'on') else color_off }}"
-    ```
+  uix-macros-yaml: |
+    is_on:
+      params:
+        - entity_id
+      returns: true
+      template: "{%- do returns(is_state(entity_id, 'on')) -%}"
+    badge_color:
+      params:
+        - entity_id
+        - name: color_on
+          default: "'var(--state-active-color)'"
+        - name: color_off
+          default: "'var(--state-inactive-color)'"
+      template: "{{ color_on if is_on(entity_id) else color_off }}"
+```
+
+Badge example using theme macros with defaults for `badge_color()`:
+
+```yaml
+  badges:
+    - type: entity
+      entity: light.bed_light
+      tap_action:
+        action: toggle
+      uix:
+        style: |
+          ha-badge {
+            --badge-color: {{ badge_color(config.entity) }} !important;
+          }
+```
+
+![Example using theme macros with defaults](../assets/page-assets/using/theme-macros-badge-1.gif)
+
+Badge example using theme macros setting `color_on` named variable to `red` in the `badge_color()` macro:
+
+```yaml
+  badges:
+    - type: entity
+      entity: light.bed_light
+      tap_action:
+        action: toggle
+      uix:
+        style: |
+          ha-badge {
+            --badge-color: {{ badge_color(config.entity, color_on='red') }} !important;
+          }
+```
+
+![Example using theme macros with defaults](../assets/page-assets/using/theme-macros-badge-2.gif)
 
 Card-level `uix.macros` take precedence over theme macros of the same name.

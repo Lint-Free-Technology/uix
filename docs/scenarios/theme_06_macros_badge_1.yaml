@@ -1,0 +1,75 @@
+id: doc_theme_macros_badge_1
+description: "Doc image: Theme macros badge color (themes.md)"
+view_path: doc-theme-macros-badge-1
+theme: uix-doc-styling-theme-template 
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.bed_light
+
+dashboard:
+  views:
+    - type: sections
+      max_columns: 10
+      title: Test Theme Macros Badge Color
+      path: test-theme-macros-badge-color
+      sections: []
+      cards: []
+      footer: {}
+      header:
+        layout: center
+        badges_position: bottom
+        badges_wrap: wrap
+      badges:
+        - type: entity
+          entity: light.bed_light
+          tap_action:
+            action: toggle
+          uix:
+            style: |
+              ha-badge {
+                --badge-color: {{ badge_color(config.entity) }} !important;
+              }
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/using/theme-macros-badge-1.gif
+  root: hui-badge
+  padding: 16 16 16 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: hui-entity-badge
+          selector: ha-badge
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-entity-badge
+          selector: ha-badge
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+      cursor: pointer
+    - interactions:
+        - type: click
+          root: hui-entity-badge
+          selector: ha-badge
+          settle_ms: 0
+      click_circle: true
+      frames: 3   # ~0.2 s
+    - frames: 14   # ~1 s
+      cursor: pointer
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s with entity on
+      cursor: none
