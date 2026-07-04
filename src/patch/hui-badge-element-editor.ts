@@ -26,6 +26,17 @@ class ConfigBadgeElementPatch extends LitElement {
 
     _orig(newConfig, ...rest);
   }
+
+  _valueChanged(_orig, ev, ...rest) {
+    const uixData = this._uixData;
+    if (uixData && (uixData.uix)) {
+      ev.detail.value.uix = uixData.uix;
+    }
+    if (uixData && uixData.card_mod) {
+      ev.detail.value.card_mod = uixData.card_mod;
+    }
+    _orig(ev, ...rest);
+  }
 }
 
 @patch_element("hui-badge-element-editor")
@@ -39,17 +50,6 @@ class HuiBadgeElementEditorPatch extends LitElement {
     patch_object(retval, ConfigBadgeElementPatch);
 
     return retval;
-  }
-
-  _configChanged(_orig, ev, ...rest) {
-    const uixData = this._configElement?._uixData;
-    if (uixData && (uixData.uix)) {
-      ev.detail.config.uix = uixData.uix;
-    }
-    if (uixData && uixData.card_mod) {
-      ev.detail.config.card_mod = uixData.card_mod;
-    }
-    _orig(ev, ...rest);
   }
 
   updated(_orig, ...args) {
