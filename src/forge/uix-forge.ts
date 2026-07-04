@@ -146,15 +146,17 @@ export function _resolveFoundryConfig(
     let finalForge = result.forge;
     let finalElement = result.element;
 
+    const currentVisited = foundryName ? new Set(visited).add(foundryName) : new Set(visited);
+
     if (globalFoundry && foundryName !== "global") {
-      const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, new Set(), false);
+      const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
       if (globalResolved === null) return null;
       finalForge = _mergeFoundryConfig(globalResolved.forge, finalForge);
       finalElement = _mergeFoundryConfig(globalResolved.element, finalElement);
     }
 
     if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
-      const globalMoldResolved = _resolveFoundryConfig({ foundry: `global_${moldType}` }, foundries, ready, new Set(), false);
+      const globalMoldResolved = _resolveFoundryConfig({ foundry: `global_${moldType}` }, foundries, ready, currentVisited, false);
       if (globalMoldResolved === null) return null;
       finalForge = _mergeFoundryConfig(globalMoldResolved.forge, finalForge);
       finalElement = _mergeFoundryConfig(globalMoldResolved.element, finalElement);
