@@ -1,3 +1,9 @@
+## [7.6.2-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2-beta.1...v7.6.2-beta.2) (2026-07-04)
+
+### 🐞 Bug Fixes
+
+* UIX Styling removed from badge when editing in UI Editor ([6d693f9](https://github.com/Lint-Free-Technology/uix/commit/6d693f9b587024b115285f436edbf03984ab4161))
+
 ## [7.6.2-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.1...v7.6.2-beta.1) (2026-07-03)
 
 ### 🐞 Bug Fixes
