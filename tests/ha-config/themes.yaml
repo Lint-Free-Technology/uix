@@ -174,3 +174,21 @@ uix-doc-spark-theme-template-red:
   primary-text-color: red
   ha-card-border-radius: 20px
   ha-card-background: antiquewhite
+
+uix-doc-styling-theme-template:
+  uix-theme: uix-doc-styling-theme-template
+
+  uix-macros-yaml: |
+    is_on:
+      params:
+        - entity_id
+      returns: true
+      template: "{%- do returns(is_state(entity_id, 'on')) -%}"
+    badge_color:
+      params:
+        - entity_id
+        - name: color_on
+          default: "'var(--state-active-color)'"
+        - name: color_off
+          default: "'var(--state-inactive-color)'"
+      template: "{{ color_on if is_on(entity_id) else color_off }}"
