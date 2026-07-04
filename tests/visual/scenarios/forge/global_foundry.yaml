@@ -1,0 +1,54 @@
+id: forge_global_foundries
+description: "Tests that global and global_<mold-type> foundries are automatically merged into forge config."
+view_path: forge-global-foundries
+
+setup:
+  - type: add_foundry
+    name: global
+    config:
+      forge:
+        macros:
+          global_bg: "'rgb(255, 0, 0)'"
+      element:
+        uix:
+          style: |
+            ha-card { background: {{ global_bg }}; }
+  - type: add_foundry
+    name: global_card
+    config:
+      forge:
+        macros:
+          global_color: "'rgb(0, 0, 255)'"
+      element:
+        uix:
+          style: |
+            ha-card { color: {{ global_color }}; }
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: markdown
+    content: "Global foundries test"
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "hui-markdown-card"
+  - type: css_property
+    root: hui-markdown-card
+    selector: ha-card
+    property: backgroundColor
+    expected: "rgb(255, 0, 0)"
+  - type: css_property
+    root: hui-markdown-card
+    selector: ha-card
+    property: color
+    expected: "rgb(0, 0, 255)"
+
+teardown:
+  - type: delete_foundry
+    name: global
+  - type: delete_foundry
+    name: global_card

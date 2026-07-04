@@ -230,12 +230,24 @@ element:
 
 For more information on HA secrets see <https://www.home-assistant.io/docs/configuration/secrets/>.
 
+## Global Foundries
+
+There are two special reserved foundry names which, if defined, are automatically merged into *every* forge configuration across your dashboard, whether they explicitly request a foundry or not.
+
+- `global` — if a foundry with this exact name exists, it is merged as the absolute base configuration for all forges.
+- `global_<mold-type>` — if a foundry with this exact name exists (e.g. `global_card`, `global_badge`, `global_row`), it is merged immediately after `global` for all forges of that mold. The mold is determined either from the local config or from an explicitly referenced foundry.
+
+These are useful for defining a consistent base set of macros, sparks, or default styles without needing to add `foundry: my_base_foundry` to every element.
+
 ## Merge behaviour
 
-When a foundry is resolved, keys are merged in this order — later entries win:
+When a forge configuration is resolved, it merges settings from several sources. Keys are merged in this order — later entries win:
 
-1. **Foundry** — the stored foundry config.
-2. **Local forge** — keys defined directly on the forge config.
+1. **Global** — the `global` foundry config (if it exists).
+2. **Global Mold** — the `global_<mold-type>` foundry config (if it exists for the resolved mold type).
+3. **Foundry Base(s)** — if the named foundry itself has a `foundry:` key, its bases are resolved recursively.
+4. **Foundry** — the explicitly named foundry config.
+5. **Local** — keys defined directly on the forge config.
 
 For **object values** (e.g. `forge`, `element`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `forge.sparks`:
 
