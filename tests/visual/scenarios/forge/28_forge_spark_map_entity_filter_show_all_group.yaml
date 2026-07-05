@@ -7,6 +7,24 @@ setup:
     domain: device_tracker
     service: see
     data:
+      dev_id: uix_test_person
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: uix_test_person_slider
+      gps:
+        - 51.5220
+        - -0.1280
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
       dev_id: uix_tracker_one
       gps:
         - 51.5200

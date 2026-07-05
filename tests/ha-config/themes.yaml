@@ -161,8 +161,9 @@ uix-card-as-badge:
         margin: 0;
       }
       .content {
-        gap: var(--ha-space-2);
-        padding: 8px 10px;
+        gap: var(--ha-space-2) !important;
+        padding: 8px 10px !important;
+        min-height: unset !important;
       }
 
 uix-doc-spark-theme-template-blue:

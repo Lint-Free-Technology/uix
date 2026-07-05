@@ -490,8 +490,9 @@ The theme type given to UIX forge container matches the mold type, including [cr
           margin: 0;
         }
         .content {
-          gap: var(--ha-space-2);
-          padding: 8px 10px;
+          gap: var(--ha-space-2) !important;
+          padding: 8px 10px !important;
+          min-height: unset !important;
         }
     ```
 
