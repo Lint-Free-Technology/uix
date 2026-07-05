@@ -22,6 +22,9 @@ input_boolean:
   test_boolean:
     name: Test Boolean
     initial: off
+  festive_day:
+    name: Festive Day
+    initial: off
 
 person:
   - name: James Bond 007

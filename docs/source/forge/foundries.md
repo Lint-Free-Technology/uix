@@ -6,6 +6,20 @@ description: Foundries are server-stored UIX Forge configurations that let you d
 
 A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define a `forge` and `element` config once, give it a name, and reference it in any number of elements with a single `foundry:` key. Local element config is merged on top, so you can still override any value per element.
 
+## Global foundries
+
+!!! info
+    Global foundries available in 7.7.0-beta.2
+
+There are two special reserved foundry names which, if defined, are automatically merged into *every* forge configuration across your dashboard, whether they explicitly request a foundry or not.
+
+- `global` — if a foundry with this exact name exists, it is merged as the absolute base configuration for all forges.
+- `global_<mold-type>` — if a foundry with this exact name exists (e.g. `global_card`, `global_badge`, `global_row`), it is merged immediately after `global` for all forges of that mold. The mold is determined either from the local config or from an explicitly referenced foundry.
+
+These are useful for defining a consistent base set of macros, sparks, or default styles without needing to add `foundry: my_base_foundry` to every element.
+
+See Example - Global foundry using macros for an example of a global foundry is use.
+
 ## Managing foundries
 
 Foundries can be managed in two ways: as **UI Foundries** configured directly in the Home Assistant UI (suitable for small numbers of foundries), or as **YAML File Foundries** stored on disk (better for larger sets, bulk authoring, and version control).
@@ -107,7 +121,7 @@ This removes the registration only — the file itself is not deleted.
 
 #### Precedence
 
-When a foundry name appears in both a YAML file and a UI foundry, the **UI foundry takes precedence**. When the same name appears in multiple files, the **last registered file wins**.
+When a foundry name appears in both a YAML file and a UI foundry, the **UI foundry takes precedence**. When the same name appears in multiple files, the **last registered file wins**. This includes the special Global foundry names of `global` and `global_<mold-type>`.
 
 ## Using a foundry
 
@@ -230,15 +244,6 @@ element:
 
 For more information on HA secrets see <https://www.home-assistant.io/docs/configuration/secrets/>.
 
-## Global Foundries
-
-There are two special reserved foundry names which, if defined, are automatically merged into *every* forge configuration across your dashboard, whether they explicitly request a foundry or not.
-
-- `global` — if a foundry with this exact name exists, it is merged as the absolute base configuration for all forges.
-- `global_<mold-type>` — if a foundry with this exact name exists (e.g. `global_card`, `global_badge`, `global_row`), it is merged immediately after `global` for all forges of that mold. The mold is determined either from the local config or from an explicitly referenced foundry.
-
-These are useful for defining a consistent base set of macros, sparks, or default styles without needing to add `foundry: my_base_foundry` to every element.
-
 ## Merge behaviour
 
 When a forge configuration is resolved, it merges settings from several sources. Keys are merged in this order — later entries win:
@@ -256,7 +261,7 @@ For **object values** (e.g. `forge`, `element`), merging is recursive: nested ke
 - Spark override matching requires both the same identifier and the same spark `type`.
 - Set `forge.sparks: []` locally to explicitly clear inherited sparks.
 
-### Example
+### Merge example
 
 Foundry `weather_tile`:
 
@@ -481,3 +486,34 @@ element:
 ```
 
 ![Foundry UIX styling](../assets/page-assets/forge/foundries-uix-styling.png)
+
+## Example - Global foundry using macro
+
+!!! tip
+    If you need to use a macro as a boolean it needs to use the `returns` format. Otherwise the macro will return a string and you will get unexpected results.
+
+Foundry named `global`
+
+```yaml
+forge:
+  macros:
+    is_festive_day:
+      returns: true
+      template: "{% do returns(is_state('input_boolean.festive_day','on')) %}"
+```
+
+UIX Forge picture card:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  grid_options:
+    columns: full
+    rows: 4
+element:
+  type: picture
+  image:
+    media_content_id: |
+      media-source://media_source/local/{{ 'birthday.jpg' if is_festive_day() else 'kitchen.jpg' }}
+```
