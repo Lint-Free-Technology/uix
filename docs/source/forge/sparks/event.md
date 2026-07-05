@@ -111,7 +111,7 @@ tap_action:
 
 ```yaml
 type: button
-name: Bed Room
+name: Card B
 tap_action:
   action: fire-dom-event
   uix_forge:
