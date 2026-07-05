@@ -7,12 +7,6 @@ setup:
     domain: light
     service: turn_on
     data:
-      entity_id: light.kitchen_lights
-      brightness: 255
-  - type: ha_service
-    domain: light
-    service: turn_on
-    data:
       entity_id: light.living_room_rgbww_lights
       brightness: 255
 
@@ -30,6 +24,11 @@ cards:
           entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
+      uix:
+        style: |
+          :host {
+            --uix-button-label-text-wrap: nowrap;
+          }
     element:
       type: tile
       entity: light.bed_light

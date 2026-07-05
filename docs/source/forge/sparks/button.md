@@ -102,6 +102,12 @@ element:
 !!! note
     When used inside a tile card the button's click events are isolated from the tile card's own action handler — only the button's configured actions fire.
 
+## CSS variables
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `--uix-button-label-text-wrap` | `wrap` | Sets the button label text wrap. Default for `ha-button` is `wrap`. Set to `nowrap` if you wish for your labels to not wrap. This may or may not be needed based on the element in which the button is placed. You will need to set on a tile card like shown in the examples below. |
+
 ## Examples
 
 ??? example "Button after the tile icon with a toggle action and fluorescent light icon"
@@ -119,6 +125,11 @@ element:
           entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
+      uix:
+        style: |
+          :host {
+            --uix-button-label-text-wrap: nowrap;
+          }
     element:
       type: tile
       entity: light.bed_light
