@@ -92,9 +92,16 @@ export function _resolveFoundryConfig(
   config: { foundry?: string; forge?: any; element?: any },
   foundries?: Record<string, any>,
   ready = true,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
+  isTopLevel = true
 ): { forge: any; element: any } | null {
   const foundryName = config.foundry;
+
+  if (isTopLevel && (!foundries || (Object.keys(foundries).length === 0 && !ready))) {
+    return null;
+  }
+
+  let result: { forge: any; element: any } | null = null;
 
   if (foundryName) {
     // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
@@ -113,23 +120,54 @@ export function _resolveFoundryConfig(
 
     // Recursively resolve the foundry's own base (if it also references another foundry).
     const baseResolved = foundryData.foundry
-      ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited)
+      ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited, false)
       : { forge: {}, element: {} };
     if (baseResolved === null) return null;
 
     // foundryData overrides base, local config overrides foundry
     const foundryForge = _mergeFoundryConfig(baseResolved.forge, foundryData.forge);
     const foundryElement = _mergeFoundryConfig(baseResolved.element, foundryData.element);
-    return {
+    result = {
       forge: _mergeFoundryConfig(foundryForge, config.forge),
       element: _mergeFoundryConfig(foundryElement, config.element),
     };
+  } else {
+    result = {
+      forge: config.forge ?? {},
+      element: config.element ?? {},
+    };
   }
 
-  return {
-    forge: config.forge ?? {},
-    element: config.element ?? {},
-  };
+  if (isTopLevel && foundries) {
+    const moldType = result.forge?.mold;
+    const globalFoundry = foundries["global"];
+    const globalMoldFoundry = moldType ? foundries[`global_${moldType}`] : undefined;
+    const currentVisited = foundryName ? new Set(visited).add(foundryName) : new Set(visited);
+
+    let inheritedForge = {};
+    let inheritedElement = {};
+
+    if (globalFoundry && foundryName !== "global") {
+      const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
+      if (globalResolved === null) return null;
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalResolved.element);
+    }
+
+    if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
+      const globalMoldResolved = _resolveFoundryConfig({ foundry: `global_${moldType}` }, foundries, ready, currentVisited, false);
+      if (globalMoldResolved === null) return null;
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalMoldResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalMoldResolved.element);
+    }
+
+    result = {
+      forge: _mergeFoundryConfig(inheritedForge, result.forge),
+      element: _mergeFoundryConfig(inheritedElement, result.element),
+    };
+  }
+
+  return result;
 }
 
 export class UixForge extends LitElement {
@@ -548,7 +586,7 @@ export class UixForge extends LitElement {
   }
 
   private _onFoundryUpdate() {
-    if (!this.config?.foundry) return;
+    if (!this.config) return;
     // If the forge was waiting for foundry to load initially, complete setup now
     if (!this._mold) {
       const resolved = this._resolveFoundry({ ...this.config });
