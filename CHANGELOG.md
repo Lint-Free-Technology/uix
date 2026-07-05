@@ -1,3 +1,9 @@
+## [7.7.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.1...v7.7.0-beta.2) (2026-07-05)
+
+### ⭐ New Features
+
+* **forge:** Overall global and global mold-specific foundries ([#426](https://github.com/Lint-Free-Technology/uix/issues/426)) ([2781a74](https://github.com/Lint-Free-Technology/uix/commit/2781a743945d61d2ca4c3cb2c65188868112df60))
+
 ## [7.7.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2...v7.7.0-beta.1) (2026-07-05)
 
 ### ⭐ New Features
