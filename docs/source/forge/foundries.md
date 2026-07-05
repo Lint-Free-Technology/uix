@@ -517,3 +517,5 @@ element:
     media_content_id: |
       media-source://media_source/local/{{ 'birthday.jpg' if is_festive_day() else 'kitchen.jpg' }}
 ```
+
+![Example global foundry using macro](../assets/page-assets/forge/foundries-global-macro.gif)
