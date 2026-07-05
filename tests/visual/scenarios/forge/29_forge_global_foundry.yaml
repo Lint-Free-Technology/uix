@@ -8,21 +8,23 @@ setup:
     config:
       forge:
         macros:
-          global_bg: "'rgb(255, 0, 0)'"
-      element:
-        uix:
-          style: |
-            ha-card { background: {{ global_bg }}; }
+          global_bg: 
+            template: "rgb(255, 0, 0)"
   - type: add_foundry
     name: global_card
     config:
       forge:
         macros:
-          global_color: "'rgb(0, 0, 255)'"
+          global_color: 
+            template: "rgb(0, 0, 255)"
       element:
         uix:
-          style: |
-            ha-card { color: {{ global_color }}; }
+          style:
+            .: |
+              ha-card { 
+                background-color: {{ global_bg() }};
+                color: {{ global_color() }}; 
+              }
 
 card:
   type: custom:uix-forge
