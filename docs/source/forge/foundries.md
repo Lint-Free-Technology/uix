@@ -18,7 +18,7 @@ There are two special reserved foundry names which, if defined, are automaticall
 
 These are useful for defining a consistent base set of macros, sparks, or default styles without needing to add `foundry: my_base_foundry` to every element.
 
-See Example - Global foundry using macros for an example of a global foundry is use.
+See [Example - Global foundry using macro](#example---global-foundry-using-macro) for an example of a global foundry in use.
 
 ## Managing foundries
 

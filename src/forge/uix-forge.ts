@@ -142,27 +142,29 @@ export function _resolveFoundryConfig(
     const moldType = result.forge?.mold;
     const globalFoundry = foundries["global"];
     const globalMoldFoundry = moldType ? foundries[`global_${moldType}`] : undefined;
-
-    let finalForge = result.forge;
-    let finalElement = result.element;
-
     const currentVisited = foundryName ? new Set(visited).add(foundryName) : new Set(visited);
+
+    let inheritedForge = {};
+    let inheritedElement = {};
 
     if (globalFoundry && foundryName !== "global") {
       const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
       if (globalResolved === null) return null;
-      finalForge = _mergeFoundryConfig(globalResolved.forge, finalForge);
-      finalElement = _mergeFoundryConfig(globalResolved.element, finalElement);
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalResolved.element);
     }
 
     if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
       const globalMoldResolved = _resolveFoundryConfig({ foundry: `global_${moldType}` }, foundries, ready, currentVisited, false);
       if (globalMoldResolved === null) return null;
-      finalForge = _mergeFoundryConfig(globalMoldResolved.forge, finalForge);
-      finalElement = _mergeFoundryConfig(globalMoldResolved.element, finalElement);
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalMoldResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalMoldResolved.element);
     }
 
-    result = { forge: finalForge, element: finalElement };
+    result = {
+      forge: _mergeFoundryConfig(inheritedForge, result.forge),
+      element: _mergeFoundryConfig(inheritedElement, result.element),
+    };
   }
 
   return result;
@@ -584,7 +586,7 @@ export class UixForge extends LitElement {
   }
 
   private _onFoundryUpdate() {
-    if (!this.config?.foundry) return;
+    if (!this.config) return;
     // If the forge was waiting for foundry to load initially, complete setup now
     if (!this._mold) {
       const resolved = this._resolveFoundry({ ...this.config });
