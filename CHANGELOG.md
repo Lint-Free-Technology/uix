@@ -1,3 +1,9 @@
+## [7.7.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2...v7.7.0-beta.1) (2026-07-05)
+
+### ⭐ New Features
+
+* **button-spark:** Allow for styling of label text-wrap by CSS var. ([b391849](https://github.com/Lint-Free-Technology/uix/commit/b391849ca6baeaeb13d6880d437257cd5403e302)), closes [#428](https://github.com/Lint-Free-Technology/uix/issues/428)
+
 ## [7.6.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.1...v7.6.2) (2026-07-04)
 
 ### 🐞 Bug Fixes
