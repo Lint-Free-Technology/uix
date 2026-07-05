@@ -10,6 +10,8 @@ setup:
         macros:
           global_bg: 
             template: "rgb(255, 0, 0)"
+          global_color: 
+            template: "rgb(0, 255, 0)"
   - type: add_foundry
     name: global_card
     config:
