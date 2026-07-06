@@ -43,7 +43,8 @@ element:
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
 !!! warning
-    [Theme macros](../using/themes.md#macros) are only available to UIX styling **NOT** to UIX Forge. Use UIX Forge [Global foundries](./foundries.md#global-foundries) to provide for UIX Forge `macros` which are available in all UIX Forge globally or for a specific `mold`.
+    [Theme macros](../using/themes.md#macros) are only available in UIX styling templates, not in UIX Forge element/forge templates.
+    Use UIX Forge [Global foundries](../forge/foundries.md#global-foundries) to define `forge.macros` available globally or per `mold`.
 
 ## Element config
 
