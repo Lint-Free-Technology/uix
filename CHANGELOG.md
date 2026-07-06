@@ -1,3 +1,10 @@
+## [7.7.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.2...v7.7.0-beta.3) (2026-07-06)
+
+### 🐞 Bug Fixes
+
+* Allow theme yaml loading via either `developer-tools` or `tools` in preparation for Home Assistant 2026.8.0. UIX uses ha-yaml-editor as a yaml2json loader and loads via (developer-)tools. ([3a82a23](https://github.com/Lint-Free-Technology/uix/commit/3a82a23c44760b1d3f68234f9f90d73e39d54a2a)), closes [#425](https://github.com/Lint-Free-Technology/uix/issues/425)
+* Unhandled exception when theme `-yaml` section has invalid yaml. Correct to show UIX error and group invalid yaml with console group. ([0a77e6a](https://github.com/Lint-Free-Technology/uix/commit/0a77e6afb8a42c1c2b16fb19638fa608534b2003))
+
 ## [7.7.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.1...v7.7.0-beta.2) (2026-07-05)
 
 ### ⭐ New Features
