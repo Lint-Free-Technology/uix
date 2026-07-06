@@ -52,6 +52,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
     this._applyConfig(config);
+    const gen = this._beginUpdate();
+    this._attach(gen);
   }
 
   private _applyConfig(config: Record<string, any>) {
