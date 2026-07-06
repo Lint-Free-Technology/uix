@@ -70,7 +70,7 @@ element:
 
 ### Element entities config
 
-You can also use direct templates in the config, eg. template the entities inside an `type: entities` card. This can be an alternative for using [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) custom plugin for entities templates.
+You can also use direct templates in the config, eg. template the entities inside a `type: entities` card. This can be an alternative for using [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) custom plugin for entities templates.
 
 ```yaml
 type: custom:uix-forge
