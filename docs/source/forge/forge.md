@@ -68,6 +68,22 @@ element:
       }
 ```
 
+### Element entities config
+
+You can also use direct templates in the config, eg. template the entities inside an `type: entities` card. This can be an alternative for using [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) custom plugin for entities templates.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+element:
+  type: entities
+  entities: |
+    {{ integration_entities('sun') }}
+```
+
+![Element entities config example](../assets/page-assets/forge/basic-element-entities.png)
+
 ### Template variables and macros
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
@@ -371,6 +387,9 @@ When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. H
     When using template nesting, the template nesting characters are replaced with Jinja `raw` directives before the template is rendered. The replacement includes a marker for internal readiness code to be able to recognize a rendered template with nesting. With the default `<<>>`, `<<` is replaced with `{% raw %}{#uix#}{{{% endraw %}` and `>>` is replaced with `{% raw %}}}{#uix#}{% endraw %}`; flow-control delimiters are inferred automatically, so `<%` is replaced with `{% raw %}{#uix#}{%{% endraw %}` and `%>` is replaced with `{% raw %}%}{#uix#}{% endraw %}`. If you try and create these sequences without using the nesting shorthand, they must be replicated EXACTLY for forge internal readiness checks to complete.
 
 ### Using with auto-entities
+
+!!! tip
+   For simple entities templating you may wish to just forge an entities card and template. `entities:` config. See [Element entities config](#element-entities-config).
 
 UIX Forge supports `custom:auto-entities` in two ways:
 
