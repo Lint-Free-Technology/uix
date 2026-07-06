@@ -352,4 +352,5 @@ Badge example using theme macros setting `color_on` named variable to `red` in t
 Card-level `uix.macros` take precedence over theme macros of the same name.
 
 !!! warning
-    [Theme macros](../using/themes.md#macros) are only available to UIX styling **NOT** to UIX Forge. Use UIX Forge [Global foundries](./foundries.md#global-foundries) to provide for UIX Forge `macros` which are available in all UIX Forge globally or for a specific `mold`.
+    [Theme macros](#macros) are only available in UIX styling templates, not in UIX Forge element/forge templates.
+    Use UIX Forge [Global foundries](../forge/foundries.md#global-foundries) to define `forge.macros` available globally or per `mold`.
