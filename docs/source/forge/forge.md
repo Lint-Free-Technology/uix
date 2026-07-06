@@ -65,6 +65,20 @@ element:
       }
 ```
 
+With the above in mind one can also use direct templates in the config, eg. template the entities inside an `type: entities` card:
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+element:
+  type: entities
+  entities: |
+    {{integration_entities('sun')}}
+```
+
+much like the [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) custom plugin does.
+
 ### Template variables and macros
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
