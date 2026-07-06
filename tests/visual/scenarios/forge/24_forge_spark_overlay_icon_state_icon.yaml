@@ -1,0 +1,36 @@
+id: forge_spark_overlay_icon_state_icon
+description: "Overlay icon spark renders icon on ha-state-icon target when icon is configured"
+view_path: forge-spark-overlay-icon-state-icon
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-button-card $ ha-state-icon $
+        icon: mdi:shimmer
+        icon_color: white
+        icon_background: "#22b922"
+  element:
+    show_name: true
+    show_icon: true
+    type: button
+    entity: light.bed_light
+
+assertions:
+  - type: element_present
+    root: "hui-button-card"
+    selector: 'ha-state-icon $ [data-uix-forge-overlay-icon-id] > ha-icon'
+
+  - type: css_property
+    root: "hui-button-card"
+    selector: 'ha-state-icon $ [data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "top"
+    expected: "0px"
+
+  - type: css_property
+    root: "hui-button-card"
+    selector: 'ha-state-icon $ [data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "right"
+    expected: "0px"

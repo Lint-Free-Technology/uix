@@ -34,8 +34,38 @@ export function getOverlayIconTargetAdapter(element: HTMLElement): OverlayIconTa
       return new HaTileIconOverlayIconAdapter();
     case "hui-generic-entity-row":
       return new HuiGenericEntityRowOverlayIconAdapter();
+    case "ha-state-icon":
+    case "ha-icon":
+      return new HaStateIconOverlayIconAdapter();
     default:
       return null;
+  }
+}
+
+class HaStateIconOverlayIconAdapter implements OverlayIconTargetAdapter {
+  defaultIconSize(): string {
+    return "12px";
+  }
+
+  defaultIconPadding(): string | null {
+    return "2px";
+  }
+
+  defaultIconBorderRadius(): string | null {
+    return "50%";
+  }
+
+  defaultIconPosition(): AdapterIconPosition | null {
+    // Position the overlay icon at the top-right of the icon.
+    return { top: "0px", right: "0px" };
+  }
+
+  defaultIconColor(): string {
+    return "var(--white-color, #ffffff)";
+  }
+
+  defaultIconBackground(): string | null {
+    return "var(--primary-color, #03a9f4)";
   }
 }
 
