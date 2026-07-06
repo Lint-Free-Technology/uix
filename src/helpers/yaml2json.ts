@@ -30,11 +30,17 @@ const _load_yaml2json = async () => {
 export const yaml2json = async (yaml) => {
   await _load_yaml2json();
   const el: any = document.createElement("ha-yaml-editor");
-  el.hass = {};
-  el.hass.localize = (any) => "Invalid YAML";
+  if ('hass' in el) {
+    el.hass = {};
+    el.hass.localize = (any) => "Invalid YAML";
+  } else {
+    el._i18n = { localize: (any) => "Invalid YAML" };
+  }
   el._onChange(new CustomEvent("yaml", { detail: { value: yaml } }));
   if (!el.isValid) {
-    console.error("UIX: Error loading theme yaml:", yaml);
+    console.groupCollapsed("UIX: Error loading theme yaml");
+    console.error(yaml);
+    console.groupEnd();
     return {};
   }
   return el.value;
