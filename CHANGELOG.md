@@ -1,3 +1,10 @@
+## [7.7.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.4...v7.7.0-beta.5) (2026-07-07)
+
+### 🐞 Bug Fixes
+
+* **forge-overlay-icon-spark:** Prepend overlay div in shadowRoot rather than appendChild as Lit update cycle may remove appended child. ([4d45c21](https://github.com/Lint-Free-Technology/uix/commit/4d45c21dcb221d51892d1c8de18d09fcb6cf4b17)), closes [#427](https://github.com/Lint-Free-Technology/uix/issues/427)
+* Update console helpers to give theme only boilerplate for 'profile', 'todo' and 'persistent-notification' ([cc0376b](https://github.com/Lint-Free-Technology/uix/commit/cc0376b7d32478c473e103a509ecace9f1d683c1))
+
 ## [7.7.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.3...v7.7.0-beta.4) (2026-07-07)
 
 ### 🐞 Bug Fixes
