@@ -212,6 +212,17 @@ export class Uix extends LitElement {
     // Save processed styles
     this._fixed_styles = styles;
 
+    // As _process_styles is async we may have disconnected before it completes
+    // so check for connection before proceeding.
+    // If not connected, set a flag to process styles on connect as they will not be fresh.
+    if (!this.isConnected) {
+      this._debug("Disconnected while (re)connecting:", 
+        "type:",
+        this.type
+      );
+      this._processStylesOnConnect = true;
+      return;
+    }
     this.refresh();
   }
 
