@@ -1,3 +1,9 @@
+## [7.7.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.3...v7.7.0-beta.4) (2026-07-07)
+
+### 🐞 Bug Fixes
+
+* A connected element may disconnect while style pre-process (theme etc) takes place so should not be refreshed as disconnected element will have no theme, so no theme macros etc. causing downstream errors. A connected check now takes place after pre-process and does not refresh if disconnected. ([d33664e](https://github.com/Lint-Free-Technology/uix/commit/d33664e69f5251e6e8749c0d67d6bb8b6e0048e2))
+
 ## [7.7.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.2...v7.7.0-beta.3) (2026-07-06)
 
 ### 🐞 Bug Fixes
