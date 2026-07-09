@@ -293,31 +293,32 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       titleEl.textContent = "Details";
       headEl.appendChild(titleEl);
 
-      const yamlButton = this._createIconButton("mdi:code-braces", "Toggle YAML mode", () => {
-        this._detailsYamlMode = !this._detailsYamlMode;
-        this._updateDetails(wrapperEl);
-      });
-      yamlButton.classList.add("uix-forge-more-info-yaml-toggle");
+      const yamlButton = this._createIconButton(
+        "mdi:code-braces",
+        "Toggle YAML mode",
+        () => {
+          this._detailsYamlMode = !this._detailsYamlMode;
+          this._updateDetails(wrapperEl);
+        },
+        "uix-forge-more-info-yaml-toggle"
+      );
       headEl.appendChild(yamlButton);
 
-      const toggleButton = this._createIconButton("mdi:chevron-down", "Toggle details", () => {
-        this._detailsOpen = !this._detailsOpen;
-        this._updateDetails(wrapperEl);
-      });
-      toggleButton.classList.add("uix-forge-more-info-details-toggle");
+      const toggleButton = this._createIconButton(
+        "mdi:chevron-down",
+        "Toggle details",
+        () => {
+          this._detailsOpen = !this._detailsOpen;
+          this._updateDetails(wrapperEl);
+        },
+        "uix-forge-more-info-details-toggle"
+      );
       headEl.appendChild(toggleButton);
 
       wrapperEl.appendChild(headEl);
     }
 
     let detailsEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
-    if (detailsEl && detailsEl.localName !== "ha-card") {
-      const cardEl = document.createElement("ha-card");
-      cardEl.className = detailsEl.className;
-      cardEl.append(...Array.from(detailsEl.childNodes));
-      detailsEl.replaceWith(cardEl);
-      detailsEl = cardEl;
-    }
     if (!detailsEl) {
       detailsEl = document.createElement("ha-card");
       detailsEl.className = "uix-forge-more-info-details";
@@ -329,8 +330,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     this._updateDetails(wrapperEl);
   }
 
-  private _createIconButton(icon: string, label: string, handler: (ev: Event) => void): HTMLElement {
+  private _createIconButton(icon: string, label: string, handler: (ev: Event) => void, className: string): HTMLElement {
     const button = document.createElement("ha-icon-button") as HTMLElement & { label?: string };
+    button.classList.add(className);
     button.label = label;
     button.setAttribute("aria-label", label);
     button.setAttribute("role", "button");
