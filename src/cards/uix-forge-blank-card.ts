@@ -1,12 +1,16 @@
 import { LitElement, css, html } from "lit";
+import { state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 
 class UixForgeBlankCard extends LitElement {
-  _config?: any;
-  _hass?: any;
+  @state() private _config?: any;
 
   setConfig(config: any) {
     this._config = config;
+  }
+
+  getCardSize() {
+    return 1;
   }
 
   render() {

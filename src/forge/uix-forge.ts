@@ -559,6 +559,12 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
+      if (this._mold.isCard() && !elementConfig.type) {
+        elementConfig.type = "custom:uix-forge-blank-card";
+        if (this._mold.isCardBlankClear()) {
+          elementConfig.clear = true;
+        }
+      }
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...elementConfig };
       Promise.all([
@@ -721,6 +727,12 @@ export class UixForge extends LitElement {
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+    if (this._mold.isCard() && !elementConfig.type) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) {
+        elementConfig.clear = true;
+      }
     }
     this.forgedElementConfig = elementConfig;
     const completeRefresh = () => {
