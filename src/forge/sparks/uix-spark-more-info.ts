@@ -1,5 +1,6 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkBase } from "./uix-spark-base";
+import type { UixForgeSparkController } from "./uix-spark-controller";
 
 const MORE_INFO_ID_ATTR = "data-uix-forge-more-info-id";
 
@@ -53,6 +54,20 @@ interface MoreInfoEntityRegistryEntry {
   [key: string]: any;
 }
 
+interface MoreInfoInfoElement extends HTMLElement {
+  hass?: any;
+  entityId?: string;
+  entity?: string;
+  entry?: MoreInfoEntityRegistryEntry | null;
+}
+
+interface MoreInfoDetailsElement extends HTMLElement {
+  hass?: any;
+  entry?: MoreInfoEntityRegistryEntry | null;
+  params?: { entityId: string };
+  yamlMode?: boolean;
+}
+
 export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   type = "more-info";
 
@@ -70,7 +85,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private _detailsYamlMode: boolean = false;
   private readonly _id: string;
 
-  constructor(controller: any, config: Record<string, any>) {
+  constructor(controller: UixForgeSparkController, config: Record<string, any>) {
     super(controller, config);
     this._id = `uix-forge-more-info-${Math.random().toString(36).slice(2, 11)}`;
     this._applyConfig(config);
@@ -205,9 +220,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
 
   private _updateElement(wrapperEl: HTMLElement) {
     const hass = this.controller.forge.hass;
-    let infoEl = wrapperEl.querySelector(":scope > ha-more-info-info") as any;
+    let infoEl = wrapperEl.querySelector(":scope > ha-more-info-info") as MoreInfoInfoElement | null;
     if (!infoEl) {
-      infoEl = document.createElement("ha-more-info-info") as any;
+      infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
       wrapperEl.appendChild(infoEl);
     }
 
@@ -253,7 +268,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (!detailsEl) {
       detailsEl = document.createElement("div");
       detailsEl.className = "uix-forge-more-info-details";
-      const detailsContent = document.createElement("ha-more-info-details") as any;
+      const detailsContent = document.createElement("ha-more-info-details") as MoreInfoDetailsElement;
       detailsEl.appendChild(detailsContent);
       wrapperEl.appendChild(detailsEl);
     }
@@ -296,7 +311,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     const toggleButton = wrapperEl.querySelector(
       ":scope > .uix-forge-more-info-details-head .uix-forge-more-info-details-toggle"
     ) as HTMLElement | null;
-    const detailsContent = detailsEl?.querySelector(":scope > ha-more-info-details") as any;
+    const detailsContent = detailsEl?.querySelector(":scope > ha-more-info-details") as MoreInfoDetailsElement | null;
     if (!detailsEl || !detailsContent) return;
 
     detailsEl.classList.toggle("expanded", this._detailsOpen);
