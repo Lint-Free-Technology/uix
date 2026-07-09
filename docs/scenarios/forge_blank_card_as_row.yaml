@@ -1,0 +1,32 @@
+id: doc_forge_blank_card_as_row
+description: "UIX Forge wrapping a blank card as a row renders a uix-forge element containing a uix-forge-blank-card"
+view_path: doc-forge-blank-card-as-row
+
+setup:
+  - type: wait
+    ms: 1000
+
+card:
+  type: entities
+  title: Entities Card
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: card_as_row
+        sparks:
+          - type: overlay-icon
+            icon: mdi:shimmer
+            icon_color: red
+            icon_position:
+              left: 10px
+              top: 8px
+        uix:
+          style: |
+            :host {
+              --uix-forge-blank-card-height: 40px;
+            }
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/blank-card-as-row.png
+  root: hui-entities-card
+  padding: 16

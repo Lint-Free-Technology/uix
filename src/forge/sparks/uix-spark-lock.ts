@@ -96,7 +96,7 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this._for = config.for || "";
+    this._for = config.for || this.defaultTarget("");
     this._duration = parseDuration(config.duration) ?? 3000;
     this._action = config.action || "tap";
     this._iconLocked = config.icon_locked || "mdi:lock-outline";

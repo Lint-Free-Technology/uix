@@ -170,7 +170,7 @@ export class UixForgeSparkGrid extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
-    this._for = config.for ?? "element";
+    this._for = config.for ?? this.defaultTarget();
     this._mediaQueries = Array.isArray(config.media_queries) ? config.media_queries : [];
     this._elements = Array.isArray(config.elements) ? config.elements : [];
     this._base = {

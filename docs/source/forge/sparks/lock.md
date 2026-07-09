@@ -94,7 +94,7 @@ When no entry matches:
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `type` | string | — | Must be `lock`. |
-| `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
+| `for` | string | `element` | UIX selector for the element to overlay. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. |
 | `action` | string | `tap` | Gesture that triggers the unlock flow. One of `tap`, `hold`, `double_tap`. |
 | `duration` | number or string | `3000` | How long before the overlay re-locks after a successful unlock. Numbers are milliseconds; strings use human-readable units (e.g. `"5s"`, `"1m"`, `"500ms"`). |
 | `icon_locked` | string | `mdi:lock-outline` | MDI icon shown when locked. |

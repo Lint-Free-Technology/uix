@@ -1,0 +1,17 @@
+id: doc_forge_blank_card_no_config
+description: "UIX Forge wrapping a blank card with no config renders a uix-forge element containing a uix-forge-blank-card"
+view_path: doc-forge-blank-card-no-config
+
+setup:
+  - type: wait
+    ms: 1000
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/blank-card-no-config.png
+  root: uix-forge
+  padding: 16

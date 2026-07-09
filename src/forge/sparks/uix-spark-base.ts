@@ -1,6 +1,11 @@
 import { PropertyValues } from "lit";
 import { UixForgeSparkController } from "./uix-spark-controller";
 
+const UIX_FORGE_ELEMENT_DEFAULT_TARGET_SELECTOR = {
+  "custom:uix-forge-blank-card": "uix-forge-blank-card $ div.content",
+  default: "element"
+}
+
 export abstract class UixForgeSparkBase {
   controller: UixForgeSparkController;
   config: Record<string, any> = {};
@@ -36,6 +41,14 @@ export abstract class UixForgeSparkBase {
 
   configUpdated(config: Record<string, any>) {
     this.config = config;
+  }
+
+  defaultTarget(defaultSelector?: string): string {
+    const forgeElementConfig = this.controller.forge.forgedElementConfig;
+    if (forgeElementConfig?.type && UIX_FORGE_ELEMENT_DEFAULT_TARGET_SELECTOR[forgeElementConfig.type]) {
+      return UIX_FORGE_ELEMENT_DEFAULT_TARGET_SELECTOR[forgeElementConfig.type];
+    }
+    return defaultSelector ?? UIX_FORGE_ELEMENT_DEFAULT_TARGET_SELECTOR.default;
   }
 
   /** Cancel all pending async operations (e.g. target resolution retries). */

@@ -85,6 +85,62 @@ element:
 
 ![Element entities config example](../assets/page-assets/forge/basic-element-entities.png)
 
+### Blank card config
+
+When using UIX Forge molds `card`, `card_as_row` or `card_as_badge`, a default blank card, `custom:uix-forge-blank-card` will be used when no `element` or `element.type` is set. This allows for a blank card to which UIX Forge [sparks](./sparks/index.md) can be applied directly.
+
+A default config with no sparks will show a placeholder message.
+
+```yaml
+type: "custom:uix-forge"
+forge:
+  mold: card
+```
+
+![Empty uix-forge-blank-card example](../assets/page-assets/forge/blank-card-no-config.png)
+
+Setting `element.title` will show a card with title only.
+
+```yaml
+type: "custom:uix-forge"
+forge:
+  mold: card
+element:
+  title: "Blank Card Title"
+```
+
+![uix-forge-blank-card with title example](../assets/page-assets/forge/blank-card-title.png)
+
+The blank card can be styled to be transparent in context by setting `element.clear`. For molds `card_as_row` and `card_as_badge` this is done automatically when the blank card is in use.
+
+This example is of UIX Forge using `mold: card_as_row` as an entities row to generate a blank card over which an [`overlay-icon` spark](./sparks/overlay-icon.md) is displayed.
+
+```yaml
+type: entities
+title: Entities Card
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: card_as_row
+      sparks:
+        - type: overlay-icon
+          icon: mdi:shimmer
+          icon_color: red
+          icon_position:
+            left: 10px
+            top: 8px
+      uix:
+        style: |
+          :host {
+            --uix-forge-blank-card-height: 40px;
+          }
+```
+
+![uix-forge-blank-card used as card_as_row](../assets/page-assets/forge/blank-card-as-row.png)
+
+!!! tip
+    A blank card will be given height of `var(--row-height, 56px)` by default. This can be styled using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
+
 ### Template variables and macros
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.

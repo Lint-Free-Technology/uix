@@ -1,0 +1,21 @@
+id: forge_blank_card_no_config
+description: "UIX Forge wrapping a blank card with no config renders a uix-forge element containing a uix-forge-blank-card"
+view_path: forge-blank-card-no-config
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+
+assertions:
+  - type: element_present
+    root: "uix-forge"
+    selector: "uix-forge-blank-card"
+
+  - type: element_present
+    root: "uix-forge-blank-card"
+    selector: ".content.no-header"
+
+  - type: snapshot
+    name: "32_forge_blank_card_no_config"
+    threshold: 0.02

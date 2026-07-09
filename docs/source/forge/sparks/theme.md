@@ -13,7 +13,7 @@ Use it when you want a forged element to pick up an existing theme without addin
 | Key | Type | Required | Default | Description |
 |-----|------|----------|---------|-------------|
 | `type` | string | ✅ | — | Must be `theme`. |
-| `for` | string | | `element` | UIX selector path for the element to apply the theme to. |
+| `for` | string | | `element` | UIX selector path for the element to apply the theme to. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. |
 | `theme` | string | | — | Theme name to apply. Supports templates. |
 
 !!! tip

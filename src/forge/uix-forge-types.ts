@@ -44,6 +44,12 @@ export const UIX_FORGE_FORGE_MOLDS = [
   "card-feature",
 ];
 
+export const UIX_FORGE_MOLDS_WITH_BLANKS = [
+  "card",
+  "card_as_row",
+  "card_as_badge",
+];
+
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 export const UIX_FORGE_PASSTHROUGH_MARKER = "##UIX_FORGE_PASSTHROUGH##";
 

@@ -73,6 +73,11 @@ export abstract class UixForgeMoldBase {
   isError() : boolean {
     return false;
   }
+
+  isCardBlankClear(): boolean {
+    return this.type === "card_as_row" || this.type === "card_as_badge";
+  }
+
   abstract refresh(path: UixForgeConfigPath): void;
 
   connectedCallback() {}

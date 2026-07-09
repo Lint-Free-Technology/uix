@@ -67,7 +67,7 @@ element:
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `grid`. |
-| `for` | `string` | | `element` | UIX selector for the target element. Default `element` refers to the root of the forged element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). |
+| `for` | `string` | | `element` | UIX selector for the target element. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). |
 | `columns` | `number` \| `string` | | — | Grid template columns. A **number** becomes `repeat(n, 1fr)`. A **string** is used verbatim (e.g. `"200px 1fr 200px"`). |
 | `rows` | `number` \| `string` | | — | Grid template rows. Same shorthand as `columns`. |
 | `gap` | `number` \| `string` | | — | Shorthand gap between rows and columns. A **number** is treated as pixels (e.g. `8` → `8px`). A **string** is used verbatim (e.g. `"8px 16px"`). |
