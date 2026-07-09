@@ -42,7 +42,7 @@ forge:
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `more-info`. |
-| `after` | `string` | | When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, `""`. | UIX selector for the reference element. The more-info content is inserted as a sibling **after** the matched element. |
+| `after` | `string` | | see description | UIX selector for the reference element. The more-info content is inserted as a sibling **after** the matched element. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, it defaults to `""`. |
 | `before` | `string` | | — | UIX selector for the reference element. The more-info content is inserted as a sibling **before** the matched element. |
 | `for` | `string` | | — | Alias used as the target selector when `after` is not set. |
 | `entity` | `string` | | `element.entity` | Entity ID shown in the embedded more-info content. If omitted, the spark uses the forged element's `entity` config when available. |

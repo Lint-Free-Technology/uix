@@ -61,6 +61,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private entity: string = "";
   private details: boolean = false;
   private _wrapperElement: HTMLElement | null = null;
+  // `undefined` means not loaded yet, `null` means the registry lookup failed
+  // or found no entry, and an object is the loaded registry entry.
   private _entry: MoreInfoEntityRegistryEntry | null | undefined = undefined;
   private _entryEntityId: string = "";
   private _detailsOpen: boolean = false;
@@ -179,6 +181,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       this._entryEntityId = "";
       return;
     }
+    // Avoid re-querying on every hass update once a lookup has completed for
+    // this entity; config/entity changes reset the loaded state by changing the
+    // entity id used below.
     if (this._entryEntityId === this.entity && this._entry !== undefined) return;
 
     this._entryEntityId = this.entity;
@@ -207,6 +212,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
 
     infoEl.hass = hass;
     infoEl.entityId = this.entity;
+    // Current HA more-info elements use `entityId`; keep `entity` in sync for
+    // compatibility with older/custom more-info element implementations.
     infoEl.entity = this.entity;
     infoEl.entry = this._entry;
 
@@ -257,10 +264,17 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     const button = document.createElement("ha-icon-button") as HTMLElement & { label?: string };
     button.label = label;
     button.setAttribute("aria-label", label);
+    button.setAttribute("role", "button");
+    button.setAttribute("tabindex", "0");
     const iconEl = document.createElement("ha-icon") as HTMLElement & { icon?: string };
     iconEl.icon = icon;
     button.appendChild(iconEl);
     button.addEventListener("click", handler);
+    button.addEventListener("keydown", (ev: KeyboardEvent) => {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      ev.preventDefault();
+      handler(ev);
+    });
     return button;
   }
 
