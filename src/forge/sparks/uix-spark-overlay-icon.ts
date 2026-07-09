@@ -55,7 +55,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this._for = config.for || "element";
+    this._for = config.for || this.defaultTarget();
     this._entity = config.entity || "";
     const rawIcon = config.icon || "";
     const rawImageUrl = config.image_url || "";

@@ -1,5 +1,22 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig, UIX_FORGE_ARRAY_MERGE_STRATEGIES } from "./uix-forge-types";
+import { 
+  getNestedTemplateRawDelimiters, 
+  HuiBadge, 
+  HuiCard, 
+  HuiCardFeature, 
+  LovelaceElement, 
+  UIX_FORGE_ALLOWED_CONFIG_KEYS, 
+  UIX_FORGE_DEFAULT_TEMPLATE_VALUE, 
+  UIX_FORGE_FORGE_MOLDS, 
+  UIX_FORGE_NESTED_TEMPLATE_CLOSE, 
+  UIX_FORGE_NESTED_TEMPLATE_OPEN, 
+  UIX_FORGE_PASSTHROUGH_MARKER, 
+  UIX_FORGE_TYPE, UixForgeConfig, 
+  UixForgeConfigBuilder, 
+  UixForgeConfigPath, 
+  UixMacroConfig, 
+  UIX_FORGE_ARRAY_MERGE_STRATEGIES, 
+  UIX_FORGE_MOLDS_WITH_BLANKS } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -316,9 +333,6 @@ export class UixForge extends LitElement {
     if (!config.foundry && !config.forge) {
       throw new Error("uix-forge: forge config or foundry is required");
     }
-    if (!config.foundry && !config.element) {
-      throw new Error("uix-forge: element config is required");
-    }
     if ((config as any).visibility) {
       throw new Error("uix-forge: 'visibility' config key is not supported, use 'forge.hidden' with a template instead");
     }
@@ -350,12 +364,12 @@ export class UixForge extends LitElement {
     if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
       throw new Error("uix-forge: forge config is required (not provided locally or via foundry)");
     }
-    if (!resolvedElement || Object.keys(resolvedElement).length === 0) {
-      throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
-    }
     // Only support card, badge, row, section, and picture-element molds at this time
     if (!resolvedForge.mold || !UIX_FORGE_FORGE_MOLDS.includes(resolvedForge.mold)) {
       throw new Error(`uix-forge: only forge molds of ${UIX_FORGE_FORGE_MOLDS.join(", ")} are supported at this time`);
+    }
+    if (( !resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold)) {
+      throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
       throw new Error("uix-forge: forge macros must be an object");
@@ -400,6 +414,12 @@ export class UixForge extends LitElement {
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+    if (this._mold.isCard() && !elementConfig.type) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) {
+        elementConfig.clear = true;
+      }
     }
 
     this.forgedElementConfig = elementConfig;

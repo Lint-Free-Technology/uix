@@ -28,7 +28,7 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.after = config.after || "";
+    this.after = config.after || config.for || this.defaultTarget();
     this.before = config.before || "";
     this.entity = config.entity || "";
     this.overrideIcon = config.override_icon || "";

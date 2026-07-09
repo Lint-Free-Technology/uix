@@ -39,5 +39,6 @@ import "./patch/developer-yaml-config";
 import "./patch/ha-panel-calendar";
 import "./patch/ha-panel-todo";
 import "./patch/ha-panel-history";
-import "./mod-card";
+import "./cards/mod-card";
+import "./cards/uix-forge-blank-card";
 import "./theme-watcher";

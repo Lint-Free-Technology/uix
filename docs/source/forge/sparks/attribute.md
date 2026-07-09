@@ -13,7 +13,7 @@ The `attribute` spark lets you **replace** or **remove** an HTML attribute on an
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `attribute`. |
 | `attribute` | `string` | ✅ | — | Name of the HTML attribute to target (e.g. `title`). |
-| `for` | `string` | | `element` | CSS/UIX selector to the target element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). Default `element` refers to the root of the forged element. |
+| `for` | `string` | | `element` | CSS/UIX selector to the target element. Supports `$` for shadow-root crossings (see [DOM navigation](../../concepts/dom.md)). When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. |
 | `action` | `string` | | `replace` | What to do with the attribute. Either `replace` (set a new value) or `remove` (delete the attribute entirely). |
 | `value` | `string` | | `""` | The new attribute value. Only used when `action` is `replace`. Supports [Jinja2 templates](../../using/templates.md). |
 

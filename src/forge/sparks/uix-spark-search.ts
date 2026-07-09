@@ -42,7 +42,7 @@ interface AppliedElementChange {
 export class UixForgeSparkSearch extends UixForgeSparkBase {
   type = "search";
 
-  private _for: string = "element";
+  private _for: string = "";
   private _query: string = "";
   private _text: string = "";
   private _actions: SearchAction = {};
@@ -60,7 +60,7 @@ export class UixForgeSparkSearch extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
-    this._for = config.for || "element";
+    this._for = config.for || this.defaultTarget();
     this._query = config.query || "";
     this._text = config.text || "";
     this._actions = config.actions || {};

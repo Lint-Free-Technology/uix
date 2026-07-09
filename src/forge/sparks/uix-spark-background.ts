@@ -326,7 +326,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
-    this._for = config.for ?? "element";
+    this._for = config.for ?? this.defaultTarget();
     this._cameraEntity = config.camera_entity || "";
     this._imageEntity = config.image_entity || "";
     this._videoUrl = config.video_url || "";

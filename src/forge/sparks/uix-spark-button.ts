@@ -89,7 +89,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.after = config.after || config.for || "";
+    this.after = config.after || config.for || this.defaultTarget("");
     this.before = config.before || "";
     this.entity = config.entity || "";
     this.icon = config.icon || "";
