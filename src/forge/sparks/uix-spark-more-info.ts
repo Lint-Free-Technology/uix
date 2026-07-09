@@ -1,4 +1,5 @@
 import { PropertyValues } from "lit";
+import { ModdedElement, apply_uix } from "../../helpers/apply_uix";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import type { UixForgeSparkController } from "./uix-spark-controller";
 
@@ -232,6 +233,20 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     // compatibility with older/custom more-info element implementations.
     infoEl.entity = this.entity;
     infoEl.entry = this._entry;
+
+    void apply_uix(
+      wrapperEl as ModdedElement,
+      "more-info",
+      undefined,
+      {
+        config: {
+          entity: this.entity,
+          entity_id: this.entity,
+          entityId: this.entity,
+        },
+      },
+      false
+    );
 
     if (this.details) {
       this._ensureDetails(wrapperEl);

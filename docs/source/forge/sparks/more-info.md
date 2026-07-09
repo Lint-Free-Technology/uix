@@ -51,6 +51,20 @@ forge:
 !!! note
     The spark targets the **first** element matched by `after`, `for`, or `before`.
 
+## Theme styling
+
+The spark applies UIX `more-info` styling to the wrapper containing `ha-more-info-info`, so theme-level `uix-more-info-yaml` paths can target the embedded content the same way they target the more-info dialog:
+
+```yaml
+my-theme:
+  uix-theme: my-theme
+  uix-more-info-yaml: |
+    ha-more-info-info $ more-info-content $: |
+      more-info-light {
+        color: var(--primary-color);
+      }
+```
+
 ## CSS variables
 
 | Variable | Default | Description |
