@@ -24,8 +24,11 @@ forge:
 
 Set `details: true` to add a collapsible details section underneath the main more-info content. The details header includes:
 
-- a code button to toggle the details view's YAML mode
+- a `Details` subheading
+- a code button to toggle the details view's YAML mode, shown only while the details section is expanded
 - a chevron button to expand or collapse the details section
+
+The collapsible details content is wrapped in an `ha-card` so it inherits normal Home Assistant card styling such as borders, background, and shadow.
 
 ```yaml
 type: custom:uix-forge
@@ -74,6 +77,7 @@ my-theme:
 | `--uix-more-info-details-head-gap` | `var(--ha-space-2, 8px)` | Gap between details action buttons. |
 | `--uix-more-info-details-toggle-width` | `32px` | Size of the details action buttons and icons. |
 | `--uix-more-info-details-transition-duration` | `150ms` | Base transition duration for the details dropdown. |
+| `--uix-more-info-details-yaml-transition-duration` | `250ms` | Fade duration for showing and hiding the YAML toggle button. |
 | `--uix-more-info-details-toggle-color` | `var(--primary-text-color)` | Details action button color. |
 | `--uix-more-info-details-margin-top` | `8px` | Top margin applied when details are expanded. |
 | `--uix-more-info-details-max-height` | `80vh` | Maximum expanded details height. |

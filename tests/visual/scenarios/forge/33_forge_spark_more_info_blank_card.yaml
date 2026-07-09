@@ -12,6 +12,13 @@ card:
         entity: light.bed_light
         details: true
 
+interactions:
+  - type: click
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-toggle'
+    settle_ms: 300
+
 assertions:
   - type: element_present
     root:
@@ -23,10 +30,28 @@ assertions:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-head'
 
+  - type: text_equals
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-title'
+    expected: Details
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details'
+
   - type: element_present
     root:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] ha-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-yaml-toggle'
+    property: opacity
+    expected: "1"
 
   - type: css_variable
     root:
