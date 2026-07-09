@@ -61,6 +61,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private entity: string = "";
   private details: boolean = false;
   private _wrapperElement: HTMLElement | null = null;
+  private readonly _stopPropagation = (ev: Event) => ev.stopPropagation();
   // `undefined` means not loaded yet, `null` means the registry lookup failed
   // or found no entry, and an object is the loaded registry entry.
   private _entry: MoreInfoEntityRegistryEntry | null | undefined = undefined;
@@ -106,6 +107,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
 
   private _remove() {
     if (this._wrapperElement) {
+      this._removeWrapperListeners(this._wrapperElement);
       this._wrapperElement.remove();
       this._wrapperElement = null;
     }
@@ -131,6 +133,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     ) as HTMLElement | null;
 
     if (this._wrapperElement && !existingWrapper) {
+      this._removeWrapperListeners(this._wrapperElement);
       this._wrapperElement.remove();
       this._wrapperElement = null;
     }
@@ -151,10 +154,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
         wrapperEl.setAttribute("slot", slot);
       }
 
-      const stopProp = (ev: Event) => ev.stopPropagation();
-      wrapperEl.addEventListener("click", stopProp);
-      wrapperEl.addEventListener("mousedown", stopProp);
-      wrapperEl.addEventListener("touchstart", stopProp);
+      this._addWrapperListeners(wrapperEl);
 
       if (this.before) {
         parent.insertBefore(wrapperEl, element);
@@ -195,7 +195,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       if (generation === this._callGeneration && this._entryEntityId === this.entity) {
         this._entry = entry;
       }
-    } catch (_e) {
+    } catch (err) {
+      console.debug("UIX Forge: more-info spark failed to load entity registry entry", err);
       if (generation === this._callGeneration && this._entryEntityId === this.entity) {
         this._entry = null;
       }
@@ -269,13 +270,25 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     const iconEl = document.createElement("ha-icon") as HTMLElement & { icon?: string };
     iconEl.icon = icon;
     button.appendChild(iconEl);
-    button.addEventListener("click", handler);
-    button.addEventListener("keydown", (ev: KeyboardEvent) => {
+    button.onclick = handler;
+    button.onkeydown = (ev: KeyboardEvent) => {
       if (ev.key !== "Enter" && ev.key !== " ") return;
       ev.preventDefault();
       handler(ev);
-    });
+    };
     return button;
+  }
+
+  private _addWrapperListeners(wrapperEl: HTMLElement): void {
+    wrapperEl.addEventListener("click", this._stopPropagation);
+    wrapperEl.addEventListener("mousedown", this._stopPropagation);
+    wrapperEl.addEventListener("touchstart", this._stopPropagation);
+  }
+
+  private _removeWrapperListeners(wrapperEl: HTMLElement): void {
+    wrapperEl.removeEventListener("click", this._stopPropagation);
+    wrapperEl.removeEventListener("mousedown", this._stopPropagation);
+    wrapperEl.removeEventListener("touchstart", this._stopPropagation);
   }
 
   private _updateDetails(wrapperEl: HTMLElement) {
