@@ -28,7 +28,7 @@ assertions:
   - type: element_present
     root:
       - uix-forge-blank-card
-    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-head'
+    selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details > .uix-forge-more-info-details-head'
 
   - type: text_equals
     root:
@@ -40,6 +40,13 @@ assertions:
     root:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details'
+    property: paddingTop
+    expected: "24px"
 
   - type: element_present
     root:

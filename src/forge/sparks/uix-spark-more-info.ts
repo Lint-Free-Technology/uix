@@ -33,15 +33,15 @@ const MORE_INFO_CSS = `
     pointer-events: none;
     visibility: hidden;
     transition:
-      opacity var(--uix-more-info-details-yaml-transition-duration, 250ms) cubic-bezier(0.4, 0, 0.2, 1),
-      visibility 0s linear var(--uix-more-info-details-yaml-transition-duration, 250ms);
+      opacity var(--uix-more-info-details-yaml-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s linear var(--uix-more-info-details-yaml-transition-duration, 350ms);
   }
   .uix-forge-more-info-details-head.expanded .uix-forge-more-info-yaml-toggle {
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
     transition:
-      opacity var(--uix-more-info-details-yaml-transition-duration, 250ms) cubic-bezier(0.4, 0, 0.2, 1),
+      opacity var(--uix-more-info-details-yaml-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
       visibility 0s linear 0s;
   }
   .uix-forge-more-info-details-head ha-icon-button {
@@ -65,13 +65,15 @@ const MORE_INFO_CSS = `
   ha-card.uix-forge-more-info-details {
     display: block;
     overflow: hidden;
-    transition: calc(var(--uix-more-info-details-transition-duration, 150ms) * 2) cubic-bezier(0.4, 0, 0.2, 1);
-    transition-property: max-height, margin-top;
-    margin-top: 0;
+    margin-top: var(--uix-more-info-details-margin-top, 8px);
+    padding: var(--uix-more-info-details-card-padding, var(--ha-space-6, 24px));
+  }
+  .uix-forge-more-info-details-content {
+    overflow: hidden;
+    transition: max-height calc(var(--uix-more-info-details-transition-duration, 150ms) * 2) cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 0;
   }
-  ha-card.uix-forge-more-info-details.expanded {
-    margin-top: var(--uix-more-info-details-margin-top, 8px);
+  ha-card.uix-forge-more-info-details.expanded .uix-forge-more-info-details-content {
     max-height: var(--uix-more-info-details-max-height, 80vh);
   }
 `;
@@ -277,15 +279,16 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (this.details) {
       this._ensureDetails(wrapperEl);
     } else {
-      wrapperEl.querySelector(":scope > .uix-forge-more-info-details-head")?.remove();
       wrapperEl.querySelector(":scope > .uix-forge-more-info-details")?.remove();
     }
   }
 
   private _ensureDetails(wrapperEl: HTMLElement) {
-    let headEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-head") as HTMLElement | null;
-    if (!headEl) {
-      headEl = document.createElement("div");
+    let detailsEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
+    if (!detailsEl) {
+      detailsEl = document.createElement("ha-card");
+      detailsEl.className = "uix-forge-more-info-details";
+      const headEl = document.createElement("div");
       headEl.className = "uix-forge-more-info-details-head";
 
       const titleEl = document.createElement("div");
@@ -315,15 +318,12 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       );
       headEl.appendChild(toggleButton);
 
-      wrapperEl.appendChild(headEl);
-    }
-
-    let detailsEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
-    if (!detailsEl) {
-      detailsEl = document.createElement("ha-card");
-      detailsEl.className = "uix-forge-more-info-details";
+      const contentEl = document.createElement("div");
+      contentEl.className = "uix-forge-more-info-details-content";
       const detailsContent = document.createElement("ha-more-info-details") as MoreInfoDetailsElement;
-      detailsEl.appendChild(detailsContent);
+      contentEl.appendChild(detailsContent);
+      detailsEl.appendChild(headEl);
+      detailsEl.appendChild(contentEl);
       wrapperEl.appendChild(detailsEl);
     }
 
@@ -363,18 +363,19 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
 
   private _updateDetails(wrapperEl: HTMLElement) {
     const detailsEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
-    const headEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-head") as HTMLElement | null;
+    const headEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-head") as HTMLElement | null;
     const yamlButton = wrapperEl.querySelector(
-      ":scope > .uix-forge-more-info-details-head .uix-forge-more-info-yaml-toggle"
+      ":scope > .uix-forge-more-info-details .uix-forge-more-info-details-head .uix-forge-more-info-yaml-toggle"
     ) as HTMLElement | null;
     const toggleButton = wrapperEl.querySelector(
-      ":scope > .uix-forge-more-info-details-head .uix-forge-more-info-details-toggle"
+      ":scope > .uix-forge-more-info-details .uix-forge-more-info-details-head .uix-forge-more-info-details-toggle"
     ) as HTMLElement | null;
-    const detailsContent = detailsEl?.querySelector(":scope > ha-more-info-details") as MoreInfoDetailsElement | null;
+    const contentEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-content") as HTMLElement | null;
+    const detailsContent = contentEl?.querySelector(":scope > ha-more-info-details") as MoreInfoDetailsElement | null;
     if (!detailsEl || !detailsContent) return;
 
     detailsEl.classList.toggle("expanded", this._detailsOpen);
-    detailsEl.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");
+    contentEl?.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");
     headEl?.classList.toggle("expanded", this._detailsOpen);
     yamlButton?.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");
     yamlButton?.setAttribute("tabindex", this._detailsOpen ? "0" : "-1");
