@@ -330,9 +330,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     this._updateDetails(wrapperEl);
   }
 
-  private _createIconButton(icon: string, label: string, handler: (ev: Event) => void, className: string): HTMLElement {
+  private _createIconButton(icon: string, label: string, handler: (ev: Event) => void, className = ""): HTMLElement {
     const button = document.createElement("ha-icon-button") as HTMLElement & { label?: string };
-    button.classList.add(className);
+    if (className) button.classList.add(className);
     button.label = label;
     button.setAttribute("aria-label", label);
     button.setAttribute("role", "button");
