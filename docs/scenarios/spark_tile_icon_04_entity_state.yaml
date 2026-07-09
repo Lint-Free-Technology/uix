@@ -9,12 +9,14 @@ setup:
     data:
       entity_id: light.bed_light
       brightness: 255
+      color_temp_kelvin: 2631
   - type: ha_service
     domain: light
     service: turn_on
     data:
       entity_id: light.ceiling_lights
       brightness: 255
+      color_temp_kelvin: 2631
 
 card:
   type: custom:uix-forge

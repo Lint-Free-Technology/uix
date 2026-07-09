@@ -9,6 +9,7 @@ setup:
     data:
       entity_id: light.bed_light
       brightness: 181
+      color_temp_kelvin: 2631
   - type: add_foundry
     name: uix-test-foundry-sparks-merge
     config:

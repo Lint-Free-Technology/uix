@@ -9,6 +9,7 @@ setup:
     data:
       entity_id: light.bed_light
       brightness_pct: 50
+      color_temp_kelvin: 2631
   - type: ha_service
     domain: light
     service: turn_off
