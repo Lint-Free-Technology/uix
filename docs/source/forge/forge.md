@@ -87,7 +87,7 @@ element:
 
 ### Blank card config
 
-When using UIX Forge molds `card`, `card_as_row` or `card_as_badge`, a default blank card, `custom:uix-forge-blank-card` will be used when no `element` or `element.type` is set. This allows for a blanks card to which UIX forge [sparks](./sparks/index.md) can be applied to directly.
+When using UIX Forge molds `card`, `card_as_row` or `card_as_badge`, a default blank card, `custom:uix-forge-blank-card` will be used when no `element` or `element.type` is set. This allows for a blank card to which UIX Forge [sparks](./sparks/index.md) can be applied directly.
 
 A default config with no sparks will show a placeholder message.
 
