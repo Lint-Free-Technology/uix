@@ -17,7 +17,7 @@ forge:
   mold: card
   sparks:
     - type: more-info
-      entity: light.living_room
+      entity: light.bed_light
 ```
 
 ## With details
