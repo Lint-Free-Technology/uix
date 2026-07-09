@@ -75,10 +75,9 @@ my-theme:
 | `--uix-more-info-details-head-height` | `40px` | Minimum height of the details toggle row. |
 | `--uix-more-info-details-head-padding` | `0 var(--ha-space-4, 16px)` | Padding for the details toggle row. |
 | `--uix-more-info-details-head-gap` | `var(--ha-space-2, 8px)` | Gap between details action buttons. |
-| `--uix-more-info-details-card-padding` | `var(--ha-space-6, 24px)` | Padding inside the details card. |
+| `--uix-more-info-details-outer-padding` | `var(--ha-space-6, 24px)` | Padding around the outside of the details card. |
 | `--uix-more-info-details-toggle-width` | `32px` | Size of the details action buttons and icons. |
-| `--uix-more-info-details-transition-duration` | `150ms` | Base transition duration for the details dropdown. |
-| `--uix-more-info-details-yaml-transition-duration` | `350ms` | Fade duration for showing and hiding the YAML toggle button. |
+| `--uix-more-info-details-transition-duration` | `350ms` | Transition duration for the details dropdown, toggle icon, and YAML button fade. |
 | `--uix-more-info-details-toggle-color` | `var(--primary-text-color)` | Details action button color. |
-| `--uix-more-info-details-margin-top` | `8px` | Top margin applied to the details card. |
+| `--uix-more-info-details-margin-top` | `8px` | Top margin applied to the details card wrapper. |
 | `--uix-more-info-details-max-height` | `80vh` | Maximum expanded details height. |
