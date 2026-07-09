@@ -48,6 +48,11 @@ const MORE_INFO_CSS = `
   }
 `;
 
+interface MoreInfoEntityRegistryEntry {
+  entity_id: string;
+  [key: string]: any;
+}
+
 export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   type = "more-info";
 
@@ -56,7 +61,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private entity: string = "";
   private details: boolean = false;
   private _wrapperElement: HTMLElement | null = null;
-  private _entry: any = undefined;
+  private _entry: MoreInfoEntityRegistryEntry | null | undefined = undefined;
   private _entryEntityId: string = "";
   private _detailsOpen: boolean = false;
   private _detailsYamlMode: boolean = false;
@@ -261,7 +266,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
 
   private _updateDetails(wrapperEl: HTMLElement) {
     const detailsEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
-    const toggleButton = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-toggle") as HTMLElement | null;
+    const toggleButton = wrapperEl.querySelector(
+      ":scope > .uix-forge-more-info-details-head .uix-forge-more-info-details-toggle"
+    ) as HTMLElement | null;
     const detailsContent = detailsEl?.querySelector(":scope > ha-more-info-details") as any;
     if (!detailsEl || !detailsContent) return;
 
