@@ -174,7 +174,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       this._entryEntityId = "";
       return;
     }
-    if (this._entryEntityId === this.entity) return;
+    if (this._entryEntityId === this.entity && this._entry !== undefined) return;
 
     this._entryEntityId = this.entity;
     try {
