@@ -1,0 +1,28 @@
+id: forge_spark_more_info_blank_card
+description: "More-info spark renders info and collapsible details in a blank Forge card"
+view_path: forge-spark-more-info-blank-card
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: light.bed_light
+        details: true
+
+assertions:
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-info'
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-head'
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-details'
