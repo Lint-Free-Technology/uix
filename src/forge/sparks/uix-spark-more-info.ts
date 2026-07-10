@@ -253,6 +253,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (this.info) {
       if (!infoEl) {
         infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
+        // Ensure the spark's `<style>` tag remains the first child to preserve
+        // the original DOM tree structure/ordering for existing installations.
         const styleEl = wrapperEl.querySelector(":scope > style");
         const referenceNode = styleEl ? styleEl.nextSibling : wrapperEl.firstChild;
         wrapperEl.insertBefore(infoEl, referenceNode);
