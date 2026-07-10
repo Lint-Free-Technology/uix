@@ -253,7 +253,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (this.info) {
       if (!infoEl) {
         infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
-        wrapperEl.insertBefore(infoEl, wrapperEl.firstChild);
+        const styleEl = wrapperEl.querySelector(":scope > style");
+        const referenceNode = styleEl ? styleEl.nextSibling : wrapperEl.firstChild;
+        wrapperEl.insertBefore(infoEl, referenceNode);
       }
 
       infoEl.hass = hass;
