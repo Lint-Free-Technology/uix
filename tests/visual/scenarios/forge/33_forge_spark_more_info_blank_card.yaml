@@ -17,7 +17,7 @@ interactions:
     root:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-toggle'
-    settle_ms: 300
+    settle_ms: 500
 
 assertions:
   - type: element_present
