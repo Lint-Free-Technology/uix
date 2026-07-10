@@ -102,6 +102,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private before: string = "";
   private entity: string = "";
   private details: boolean = false;
+  private info: boolean = true;
   private _wrapperElement: HTMLElement | null = null;
   private readonly _stopPropagation = (ev: Event) => ev.stopPropagation();
   // `undefined` means not loaded yet, `null` means the registry lookup failed
@@ -130,6 +131,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     this.before = config.before || "";
     this.entity = config.entity || this.controller.forge.forgedElementConfig?.entity || "";
     this.details = config.details === true;
+    this.info = config.info !== false;
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -248,17 +250,26 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private _updateElement(wrapperEl: HTMLElement) {
     const hass = this.controller.forge.hass;
     let infoEl = wrapperEl.querySelector(":scope > ha-more-info-info") as MoreInfoInfoElement | null;
-    if (!infoEl) {
-      infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
-      wrapperEl.appendChild(infoEl);
-    }
+    if (this.info) {
+      if (!infoEl) {
+        infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
+        const detailsWrapEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-wrap");
+        if (detailsWrapEl) {
+          wrapperEl.insertBefore(infoEl, detailsWrapEl);
+        } else {
+          wrapperEl.appendChild(infoEl);
+        }
+      }
 
-    infoEl.hass = hass;
-    infoEl.entityId = this.entity;
-    // Current HA more-info elements use `entityId`; keep `entity` in sync for
-    // compatibility with older/custom more-info element implementations.
-    infoEl.entity = this.entity;
-    infoEl.entry = this._entry;
+      infoEl.hass = hass;
+      infoEl.entityId = this.entity;
+      // Current HA more-info elements use `entityId`; keep `entity` in sync for
+      // compatibility with older/custom more-info element implementations.
+      infoEl.entity = this.entity;
+      infoEl.entry = this._entry;
+    } else {
+      infoEl?.remove();
+    }
 
     void apply_uix(
       wrapperEl as ModdedElement,

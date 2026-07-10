@@ -59,6 +59,7 @@ forge:
 | `after` | `string` | | see description | UIX selector for the reference element. The more-info content is inserted as a sibling **after** the matched element. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, it defaults to `""`. |
 | `before` | `string` | | — | UIX selector for the reference element. The more-info content is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | `element.entity` | Entity ID shown in the embedded more-info content. If omitted, the spark uses the forged element's `entity` config when available. |
+| `info` | `boolean` | | `true` | If false, does not show the main more-info content (represented by the `ha-more-info-info` element). |
 | `details` | `boolean` | | `false` | Adds a collapsible `ha-more-info-details` section under the main info content. |
 
 !!! note
