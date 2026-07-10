@@ -101,11 +101,11 @@ my-theme:
 
 ## Operation and styling considerations
 
-The more-info spark uses the inbuilt Home Assistant elements `<ha-more-info-info>` and `ha-more-info-details>`. These element are designed be used in the more-info dialog. The out of place use in UIX Forge more-info spark means there are operation and styling considerations.
+The more-info spark uses the built-in Home Assistant elements `<ha-more-info-info>` and `<ha-more-info-details>`. These elements are designed to be used in the more-info dialog. Using them inside a UIX Forge layout introduces operational and styling considerations.
 
 ### YAML details fullscreen button
 
-In the more-info dialog the YAML details mode fullscreen button is constrained to wide dialog. Without any changes, this would break in the more-info spark as it would be constrained to the dropdown and not break out to fullscreen. To workaround this, the more-info spark will set the internal `inDialog` flag to `ha-more-info-details>` once it has rendered.
+In the more-info dialog, the YAML details mode fullscreen button is constrained to a wide dialog. Without any changes, this would break in the more-info spark because it would be constrained to the dropdown and not break out to fullscreen. To work around this, the more-info spark sets the internal `inDialog` flag on `<ha-more-info-details>` once it has rendered.
 
 ### More-info info content padding
 
