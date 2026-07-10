@@ -253,12 +253,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (this.info) {
       if (!infoEl) {
         infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
-        const detailsWrapEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-wrap");
-        if (detailsWrapEl) {
-          wrapperEl.insertBefore(infoEl, detailsWrapEl);
-        } else {
-          wrapperEl.appendChild(infoEl);
-        }
+        wrapperEl.insertBefore(infoEl, wrapperEl.firstChild);
       }
 
       infoEl.hass = hass;
