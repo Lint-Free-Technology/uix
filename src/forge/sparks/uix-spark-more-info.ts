@@ -33,14 +33,12 @@ const MORE_INFO_CSS = `
   .uix-forge-more-info-yaml-toggle {
     opacity: 0;
     pointer-events: none;
-    transition:
-      opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
+    transition: opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1);
   }
   .uix-forge-more-info-details-head.expanded .uix-forge-more-info-yaml-toggle {
     opacity: 1;
     pointer-events: auto;
-    transition:
-      opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
+    transition: opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1);
   }
   .uix-forge-more-info-details-head ha-icon-button {
     width: var(--uix-more-info-details-toggle-width, 32px);
