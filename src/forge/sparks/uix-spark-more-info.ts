@@ -2,6 +2,7 @@ import { PropertyValues } from "lit";
 import { ModdedElement, apply_uix } from "../../helpers/apply_uix";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import type { UixForgeSparkController } from "./uix-spark-controller";
+import { selectTree } from "../../helpers/selecttree";
 
 const MORE_INFO_ID_ATTR = "data-uix-forge-more-info-id";
 
@@ -10,6 +11,7 @@ const MORE_INFO_CSS = `
     display: block;
     width: 100%;
     pointer-events: auto;
+    --safe-area-inset-bottom: 0px;
   }
   .uix-forge-more-info-details-head {
     display: flex;
@@ -31,18 +33,14 @@ const MORE_INFO_CSS = `
   .uix-forge-more-info-yaml-toggle {
     opacity: 0;
     pointer-events: none;
-    visibility: hidden;
     transition:
       opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
-      visibility 0s linear var(--uix-more-info-details-transition-duration, 350ms);
   }
   .uix-forge-more-info-details-head.expanded .uix-forge-more-info-yaml-toggle {
     opacity: 1;
     pointer-events: auto;
-    visibility: visible;
     transition:
       opacity var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1),
-      visibility 0s linear 0s;
   }
   .uix-forge-more-info-details-head ha-icon-button {
     width: var(--uix-more-info-details-toggle-width, 32px);
@@ -63,8 +61,7 @@ const MORE_INFO_CSS = `
     display: flex;
   }
   .uix-forge-more-info-details-wrap {
-    margin-top: var(--uix-more-info-details-margin-top, 8px);
-    padding: var(--uix-more-info-details-outer-padding, var(--ha-space-6, 24px));
+    padding: var(--uix-more-info-details-outer-padding, 0 var(--ha-space-6, 24px) var(--ha-space-6, 24px));
   }
   ha-card.uix-forge-more-info-details {
     display: block;
@@ -76,7 +73,8 @@ const MORE_INFO_CSS = `
     max-height: 0;
   }
   ha-card.uix-forge-more-info-details.expanded .uix-forge-more-info-details-content {
-    max-height: var(--uix-more-info-details-max-height, 80vh);
+    max-height: var(--uix-more-info-details-max-height, unset);
+    overflow: scroll;
   }
 `;
 
@@ -391,5 +389,12 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     detailsContent.entry = this._entry;
     detailsContent.params = { entityId: this.entity };
     detailsContent.yamlMode = this._detailsYamlMode;
+    if (this._detailsYamlMode) {
+      selectTree(detailsContent.shadowRoot, "ha-yaml-editor", false, 2000).then((yamlEditor) => {
+        if (yamlEditor) {
+          yamlEditor.inDialog = false;
+        }
+      }).catch(() => {});
+    }
   }
 }

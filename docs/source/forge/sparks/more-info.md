@@ -47,7 +47,6 @@ forge:
 | `type` | `string` | ✅ | — | Must be `more-info`. |
 | `after` | `string` | | see description | UIX selector for the reference element. The more-info content is inserted as a sibling **after** the matched element. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, it defaults to `""`. |
 | `before` | `string` | | — | UIX selector for the reference element. The more-info content is inserted as a sibling **before** the matched element. |
-| `for` | `string` | | — | Alias used as the target selector when `after` is not set. |
 | `entity` | `string` | | `element.entity` | Entity ID shown in the embedded more-info content. If omitted, the spark uses the forged element's `entity` config when available. |
 | `details` | `boolean` | | `false` | Adds a collapsible `ha-more-info-details` section under the main info content. |
 
@@ -64,7 +63,7 @@ my-theme:
   uix-more-info-yaml: |
     ha-more-info-info $ more-info-content $: |
       more-info-light {
-        color: var(--primary-color);
+        color: red;
       }
 ```
 
@@ -72,12 +71,11 @@ my-theme:
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `--uix-more-info-details-head-height` | `40px` | Minimum height of the details toggle row. |
+| `--uix-more-info-details-head-height` | `40px` | Height of the details toggle row. |
 | `--uix-more-info-details-head-padding` | `0 var(--ha-space-4, 16px)` | Padding for the details toggle row. |
 | `--uix-more-info-details-head-gap` | `var(--ha-space-2, 8px)` | Gap between details action buttons. |
-| `--uix-more-info-details-outer-padding` | `var(--ha-space-6, 24px)` | Padding around the outside of the details card. |
-| `--uix-more-info-details-toggle-width` | `32px` | Size of the details action buttons and icons. |
+| `--uix-more-info-details-outer-padding` | `0 var(--ha-space-6, 24px) var(--ha-space-6, 24px)` | Padding around the outside of the details card. |
+| `--uix-more-info-details-toggle-width` | `32px` | Size of the details action icon buttons. |
 | `--uix-more-info-details-transition-duration` | `350ms` | Transition duration for the details dropdown, toggle icon, and YAML button fade. |
 | `--uix-more-info-details-toggle-color` | `var(--primary-text-color)` | Details action button color. |
-| `--uix-more-info-details-margin-top` | `8px` | Top margin applied to the details card wrapper. |
-| `--uix-more-info-details-max-height` | `80vh` | Maximum expanded details height. |
+| `--uix-more-info-details-max-height` | `unset` | Maximum expanded details height. Set to a CSS size value to constrain the details dropdown height. Overflow is set to scroll. |
