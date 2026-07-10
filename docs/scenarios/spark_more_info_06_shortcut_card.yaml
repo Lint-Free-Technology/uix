@@ -1,0 +1,29 @@
+id: doc_spark_more_info_shortcut_card
+description: "Doc image: UIX Forge more-info spark with shortcut card (more-info.md)"
+view_path: doc-spark-more-info-shortcut-card
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        after: hui-shortcut-card $ ha-tile-container $ div.container
+        entity: weather.demo_weather_south
+    grid_options:
+      columns: full
+  element:
+    type: shortcut
+    icon: mdi:weather-sunny
+    label: Weather Details
+    tap_action:
+      action: navigate
+      navigation_path: /weather-details
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/more-info-shortcut-card.png
+  root: uix-forge
+  padding: 16
+  threshold: 1 # Weather always changing

@@ -11,6 +11,14 @@ uix-test-theme:
       color: white !important;
     }
 
+uix-more-info-theme:
+  uix-theme: uix-more-info-theme
+  uix-more-info-yaml: |
+    ha-more-info-info $: |
+      more-info-content {
+        --uix-test-more-info-theme: applied;
+      }
+
 # ---------------------------------------------------------------------------
 # Documentation image themes — used by scenarios under
 # tests/visual/scenarios/doc-images/ to generate the page-asset PNGs
@@ -193,3 +201,42 @@ uix-doc-styling-theme-template:
         - name: color_off
           default: "'var(--state-inactive-color)'"
       template: "{{ color_on if is_on(entity_id) else color_off }}"
+
+uix-forge-spark-more-info-weather:
+  uix-theme: uix-forge-spark-more-info-weather
+  uix-more-info-yaml: |
+    ha-more-info-info $$ more-info-weather $: |
+      div.forecast-item-label {
+        font-weight: bold;
+      }
+      div.temp,
+      div.forecast-item div.temp {
+        color: red;
+      }
+      div.forecast-item div.templow {
+        color: blue;
+      }
+
+uix-forge-spark-more-info-padding:
+  uix-theme: uix-forge-spark-more-info-padding
+  uix-more-info-yaml: |
+    .: |
+      :host {
+        --uix-more-info-details-outer-padding: 0 var(--ha-space-3) var(--ha-space-3);
+      }
+    ha-more-info-info $: |
+      div.content {
+        padding: var(--ha-space-3);
+      }
+
+uix-forge-spark-more-info-details-padding:
+  uix-theme: uix-forge-spark-more-info-details-padding
+  uix-more-info-yaml: |
+    .: |
+      :host {
+        --uix-more-info-details-head-padding: 0 var(--ha-space-3);
+      }
+    ha-more-info-details $: |
+      div.content {
+        padding: 0 var(--ha-space-3) var(--ha-space-3);
+      }

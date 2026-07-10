@@ -1,0 +1,19 @@
+id: doc_spark_more_info_basic
+description: "Doc image: UIX Forge more-info spark (more-info.md)"
+view_path: doc-spark-more-info-basic
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: weather.demo_weather_south
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/more-info-basic.png
+  root: uix-forge
+  padding: 16
+  threshold: 1 # Weather always changing

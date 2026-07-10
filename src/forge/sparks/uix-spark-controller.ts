@@ -16,6 +16,7 @@ import { UixForgeSparkLock } from "./uix-spark-lock";
 import { UixForgeSparkBackground } from "./uix-spark-background";
 import { UixForgeSparkTheme } from "./uix-spark-theme";
 import { UixForgeSparkOverlayIcon } from "./uix-spark-overlay-icon";
+import { UixForgeSparkMoreInfo } from "./uix-spark-more-info";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -32,6 +33,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "overlay-icon": UixForgeSparkOverlayIcon,
     "background": UixForgeSparkBackground,
     "theme": UixForgeSparkTheme,
+    "more-info": UixForgeSparkMoreInfo,
 };
 
 export class UixForgeSparkController {
