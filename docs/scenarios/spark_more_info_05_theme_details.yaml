@@ -1,0 +1,27 @@
+id: doc_spark_more_info_theme_details
+description: "Doc image: UIX Forge more-info spark with theme (more-info.md)"
+view_path: doc-spark-more-info-theme-details
+theme: uix-forge-spark-more-info-details-padding
+
+interactions:
+  - type: click
+    root: uix-forge-blank-card
+    selector: ha-icon-button.uix-forge-more-info-details-toggle
+    settle_ms: 800
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: weather.demo_weather_south
+        details: true
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/more-info-theme-details.png
+  root: ha-card.uix-forge-more-info-details
+  padding: 16
+  threshold: 1 # Weather always changing
