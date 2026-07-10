@@ -139,7 +139,7 @@ entities:
 ![uix-forge-blank-card used as card_as_row](../assets/page-assets/forge/blank-card-as-row.png)
 
 !!! tip
-    A blank card will be given height of `var(--row-height, 56px)` by default. This can be styled using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
+    The blank card content div will be given a height of `var(--row-height, 56px)` when no other content has been applied via a spark, either as a sibling to or child of the div. However when there is a sibling to the div but it is empty, the height will be `0px`. IN all cases this height can be styled explicitly using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
 
 ### Template variables and macros
 
