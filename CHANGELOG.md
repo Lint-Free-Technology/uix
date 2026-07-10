@@ -1,3 +1,15 @@
+## [7.7.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.5...v7.7.0-beta.6) (2026-07-10)
+
+### ⭐ New Features
+
+* Add UIX Forge more-info spark ([#437](https://github.com/Lint-Free-Technology/uix/issues/437)) ([da1a943](https://github.com/Lint-Free-Technology/uix/commit/da1a94347bfa07903b5d37be5616469d5f62f111))
+* UIX Forge blank card. Use as a base for sparks. Can have `title`. Can be used with `card`, `card_as_row` and `card_as_badge` molds. ([#436](https://github.com/Lint-Free-Technology/uix/issues/436)) ([a226d7c](https://github.com/Lint-Free-Technology/uix/commit/a226d7c3878f1d5cfb5d54050d78a6e8e48f21ac))
+
+### ⚙️ Miscellaneous
+
+* Add nl to integration strings (not Frontend)([#438](https://github.com/Lint-Free-Technology/uix/issues/438)) ([3bd3027](https://github.com/Lint-Free-Technology/uix/commit/3bd3027b7095fda217f9024365c07ff8ce5dbef1))
+* Add simplified Chinese (zh-Hans) to integration strings (not Frontend). ([#435](https://github.com/Lint-Free-Technology/uix/issues/435)) ([8e66373](https://github.com/Lint-Free-Technology/uix/commit/8e66373fc46d9760e7bea8fa7c428d8e8e0b4bcc))
+
 ## [7.7.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.4...v7.7.0-beta.5) (2026-07-07)
 
 ### 🐞 Bug Fixes
