@@ -45,6 +45,9 @@ class UixForgeBlankCard extends LitElement {
         .content.no-header {
           height: var(--uix-forge-blank-card-height, var(--row-height, 56px));
         }
+        .content.no-header:not(:only-child):empty {
+          height: var(--uix-forge-blank-card-height, 0px);
+        }
         .content.no-header:only-child:empty::before {
           content: "Empty uix-forge-blank-card. Add element.title or forge.sparks.";
           color: var(--primary-text-color);
