@@ -37,7 +37,7 @@
     "compare-versions": "^6.1.1",
     "lit": "^3.3.3",
     "memoize-one": "^6.0.0",
-    "parse-duration": "^2.1.6"
+    "parse-duration": "^2.1.8"
   },
   "overrides": {
     "@babel/core": "$@babel/core",
