@@ -1,7 +1,7 @@
-id: forge_spark_more_info_blank_card
-description: "More-info spark renders info and collapsible details in a blank Forge card"
+id: forge_spark_more_info_info_false
+description: "More-info spark does not show ha-more-info-info when info: false"
 theme: uix-more-info-theme
-view_path: forge-spark-more-info-blank-card
+view_path: forge-spark-more-info-info-false
 
 card:
   type: custom:uix-forge
@@ -9,7 +9,8 @@ card:
     mold: card
     sparks:
       - type: more-info
-        entity: weather.demo_weather_south
+        entity: light.bed_light
+        info: false
         details: true
 
 interactions:
@@ -20,7 +21,7 @@ interactions:
     settle_ms: 500
 
 assertions:
-  - type: element_present
+  - type: element_absent
     root:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] ha-more-info-info'
@@ -46,7 +47,7 @@ assertions:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-wrap'
     property: paddingTop
-    expected: "0px"
+    expected: "24px"
 
   - type: element_present
     root:
@@ -59,11 +60,3 @@ assertions:
     selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-yaml-toggle'
     property: opacity
     expected: "1"
-
-  - type: css_variable
-    root:
-      - uix-forge-blank-card
-      - ha-more-info-info
-    selector: more-info-content
-    property: "--uix-test-more-info-theme"
-    expected: applied

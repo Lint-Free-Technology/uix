@@ -58,6 +58,9 @@ const MORE_INFO_CSS = `
   .uix-forge-more-info-details-head ha-icon {
     display: flex;
   }
+  div.uix-forge-more-info-details-wrap[no-info] {
+    padding: var(--uix-more-info-details-no-info-outer-padding, var(--ha-space-6, 24px));
+  }
   .uix-forge-more-info-details-wrap {
     padding: var(--uix-more-info-details-outer-padding, 0 var(--ha-space-6, 24px) var(--ha-space-6, 24px));
   }
@@ -102,6 +105,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private before: string = "";
   private entity: string = "";
   private details: boolean = false;
+  private info: boolean = true;
   private _wrapperElement: HTMLElement | null = null;
   private readonly _stopPropagation = (ev: Event) => ev.stopPropagation();
   // `undefined` means not loaded yet, `null` means the registry lookup failed
@@ -130,6 +134,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     this.before = config.before || "";
     this.entity = config.entity || this.controller.forge.forgedElementConfig?.entity || "";
     this.details = config.details === true;
+    this.info = config.info !== false;
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -248,17 +253,25 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private _updateElement(wrapperEl: HTMLElement) {
     const hass = this.controller.forge.hass;
     let infoEl = wrapperEl.querySelector(":scope > ha-more-info-info") as MoreInfoInfoElement | null;
-    if (!infoEl) {
-      infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
-      wrapperEl.appendChild(infoEl);
-    }
+    if (this.info) {
+      if (!infoEl) {
+        infoEl = document.createElement("ha-more-info-info") as MoreInfoInfoElement;
+        // Ensure the spark's `<style>` tag remains the first child to preserve
+        // the original DOM tree structure/ordering for existing installations.
+        const styleEl = wrapperEl.querySelector(":scope > style");
+        const referenceNode = styleEl ? styleEl.nextSibling : wrapperEl.firstChild;
+        wrapperEl.insertBefore(infoEl, referenceNode);
+      }
 
-    infoEl.hass = hass;
-    infoEl.entityId = this.entity;
-    // Current HA more-info elements use `entityId`; keep `entity` in sync for
-    // compatibility with older/custom more-info element implementations.
-    infoEl.entity = this.entity;
-    infoEl.entry = this._entry;
+      infoEl.hass = hass;
+      infoEl.entityId = this.entity;
+      // Current HA more-info elements use `entityId`; keep `entity` in sync for
+      // compatibility with older/custom more-info element implementations.
+      infoEl.entity = this.entity;
+      infoEl.entry = this._entry;
+    } else {
+      infoEl?.remove();
+    }
 
     void apply_uix(
       wrapperEl as ModdedElement,
@@ -366,15 +379,20 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   }
 
   private _updateDetails(wrapperEl: HTMLElement) {
-    const detailsEl = wrapperEl.querySelector(
-      ":scope > .uix-forge-more-info-details-wrap > .uix-forge-more-info-details"
-    ) as HTMLElement | null;
+    const detailsWrapEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-wrap") as HTMLElement | null;
+    const detailsEl = detailsWrapEl?.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
     const headEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-head") as HTMLElement | null;
     const yamlButton = headEl?.querySelector(":scope > .uix-forge-more-info-yaml-toggle") as HTMLElement | null;
     const toggleButton = headEl?.querySelector(":scope > .uix-forge-more-info-details-toggle") as HTMLElement | null;
     const contentEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-content") as HTMLElement | null;
     const detailsContent = contentEl?.querySelector(":scope > ha-more-info-details") as MoreInfoDetailsElement | null;
-    if (!detailsEl || !detailsContent) return;
+    if (!detailsWrapEl || !detailsEl || !detailsContent) return;
+
+    if (!this.info) {
+      detailsWrapEl?.setAttribute("no-info", "true");
+    } else {
+      detailsWrapEl?.removeAttribute("no-info");
+    }
 
     detailsEl.classList.toggle("expanded", this._detailsOpen);
     contentEl?.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");
