@@ -98,7 +98,7 @@ my-theme:
 | `--uix-more-info-details-head-padding` | `0 var(--ha-space-4, 16px)` | Padding for the details toggle row. |
 | `--uix-more-info-details-head-gap` | `var(--ha-space-2, 8px)` | Gap between details action buttons. |
 | `--uix-more-info-details-outer-padding` | `0 var(--ha-space-6, 24px) var(--ha-space-6, 24px)` | Padding around the outside of the details card. |
-| `--uix-more-info-details-no-info-outer-padding` | `var(--ha-space-6, 24px)` | Padding around the outside of the details card when info is not show shown (`info: false`). As the details is shown in isolation to info above, top padding is present. |
+| `--uix-more-info-details-no-info-outer-padding` | `var(--ha-space-6, 24px)` | Padding around the outside of the details card when info is not shown (`info: false`). When details are shown without the info content above, top padding is added. |
 | `--uix-more-info-details-toggle-width` | `32px` | Size of the details action icon buttons. |
 | `--uix-more-info-details-transition-duration` | `350ms` | Transition duration for the details dropdown, toggle icon, and YAML button fade. |
 | `--uix-more-info-details-toggle-color` | `var(--primary-text-color)` | Details action button color. |
