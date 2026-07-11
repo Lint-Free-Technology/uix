@@ -1,8 +1,8 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
-import typescript from "rollup-plugin-typescript2";
-import terser from "@rollup/plugin-terser";
-import { getBabelOutputPlugin } from "@rollup/plugin-babel";
+import esbuild from "rollup-plugin-esbuild";
+import { babel } from "@rollup/plugin-babel"; 
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -19,9 +19,17 @@ export default {
   },
   plugins: [
     nodeResolve(),
+    commonjs(),
     json(),
-    typescript(tsPluginOptions),
-    getBabelOutputPlugin({ presets: ["@babel/preset-env"], compact: false }),
-    !dev && terser({ format: { comments: false } }),
+    esbuild({ // 2. Replace typescript() with esbuild()
+      minify: !dev,
+      target: 'es2017',
+      tsconfig: './tsconfig.json'
+    }),
+    babel({ 
+      presets: [["@babel/preset-env", { modules: false }, "@babel/preset-typescript"]], 
+      babelHelpers: "bundled",
+      extensions: [".js", ".jsx", ".ts", ".tsx"] // Ensure it targets TS files
+    }),
   ],
 };
