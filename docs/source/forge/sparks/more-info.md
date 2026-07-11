@@ -165,7 +165,7 @@ All the examples above are using the UIX Forge blank card. Due to the nature of 
 
 Example using a shortcut card in a stack, using UIX Styling to hide borders of cards in stack and then giving regular `ha-card` type styling to the vertical stack.
 
-### Using with title card in vertical stack
+### Using with shortcut card in vertical stack
 
 ```yaml
 type: vertical-stack
