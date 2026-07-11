@@ -1,29 +1,61 @@
 id: doc_spark_more_info_shortcut_card
-description: "Doc image: UIX Forge more-info spark with shortcut card (more-info.md)"
+description: "Doc image: UIX Forge more-info spark with shortcut card in a vertical stack (more-info.md)"
 view_path: doc-spark-more-info-shortcut-card
 
 card:
-  type: custom:uix-forge
-  forge:
-    mold: card
-    sparks:
-      - type: more-info
-        after: hui-shortcut-card $ ha-tile-container $ div.container
-        entity: weather.demo_weather_south
-    grid_options:
-      columns: full
-  element:
-    type: shortcut
-    icon: mdi:weather-sunny
-    label: Weather Details
-    tap_action:
-      action: navigate
-      navigation_path: /weather-details
+  type: vertical-stack
+  cards:
+    - type: shortcut
+      label: Weather Details
+      icon: mdi:weather-sunny
+      tap_action:
+        action: navigate
+        navigation_path: /weather-details
+      uix:
+        style: |
+          ha-card {
+            border-width: 0;
+          }
+    - type: custom:uix-forge
+      forge:
+        mold: card
+        sparks:
+          - type: more-info
+            entity: weather.demo_weather_south
+            details: true
+        grid_options:
+          columns: full
+      element:
+        uix:
+          style: |
+            ha-card:has(.uix-forge-more-info) {
+              border-width: 0px;
+            }
+  uix:
+    style: |
+      :host {
+        background: var(
+          --ha-card-background,
+          var(--card-background-color, white)
+        );
+        -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+        backdrop-filter: var(--ha-card-backdrop-filter, none);
+        box-shadow: var(--ha-card-box-shadow, none);
+        box-sizing: border-box;
+        border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+        border-width: var(--ha-card-border-width, 1px);
+        border-style: solid;
+        border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+        color: var(--primary-text-color);
+        display: block;
+        transition: all 0.3s ease-out;
+        position: relative;
+      }
 
 assertions: []
 
 doc_image:
   output: docs/source/assets/page-assets/forge/sparks/more-info-shortcut-card.png
-  root: uix-forge
+  root: hui-vertical-stack-card
   padding: 16
   threshold: 1 # Weather always changing

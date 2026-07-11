@@ -9,7 +9,7 @@ card:
     mold: card
     sparks:
       - type: more-info
-        entity: light.bed_light
+        entity: weather.demo_weather_south
         details: true
 
 interactions:
@@ -46,7 +46,7 @@ assertions:
       - uix-forge-blank-card
     selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-wrap'
     property: paddingTop
-    expected: "24px"
+    expected: "0px"
 
   - type: element_present
     root:

@@ -58,6 +58,9 @@ const MORE_INFO_CSS = `
   .uix-forge-more-info-details-head ha-icon {
     display: flex;
   }
+  div.uix-forge-more-info-details-wrap[no-info] {
+    padding: var(--uix-more-info-details-no-info-outer-padding, var(--ha-space-6, 24px));
+  }
   .uix-forge-more-info-details-wrap {
     padding: var(--uix-more-info-details-outer-padding, 0 var(--ha-space-6, 24px) var(--ha-space-6, 24px));
   }
@@ -376,15 +379,20 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   }
 
   private _updateDetails(wrapperEl: HTMLElement) {
-    const detailsEl = wrapperEl.querySelector(
-      ":scope > .uix-forge-more-info-details-wrap > .uix-forge-more-info-details"
-    ) as HTMLElement | null;
+    const detailsWrapEl = wrapperEl.querySelector(":scope > .uix-forge-more-info-details-wrap") as HTMLElement | null;
+    const detailsEl = detailsWrapEl?.querySelector(":scope > .uix-forge-more-info-details") as HTMLElement | null;
     const headEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-head") as HTMLElement | null;
     const yamlButton = headEl?.querySelector(":scope > .uix-forge-more-info-yaml-toggle") as HTMLElement | null;
     const toggleButton = headEl?.querySelector(":scope > .uix-forge-more-info-details-toggle") as HTMLElement | null;
     const contentEl = detailsEl?.querySelector(":scope > .uix-forge-more-info-details-content") as HTMLElement | null;
     const detailsContent = contentEl?.querySelector(":scope > ha-more-info-details") as MoreInfoDetailsElement | null;
-    if (!detailsEl || !detailsContent) return;
+    if (!detailsWrapEl || !detailsEl || !detailsContent) return;
+
+    if (!this.info) {
+      detailsWrapEl?.setAttribute("no-info", "true");
+    } else {
+      detailsWrapEl?.removeAttribute("no-info");
+    } 
 
     detailsEl.classList.toggle("expanded", this._detailsOpen);
     contentEl?.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");

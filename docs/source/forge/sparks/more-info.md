@@ -98,6 +98,7 @@ my-theme:
 | `--uix-more-info-details-head-padding` | `0 var(--ha-space-4, 16px)` | Padding for the details toggle row. |
 | `--uix-more-info-details-head-gap` | `var(--ha-space-2, 8px)` | Gap between details action buttons. |
 | `--uix-more-info-details-outer-padding` | `0 var(--ha-space-6, 24px) var(--ha-space-6, 24px)` | Padding around the outside of the details card. |
+| `--uix-more-info-details-no-info-outer-padding` | `var(--ha-space-6, 24px)` | Padding around the outside of the details card when info is not show shown (`info: false`). As the details is shown in isolation to info above, top padding is present. |
 | `--uix-more-info-details-toggle-width` | `32px` | Size of the details action icon buttons. |
 | `--uix-more-info-details-transition-duration` | `350ms` | Transition duration for the details dropdown, toggle icon, and YAML button fade. |
 | `--uix-more-info-details-toggle-color` | `var(--primary-text-color)` | Details action button color. |
@@ -160,30 +161,61 @@ my-theme:
 
 ## Using with standard cards
 
-All the examples above are using the UIX Forge blank card. You can also use with other cards.
+All the examples above are using the UIX Forge blank card. Due to the nature of the more-info spark and its content it is best to always use a UIX forge blank card in a stack of cards.
 
-!!! tip
-    For `after` for standard Home Assistant cards, search for the main container in shadowRoot of element contained within `<ha-card>`. For example, shortcut card has `div.container` in shadowRoot of  `<ha-tile-container>` within `<ha-card>`.
+Example using a shortcut card in a stack, using UIX Styling to hide borders of cards in stack and then giving regular `ha-card` type styling to the vertical stack.
 
-### Using with shortcut card
+### Using with title card in vertical stack
 
 ```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: more-info
-      after: hui-shortcut-card $ ha-tile-container $ div.container
-      entity: weather.demo_weather_south
-  grid_options:
-    columns: full
-element:
-  type: shortcut
-  icon: mdi:weather-sunny
-  label: Weather Details
-  tap_action:
-    action: navigate
-    navigation_path: /weather-details
+type: vertical-stack
+cards:
+  - type: shortcut
+    label: Weather Details
+    icon: mdi:weather-sunny
+    tap_action:
+      action: navigate
+      navigation_path: /weather-details
+    uix:
+      style: |
+        ha-card {
+          border-width: 0;
+        }
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: more-info
+          entity: weather.carlingford
+          details: true
+      grid_options:
+        columns: full
+    element:
+      uix:
+        style: |
+          ha-card:has(.uix-forge-more-info) {
+            border-width: 0px;
+          }
+uix:
+  style: |
+    :host {
+      background: var(
+        --ha-card-background,
+        var(--card-background-color, white)
+      );
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+      backdrop-filter: var(--ha-card-backdrop-filter, none);
+      box-shadow: var(--ha-card-box-shadow, none);
+      box-sizing: border-box;
+      border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+      border-width: var(--ha-card-border-width, 1px);
+      border-style: solid;
+      border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+      color: var(--primary-text-color);
+      display: block;
+      transition: all 0.3s ease-out;
+      position: relative;
+    }
 ```
 
 ![Forge spark more-info applied to shortcut card](../../assets/page-assets/forge/sparks/more-info-shortcut-card.png)
