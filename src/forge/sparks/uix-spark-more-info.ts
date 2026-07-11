@@ -392,7 +392,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       detailsWrapEl?.setAttribute("no-info", "true");
     } else {
       detailsWrapEl?.removeAttribute("no-info");
-    } 
+    }
 
     detailsEl.classList.toggle("expanded", this._detailsOpen);
     contentEl?.setAttribute("aria-hidden", this._detailsOpen ? "false" : "true");
