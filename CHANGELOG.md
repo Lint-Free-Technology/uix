@@ -1,3 +1,17 @@
+## [7.7.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.6...v7.7.0-beta.7) (2026-07-11)
+
+### ⭐ New Features
+
+* **forge:** add info option to more-info spark allowing to show details only with `info: false` and `details: true` ([#444](https://github.com/Lint-Free-Technology/uix/issues/444)) ([23ec5fc](https://github.com/Lint-Free-Technology/uix/commit/23ec5fcbe9ab11fc9bd85ca3ca16a98aa3b452a6))
+
+### 📦 Dependency Upgrades
+
+* bump parse-duration from 2.1.6 to 2.1.8 ([#443](https://github.com/Lint-Free-Technology/uix/issues/443)) ([3e0f741](https://github.com/Lint-Free-Technology/uix/commit/3e0f7410ce25fd01791537505356be91183b25cb))
+
+### ⚙️ Miscellaneous
+
+* bump typescript from 6.0.3 to 7.0.2. Switch to esbuild rollup plugin from typescript2 plugin. Switch to babel input rollup plugin from output. Remove terser rollup plugin now handled by esbuild ([#440](https://github.com/Lint-Free-Technology/uix/issues/440)) ([0dd3d33](https://github.com/Lint-Free-Technology/uix/commit/0dd3d335e0da67e512c55bf02de1a3965ba44c41))
+
 ## [7.7.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.5...v7.7.0-beta.6) (2026-07-10)
 
 ### ⭐ New Features
