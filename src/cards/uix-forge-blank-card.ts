@@ -19,6 +19,7 @@ class UixForgeBlankCard extends LitElement {
         .header=${this._config?.title ?? undefined}
         class=${classMap({
           "clear": this._config?.clear,
+          "type-custom-uix-forge-blank-card": true,
         })}
       >
         <div 
