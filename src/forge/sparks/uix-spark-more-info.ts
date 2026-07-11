@@ -4,6 +4,26 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 import type { UixForgeSparkController } from "./uix-spark-controller";
 import { selectTree } from "../../helpers/selecttree";
 
+// https://github.com/home-assistant/frontend/blob/7f04b0884b186e3d8ed26fcb04b3813efd12604b/src/components/ha-card.ts#L11
+const HA_CARD_CSS = `
+  background: var(
+    --ha-card-background,
+    var(--card-background-color, white)
+  );
+  -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+  backdrop-filter: var(--ha-card-backdrop-filter, none);
+  box-shadow: var(--ha-card-box-shadow, none);
+  box-sizing: border-box;
+  border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+  border-width: var(--ha-card-border-width, 1px);
+  border-style: solid;
+  border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+  color: var(--primary-text-color);
+  display: block;
+  transition: all 0.3s ease-out;
+  position: relative;
+`;
+
 const MORE_INFO_ID_ATTR = "data-uix-forge-more-info-id";
 
 const MORE_INFO_CSS = `
@@ -64,8 +84,8 @@ const MORE_INFO_CSS = `
   .uix-forge-more-info-details-wrap {
     padding: var(--uix-more-info-details-outer-padding, 0 var(--ha-space-6, 24px) var(--ha-space-6, 24px));
   }
-  ha-card.uix-forge-more-info-details {
-    display: block;
+  div.uix-forge-more-info-details {
+    ${HA_CARD_CSS}
     overflow: hidden;
   }
   .uix-forge-more-info-details-content {
@@ -73,7 +93,7 @@ const MORE_INFO_CSS = `
     transition: max-height var(--uix-more-info-details-transition-duration, 350ms) cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 0;
   }
-  ha-card.uix-forge-more-info-details.expanded .uix-forge-more-info-details-content {
+  div.uix-forge-more-info-details.expanded .uix-forge-more-info-details-content {
     max-height: var(--uix-more-info-details-max-height, unset);
     overflow: scroll;
   }
@@ -302,7 +322,7 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     if (!detailsEl) {
       detailsWrapEl = document.createElement("div");
       detailsWrapEl.className = "uix-forge-more-info-details-wrap";
-      detailsEl = document.createElement("ha-card");
+      detailsEl = document.createElement("div");
       detailsEl.className = "uix-forge-more-info-details";
       const headEl = document.createElement("div");
       headEl.className = "uix-forge-more-info-details-head";

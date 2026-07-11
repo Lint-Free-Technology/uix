@@ -136,7 +136,7 @@ my-theme:
 
 ### More-info details content padding
 
-The built-in more-info details content padding is also a generous `--ha-space-6` (24px). This is likely also too much for the more-info spark details section, especially the top padding. As the padding is applied in the shadow root, the best method to override it is using UIX styling via a theme. As the details section in the more-info spark uses `<ha-card>`, you can either style via `uix-card-yaml` or combine with any other `uix-more-info-yaml` styling.
+The built-in more-info details content padding is also a generous `--ha-space-6` (24px). This is likely also too much for the more-info spark details section, especially the top padding. As the padding is applied in the shadow root, the best method to override it is using UIX styling via a theme styling `uix-more-info-yaml`.
 
 Styling the more-info details content padding using `uix-more-info-yaml`, also setting reduced padding for the more-info details head:
 
