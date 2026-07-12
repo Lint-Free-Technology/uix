@@ -1,3 +1,9 @@
+## [7.7.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.8...v7.7.0-beta.9) (2026-07-12)
+
+### 🐞 Bug Fixes
+
+* **forge:** Toggle details on click on entire details head. ([ae68047](https://github.com/Lint-Free-Technology/uix/commit/ae68047a09dbe5d7578ca7a31e4d9e83fac516f9))
+
 ## [7.7.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.7...v7.7.0-beta.8) (2026-07-12)
 
 ### ⭐ New Features
