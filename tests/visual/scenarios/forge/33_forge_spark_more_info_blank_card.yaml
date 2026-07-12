@@ -28,7 +28,7 @@ assertions:
   - type: element_present
     root:
       - uix-forge-blank-card
-    selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details > .uix-forge-more-info-details-head'
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details > .uix-forge-more-info-details-head'
 
   - type: text_equals
     root:
@@ -39,7 +39,7 @@ assertions:
   - type: element_present
     root:
       - uix-forge-blank-card
-    selector: '[data-uix-forge-more-info-id] ha-card.uix-forge-more-info-details'
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details'
 
   - type: css_property
     root:
