@@ -1,3 +1,14 @@
+## [7.7.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.7...v7.7.0-beta.8) (2026-07-12)
+
+### ⭐ New Features
+
+* more-info dialog styling to get theme from panel state allowing for dialog to set view theme when applying UIX styling. ([58ae10e](https://github.com/Lint-Free-Technology/uix/commit/58ae10ed82f430a2158723d206d1236185bd4989))
+
+### 🐞 Bug Fixes
+
+* **forge:** Change more-info spark more-info details wrapper form ha-card to div with styling like ha-card. Fixes having a child ha-card of blank card not in shadowRoot. ([1412d15](https://github.com/Lint-Free-Technology/uix/commit/1412d157cbbff71b3890084d62c398d052752481))
+* UIX Forge blank card ha-card does not include class type-custom-uix-forge-blank-card ([8e520c6](https://github.com/Lint-Free-Technology/uix/commit/8e520c64969b0df92d77d0adcf7b610a3c1adc59))
+
 ## [7.7.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.6...v7.7.0-beta.7) (2026-07-11)
 
 ### ⭐ New Features
