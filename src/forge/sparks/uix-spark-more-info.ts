@@ -326,6 +326,10 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       detailsEl.className = "uix-forge-more-info-details";
       const headEl = document.createElement("div");
       headEl.className = "uix-forge-more-info-details-head";
+      headEl.onclick = () => {
+        this._detailsOpen = !this._detailsOpen;
+        this._updateDetails(wrapperEl);
+      }
 
       const titleEl = document.createElement("div");
       titleEl.className = "uix-forge-more-info-details-title";
@@ -335,7 +339,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       const yamlButton = this._createIconButton(
         "mdi:code-braces",
         "Toggle YAML mode",
-        () => {
+        (ev: Event) => {
+          ev.stopPropagation();
           this._detailsYamlMode = !this._detailsYamlMode;
           this._updateDetails(wrapperEl);
         },
@@ -346,7 +351,8 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
       const toggleButton = this._createIconButton(
         "mdi:chevron-down",
         "Toggle details",
-        () => {
+        (ev: Event) => {
+          ev.stopPropagation();
           this._detailsOpen = !this._detailsOpen;
           this._updateDetails(wrapperEl);
         },
