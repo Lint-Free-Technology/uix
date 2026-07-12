@@ -69,10 +69,12 @@ function _panelAttributes(panel) {
 
 async function _viewAttributes(panel) {
   if (panel?.panel?.component_name !== "lovelace") {
+    const theme = panel?.hass?.themes?.theme;
     return {
       viewTitle: "",
       viewUrlPath: panel?.route?.path?.replace(/^\/|\/$/g, "") || "",
       viewNarrow: panel?.narrow || false,
+      theme: theme,
     };
   }
   let cnt = 0;
@@ -83,10 +85,12 @@ async function _viewAttributes(panel) {
   const lovelace = panel.shadowRoot.querySelector("hui-root");
   if (!lovelace) return {};
   const _curView = lovelace._curView || 0;
+  const theme = lovelace.config?.views?.[_curView]?.theme || panel?.hass?.themes?.theme;
   return {
     viewTitle: lovelace.config?.views?.[_curView]?.title || "",
     viewUrlPath: lovelace.config?.views?.[_curView]?.path || `${_curView}`,
     viewNarrow: lovelace.narrow || false,
+    theme: theme,
   };
 }
 
