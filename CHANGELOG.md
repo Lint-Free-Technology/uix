@@ -1,3 +1,9 @@
+## [7.7.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.10...v7.7.0-beta.11) (2026-07-14)
+
+### ⚙️ Miscellaneous
+
+* Update new `more-info` action to use `entity` instead of `entityId` ([ebbd5dc](https://github.com/Lint-Free-Technology/uix/commit/ebbd5dc2a2456dce7e0a2c54ee6dbc05aab4e1a7))
+
 ## [7.7.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.9...v7.7.0-beta.10) (2026-07-14)
 
 ### ⭐ New Features
