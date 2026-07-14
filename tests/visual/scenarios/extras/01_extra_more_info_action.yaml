@@ -17,7 +17,7 @@ card:
   tap_action:
     action: fire-dom-event
     uix:
-      action: more_info
+      action: more-info
       data:
         entity: light.bed_light
         view: related

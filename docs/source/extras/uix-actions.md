@@ -5,7 +5,7 @@ description: Learn how UIX actions can assist in clearing cache, showing more-in
 # UIX actions
 
 !!! info
-    `more_info` and `toast` UIX actions available in 7.7.0-beta.10.
+    `more-info` and `toast` UIX actions available in 7.7.0-beta.10.
 
 UIX has several custom actions which can be used on Home Assistant Frontend dashboards. These are invoked using `action: fire-dom-event` with a `uix:` object to set the action and any parameters set in the `data:` object. UIX actions can be used on any card that supports the `fire-dom-event` action which includes all standard Home Assistant cards.
 
@@ -22,13 +22,16 @@ UIX has several custom actions which can be used on Home Assistant Frontend dash
         <action-data>
 ```
 
-## `clear_cache` - clearing Home Assistant Frontend cache
+!!! info
+   `action: clear_cache` and `action: more_info` are also valid config and translate to `action: clear-cache` and `action: more-info` respectively.
+
+## `clear-cache` - clearing Home Assistant Frontend cache
 
 Clears the Home Assistant Frontend Application cache and reloads the Browser - localStorage remains untouched. This can be very convenient especially for devices where the option is hidden in a debugging menu and will also clear more than just the Frontend Application cache (e.g. localStorage which clears out many stored items like Browser Mod Browser ID).
 
 | config | setting | default | description |
 | --- | --- | --- | --- |
-| `action: clear_cache` | - | - | Clears the Home Assistant Application cache and reloads the Browser. |
+| `action: clear-cache` | - | - | Clears the Home Assistant Application cache and reloads the Browser. |
 | `data:` | - | - | not used |
 
 Example button to clear cache and reload.
@@ -41,16 +44,16 @@ name: Clear Frontend Cache
 tap_action:
   action: fire-dom-event
   uix:
-    action: clear_cache
+    action: clear-cache
 ```
 
-## `more_info` - show Home Assistant more-info for an entity with starting view
+## `more-info` - show Home Assistant more-info for an entity with starting view
 
 Shows the Home Assistant more-info dialog with the option to set the starting view of the more-info dialog.
 
 | config | setting | default | description |
 | --- | --- | --- | --- |
-| `action: more_info` | - | - | Shows the Home Assistant more-info dialog with entity and view options set with `data:` |
+| `action: more-info` | - | - | Shows the Home Assistant more-info dialog with entity and view options set with `data:` |
 | `data:` | - | - | More-info entity and view options. |
 | | `entity` | - | Entity Id of the entity for which to show more-info. |
 | | `view` | `info` | Initial view of the more-info dialog. Can be set to `info`, `history`, `settings`, `related`, `add_to` , `details` |
@@ -63,7 +66,7 @@ entity: light.bed_light
 tap_action:
   action: fire-dom-event
   uix:
-    action: more_info
+    action: more-info
     data:
       entity: light.bed_light
       view: history

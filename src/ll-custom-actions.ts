@@ -13,10 +13,10 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
       return;
     }
     const actionName = (uix as any).action;
-    if (actionName && typeof actionName === "string" && typeof Actions[actionName] === "function") {
+    if (actionName && typeof actionName === "string" && typeof actionList[actionName] === "function") {
       try {
         const data = (uix as any).data ?? {};
-        const result = (Actions as any)[actionName](data);
+        const result = (actionList as any)[actionName](data);
         if (result && typeof (result as Promise<unknown>).catch === "function") {
           (result as Promise<unknown>).catch((error: unknown) => {
             console.error(`UIX: Error while executing action "${actionName}":`, error);
@@ -96,3 +96,11 @@ export class Actions {
     base.dispatchEvent(event);
   }
 }
+
+const actionList: Record<string, Function> = {
+  clear_cache: Actions.clear_cache,
+  more_info: Actions.more_info,
+  toast: Actions.toast,
+  "clear-cache": Actions.clear_cache,
+  "more-info": Actions.more_info,
+};
