@@ -20,7 +20,7 @@ UIX has several custom actions which can be used on Home Assistant Frontend dash
 ```
 
 !!! info
-   `action: clear_cache` and `action: more_info` are also valid config and translate to `action: clear-cache` and `action: more-info` respectively.
+    `action: clear_cache` and `action: more_info` are also valid config and translate to `action: clear-cache` and `action: more-info` respectively.
 
 ## `clear-cache` - clearing Home Assistant Frontend cache
 
