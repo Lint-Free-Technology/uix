@@ -55,6 +55,20 @@ Shows the Home Assistant more-info dialog with the option to set the starting vi
 | | `entityId` | - | Entity Id of the entity for which to show more-info. |
 | | `view` | `info` | Initial view of the more-info dialog. Can be set to `info`, `history`, `settings`, `related`, `add_to` , `details` |
 
+Example showing more-info with history view.
+
+```yaml
+type: tile
+entity: light.bed_light
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: more_info
+    data:
+      entityId: light.bed_light
+      view: history
+```
+
 ## `toast` - show Home Assistant toast notification
 
 Shows a Home Assistant toast notification.
