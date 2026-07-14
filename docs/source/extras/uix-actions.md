@@ -4,6 +4,9 @@ description: Learn how UIX actions can assist in clearing cache, showing more-in
 ---
 # UIX actions
 
+!!! info
+    `more_info` and `toast` UIX actions available in 7.7.0-beta.10.
+
 UIX has several custom actions which can be used on Home Assistant Frontend dashboards. These are invoked using `action: fire-dom-event` with a `uix:` object to set the action and any parameters set in the `data:` object. UIX actions can be used on any card that supports the `fire-dom-event` action which includes all standard Home Assistant cards.
 
 !!! info
