@@ -1,3 +1,9 @@
+## [7.7.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.11...v7.7.0-beta.12) (2026-07-14)
+
+### ⚙️ Miscellaneous
+
+* Update primary UIX action names to `clear-cache` and `more-info` so as to align more-info with what is commonly recognised. Prior `clear_cache` will continue to work as an action. ([072aa52](https://github.com/Lint-Free-Technology/uix/commit/072aa5207e53bf891705cb452f1d1c3fc9390c9a))
+
 ## [7.7.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.10...v7.7.0-beta.11) (2026-07-14)
 
 ### ⚙️ Miscellaneous
