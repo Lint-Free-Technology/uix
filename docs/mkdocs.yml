@@ -105,6 +105,7 @@ nav:
           - forge/sparks/theme.md
   - UIX Extras:
       - extras/index.md
+      - extras/uix-actions.md
       - extras/frontend-states-throttling.md
       - extras/dialog-styling-delay.md
       - extras/hash-template-variable-updates.md

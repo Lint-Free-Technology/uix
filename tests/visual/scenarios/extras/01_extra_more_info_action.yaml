@@ -1,0 +1,40 @@
+id: extra_more_info_action
+description: "UIX more-info action on a tile card"
+view_path: extra-more-info-action
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+card:
+  type: tile
+  entity: light.bed_light
+  tap_action:
+    action: fire-dom-event
+    uix:
+      action: more_info
+      data:
+        entityId: light.bed_light
+        view: related
+
+interactions:
+  - type: click
+    root: hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+  
+assertions:
+  - type: element_present
+    root: ha-more-info-dialog
+    selector: ha-adaptive-dialog
+  - type: element_present
+    root: ha-more-info-dialog
+    selector: ha-related-items
+  - type: snapshot
+    name: 35_extra_more_info_action
+    threshold: 0.02
