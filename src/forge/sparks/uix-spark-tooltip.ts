@@ -25,7 +25,7 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.for = config.for || "";
+    this.for = config.for || this.defaultTarget();
     this.content = config.content || "";
     this.placement = config.placement || "top";
     this.skidding = config.skidding || 0;

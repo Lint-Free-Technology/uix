@@ -1,0 +1,62 @@
+id: forge_spark_more_info_info_false
+description: "More-info spark does not show ha-more-info-info when info: false"
+theme: uix-more-info-theme
+view_path: forge-spark-more-info-info-false
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: light.bed_light
+        info: false
+        details: true
+
+interactions:
+  - type: click
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-toggle'
+    settle_ms: 500
+
+assertions:
+  - type: element_absent
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-info'
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details > .uix-forge-more-info-details-head'
+
+  - type: text_equals
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-title'
+    expected: Details
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-wrap'
+    property: paddingTop
+    expected: "24px"
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-yaml-toggle'
+    property: opacity
+    expected: "1"

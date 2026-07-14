@@ -1,0 +1,47 @@
+id: extra_toast_action
+description: "UIX toast action on a tile card"
+view_path: extra-toast-action
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+card:
+  type: tile
+  entity: light.bed_light
+  tap_action:
+    action: fire-dom-event
+    uix:
+      action: toast
+      data:
+        message: "Toast Message"
+        duration: 10000
+        dismissable: true
+        bottomOffset: 500
+        action:
+          text:
+            translationKey: ui.dialogs.more_info_control.light.toggle
+          tap_action:
+            action: perform-action
+            perform_action: light.toggle
+            target:
+              entity_id: light.bed_light
+
+interactions:
+  - type: click
+    root: hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+  
+assertions:
+  - type: element_present
+    root: notification-manager
+    selector: ha-toast
+  - type: snapshot
+    name: 36_extra_toast_action
+    threshold: 0.02

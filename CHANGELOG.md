@@ -1,3 +1,96 @@
+## [7.7.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.11...v7.7.0-beta.12) (2026-07-14)
+
+### ⚙️ Miscellaneous
+
+* Update primary UIX action names to `clear-cache` and `more-info` so as to align more-info with what is commonly recognised. Prior `clear_cache` will continue to work as an action. ([072aa52](https://github.com/Lint-Free-Technology/uix/commit/072aa5207e53bf891705cb452f1d1c3fc9390c9a))
+
+## [7.7.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.10...v7.7.0-beta.11) (2026-07-14)
+
+### ⚙️ Miscellaneous
+
+* Update new `more-info` action to use `entity` instead of `entityId` ([ebbd5dc](https://github.com/Lint-Free-Technology/uix/commit/ebbd5dc2a2456dce7e0a2c54ee6dbc05aab4e1a7))
+
+## [7.7.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.9...v7.7.0-beta.10) (2026-07-14)
+
+### ⭐ New Features
+
+* New UIX actions `more-info` and `toast`. `more-info` action allows to set more-info view. `toast` actions shows Home Assistant toast message with optional action. ([#446](https://github.com/Lint-Free-Technology/uix/issues/446)) ([7022caa](https://github.com/Lint-Free-Technology/uix/commit/7022caaf95a4d181b662c76982efeb2d589cb5ab))
+
+## [7.7.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.8...v7.7.0-beta.9) (2026-07-12)
+
+### 🐞 Bug Fixes
+
+* **forge:** Toggle details on click on entire details head. ([ae68047](https://github.com/Lint-Free-Technology/uix/commit/ae68047a09dbe5d7578ca7a31e4d9e83fac516f9))
+
+## [7.7.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.7...v7.7.0-beta.8) (2026-07-12)
+
+### ⭐ New Features
+
+* more-info dialog styling to get theme from panel state allowing for dialog to set view theme when applying UIX styling. ([58ae10e](https://github.com/Lint-Free-Technology/uix/commit/58ae10ed82f430a2158723d206d1236185bd4989))
+
+### 🐞 Bug Fixes
+
+* **forge:** Change more-info spark more-info details wrapper form ha-card to div with styling like ha-card. Fixes having a child ha-card of blank card not in shadowRoot. ([1412d15](https://github.com/Lint-Free-Technology/uix/commit/1412d157cbbff71b3890084d62c398d052752481))
+* UIX Forge blank card ha-card does not include class type-custom-uix-forge-blank-card ([8e520c6](https://github.com/Lint-Free-Technology/uix/commit/8e520c64969b0df92d77d0adcf7b610a3c1adc59))
+
+## [7.7.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.6...v7.7.0-beta.7) (2026-07-11)
+
+### ⭐ New Features
+
+* **forge:** add info option to more-info spark allowing to show details only with `info: false` and `details: true` ([#444](https://github.com/Lint-Free-Technology/uix/issues/444)) ([23ec5fc](https://github.com/Lint-Free-Technology/uix/commit/23ec5fcbe9ab11fc9bd85ca3ca16a98aa3b452a6))
+
+### 📦 Dependency Upgrades
+
+* bump parse-duration from 2.1.6 to 2.1.8 ([#443](https://github.com/Lint-Free-Technology/uix/issues/443)) ([3e0f741](https://github.com/Lint-Free-Technology/uix/commit/3e0f7410ce25fd01791537505356be91183b25cb))
+
+### ⚙️ Miscellaneous
+
+* bump typescript from 6.0.3 to 7.0.2. Switch to esbuild rollup plugin from typescript2 plugin. Switch to babel input rollup plugin from output. Remove terser rollup plugin now handled by esbuild ([#440](https://github.com/Lint-Free-Technology/uix/issues/440)) ([0dd3d33](https://github.com/Lint-Free-Technology/uix/commit/0dd3d335e0da67e512c55bf02de1a3965ba44c41))
+
+## [7.7.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.5...v7.7.0-beta.6) (2026-07-10)
+
+### ⭐ New Features
+
+* Add UIX Forge more-info spark ([#437](https://github.com/Lint-Free-Technology/uix/issues/437)) ([da1a943](https://github.com/Lint-Free-Technology/uix/commit/da1a94347bfa07903b5d37be5616469d5f62f111))
+* UIX Forge blank card. Use as a base for sparks. Can have `title`. Can be used with `card`, `card_as_row` and `card_as_badge` molds. ([#436](https://github.com/Lint-Free-Technology/uix/issues/436)) ([a226d7c](https://github.com/Lint-Free-Technology/uix/commit/a226d7c3878f1d5cfb5d54050d78a6e8e48f21ac))
+
+### ⚙️ Miscellaneous
+
+* Add nl to integration strings (not Frontend)([#438](https://github.com/Lint-Free-Technology/uix/issues/438)) ([3bd3027](https://github.com/Lint-Free-Technology/uix/commit/3bd3027b7095fda217f9024365c07ff8ce5dbef1))
+* Add simplified Chinese (zh-Hans) to integration strings (not Frontend). ([#435](https://github.com/Lint-Free-Technology/uix/issues/435)) ([8e66373](https://github.com/Lint-Free-Technology/uix/commit/8e66373fc46d9760e7bea8fa7c428d8e8e0b4bcc))
+
+## [7.7.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.4...v7.7.0-beta.5) (2026-07-07)
+
+### 🐞 Bug Fixes
+
+* **forge-overlay-icon-spark:** Prepend overlay div in shadowRoot rather than appendChild as Lit update cycle may remove appended child. ([4d45c21](https://github.com/Lint-Free-Technology/uix/commit/4d45c21dcb221d51892d1c8de18d09fcb6cf4b17)), closes [#427](https://github.com/Lint-Free-Technology/uix/issues/427)
+* Update console helpers to give theme only boilerplate for 'profile', 'todo' and 'persistent-notification' ([cc0376b](https://github.com/Lint-Free-Technology/uix/commit/cc0376b7d32478c473e103a509ecace9f1d683c1))
+
+## [7.7.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.3...v7.7.0-beta.4) (2026-07-07)
+
+### 🐞 Bug Fixes
+
+* A connected element may disconnect while style pre-process (theme etc) takes place so should not be refreshed as disconnected element will have no theme, so no theme macros etc. causing downstream errors. A connected check now takes place after pre-process and does not refresh if disconnected. ([d33664e](https://github.com/Lint-Free-Technology/uix/commit/d33664e69f5251e6e8749c0d67d6bb8b6e0048e2))
+
+## [7.7.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.2...v7.7.0-beta.3) (2026-07-06)
+
+### 🐞 Bug Fixes
+
+* Allow theme yaml loading via either `developer-tools` or `tools` in preparation for Home Assistant 2026.8.0. UIX uses ha-yaml-editor as a yaml2json loader and loads via (developer-)tools. ([3a82a23](https://github.com/Lint-Free-Technology/uix/commit/3a82a23c44760b1d3f68234f9f90d73e39d54a2a)), closes [#425](https://github.com/Lint-Free-Technology/uix/issues/425)
+* Unhandled exception when theme `-yaml` section has invalid yaml. Correct to show UIX error and group invalid yaml with console group. ([0a77e6a](https://github.com/Lint-Free-Technology/uix/commit/0a77e6afb8a42c1c2b16fb19638fa608534b2003))
+
+## [7.7.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.1...v7.7.0-beta.2) (2026-07-05)
+
+### ⭐ New Features
+
+* **forge:** Overall global and global mold-specific foundries ([#426](https://github.com/Lint-Free-Technology/uix/issues/426)) ([2781a74](https://github.com/Lint-Free-Technology/uix/commit/2781a743945d61d2ca4c3cb2c65188868112df60))
+
+## [7.7.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2...v7.7.0-beta.1) (2026-07-05)
+
+### ⭐ New Features
+
+* **button-spark:** Allow for styling of label text-wrap by CSS var. ([b391849](https://github.com/Lint-Free-Technology/uix/commit/b391849ca6baeaeb13d6880d437257cd5403e302)), closes [#428](https://github.com/Lint-Free-Technology/uix/issues/428)
+
 ## [7.6.2](https://github.com/Lint-Free-Technology/uix/compare/v7.6.1...v7.6.2) (2026-07-04)
 
 ### 🐞 Bug Fixes

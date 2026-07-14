@@ -41,7 +41,7 @@ The Frontend javascript resource is where all the UIX magic happens. If you have
 Documentation is where every UIX user can contribute. As long as you have python installed in your environment you can modify the document source and see results in real time.
 
 !!! tip "Documentation updating"
-    UIX documentation is built from markdown source files using [Zensical](https://zensical.org/doc). Follow these tips to serve the documentation website in your local environment:
+    UIX documentation is built from markdown source files using [Zensical](https://zensical.org/docs/get-started/). Follow these tips to serve the documentation website in your local environment:
 
     - Clone [repo](https://github.com/Lint-Free-Technology/uix)
     - Make a python virtual environment and install zensical (not required if you have zensical installed globally)

@@ -24,7 +24,7 @@ export class UixForgeSparkAttribute extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.selector = config.for || "";
+    this.selector = config.for || this.defaultTarget("");
     this.attribute = config.attribute || "";
     this.action = config.action || "replace";
     this.value = config.value ?? "";

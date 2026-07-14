@@ -1,4 +1,6 @@
-// Add a listener to allow to clear Frontend cache via Home Assistant action
+import { hass_base_el } from "./helpers/hass";
+
+// Add a listener to execute UIX custom actions via the Home Assistant `fire-dom-event` / `ll-custom` action
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   document.addEventListener("ll-custom", (event: Event) => {
@@ -11,9 +13,10 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
       return;
     }
     const actionName = (uix as any).action;
-    if (actionName && typeof actionName === "string" && typeof Actions[actionName] === "function") {
+    if (actionName && typeof actionName === "string" && typeof actionList[actionName] === "function") {
       try {
-        const result = (Actions as any)[actionName]();
+        const data = (uix as any).data ?? {};
+        const result = (actionList as any)[actionName](data);
         if (result && typeof (result as Promise<unknown>).catch === "function") {
           (result as Promise<unknown>).catch((error: unknown) => {
             console.error(`UIX: Error while executing action "${actionName}":`, error);
@@ -46,4 +49,58 @@ export class Actions {
       window.location.reload();
     }
   }
+  static async more_info(data: Record<string, any>) {
+    const base = await hass_base_el();
+    const eventName = "hass-more-info";
+    const eventDetail = { ...data };
+    eventDetail.entityId =  eventDetail.entity ?? eventDetail.entity_id ?? eventDetail.entityId ?? undefined;
+    delete eventDetail.entity;
+    delete eventDetail.entity_id;
+    const event = new CustomEvent(eventName, {
+      detail: eventDetail,
+      bubbles: true,
+      composed: true,
+    });
+    base.dispatchEvent(event);
+  }
+  static async toast(data: Record<string, any>) {
+    const dataExtensible = { ...data };
+    const base = await hass_base_el();
+    const eventName = "hass-notification";
+    const _triggerHassAction = (action: Record<string, any>, source: HTMLElement) => {
+      const config: Record<string, any> = {};
+      config.tap_action = { ...action };
+      source.dispatchEvent(
+        new CustomEvent("hass-action", {
+          bubbles: true,
+          composed: true,
+          detail: { config, action: "tap" },
+        })
+      );
+    };
+    if (dataExtensible.action) {
+      const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {};
+      dataExtensible.action = {
+        ...dataExtensible.action,
+        action: () => {
+          _triggerHassAction(tapAction, base as HTMLElement);
+        },
+      };
+      delete dataExtensible.action.tap_action;
+    }
+    const event = new CustomEvent(eventName, {
+      detail: dataExtensible,
+      bubbles: true,
+      composed: true,
+    });
+    base.dispatchEvent(event);
+  }
 }
+
+const actionList: Record<string, Function> = {
+  clear_cache: Actions.clear_cache,
+  more_info: Actions.more_info,
+  toast: Actions.toast,
+  "clear-cache": Actions.clear_cache,
+  "more-info": Actions.more_info,
+};

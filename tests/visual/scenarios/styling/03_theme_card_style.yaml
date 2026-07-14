@@ -15,6 +15,7 @@ setup:
     data:
       entity_id: light.bed_light
       brightness: 181
+      color_temp_kelvin: 2631
 
 # A plain entities card — no uix: key.  The styling comes entirely from the
 # active theme's uix-card variable.

@@ -1,0 +1,19 @@
+id: doc_forge_blank_card_title
+description: "UIX Forge wrapping a blank card with a title renders a uix-forge element containing a uix-forge-blank-card with title"
+view_path: doc-forge-blank-card-title
+
+setup:
+  - type: wait
+    ms: 1000
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+  element:
+    title: "Blank Card Title"
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/blank-card-title.png
+  root: uix-forge
+  padding: 16

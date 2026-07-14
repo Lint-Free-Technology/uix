@@ -1,0 +1,21 @@
+id: doc_spark_more_info_padding
+description: "Doc image: UIX Forge more-info spark with padding (more-info.md)"
+view_path: doc-spark-more-info-padding
+theme: uix-forge-spark-more-info-padding
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: weather.demo_weather_south
+        details: true
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/more-info-padding.png
+  root: uix-forge
+  padding: 16
+  threshold: 1 # Weather always changing

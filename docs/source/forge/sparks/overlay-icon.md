@@ -41,7 +41,7 @@ element:
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `type` | string | — | Must be `overlay-icon`. |
-| `for` | string | `element` | UIX selector for the element to overlay. Default targets the root of the forged element. |
+| `for` | string | `element` | UIX selector for the element to overlay. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. |
 | `icon` | string | — | MDI/custom to show. Use one of `icon` or `image_url` |
 | `image_url` | string | — | Static image applied as overlay. Supports `media-source://` URIs. Use one of `icon` or `image_url`. |
 | `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). When `entity` is set, `icon` and `image_url` are ignored. |

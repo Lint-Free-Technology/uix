@@ -1,5 +1,22 @@
 import { html, LitElement, nothing, PropertyValues } from "lit";
-import { getNestedTemplateRawDelimiters, HuiBadge, HuiCard, HuiCardFeature, LovelaceElement, UIX_FORGE_ALLOWED_CONFIG_KEYS, UIX_FORGE_DEFAULT_TEMPLATE_VALUE, UIX_FORGE_FORGE_MOLDS, UIX_FORGE_NESTED_TEMPLATE_CLOSE, UIX_FORGE_NESTED_TEMPLATE_OPEN, UIX_FORGE_PASSTHROUGH_MARKER, UIX_FORGE_TYPE, UixForgeConfig, UixForgeConfigBuilder, UixForgeConfigPath, UixMacroConfig, UIX_FORGE_ARRAY_MERGE_STRATEGIES } from "./uix-forge-types";
+import { 
+  getNestedTemplateRawDelimiters, 
+  HuiBadge, 
+  HuiCard, 
+  HuiCardFeature, 
+  LovelaceElement, 
+  UIX_FORGE_ALLOWED_CONFIG_KEYS, 
+  UIX_FORGE_DEFAULT_TEMPLATE_VALUE, 
+  UIX_FORGE_FORGE_MOLDS, 
+  UIX_FORGE_NESTED_TEMPLATE_CLOSE, 
+  UIX_FORGE_NESTED_TEMPLATE_OPEN, 
+  UIX_FORGE_PASSTHROUGH_MARKER, 
+  UIX_FORGE_TYPE, UixForgeConfig, 
+  UixForgeConfigBuilder, 
+  UixForgeConfigPath, 
+  UixMacroConfig, 
+  UIX_FORGE_ARRAY_MERGE_STRATEGIES, 
+  UIX_FORGE_MOLDS_WITH_BLANKS } from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -92,9 +109,16 @@ export function _resolveFoundryConfig(
   config: { foundry?: string; forge?: any; element?: any },
   foundries?: Record<string, any>,
   ready = true,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
+  isTopLevel = true
 ): { forge: any; element: any } | null {
   const foundryName = config.foundry;
+
+  if (isTopLevel && (!foundries || (Object.keys(foundries).length === 0 && !ready))) {
+    return null;
+  }
+
+  let result: { forge: any; element: any } | null = null;
 
   if (foundryName) {
     // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
@@ -113,23 +137,54 @@ export function _resolveFoundryConfig(
 
     // Recursively resolve the foundry's own base (if it also references another foundry).
     const baseResolved = foundryData.foundry
-      ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited)
+      ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited, false)
       : { forge: {}, element: {} };
     if (baseResolved === null) return null;
 
     // foundryData overrides base, local config overrides foundry
     const foundryForge = _mergeFoundryConfig(baseResolved.forge, foundryData.forge);
     const foundryElement = _mergeFoundryConfig(baseResolved.element, foundryData.element);
-    return {
+    result = {
       forge: _mergeFoundryConfig(foundryForge, config.forge),
       element: _mergeFoundryConfig(foundryElement, config.element),
     };
+  } else {
+    result = {
+      forge: config.forge ?? {},
+      element: config.element ?? {},
+    };
   }
 
-  return {
-    forge: config.forge ?? {},
-    element: config.element ?? {},
-  };
+  if (isTopLevel && foundries) {
+    const moldType = result.forge?.mold;
+    const globalFoundry = foundries["global"];
+    const globalMoldFoundry = moldType ? foundries[`global_${moldType}`] : undefined;
+    const currentVisited = foundryName ? new Set(visited).add(foundryName) : new Set(visited);
+
+    let inheritedForge = {};
+    let inheritedElement = {};
+
+    if (globalFoundry && foundryName !== "global") {
+      const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
+      if (globalResolved === null) return null;
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalResolved.element);
+    }
+
+    if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
+      const globalMoldResolved = _resolveFoundryConfig({ foundry: `global_${moldType}` }, foundries, ready, currentVisited, false);
+      if (globalMoldResolved === null) return null;
+      inheritedForge = _mergeFoundryConfig(inheritedForge, globalMoldResolved.forge);
+      inheritedElement = _mergeFoundryConfig(inheritedElement, globalMoldResolved.element);
+    }
+
+    result = {
+      forge: _mergeFoundryConfig(inheritedForge, result.forge),
+      element: _mergeFoundryConfig(inheritedElement, result.element),
+    };
+  }
+
+  return result;
 }
 
 export class UixForge extends LitElement {
@@ -278,9 +333,6 @@ export class UixForge extends LitElement {
     if (!config.foundry && !config.forge) {
       throw new Error("uix-forge: forge config or foundry is required");
     }
-    if (!config.foundry && !config.element) {
-      throw new Error("uix-forge: element config is required");
-    }
     if ((config as any).visibility) {
       throw new Error("uix-forge: 'visibility' config key is not supported, use 'forge.hidden' with a template instead");
     }
@@ -312,12 +364,12 @@ export class UixForge extends LitElement {
     if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
       throw new Error("uix-forge: forge config is required (not provided locally or via foundry)");
     }
-    if (!resolvedElement || Object.keys(resolvedElement).length === 0) {
-      throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
-    }
     // Only support card, badge, row, section, and picture-element molds at this time
     if (!resolvedForge.mold || !UIX_FORGE_FORGE_MOLDS.includes(resolvedForge.mold)) {
       throw new Error(`uix-forge: only forge molds of ${UIX_FORGE_FORGE_MOLDS.join(", ")} are supported at this time`);
+    }
+    if (( !resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold)) {
+      throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
       throw new Error("uix-forge: forge macros must be an object");
@@ -362,6 +414,12 @@ export class UixForge extends LitElement {
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+    if (this._mold.isCard() && !elementConfig.type) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) {
+        elementConfig.clear = true;
+      }
     }
 
     this.forgedElementConfig = elementConfig;
@@ -501,6 +559,12 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
+      if (this._mold.isCard() && !elementConfig.type) {
+        elementConfig.type = "custom:uix-forge-blank-card";
+        if (this._mold.isCardBlankClear()) {
+          elementConfig.clear = true;
+        }
+      }
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...elementConfig };
       Promise.all([
@@ -548,7 +612,7 @@ export class UixForge extends LitElement {
   }
 
   private _onFoundryUpdate() {
-    if (!this.config?.foundry) return;
+    if (!this.config) return;
     // If the forge was waiting for foundry to load initially, complete setup now
     if (!this._mold) {
       const resolved = this._resolveFoundry({ ...this.config });
@@ -663,6 +727,12 @@ export class UixForge extends LitElement {
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+    }
+    if (this._mold.isCard() && !elementConfig.type) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) {
+        elementConfig.clear = true;
+      }
     }
     this.forgedElementConfig = elementConfig;
     const completeRefresh = () => {

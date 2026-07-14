@@ -52,7 +52,7 @@ element:
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `button`. |
-| `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **after** the matched element. |
+| `after` | `string` | one of `after`/`before` ✅ | When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, `""`. If you wish to target `before` using Blank card config, set explicitly to `""`. | UIX selector for the reference element. The button is inserted as a sibling **after** the matched element. |
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The button is inserted as a sibling **before** the matched element. |
 | `entity` | `string` | | — | Entity ID passed to action handlers (e.g. `toggle`). Required for entity-based actions. |
 | `icon` | `string` | | — | MDI icon string (e.g. `mdi:lightbulb`) placed in the label slot of the button. Mutually exclusive with `label`. |
@@ -102,6 +102,12 @@ element:
 !!! note
     When used inside a tile card the button's click events are isolated from the tile card's own action handler — only the button's configured actions fire.
 
+## CSS variables
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `--uix-button-label-text-wrap` | `wrap` | Sets the button label text wrap. Default for `ha-button` is `wrap`. Set to `nowrap` if you wish for your labels to not wrap. This may or may not be needed based on the element in which the button is placed. You will need to set on a tile card like shown in the examples below. |
+
 ## Examples
 
 ??? example "Button after the tile icon with a toggle action and fluorescent light icon"
@@ -119,6 +125,11 @@ element:
           entity: light.living_room_rgbww_lights
           tap_action:
             action: toggle
+      uix:
+        style: |
+          :host {
+            --uix-button-label-text-wrap: nowrap;
+          }
     element:
       type: tile
       entity: light.bed_light

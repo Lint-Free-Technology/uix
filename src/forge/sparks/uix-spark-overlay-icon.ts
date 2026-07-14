@@ -55,7 +55,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this._for = config.for || "element";
+    this._for = config.for || this.defaultTarget();
     this._entity = config.entity || "";
     const rawIcon = config.icon || "";
     const rawImageUrl = config.image_url || "";
@@ -207,7 +207,13 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
       overlay.style.setProperty("justify-content", "center");
       overlay.style.setProperty("pointer-events", "none");
 
-      target.appendChild(overlay);
+      // If target is shadow DOM, append child may get overwritten by Lit regeneration of element
+      // Since position is absolute and z-index is used we can prepend as a workaround
+      if (target instanceof ShadowRoot) {
+        target.prepend(overlay);
+      } else {
+        target.appendChild(overlay);
+      } 
     }
 
     const targetChanged = this._targetElement !== element;

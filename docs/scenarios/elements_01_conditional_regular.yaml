@@ -15,6 +15,7 @@ setup:
     data:
       entity_id: light.ceiling_lights
       brightness: 255
+      color_temp_kelvin: 2631
   - type: ha_service
     domain: input_boolean
     service: turn_on

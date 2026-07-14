@@ -11,7 +11,7 @@ interface UixForgeSparkThemeConfig {
 export class UixForgeSparkTheme extends UixForgeSparkBase {
   type = "theme";
 
-  private _for: string = "element";
+  private _for: string = "";
   private _theme: string = "";
   private _targetElement: HTMLElement | null = null;
 
@@ -26,7 +26,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: UixForgeSparkThemeConfig) {
-    this._for = config.for || "element";
+    this._for = config.for || this.defaultTarget();
     this._theme = config.theme || "";
   }
 

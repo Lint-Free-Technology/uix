@@ -48,7 +48,7 @@ The `for` value accepts the same [DOM navigation syntax](../../concepts/dom.md) 
 | Key | Type | Default | Description |
 | --- | ---- | ------- | ----------- |
 | `type` | string | — | Must be `background`. |
-| `for` | string | `element` | UIX selector for the target element. |
+| `for` | string | When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. | UIX selector for the target element. |
 | `camera_entity` | string | — | Entity ID of a `camera.*` entity to stream live as the background. |
 | `camera_zoom` | string or number | — | CSS zoom/scale value applied to the stream (e.g. `1.5`, `"150%"`). |
 | `camera_pan_x` | string or number | — | CSS translate X applied to the stream (e.g. `"10%"`, `"-20px"`). |

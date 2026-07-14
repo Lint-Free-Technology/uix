@@ -1,0 +1,21 @@
+id: forge_blank_card_title
+description: "UIX Forge wrapping a blank card with a title renders a uix-forge element containing a uix-forge-blank-card with title"
+view_path: forge-blank-card-title
+
+card:
+  type: "custom:uix-forge"
+  forge:
+    mold: card
+  element:
+    title: "Blank Card Title"
+
+assertions:
+  - type: element_present
+    root: 
+      - "uix-forge-blank-card"
+      - "ha-card"
+    selector: "h1.card-header"
+
+  - type: snapshot
+    name: "33_forge_blank_card_title"
+    threshold: 0.02

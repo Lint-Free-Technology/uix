@@ -1,0 +1,78 @@
+id: doc_foundries_global_macro
+description: "UIX Forge foundry with global foundry macro (foundries.md)"
+view_path: doc-foundries-global-macro
+
+setup:
+  - type: ha_service
+    domain: input_boolean
+    service: turn_off
+    data:
+      entity_id: input_boolean.festive_day
+  - type: add_foundry
+    name: global
+    config:
+      forge:
+        macros:
+          is_festive_day:
+            returns: true
+            template: "{% do returns(is_state('input_boolean.festive_day','on')) %}"
+
+cards:
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+        rows: 4
+    element:
+      type: picture
+      image:
+        media_content_id: |
+          media-source://media_source/local/{{ 'birthday.jpg' if is_festive_day() else 'kitchen.jpg' }}
+  - type: tile
+    entity: input_boolean.festive_day
+    name: Festive Day
+    grid_options:
+      columns: full
+      rows: 1
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/foundries-global-macro.gif
+  root: hui-grid-section
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover_away
+      frames: 14   # ~1 s
+
+teardown:
+  - type: delete_foundry
+    name: global

@@ -1,0 +1,69 @@
+id: forge_spark_more_info_blank_card
+description: "More-info spark renders info and collapsible details in a blank Forge card"
+theme: uix-more-info-theme
+view_path: forge-spark-more-info-blank-card
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: weather.demo_weather_south
+        details: true
+
+interactions:
+  - type: click
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-toggle'
+    settle_ms: 500
+
+assertions:
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-info'
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details > .uix-forge-more-info-details-head'
+
+  - type: text_equals
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-title'
+    expected: Details
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] div.uix-forge-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-wrap'
+    property: paddingTop
+    expected: "0px"
+
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-details'
+
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-yaml-toggle'
+    property: opacity
+    expected: "1"
+
+  - type: css_variable
+    root:
+      - uix-forge-blank-card
+      - ha-more-info-info
+    selector: more-info-content
+    property: "--uix-test-more-info-theme"
+    expected: applied

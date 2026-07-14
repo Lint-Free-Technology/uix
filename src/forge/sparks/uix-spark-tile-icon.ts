@@ -47,7 +47,7 @@ export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.after = config.after || "";
+    this.after = config.after || config.for || this.defaultTarget("");
     this.before = config.before || "";
     this.icon = config.icon || "";
     this.color = config.color || "";

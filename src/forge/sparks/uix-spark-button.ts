@@ -41,6 +41,9 @@ const BUTTON_CSS = `
   ha-button.uix-forge-spark-icon-button::part(label) {
     display: flex;
   }
+  ha-button span.uix-button-label {
+    text-wrap: var(--uix-button-label-text-wrap, wrap);
+  }
   @media (hover: hover) {
     ha-button.uix-forge-spark-icon-button:hover:not([disabled])::after {
       opacity: 0.1;
@@ -86,7 +89,7 @@ export class UixForgeSparkButton extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>) {
-    this.after = config.after || config.for || "";
+    this.after = config.after || config.for || this.defaultTarget("");
     this.before = config.before || "";
     this.entity = config.entity || "";
     this.icon = config.icon || "";

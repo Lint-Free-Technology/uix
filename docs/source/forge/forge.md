@@ -33,7 +33,7 @@ element:
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
 | `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
-| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#template-variables-and-macros) |
+| `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#template-variables-and-macros). |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
@@ -41,6 +41,10 @@ element:
 | `template_nesting` | string | | `"<<>>"` | Four-character string used to escape nested templates. A single setting controls both Jinja forms: with the default `<<>>`, use `<<...>>` for `{{...}}` and `<%...%>` for `{%...%}` in the same nested template. Use when the element config itself contains Jinja2-like syntax. When nesting multiple forge layers deep, add an extra `<>` pair per additional layer (e.g. `<<< >>>` and `<<% %>>` for two layers of nesting). |
 | `sparks` | list | ✅ | `[]` | List of [spark](./sparks/index.md) configurations to attach to the forged element. |
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
+
+!!! warning
+    [Theme macros](../using/themes.md#macros) are only available in UIX styling templates, not in UIX Forge element/forge templates.
+    Use UIX Forge [Global foundries](../forge/foundries.md#global-foundries) to define `forge.macros` available globally or per `mold`.
 
 ## Element config
 
@@ -64,6 +68,78 @@ element:
         --tile-color: teal !important;
       }
 ```
+
+### Element entities config
+
+You can also use direct templates in the config, eg. template the entities inside a `type: entities` card. This can be an alternative for using [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) custom plugin for entities templates.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+element:
+  type: entities
+  entities: |
+    {{ integration_entities('sun') }}
+```
+
+![Element entities config example](../assets/page-assets/forge/basic-element-entities.png)
+
+### Blank card config
+
+When using UIX Forge molds `card`, `card_as_row` or `card_as_badge`, a default blank card, `custom:uix-forge-blank-card` will be used when no `element` or `element.type` is set. This allows for a blank card to which UIX Forge [sparks](./sparks/index.md) can be applied directly.
+
+A default config with no sparks will show a placeholder message.
+
+```yaml
+type: "custom:uix-forge"
+forge:
+  mold: card
+```
+
+![Empty uix-forge-blank-card example](../assets/page-assets/forge/blank-card-no-config.png)
+
+Setting `element.title` will show a card with title only.
+
+```yaml
+type: "custom:uix-forge"
+forge:
+  mold: card
+element:
+  title: "Blank Card Title"
+```
+
+![uix-forge-blank-card with title example](../assets/page-assets/forge/blank-card-title.png)
+
+The blank card can be styled to be transparent in context by setting `element.clear`. For molds `card_as_row` and `card_as_badge` this is done automatically when the blank card is in use.
+
+This example is of UIX Forge using `mold: card_as_row` as an entities row to generate a blank card over which an [`overlay-icon` spark](./sparks/overlay-icon.md) is displayed.
+
+```yaml
+type: entities
+title: Entities Card
+entities:
+  - type: custom:uix-forge
+    forge:
+      mold: card_as_row
+      sparks:
+        - type: overlay-icon
+          icon: mdi:shimmer
+          icon_color: red
+          icon_position:
+            left: 10px
+            top: 8px
+      uix:
+        style: |
+          :host {
+            --uix-forge-blank-card-height: 40px;
+          }
+```
+
+![uix-forge-blank-card used as card_as_row](../assets/page-assets/forge/blank-card-as-row.png)
+
+!!! tip
+    The blank card content div will be given a height of `var(--row-height, 56px)` when no other content has been applied via a spark, either as a sibling to or child of the div. However when there is a sibling to the div but it is empty, the height will be `0px`. IN all cases this height can be styled explicitly using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
 
 ### Template variables and macros
 
@@ -369,6 +445,9 @@ When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. H
 
 ### Using with auto-entities
 
+!!! tip
+   For simple entities templating you may wish to just forge an entities card and template. `entities:` config. See [Element entities config](#element-entities-config).
+
 UIX Forge supports `custom:auto-entities` in two ways:
 
 1. When UIX Forge is used as the main card for auto-entities, UIX Forge accepts and passes through `entities` to the element config, though will not be available on `config.element.entities`
@@ -490,8 +569,9 @@ The theme type given to UIX forge container matches the mold type, including [cr
           margin: 0;
         }
         .content {
-          gap: var(--ha-space-2);
-          padding: 8px 10px;
+          gap: var(--ha-space-2) !important;
+          padding: 8px 10px !important;
+          min-height: unset !important;
         }
     ```
 

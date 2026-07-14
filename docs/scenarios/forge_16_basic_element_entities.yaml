@@ -1,0 +1,20 @@
+id: doc_forge_basic_element_entities
+description: "Doc image: basic element entities forging with UIX Forge (forge.md)"
+view_path: doc-forge-basic-element-entities
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+  element:
+    type: entities
+    entities: |
+      {{ integration_entities('sun') }}
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/basic-element-entities.png
+  root: uix-forge
+  padding: 16
+  threshold: 1 # Will always be changed due to the entity state changing

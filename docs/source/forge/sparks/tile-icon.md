@@ -46,7 +46,7 @@ element:
 | Key | Type | Required | Default | Description |
 | --- | ---- | -------- | ------- | ----------- |
 | `type` | `string` | ✅ | — | Must be `tile-icon`. |
-| `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The icon is inserted as a sibling **after** the matched element. |
+| `after` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The icon is inserted as a sibling **after** the matched element. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, `""`. If you wish to target `before` using Blank card config, set explicitly to `""`. |
 | `before` | `string` | one of `after`/`before` ✅ | — | UIX selector for the reference element. The icon is inserted as a sibling **before** the matched element. |
 | `icon` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | MDI icon string (e.g. `mdi:star`). `icon` can also be used to replace the default entity icon if `entity` is set. |
 | `icon_path` | `string` | one of `icon`/`icon_path`/`image_url`/`entity` ✅ | — | SVG path string passed to `ha-tile-icon` as its `iconPath` property (rendered via `ha-svg-icon`). |
