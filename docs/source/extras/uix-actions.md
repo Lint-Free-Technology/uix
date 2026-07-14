@@ -75,21 +75,21 @@ Example toast with action with translated action text.
 type: tile
 entity: light.bed_light
 tap_action:
-action: fire-dom-event
-uix:
+  action: fire-dom-event
+  uix:
     action: toast
     data:
-    message: "Bed Light"
-    duration: 10000
-    dismissable: true
-    bottomOffset: 550
-    action:
+      message: "Bed Light"
+      duration: 10000
+      dismissable: true
+      bottomOffset: 550
+      action:
         text:
-        translationKey: ui.dialogs.more_info_control.light.toggle
+          translationKey: ui.dialogs.more_info_control.light.toggle
         tap_action:
-        action: perform-action
-        perform_action: light.toggle
-        target:
+          action: perform-action
+          perform_action: light.toggle
+          target:
             entity_id: light.bed_light
 ```
 
