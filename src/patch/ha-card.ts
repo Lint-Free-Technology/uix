@@ -48,7 +48,6 @@ interface LovelaceCard extends Node {
 export function findConfig(node: LovelaceCard) {
   if (node.config) return node.config;
   if (node._config) return node._config;
-  if (customElements.get(node.nodeName.toLowerCase())) return null;
   if (node.host) return findConfig(node.host);
   if (node.parentElement) return findConfig(node.parentElement);
   if (node.parentNode) return findConfig(node.parentNode);
