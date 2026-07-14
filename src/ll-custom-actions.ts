@@ -74,16 +74,13 @@ export class Actions {
           detail: { config, action: "tap" },
         })
       );
-    }
+    };
     if (dataExtensible.action) {
-      const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {}; 
+      const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {};
       dataExtensible.action = {
         ...dataExtensible.action,
         action: () => {
-          _triggerHassAction(
-            tapAction, 
-            base as HTMLElement
-          ) 
+          _triggerHassAction(tapAction, base as HTMLElement);
         },
       };
       delete dataExtensible.action.tap_action;
