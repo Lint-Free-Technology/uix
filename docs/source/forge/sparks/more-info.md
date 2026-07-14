@@ -153,9 +153,6 @@ my-theme:
 
 ![Forge spark more-info details padding example](../../assets/page-assets/forge/sparks/more-info-theme-details.png)
 
-!!! tip
-    If you wish to style using `uix-card-yaml` use the [uix_style_path()](../../concepts/dom.md#uix_style_path0--specific-helper) helper to find the correct UIX style path.
-
 ## Using with standard cards
 
 All the examples above are using the UIX Forge blank card. Due to the nature of the more-info spark and its content it is best to always use a UIX forge blank card in a stack of cards.
