@@ -5,9 +5,6 @@ icon: material/information-outline
 
 # :material-information-outline: More-info spark
 
-!!! info
-    more-info spark is available in 7.7.0-beta.6
-
 The `more-info` spark inserts Home Assistant's `ha-more-info-info` element as a sibling before or after a target element inside a UIX Forge element.
 
 It is most useful with [Blank card config](../forge.md#blank-card-config), where a Forge card has no `element` config and the spark uses the blank card content as its default insertion target.

@@ -8,9 +8,6 @@ A **foundry** is a named UIX Forge configuration stored in Home Assistant. It ac
 
 ## Global foundries
 
-!!! info
-    Global foundries available in 7.7.0-beta.2
-
 There are two special reserved foundry names which, if defined, are automatically merged into *every* forge configuration across your dashboard, whether they explicitly request a foundry or not.
 
 - `global` — if a foundry with this exact name exists, it is merged as the absolute base configuration for all forges.
