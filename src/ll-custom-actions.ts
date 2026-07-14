@@ -1,6 +1,6 @@
 import { hass_base_el } from "./helpers/hass";
 
-// Add a listener to allow to clear Frontend cache via Home Assistant action
+// Add a listener to execute UIX custom actions via the Home Assistant `fire-dom-event` / `ll-custom` action
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   document.addEventListener("ll-custom", (event: Event) => {
