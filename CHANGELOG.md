@@ -1,3 +1,9 @@
+## [7.7.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.9...v7.7.0-beta.10) (2026-07-14)
+
+### ⭐ New Features
+
+* New UIX actions `more-info` and `toast`. `more-info` action allows to set more-info view. `toast` actions shows Home Assistant toast message with optional action. ([#446](https://github.com/Lint-Free-Technology/uix/issues/446)) ([7022caa](https://github.com/Lint-Free-Technology/uix/commit/7022caaf95a4d181b662c76982efeb2d589cb5ab))
+
 ## [7.7.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0-beta.8...v7.7.0-beta.9) (2026-07-12)
 
 ### 🐞 Bug Fixes
