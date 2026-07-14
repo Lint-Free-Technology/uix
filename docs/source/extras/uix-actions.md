@@ -4,10 +4,10 @@ description: Learn how UIX actions can assist in clearing cache, showing more-in
 ---
 # UIX actions
 
-UIX has several custom actions which can be used aon Home Assistant Frontend dashboards. These are invoked using `action: fire-dom-event` with `uix` object to set the action and any parameters set in the `data` object. UIX actions can be used on any card that supports the `fire-dom-event` action which includes all standard Home Assistant cards.
+UIX has several custom actions which can be used on Home Assistant Frontend dashboards. These are invoked using `action: fire-dom-event` with a `uix:` object to set the action and any parameters set in the `data:` object. UIX actions can be used on any card that supports the `fire-dom-event` action which includes all standard Home Assistant cards.
 
 !!! info
-    UIX action `data:` object parameters are as required by the Home Assistant event called and are not chosen by UIX. This gives rise to multiple `action` config items which may be confusing. However each has there place. If you have any issues make sure to follow the documented config for each UIX action.
+    UIX action `data:` object parameters are as required by the Home Assistant event called and are not chosen by UIX. This gives rise to multiple `action` config items which may be confusing. However, each has their place. If you have any issues make sure to follow the documented config for each UIX action.
 
 ```yaml
 # ... card config
