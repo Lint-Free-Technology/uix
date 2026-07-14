@@ -52,7 +52,10 @@ export class Actions {
   static async more_info(data: Record<string, any>) {
     const base = await hass_base_el();
     const eventName = "hass-more-info";
-    const eventDetail = data ?? {};
+    const eventDetail = { ...data };
+    eventDetail.entityId =  eventDetail.entity ?? eventDetail.entity_id ?? eventDetail.entityId ?? undefined;
+    delete eventDetail.entity;
+    delete eventDetail.entity_id;
     const event = new CustomEvent(eventName, {
       detail: eventDetail,
       bubbles: true,
@@ -61,7 +64,7 @@ export class Actions {
     base.dispatchEvent(event);
   }
   static async toast(data: Record<string, any>) {
-    const dataExtensible = data ? { ...data } : {};
+    const dataExtensible = { ...data };
     const base = await hass_base_el();
     const eventName = "hass-notification";
     const _triggerHassAction = (action: Record<string, any>, source: HTMLElement) => {

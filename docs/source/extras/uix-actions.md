@@ -52,7 +52,7 @@ Shows the Home Assistant more-info dialog with the option to set the starting vi
 | --- | --- | --- | --- |
 | `action: more_info` | - | - | Shows the Home Assistant more-info dialog with entity and view options set with `data:` |
 | `data:` | - | - | More-info entity and view options. |
-| | `entityId` | - | Entity Id of the entity for which to show more-info. |
+| | `entity` | - | Entity Id of the entity for which to show more-info. |
 | | `view` | `info` | Initial view of the more-info dialog. Can be set to `info`, `history`, `settings`, `related`, `add_to` , `details` |
 
 Example showing more-info with history view.
@@ -65,7 +65,7 @@ tap_action:
   uix:
     action: more_info
     data:
-      entityId: light.bed_light
+      entity: light.bed_light
       view: history
 ```
 

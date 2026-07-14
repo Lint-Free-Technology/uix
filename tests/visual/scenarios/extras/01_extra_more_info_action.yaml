@@ -19,7 +19,7 @@ card:
     uix:
       action: more_info
       data:
-        entityId: light.bed_light
+        entity: light.bed_light
         view: related
 
 interactions:
