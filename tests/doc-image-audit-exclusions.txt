@@ -24,7 +24,5 @@ docs/source/assets/page-assets/developers/developers-1-light.png
 docs/source/assets/page-assets/developers/developers-1-dark.png
 
 # Forge — lock spark example animations (manually recorded)
-docs/source/assets/page-assets/forge/sparks/lock-spark-example-1.gif
-docs/source/assets/page-assets/forge/sparks/lock-spark-example-2.gif
 docs/source/assets/page-assets/forge/sparks/lock-spark-styling-example.gif
 docs/source/assets/page-assets/forge/sparks/lock-spark-styling-example-2.gif

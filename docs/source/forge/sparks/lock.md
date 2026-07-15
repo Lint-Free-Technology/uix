@@ -15,9 +15,6 @@ All dialogs for code/passphrase input, confirmation and feedback use native Home
 
 ## Basic usage
 
-!!! example inline end "Basic usage"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-1.gif)
-
 Basic examples includes admins in lock config considering that admins will be implementing lock spark. Remove `admins: true` if lock will be bypassed for admins.
 
 ```yaml
@@ -34,16 +31,16 @@ element:
   entity: light.bed_light
 ```
 
+??? example "Basic usage animation"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-basic.gif)
+
 ---
 
 ## Targeting specific elements with `for`
 
-!!! example inline end "Targeting example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-2.gif)
-
 Like other sparks, `for` accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
-Here an entities row is the target for the lock. `action` is hold.
+Here an entities row is the target for the lock.
 
 ```yaml
 type: entities
@@ -54,13 +51,15 @@ entities:
       sparks:
         - type: lock
           for: $ hui-generic-entity-row
-          action: hold
           locks:
             - code: 1234
               admins: true
     element:
       entity: light.bed_light
 ```
+
+??? example "Targeting example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-for.gif)
 
 !!! warning
     As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements which are displayed inline. This means that lock spark can only apply to an entire entity row.
