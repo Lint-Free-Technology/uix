@@ -40,6 +40,8 @@ Once the UI eXtension service has been added, refresh the page to make the Front
 - Add the following to the bottom of yaml code:
 
 ```yaml
+type: tile
+entity: light.bed_light
 uix:
   style: |
     ha-card {
@@ -49,8 +51,7 @@ uix:
 
 You should see the background of the card turn red as you type. You should also see a little brush icon popping up near the `Show visual editor` button. This indicates that this card has UIX code which will not be shown in the visual editor.
 
-![Quick Start](./assets/page-assets/quick-start/quick-start-1-light.png#only-light){: width="400"}
-![Quick Start](./assets/page-assets/quick-start/quick-start-1-dark.png#only-dark){: width="400"}
+![Quick Start](./assets/page-assets/quick-start/quick-start-basic.png)
 
 ## Your first UIX Forge
 

@@ -1,0 +1,26 @@
+id: doc_concepts_markdown
+description: "Doc image: UIX applied to markdown card (concepts/dom.md)"
+view_path: doc-concepts-markdown
+card:
+  type: markdown
+  content: |-
+      # Example
+      ## A teal markdown card where h3 tags are purple
+      ### Like this
+  uix:
+    style:
+      ha-markdown$: |
+        h3 {
+          color: purple;
+        }
+      .: |
+        ha-card {
+          background: teal;
+        }
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/concepts/concepts-markdown.png
+  root: hui-markdown-card
+  padding: 16
+  threshold: 0.02
