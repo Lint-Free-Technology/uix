@@ -44,6 +44,8 @@ Here an entities row is the target for the lock.
 
 ```yaml
 type: entities
+grid_options:
+  columns: 6
 entities:
   - type: custom:uix-forge
     forge:
