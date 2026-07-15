@@ -346,11 +346,10 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 
 Using UIX Styling to apply a locked background, unlocked background and reduced opacity. A locked icon is also used in this example.
 
-!!! example inline end "Styling example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example.gif)
-
 ```yaml
 type: entities
+grid_options:
+  columns: 6
 entities:
   - type: custom:uix-forge
     forge:
@@ -376,12 +375,12 @@ entities:
       entity: light.bed_light
 ```
 
+??? example "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-styling.gif)
+
 #### Locked icon when target is a tile icon
 
 Using UIX Styling to apply lock icon background. Here the lock is applied to a tile icon and UIX Styling used to make lock appear like a tile badge.
-
-!!! example inline end "Styling example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example-2.gif)
 
 ```yaml
 type: custom:uix-forge
@@ -407,6 +406,9 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+??? example "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-styling-tile-badge.gif)
 
 ---
 

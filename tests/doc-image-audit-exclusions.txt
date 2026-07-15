@@ -22,7 +22,3 @@ docs/source/assets/page-assets/quick-start/quick-start-1-dark.png
 # Developers — manually captured card output screenshots
 docs/source/assets/page-assets/developers/developers-1-light.png
 docs/source/assets/page-assets/developers/developers-1-dark.png
-
-# Forge — lock spark example animations (manually recorded)
-docs/source/assets/page-assets/forge/sparks/lock-spark-styling-example.gif
-docs/source/assets/page-assets/forge/sparks/lock-spark-styling-example-2.gif
