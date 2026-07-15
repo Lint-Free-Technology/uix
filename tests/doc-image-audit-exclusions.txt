@@ -13,11 +13,3 @@ docs/source/assets/images/mixed.png
 # Concepts — DOM navigation diagrams (hand-drawn / manually exported)
 docs/source/assets/page-assets/concepts/dom-1-light.png
 docs/source/assets/page-assets/concepts/dom-1-dark.png
-
-# Quick-start screenshots (manually taken)
-docs/source/assets/page-assets/quick-start/quick-start-1-light.png
-docs/source/assets/page-assets/quick-start/quick-start-1-dark.png
-
-# Developers — manually captured card output screenshots
-docs/source/assets/page-assets/developers/developers-1-light.png
-docs/source/assets/page-assets/developers/developers-1-dark.png

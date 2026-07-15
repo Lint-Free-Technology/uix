@@ -240,3 +240,10 @@ uix-forge-spark-more-info-details-padding:
       div.content {
         padding: 0 var(--ha-space-3) var(--ha-space-3);
       }
+
+uix-test-custom-card:
+  uix-theme: uix-test-custom-card
+  uix-card: |
+    b {
+      color: orange;
+    }

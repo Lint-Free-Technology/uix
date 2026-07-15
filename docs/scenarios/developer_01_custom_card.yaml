@@ -1,0 +1,32 @@
+id: doc_developer_custom_card
+description: "Doc image: UIX applied by custom card (developer/cards.md)"
+view_path: doc-developer-custom-card
+theme: uix-test-custom-card
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+card:
+  type: custom:my-awesome-card
+  uix:
+    style: |
+      .content {
+        padding: 0 20px 20px 20px;
+      }
+      h1 {
+        color: red;
+      }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/developers/custom-card.png
+  root: my-awesome-card
+  padding: 16
+  threshold: 0.02
