@@ -1,0 +1,40 @@
+id: doc_spark_state_badge_basic
+description: "Doc image: state-badge spark basic (state-badge.md)"
+view_path: doc-spark-state-badge-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: entities
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: state-badge
+            before: $ hui-generic-entity-row $ state-badge:not([data-uix-forge-state-badge-id])
+            entity: light.ceiling_lights
+      element:
+        entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/state-badge-basic.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 0.02
