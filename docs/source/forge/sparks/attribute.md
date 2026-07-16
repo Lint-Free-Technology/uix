@@ -63,6 +63,8 @@ element:
   forecast_type: daily
 ```
 
+![Replace attribute example](../../assets/page-assets/forge/sparks/attribute-replace-manually-generated.gif)
+
 ### Use a template for the value
 
 The `value` field supports [templates](../../using/templates.md), giving you access to entity states and other template variables:
@@ -82,6 +84,8 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+![Replace attribute with template example](../../assets/page-assets/forge/sparks/attribute-replace-template-manually-generated.gif)
 
 !!! note
     - The spark targets the **first** matching element found by the `for` selector.

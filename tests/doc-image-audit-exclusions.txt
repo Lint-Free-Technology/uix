@@ -13,3 +13,8 @@ docs/source/assets/images/mixed.png
 # Concepts — DOM navigation diagrams (hand-drawn / manually exported)
 docs/source/assets/page-assets/concepts/dom-1-light.png
 docs/source/assets/page-assets/concepts/dom-1-dark.png
+
+# Attribute spark - title hover rendered by OS window manager and not playwright so cannot capture with test container
+
+docs/source/assets/page-assets/forge/sparks/attribute-replace-manually-generated.gif
+docs/source/assets/page-assets/forge/sparks/attribute-replace-template-manually-generated.gif
