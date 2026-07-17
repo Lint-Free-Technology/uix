@@ -1,3 +1,9 @@
+## [7.7.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0...v7.7.1-beta.1) (2026-07-17)
+
+### 🐞 Bug Fixes
+
+* ha-card in element may incorrectly get type and styling of ancestor element ([cc5a285](https://github.com/Lint-Free-Technology/uix/commit/cc5a28525487b723b534d572f68440fd078f2e6a)), references [#450](https://github.com/Lint-Free-Technology/uix/issues/450)
+
 ## [7.7.0](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2...v7.7.0) (2026-07-14)
 
 ### ⭐ New Features
