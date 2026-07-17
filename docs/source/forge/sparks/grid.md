@@ -83,7 +83,7 @@ element:
 | `place_items` | `string` | | — | `place-items` shorthand (`<align-items> / <justify-items>`). |
 | `place_content` | `string` | | — | `place-content` shorthand (`<align-content> / <justify-content>`). |
 | `areas` | `string` | | — | `grid-template-areas` value. Each row is a quoted string of space-separated area names (e.g. `'"header header" "main sidebar"'`). Can also be specified per entry in `media_queries`. |
-| `elements` | `list[string]` | | `[]` | Ordered list of `grid-area` names to assign to the direct children of the target container. The first name is applied to the first child, the second to the second, and so on. See [Template areas and elements](#template-areas-and-elements). |
+| `elements` | `list[string]` | | `[]` | Ordered list of `grid-area` names to assign to the direct children of the target container. The first name is applied to the first child, the second to the second, and so on. See Template areas and elements [example](#examples). |
 | `media_queries` | `list` | | `[]` | List of responsive override blocks. See [Media queries](#media-queries). |
 
 ### Media queries

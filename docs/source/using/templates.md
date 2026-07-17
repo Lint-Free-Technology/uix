@@ -282,4 +282,4 @@ In templates, billets are used as plain constants:
 
 When using [UIX Forge](../forge/index.md), billets defined under `forge.billets` are available in all forge templates **and** in any `uix:` style on the forge card or the forged element. Forge billets are merged with any billets defined directly in the `uix:` config, with the local `uix:` billets taking precedence.
 
-See [UIX Forge — Billets](../forge/index.md#billets) for the full reference including supported types and foundry override behaviour.
+See [UIX Forge — Billets](../forge/forge.md#billets) for the full reference including supported types and foundry override behaviour.

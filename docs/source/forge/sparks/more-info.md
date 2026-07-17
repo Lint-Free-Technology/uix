@@ -66,7 +66,7 @@ forge:
 
 The spark applies UIX `more-info` styling to the wrapper containing `ha-more-info-info`, so theme-level `uix-more-info-yaml` paths can target the embedded content the same way they target the more-info dialog.
 
-This example sets the current and forecast high temps text color to red and makes the forecast day labels bold. `ha-more-info-info $$ more-info-weather $` [express search selector](../../concepts/dom.md#express-search-selector-) condenses `ha-more-info-info $ more-info-content $ more-info-weather $`.
+This example sets the current and forecast high temps text color to red and makes the forecast day labels bold. `ha-more-info-info $$ more-info-weather $` [express search selector](../../concepts/dom.md#express-search-selector) condenses `ha-more-info-info $ more-info-content $ more-info-weather $`.
 
 ```yaml
 my-theme:
