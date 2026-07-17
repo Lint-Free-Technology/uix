@@ -48,6 +48,9 @@ interface LovelaceCard extends Node {
 export function findConfig(node: LovelaceCard) {
   if (node.config) return node.config;
   if (node._config) return node._config;
+  // If we have made it to a custom element, we can stop searching
+  const nodeName = node.nodeName.toLowerCase();
+  if (nodeName !== "ha-card" && window.customElements.get(nodeName)) return null;
   if (node.host) return findConfig(node.host);
   if (node.parentElement) return findConfig(node.parentElement);
   if (node.parentNode) return findConfig(node.parentNode);

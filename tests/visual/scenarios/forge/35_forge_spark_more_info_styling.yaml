@@ -1,0 +1,54 @@
+id: forge_spark_more_info_styling
+description: "More-info spark details styling is correct for child ha-card"
+theme: uix-more-info-theme
+view_path: forge-spark-more-info-styling
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: light.bed_light
+        info: false
+        details: true
+  element:
+    uix:
+      style:
+        .: |
+          ha-card.type-custom-uix-forge-blank-card  {
+            box-shadow: 2px 4px red;
+          }
+        ha-more-info-details $: |
+          ha-card {
+            box-shadow: 2px 4px green;
+          }
+
+interactions:
+  - type: click
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] .uix-forge-more-info-details-toggle'
+    settle_ms: 500
+
+assertions:
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: 'ha-card.type-custom-uix-forge-blank-card'
+  - type: css_property
+    root:
+      - uix-forge-blank-card
+    selector: 'ha-card.type-custom-uix-forge-blank-card'
+    property: boxShadow
+    expected: "rgb(255, 0, 0) 2px 4px 0px 0px"
+  - type: element_absent
+    root:
+      - ha-more-info-details
+    selector: 'ha-card.type-custom-uix-forge-blank-card'
+  - type: css_property
+    root:
+      - ha-more-info-details
+    selector: 'ha-card'
+    property: boxShadow
+    expected: "rgb(0, 128, 0) 2px 4px 0px 0px"
