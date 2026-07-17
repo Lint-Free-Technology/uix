@@ -1,0 +1,59 @@
+id: doc_forge_map_spark_entity_filter_groups
+description: "Doc image: UIX Forge map spark with entity filter with groups (map.md)"
+view_path: doc-forge-map-spark-entity-filter-groups
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: tablet
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        entity_filter:
+          group:
+            persons: Household
+            trackers: Phones
+            zones: Places
+  element:
+    type: map
+    entities:
+      - zone.london
+      - device_tracker.phone
+      - device_tracker.tablet
+
+interactions:
+  - type: click
+    root: ha-map
+    selector: div.uix-map-entity-filter-control
+    settle_ms: 500
+  - type: hover
+    root: ha-map
+    selector: ha-dropdown-item[data-group-trigger="trackers"]
+    settle_ms: 500
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/map-entity-filter-groups.png
+  root: uix-forge
+  padding: 16 135 90 16
+  threshold: 0.02

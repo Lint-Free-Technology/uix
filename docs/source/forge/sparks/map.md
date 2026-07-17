@@ -214,7 +214,7 @@ No include filters have been used for brevity of the example.
 ```yaml
 type: custom:auto-entities
 entities:
-  - zone.home
+  - zone.london
 filter:
   include: []
   exclude: []
@@ -236,6 +236,14 @@ card:
         }
 ```
 
+Without `fit_map: true`:
+
+![Forged map without map spark fit_map true](../../assets/page-assets/forge/sparks/map-auto-entities-no-spark.png)
+
+With `fit_map: true`:
+
+![Forged map with map spark fit_map true](../../assets/page-assets/forge/sparks/map-auto-entities.png)
+
 ### Tour mode with default settings
 
 Automatically cycle through all map entities using defaults (10 s per stop, pause/play button in bottom-right corner):
@@ -250,9 +258,11 @@ forge:
 element:
   type: map
   entities:
-    - device_tracker.phone
-    - device_tracker.tablet
+    - device_tracker.my_phone
+    - device_tracker.my_tablet
 ```
+
+:material-movie: [Map spark tour mode example animation (mp4)](../../assets/page-assets/forge/sparks/map-tour.mp4){ data-type="video" class="glightbox" }
 
 ### Tour mode with custom POI list
 
@@ -273,18 +283,19 @@ forge:
           bottom: 16px
           left: 16px
         poi:
-          - entity: device_tracker.phone
-          - latitude: 48.8566
-            longitude: 2.3522
+          - latitude: 51.614387 
+            longitude: -0.731585
             zoom: 11
-          - entity: device_tracker.tablet
-            zoom: 15
+          - entity: device_tracker.my_tablet
+            zoom: 14
 element:
   type: map
   entities:
-    - device_tracker.phone
-    - device_tracker.tablet
+    - device_tracker.my_phone
+    - device_tracker.my_tablet
 ```
+
+:material-movie: [Map spark tour mode with pois example animation (mp4)](../../assets/page-assets/forge/sparks/map-tour-pois.mp4){ data-type="video" class="glightbox" }
 
 ### Styling the tour button
 
@@ -305,14 +316,16 @@ element:
     style: |
       ha-card {
         --uix-map-tour-icon-color: white;
-        --uix-map-tour-icon-background: rgba(0,0,0,0.5);
+        --uix-map-tour-icon-background: rgba(255,0,0,0.5);
         --uix-map-tour-icon-border-radius: 4px;
       }
 ```
 
+![Map spark styling example](../../assets/page-assets/forge/sparks/map-tour-style.png)
+
 ### Hours to show history slider
 
-Enable a customizable history duration slider to load between 0 (shows all points) and 48 hours of tracker data on the map:
+Enable a customizable history duration slider to load between 1 and 48 hours of tracker data on the map:
 
 ```yaml
 type: custom:uix-forge
@@ -321,7 +334,7 @@ forge:
   sparks:
     - type: map
       hours_to_show:
-        min: 0
+        min: 1
         max: 48
         step: 2
         position:
@@ -329,9 +342,13 @@ forge:
           left: 15px
 element:
   type: map
+  hours_to_show: 3
+  default_zoom: 8
   entities:
     - device_tracker.phone
 ```
+
+![Map spark hours to show example](../../assets/page-assets/forge/sparks/map-hours-to-show.png)
 
 ### Entity selection filter dropdown
 
@@ -349,8 +366,9 @@ element:
   entities:
     - device_tracker.phone
     - device_tracker.tablet
-    - device_tracker.watch
 ```
+
+![Map spark entity filter example](../../assets/page-assets/forge/sparks/map-entity-filter.png)
 
 Customise the trigger button text, size, color and icon styling:
 
@@ -373,6 +391,8 @@ element:
     - device_tracker.tablet
 ```
 
+![Map spark entity filter with style example](../../assets/page-assets/forge/sparks/map-entity-filter-style.png)
+
 Display entity filter grouped by domain with custom labels
 
 ```yaml
@@ -388,5 +408,10 @@ forge:
           zones: Places
 element:
   type: map
-  show_all: true
+  entities:
+    - zone.london
+    - device_tracker.phone
+    - device_tracker.tablet
 ```
+
+![Map spark entity filter with groups example](../../assets/page-assets/forge/sparks/map-entity-filter-groups.png)

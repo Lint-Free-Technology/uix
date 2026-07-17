@@ -1,0 +1,59 @@
+id: doc_forge_map_spark_tour_pois
+description: "Doc image: UIX Forge map spark tour with pois (map.md)"
+view_path: doc-forge-map-spark-tour-pois
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: tablet
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        tour:
+          period: 10s
+          icon_pause: mdi:pause-circle
+          icon_play: mdi:play-circle
+          icon_position:
+            bottom: 16px
+            left: 16px
+          poi:
+            - latitude: 51.614387 
+              longitude: -0.731585
+              zoom: 8
+            - entity: device_tracker.tablet
+              zoom: 14
+  element:
+    type: map
+    entities:
+      - device_tracker.phone
+      - device_tracker.tablet
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/map-tour-pois.mp4
+  root: uix-forge
+  padding: 16
+  interval_ms: 66
+  threshold: 1
+  segments:
+    - frames:  380  # ~20 s
