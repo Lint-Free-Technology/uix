@@ -1,0 +1,18 @@
+id: forge_spark_more_info_show_child_view
+description: "More-info spark handles show-child-view event and propagates it to ha-more-info-dialog"
+theme: uix-more-info-theme
+view_path: forge-spark-more-info-show-child-view
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: more-info
+        entity: vacuum.vacuum
+
+assertions:
+  - type: element_present
+    root:
+      - uix-forge-blank-card
+    selector: '[data-uix-forge-more-info-id] ha-more-info-info'
