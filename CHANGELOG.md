@@ -1,3 +1,10 @@
+## [7.7.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.1...v7.7.1-beta.2) (2026-07-19)
+
+### 🐞 Bug Fixes
+
+* **forge:** For more-info spark show any more-info child views in regular more-info dialog. ([#457](https://github.com/Lint-Free-Technology/uix/issues/457)) ([2be654f](https://github.com/Lint-Free-Technology/uix/commit/2be654fdf62a4a7cbe9c146bfa6b2224cb1b6557)), references [#456](https://github.com/Lint-Free-Technology/uix/issues/456)
+* **forge:** Map spark fit_map option may ont work on initial page load. ([6b7450c](https://github.com/Lint-Free-Technology/uix/commit/6b7450cc13d30285f741a045b30748edfd567ae0))
+
 ## [7.7.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0...v7.7.1-beta.1) (2026-07-17)
 
 ### 🐞 Bug Fixes
