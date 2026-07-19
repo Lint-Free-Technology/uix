@@ -3,6 +3,7 @@ import { ModdedElement, apply_uix } from "../../helpers/apply_uix";
 import { UixForgeSparkBase } from "./uix-spark-base";
 import type { UixForgeSparkController } from "./uix-spark-controller";
 import { selectTree } from "../../helpers/selecttree";
+import { hass_base_el } from "../../helpers/hass";
 
 // https://github.com/home-assistant/frontend/blob/7f04b0884b186e3d8ed26fcb04b3813efd12604b/src/components/ha-card.ts#L11
 const HA_CARD_CSS = `
@@ -128,6 +129,57 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   private info: boolean = true;
   private _wrapperElement: HTMLElement | null = null;
   private readonly _stopPropagation = (ev: Event) => ev.stopPropagation();
+  // Delay (in milliseconds) as a safe yield after dialog element presence is confirmed to ensure child components are fully mounted and their event listeners are bound.
+  private static readonly DIALOG_MOUNT_SAFE_DELAY_MS = 100;
+
+  private async _waitForMoreInfoDialog(base: any): Promise<HTMLElement | undefined> {
+    // Poll for the ha-more-info dialog and ha-adaptive-dialog to be present in the DOM, 
+    // with a timeout of 20 retries (1 second total).
+    let retries = 20;
+    while (retries > 0) {
+      const shadow = base.shadowRoot;
+      if (shadow) {
+        const innerDialog = shadow.querySelector("ha-more-info-dialog")?.shadowRoot?.querySelector("ha-adaptive-dialog");
+        if (innerDialog) {
+          return innerDialog;
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      retries--;
+    }
+    return undefined; // Return undefined if the dialog is not found within the timeout
+  }
+
+  private readonly _handleShowChildView = async (ev: Event) => {
+    ev.stopPropagation();
+    const customEv = ev as CustomEvent;
+    const detail = customEv.detail;
+
+    const base = await hass_base_el();
+
+    // Show more-info dialog for the entity
+    const event = new CustomEvent("hass-more-info", {
+      detail: { entityId: this.entity },
+      bubbles: true,
+      composed: true,
+    });
+    const target = this._wrapperElement || base;
+    target?.dispatchEvent(event);
+
+    // Wait until the dialog is ready
+    const dialog: any = await this._waitForMoreInfoDialog(base);
+    if (dialog) {
+      await dialog.updateComplete; // Wait for the dialog to finish updating
+
+      // Now fire the show-child-view event with the saved data on the dialog
+      const showChildViewEvent = new CustomEvent("show-child-view", {
+        detail: detail,
+        bubbles: true,
+        composed: true,
+      });
+      dialog.dispatchEvent(showChildViewEvent);
+    }
+  };
   // `undefined` means not loaded yet, `null` means the registry lookup failed
   // or found no entry, and an object is the loaded registry entry.
   private _entry: MoreInfoEntityRegistryEntry | null | undefined = undefined;
@@ -396,12 +448,14 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     wrapperEl.addEventListener("click", this._stopPropagation);
     wrapperEl.addEventListener("mousedown", this._stopPropagation);
     wrapperEl.addEventListener("touchstart", this._stopPropagation);
+    wrapperEl.addEventListener("show-child-view", this._handleShowChildView);
   }
 
   private _removeWrapperListeners(wrapperEl: HTMLElement): void {
     wrapperEl.removeEventListener("click", this._stopPropagation);
     wrapperEl.removeEventListener("mousedown", this._stopPropagation);
     wrapperEl.removeEventListener("touchstart", this._stopPropagation);
+    wrapperEl.removeEventListener("show-child-view", this._handleShowChildView);
   }
 
   private _updateDetails(wrapperEl: HTMLElement) {
