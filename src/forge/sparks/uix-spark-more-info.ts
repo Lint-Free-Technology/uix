@@ -132,25 +132,22 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   // Delay (in milliseconds) as a safe yield after dialog element presence is confirmed to ensure child components are fully mounted and their event listeners are bound.
   private static readonly DIALOG_MOUNT_SAFE_DELAY_MS = 100;
 
-  private async _waitForDialog(dialog: any): Promise<boolean> {
-    if (dialog.updateComplete) {
-      await dialog.updateComplete;
-    }
-
-    // Poll for the internal dialog wrapper (ha-adaptive-dialog or ha-dialog) to confirm mounting
+  private async _waitForMoreInfoDialog(base: any): Promise<HTMLElement | undefined> {
+    // Poll for the ha-more-info dialog and ha-adaptive-dialog to be present in the DOM, 
+    // with a timeout of 20 retries (1 second total).
     let retries = 20;
     while (retries > 0) {
-      const shadow = dialog.shadowRoot;
+      const shadow = base.shadowRoot;
       if (shadow) {
-        const innerDialog = shadow.querySelector("ha-adaptive-dialog") || shadow.querySelector("ha-dialog");
+        const innerDialog = shadow.querySelector("ha-more-info-dialog")?.shadowRoot?.querySelector("ha-adaptive-dialog");
         if (innerDialog) {
-          return true;
+          return innerDialog;
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 50));
       retries--;
     }
-    return false;
+    return undefined; // Return undefined if the dialog is not found within the timeout
   }
 
   private readonly _handleShowChildView = async (ev: Event) => {
@@ -170,12 +167,9 @@ export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
     target?.dispatchEvent(event);
 
     // Wait until the dialog is ready
-    const dialog = base?.shadowRoot?.querySelector("ha-more-info-dialog") as any;
+    const dialog: any = await this._waitForMoreInfoDialog(base);
     if (dialog) {
-      await this._waitForDialog(dialog);
-
-      // Safe yield to allow sub-components (such as vacuum controls) to fully register event handlers
-      await new Promise((resolve) => setTimeout(resolve, UixForgeSparkMoreInfo.DIALOG_MOUNT_SAFE_DELAY_MS));
+      await dialog.updateComplete; // Wait for the dialog to finish updating
 
       // Now fire the show-child-view event with the saved data on the dialog
       const showChildViewEvent = new CustomEvent("show-child-view", {
