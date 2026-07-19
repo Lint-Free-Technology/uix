@@ -9,10 +9,19 @@ card:
     mold: card
     sparks:
       - type: more-info
-        entity: vacuum.vacuum
+        entity: vacuum.demo_vacuum_0_ground_floor
+
+interactions:
+  - type: click
+    root: more-info-vacuum
+    selector: button.clean-areas-button
+    settle_ms: 500
 
 assertions:
   - type: element_present
-    root:
-      - uix-forge-blank-card
-    selector: '[data-uix-forge-more-info-id] ha-more-info-info'
+    root: ha-more-info-dialog
+    selector: ha-more-info-view-vacuum-clean-areas
+  - type: snapshot
+    name: 39_forge_spark_more_info_show_child_view.png
+    padding: 16
+    threshold: 0.02
