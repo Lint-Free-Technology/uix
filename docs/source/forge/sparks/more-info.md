@@ -9,6 +9,9 @@ The `more-info` spark inserts Home Assistant's `ha-more-info-info` element as a 
 
 It is most useful with [Blank card config](../forge.md#blank-card-config), where a Forge card has no `element` config and the spark uses the blank card content as its default insertion target.
 
+!!! note
+    When any action requires a child more-info view, for example Vacuum Clear Areas, a regular more-info dialog is opened at the child view. *Available in 7.7.1-beta.2*
+
 ## Basic usage
 
 ```yaml
