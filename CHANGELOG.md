@@ -1,3 +1,9 @@
+## [7.7.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.2...v7.7.1-beta.3) (2026-07-21)
+
+### 🐞 Bug Fixes
+
+* Correct fix for [#450](https://github.com/Lint-Free-Technology/uix/issues/450) to allow ha-card dom search upwards through custom card shadow root tree. ([ca0a958](https://github.com/Lint-Free-Technology/uix/commit/ca0a958561a27d1d19ca458ba520f4e834a3b1b6)), closes [#452](https://github.com/Lint-Free-Technology/uix/issues/452)
+
 ## [7.7.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.1...v7.7.1-beta.2) (2026-07-19)
 
 ### 🐞 Bug Fixes
