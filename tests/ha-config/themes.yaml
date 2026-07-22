@@ -257,3 +257,15 @@ uix-test-custom-card:
     b {
       color: orange;
     }
+
+uix-theme-css-vars-template:
+  uix-theme: uix-theme-css-vars-template
+
+  uix-drawer: |
+    :host {
+      {% set isDark = is_state('sun.sun','below_horizon') %}
+      --darkslateblue-if-dark: {{ 'darkslateblue' if isDark else 'red' }};
+      --slategrey-if-dark: {{ 'slategrey' if isDark else 'green' }};
+      --yellow-if-not-dark: {{ 'yellow' if not isDark else 'pink' }};
+      --orange-if-not-dark: {{ 'orange' if not isDark else 'purple' }};
+    }
