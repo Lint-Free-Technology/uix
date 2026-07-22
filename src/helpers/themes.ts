@@ -79,21 +79,22 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
 
       root.debug ||= !!debug;
 
-      root.debug && console.log("UIX Debug: Theme:", theme);
-
       const hs = await hass();
       if (!hs) return {};
       const themes = hs?.themes.themes ?? {};
       if (!themes[theme]) return {};
 
-      if (themes[theme][`uix-${root.type}-yaml`]) {
-        return yaml2json(themes[theme][`uix-${root.type}-yaml`]);
-      } else if (themes[theme][`card-mod-${root.type}-yaml`]) {
-        return yaml2json(themes[theme][`card-mod-${root.type}-yaml`]);
-      } else if (themes[theme][`uix-${root.type}`]) {
-        return { ".": themes[theme][`uix-${root.type}`] };
-      } else if (themes[theme][`card-mod-${root.type}`]) {
-        return { ".": themes[theme][`card-mod-${root.type}`] };
+      const uixTheme = themes[theme]['uix-theme'] || themes[theme]['card-mod-theme'] || theme;
+      root.debug && console.log("UIX Debug: Effective UIX Theme:", uixTheme);
+
+      if (themes[uixTheme][`uix-${root.type}-yaml`]) {
+        return yaml2json(themes[uixTheme][`uix-${root.type}-yaml`]);
+      } else if (themes[uixTheme][`card-mod-${root.type}-yaml`]) {
+        return yaml2json(themes[uixTheme][`card-mod-${root.type}-yaml`]);
+      } else if (themes[uixTheme][`uix-${root.type}`]) {
+        return { ".": themes[uixTheme][`uix-${root.type}`] };
+      } else if (themes[uixTheme][`card-mod-${root.type}`]) {
+        return { ".": themes[uixTheme][`card-mod-${root.type}`] };
       } else {
         return {};
       }
@@ -124,11 +125,13 @@ export async function get_theme_macros(root: Uix): Promise<Record<string, MacroC
       const themes = hs?.themes.themes ?? {};
       if (!themes[theme]) return {};
 
-      if (themes[theme]["uix-macros-yaml"]) {
+      const uixTheme = themes[theme]['uix-theme'] || themes[theme]['card-mod-theme'] || theme;
+
+      if (themes[uixTheme]["uix-macros-yaml"]) {
         try {
-          return await yaml2json(themes[theme]["uix-macros-yaml"]) ?? {};
+          return await yaml2json(themes[uixTheme]["uix-macros-yaml"]) ?? {};
         } catch (e) {
-          console.error("UIX: Error parsing uix-macros-yaml from theme:", theme, e);
+          console.error("UIX: Error parsing uix-macros-yaml from theme:", uixTheme, e);
           return {};
         }
       }

@@ -1,5 +1,5 @@
 id: local_theme_uix_styles
-description: "uix.theme switches UIX theme styling variables for one element while global theme differs"
+description: "uix.theme can use a Home Assistant theme that aliases its UIX styles to another theme"
 
 theme: uix-global-blue
 
@@ -11,7 +11,7 @@ card:
   entities:
     - light.bed_light
   uix:
-    theme: uix-local-orange
+    theme: uix-local-orange-alias
 
 assertions:
   - type: css_property
