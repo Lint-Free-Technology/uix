@@ -1,0 +1,49 @@
+id: doc_forge_map_spark_entity_filter_style
+description: "Doc image: UIX Forge map spark with entity filter with style (map.md)"
+view_path: doc-forge-map-spark-entity-filter-style
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: tablet
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        entity_filter:
+          label: "Trackers"
+          icon: "mdi:account-multiple"
+          size: "m"
+          variant: "brand"
+          appearance: "filled"
+  element:
+    type: map
+    entities:
+      - device_tracker.phone
+      - device_tracker.tablet
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/map-entity-filter-style.png
+  root: uix-forge
+  padding: 16
+  threshold: 0.02

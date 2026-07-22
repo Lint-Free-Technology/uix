@@ -11,7 +11,7 @@ UI eXtension also makes the following variables available for templates:
 - `user` - The name of the currently logged in user
 - `browser` - The `browser_id` of your browser, if you have [browser_mod](https://github.com/thomasloven/hass-browser_mod) installed
 - `hash` - Whatever comes after `#` in the current URL. UIX watches for location changes through `location-changed` and `popstate` events so templates will be rebound with the updated `hash` (this can be disabled in Integration Options → Performance settings via **Disable hash template variable and updates**, which also makes `hash` unavailable)
-- `panel` - various information about the panel in view, be it a lovelace dashboard or another panel view. `panel` is a dictionary containing the following panel attributes with example values shown.
+- `panel` - various information about the panel in view, be it a lovelace dashboard or another panel view. `panel` is a dictionary containing the following panel attributes with example values shown. 
   - `panel.fullUrlPath`: "uix/another-test-view"
   - `panel.panelComponentName`: "lovelace"
   - `panel.panelIcon`: "mdi:card-bulleted-outline"
@@ -22,6 +22,11 @@ UI eXtension also makes the following variables available for templates:
   - `panel.viewNarrow`: true
   - `panel.viewTitle`: "Test View"
   - `panel.viewUrlPath`: "another-test-view"
+  - `panel.globalTheme`: "Red theme"
+  - `panel.theme`: "Blue theme"
+
+!!! info "Panel theme variables"
+    `panel.theme` is set when the dashboard view has a theme set directly, otherwise is `None`. `panel.globalTheme` is the global Home Assistant theme currently applied. The effective UIX theme is not part of the `panel` dictionary. _This change made in 7.7.1-beta.4_
 
   You can debug UIX Jinja2 templates by placing the comment `{# uix.debug #}` anywhere in your template. You will see debug messages on template binding, value updated, reuse, unbinding and final unsubscribing. Any template is kept subscribed in cache for a 20s cooldown period to assist with template application, which can bring a slight speed improvement when switching back and forth to views, or using the same template on cards on different views.
 
@@ -282,4 +287,4 @@ In templates, billets are used as plain constants:
 
 When using [UIX Forge](../forge/index.md), billets defined under `forge.billets` are available in all forge templates **and** in any `uix:` style on the forge card or the forged element. Forge billets are merged with any billets defined directly in the `uix:` config, with the local `uix:` billets taking precedence.
 
-See [UIX Forge — Billets](../forge/index.md#billets) for the full reference including supported types and foundry override behaviour.
+See [UIX Forge — Billets](../forge/forge.md#billets) for the full reference including supported types and foundry override behaviour.

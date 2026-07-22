@@ -128,6 +128,16 @@ uix-local-orange:
     ha-card {
       background-color: rgb(255, 122, 0) !important;
     }
+  uix-more-info: |
+    ha-more-info-info {
+      --uix-test-more-info-theme: applied;
+    }
+
+uix-local-orange-alias:
+  # Use this theme's Home Assistant variables while keeping UIX styles in
+  # uix-local-orange.
+  uix-theme: uix-local-orange
+  primary-color: "#ff7a00"
 
 uix-global-green:
   uix-theme: uix-global-green
@@ -240,3 +250,10 @@ uix-forge-spark-more-info-details-padding:
       div.content {
         padding: 0 var(--ha-space-3) var(--ha-space-3);
       }
+
+uix-test-custom-card:
+  uix-theme: uix-test-custom-card
+  uix-card: |
+    b {
+      color: orange;
+    }

@@ -58,7 +58,7 @@ The process is recursive, so the value may also be a dictionary. A key of `.` (a
           }
     ```
 
-    ![DOM-navigation](../assets/page-assets/concepts/dom-2.png){: width="400"}
+    ![DOM-navigation](../assets/page-assets/concepts/concepts-markdown.png)
 
 The selector chain of the queue will look for one element at a time separated by spaces or `$`. For each step, only the first match will be selected. But for the final selector of the chain (i.e. in a given dictionary key) **all** matching elements will be selected.
 

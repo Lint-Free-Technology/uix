@@ -15,9 +15,6 @@ All dialogs for code/passphrase input, confirmation and feedback use native Home
 
 ## Basic usage
 
-!!! example inline end "Basic usage"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-1.gif)
-
 Basic examples includes admins in lock config considering that admins will be implementing lock spark. Remove `admins: true` if lock will be bypassed for admins.
 
 ```yaml
@@ -34,19 +31,21 @@ element:
   entity: light.bed_light
 ```
 
+??? example "Basic usage animation"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-basic.gif)
+
 ---
 
 ## Targeting specific elements with `for`
 
-!!! example inline end "Targeting example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-example-2.gif)
-
 Like other sparks, `for` accepts the same [DOM navigation syntax](../../concepts/dom.md) as UIX styles, including `$` to cross shadow-root boundaries.
 
-Here an entities row is the target for the lock. `action` is hold.
+Here an entities row is the target for the lock.
 
 ```yaml
 type: entities
+grid_options:
+  columns: 6
 entities:
   - type: custom:uix-forge
     forge:
@@ -54,13 +53,15 @@ entities:
       sparks:
         - type: lock
           for: $ hui-generic-entity-row
-          action: hold
           locks:
             - code: 1234
               admins: true
     element:
       entity: light.bed_light
 ```
+
+??? example "Targeting example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-for.gif)
 
 !!! warning
     As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements which are displayed inline. This means that lock spark can only apply to an entire entity row.
@@ -345,11 +346,10 @@ The lock overlay respects a set of CSS custom properties. Set these on the forge
 
 Using UIX Styling to apply a locked background, unlocked background and reduced opacity. A locked icon is also used in this example.
 
-!!! example inline end "Styling example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example.gif)
-
 ```yaml
 type: entities
+grid_options:
+  columns: 6
 entities:
   - type: custom:uix-forge
     forge:
@@ -375,12 +375,12 @@ entities:
       entity: light.bed_light
 ```
 
+??? example "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-styling.gif)
+
 #### Locked icon when target is a tile icon
 
 Using UIX Styling to apply lock icon background. Here the lock is applied to a tile icon and UIX Styling used to make lock appear like a tile badge.
-
-!!! example inline end "Styling example"
-    ![Example output](../../assets/page-assets/forge/sparks/lock-spark-styling-example-2.gif)
 
 ```yaml
 type: custom:uix-forge
@@ -406,6 +406,9 @@ element:
   type: tile
   entity: light.bed_light
 ```
+
+??? example "Styling example"
+    ![Example output](../../assets/page-assets/forge/sparks/lock-styling-tile-badge.gif)
 
 ---
 

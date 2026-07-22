@@ -40,3 +40,10 @@ light:
       - light.living_room_rgbww_lights
       - light.office_rgbw_lights
       - light.entrance_color_white_lights
+
+zone:
+  - name: London
+    latitude: 51.5200
+    longitude: -0.1300
+    radius: 1000
+    passive: false

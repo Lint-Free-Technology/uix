@@ -26,3 +26,6 @@
 - repo: MelleD/lovelace-expander-card
   asset: expander-card.js
   filename: expander-card.js
+
+- local_path: ./test-custom-card/my-awesome-card.js
+  filename: my-awesome-card.js

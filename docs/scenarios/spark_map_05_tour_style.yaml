@@ -1,0 +1,53 @@
+id: doc_forge_map_spark_tour_style
+description: "Doc image: UIX Forge map spark tour with styled button (map.md)"
+view_path: doc-forge-map-spark-tour-style
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: tablet
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+  - type: wait
+    ms: 2500
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        tour: true
+  element:
+    type: map
+    entities:
+      - device_tracker.phone
+      - device_tracker.tablet
+    uix:
+      style: |
+        ha-card {
+          --uix-map-tour-icon-color: white;
+          --uix-map-tour-icon-background: rgba(255,0,0,0.5);
+          --uix-map-tour-icon-border-radius: 4px;
+        }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/map-tour-style.png
+  root: uix-forge
+  padding: 16
+  threshold: 0.02

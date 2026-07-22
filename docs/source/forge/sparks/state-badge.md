@@ -38,6 +38,8 @@ entities:
       entity: light.bed_light
 ```
 
+![State-badge spark basic example](../../assets/page-assets/forge/sparks/state-badge-basic.png)
+
 ## Configuration
 
 | Key | Type | Required | Default | Description |
@@ -77,6 +79,8 @@ entities:
           entity: light.bed_light
     ```
 
+    ![State-badge spark after example](../../assets/page-assets/forge/sparks/state-badge-after.png)
+
 ??? example "Insert a state badge with a fixed color"
     ```yaml
     type: entities
@@ -92,6 +96,8 @@ entities:
         element:
           entity: light.bed_light
     ```
+
+    ![State-badge spark fixed color example](../../assets/page-assets/forge/sparks/state-badge-fixed-color.png)
 
 ??? example "Insert a badge with an override icon and no state coloring"
     ```yaml
@@ -110,6 +116,8 @@ entities:
           entity: light.bed_light
     ```
 
+    ![State-badge spark icon example](../../assets/page-assets/forge/sparks/state-badge-icon.png)
+
 ??? example "Insert a badge with an image override"
     ```yaml
     type: entities
@@ -124,6 +132,8 @@ entities:
         element:
           entity: light.bed_light
     ```
+
+    ![State-badge spark image example](../../assets/page-assets/forge/sparks/state-badge-image.png)
 
 ??? example "Adding a tooltip spark to the added state-badge"
     The tooltip spark will retry attaching the tooltip so will find the added state badge on retry
@@ -147,3 +157,5 @@ entities:
         element:
           entity: light.bed_light
     ```
+
+    ![State-badge spark tooltip example](../../assets/page-assets/forge/sparks/state-badge-tooltip.gif)

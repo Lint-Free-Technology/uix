@@ -1,0 +1,32 @@
+id: forge_spark_map_fit_map
+description: "UIX Forge map spark with auto-entities and fit_map"
+view_path: doc-forge-spark-map-auto-entities
+
+card:
+  type: custom:auto-entities
+  entities:
+    - zone.london
+  filter:
+    include: []
+    exclude: []
+  card:
+    type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: map
+          fit_map: true
+    element:
+      type: map
+      fit_zones: true
+      uix:
+        style: |
+          :host {
+            display: block;
+            height: 400px;
+          }
+
+assertions:
+  - type: snapshot
+    name: "38_forge_spark_map_fit_map"
+    threshold: 0.02

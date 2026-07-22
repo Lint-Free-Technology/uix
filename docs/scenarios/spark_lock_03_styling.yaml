@@ -1,0 +1,99 @@
+id: doc_spark_lock_styling
+description: "Doc image: Forge lock spark with styling (lock.md)"
+view_path: doc-spark-lock-styling
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: entities
+  grid_options:
+    columns: 6
+  entities:
+    - type: custom:uix-forge
+      state_color: true
+      forge:
+        mold: row
+        sparks:
+          - type: lock
+            for: $ hui-generic-entity-row
+            duration: 5000
+            permissive: true
+            locks:
+              - code: 1234
+                admins: true
+        uix:
+          style: |
+            hui-toggle-entity-row {
+              --uix-lock-background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='red' fill-opacity='.18' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(200,0,0,0.08);
+              --uix-lock-background-unlocked: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='green' fill-opacity='.08' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(0,200,0,0.04);
+              --uix-lock-opacity: 1;
+              --uix-lock-border-radius: 8px;          
+            }
+      element:
+        entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/lock-styling.gif
+  root: hui-entities-card
+  padding: 16 50 550 50
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: uix-forge
+          selector: hui-toggle-entity-row
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: uix-forge
+          selector: hui-toggle-entity-row
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: wa-input
+          selector: "#input"
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: input_text
+          root: wa-input
+          selector: "#input"
+          text: "1234"
+          settle_ms: 50
+      frames: 14  # ~1 s
+    - interactions:
+        - type: hover
+          root: dialog-enter-code
+          selector: ha-control-button.submit
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: dialog-enter-code
+          selector: ha-control-button.submit
+          settle_ms: 50
+      click_circle: true
+      frames: 3   # ~0.2 s
+    - interactions:
+        - type: hover_away
+      frames: 32  # ~3 s
+    

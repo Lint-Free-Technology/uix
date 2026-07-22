@@ -1,0 +1,33 @@
+id: doc_forge_spark_map_auto_entities_no_spark
+description: "Doc image: UIX Forge map spark with auto-entities without map spark (map.md)"
+view_path: doc-forge-spark-map-auto-entities-no-spark
+
+card:
+  type: custom:auto-entities
+  entities:
+    - zone.london
+  filter:
+    include: []
+    exclude: []
+  card:
+    type: custom:uix-forge
+    forge:
+      mold: card
+    element:
+      type: map
+      fit_zones: true
+      uix:
+        style: |
+          :host {
+            display: block;
+            height: 400px;
+          }
+
+
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/map-auto-entities-no-spark.png
+  root: uix-forge
+  padding: 16

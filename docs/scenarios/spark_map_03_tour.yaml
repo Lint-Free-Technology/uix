@@ -1,0 +1,47 @@
+id: doc_forge_map_spark_tour
+description: "Doc image: UIX Forge map spark tour (map.md)"
+view_path: doc-forge-map-spark-tour
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: tablet
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        tour: true
+  element:
+    type: map
+    entities:
+      - device_tracker.phone
+      - device_tracker.tablet
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/map-tour.mp4
+  root: uix-forge
+  padding: 16
+  interval_ms: 66
+  threshold: 1
+  segments:
+    - frames:  380  # ~20 s

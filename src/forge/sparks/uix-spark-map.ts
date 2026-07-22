@@ -98,6 +98,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   // ── Fit-map mode ──────────────────────────────────────────────────────────
   private _fitMap: boolean = false;
+  private _fitMapGen: number = 0;
   private _fitMapAbort?: { cancelled: boolean };
   private _fitMapRunOnce: boolean = false;
 
@@ -393,7 +394,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
       const doFitMap = async () => {
         if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
-        const haMap = this._getHaMap();
+        const fitMapGen = this._fitMapGen = this._callGeneration;
+        const haMap = await this._waitForMapToBeReady(gen, () => fitMapGen === this._fitMapGen);
         if (haMap) {
           let tries = 0;
           while ((haMap.clientWidth === 0 || !haMap.leafletMap || !haMap.Leaflet) && tries < 20) {

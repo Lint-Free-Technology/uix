@@ -1,0 +1,29 @@
+id: doc_quick_start_basic
+description: "Doc image: UIX applied to tile card (quick-start.md)"
+view_path: doc-quick-start-basic
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+card:
+  type: tile
+  entity: light.bed_light
+  uix:
+    style: |
+      ha-card {
+        background: red;
+      }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/quick-start/quick-start-basic.png
+  root: hui-tile-card
+  padding: 16
+  threshold: 0.02

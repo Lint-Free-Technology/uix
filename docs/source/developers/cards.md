@@ -112,5 +112,4 @@ UIX Test:
   dark:
 ```
 
-![Output](../assets/page-assets/developers/developers-1-light.png#only-light){: width="500"}
-![Output](../assets/page-assets/developers/developers-1-dark.png#only-dark){: width="500"}
+![Output](../assets/page-assets/developers/custom-card.png)

@@ -9,6 +9,9 @@ The `more-info` spark inserts Home Assistant's `ha-more-info-info` element as a 
 
 It is most useful with [Blank card config](../forge.md#blank-card-config), where a Forge card has no `element` config and the spark uses the blank card content as its default insertion target.
 
+!!! note
+    When any action requires a child more-info view, for example Vacuum Clear Areas, a regular more-info dialog is opened at the child view. *Available in 7.7.1-beta.2*
+
 ## Basic usage
 
 ```yaml
@@ -66,7 +69,7 @@ forge:
 
 The spark applies UIX `more-info` styling to the wrapper containing `ha-more-info-info`, so theme-level `uix-more-info-yaml` paths can target the embedded content the same way they target the more-info dialog.
 
-This example sets the current and forecast high temps text color to red and makes the forecast day labels bold. `ha-more-info-info $$ more-info-weather $` [express search selector](../../concepts/dom.md#express-search-selector-) condenses `ha-more-info-info $ more-info-content $ more-info-weather $`.
+This example sets the current and forecast high temps text color to red and makes the forecast day labels bold. `ha-more-info-info $$ more-info-weather $` [express search selector](../../concepts/dom.md#express-search-selector) condenses `ha-more-info-info $ more-info-content $ more-info-weather $`.
 
 ```yaml
 my-theme:
@@ -152,9 +155,6 @@ my-theme:
 ```
 
 ![Forge spark more-info details padding example](../../assets/page-assets/forge/sparks/more-info-theme-details.png)
-
-!!! tip
-    If you wish to style using `uix-card-yaml` use the [uix_style_path()](../../concepts/dom.md#uix_style_path0--specific-helper) helper to find the correct UIX style path.
 
 ## Using with standard cards
 

@@ -15,7 +15,7 @@ There are two special reserved foundry names which, if defined, are automaticall
 
 These are useful for defining a consistent base set of macros, sparks, or default styles without needing to add `foundry: my_base_foundry` to every element.
 
-See [Example - Global foundry using macro](#example---global-foundry-using-macro) for an example of a global foundry in use.
+See [Example Global foundry using macro](#example-global-foundry-using-macro) for an example of a global foundry in use.
 
 ## Managing foundries
 
@@ -88,7 +88,7 @@ uix_foundries:
 ```
 
 !!! warning "YAML merge keys are shallow"
-    YAML merge keys (`<<: *anchor`) perform a **shallow** merge — they only copy top-level keys. This means they are not suitable for sharing a common `forge` + `element` base across multiple foundries, because merging at the foundry root level would replace the entire `element` object rather than merging its contents. Use [foundry nesting](foundries.md#foundry-nesting) instead, which performs a deep recursive merge.
+    YAML merge keys (`<<: *anchor`) perform a **shallow** merge — they only copy top-level keys. This means they are not suitable for sharing a common `forge` + `element` base across multiple foundries, because merging at the foundry root level would replace the entire `element` object rather than merging its contents. Use [nested foundries](foundries.md#nested-foundries) instead, which performs a deep recursive merge.
 
 #### Registering a file
 
@@ -343,7 +343,7 @@ The resolved config merges all three layers: `base_tile` → `light_tile` → fo
 
 ## Billets in foundries
 
-[Billets](../forge/index.md#billets) are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
+[Billets](../forge/forge.md#billets) are a good fit for foundries because they act as named slots that individual forge instances can fill or override without touching the foundry templates.
 
 There are two complementary patterns:
 
@@ -484,7 +484,7 @@ element:
 
 ![Foundry UIX styling](../assets/page-assets/forge/foundries-uix-styling.png)
 
-## Example - Global foundry using macro
+## Example Global foundry using macro
 
 !!! tip
     If you need to use a macro as a boolean it needs to use the `returns` format. Otherwise the macro will return a string and you will get unexpected results.

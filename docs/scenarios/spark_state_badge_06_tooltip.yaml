@@ -1,0 +1,61 @@
+id: doc_spark_state_badge_tooltip
+description: "Doc image: state-badge spark with tooltip (state-badge.md)"
+view_path: doc-spark-state-badge-tooltip
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.ceiling_lights
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: entities
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: tooltip
+            for: >-
+              $ hui-generic-entity-row $
+              state-badge[data-uix-forge-state-badge-id]
+            content: Ceiling lights badge
+          - type: state-badge
+            after: $ hui-generic-entity-row $ state-badge
+            entity: light.ceiling_lights
+            override_icon: mdi:star
+            state_color: false
+      element:
+        entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/state-badge-tooltip.gif
+  root: hui-entities-card
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 7   # ~0.5 s with entity on
+    - interactions:
+        - type: hover
+          root: hui-generic-entity-row
+          selector: state-badge[data-uix-forge-state-badge-id]
+          settle_ms: 0
+      frames: 22   # ~1.5 s with entity off
+      cursor: pointer
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s with entity on
+      cursor: none

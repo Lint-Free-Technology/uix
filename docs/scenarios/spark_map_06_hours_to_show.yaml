@@ -1,0 +1,51 @@
+id: doc_forge_map_spark_hours_to_show
+description: "Doc image: UIX Forge map spark tour showing hours (map.md)"
+view_path: doc-forge-map-spark-hours-to-show
+
+setup:
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.5074
+        - -0.1278
+      gps_accuracy: 1
+  - type: ha_service
+    domain: device_tracker
+    service: see
+    data:
+      dev_id: phone
+      gps:
+        - 51.752985
+        - -1.257988
+      gps_accuracy: 1
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: map
+        hours_to_show:
+          min: 1
+          max: 48
+          step: 2
+          position:
+            bottom: 15px
+            left: 15px
+  element:
+    type: map
+    hours_to_show: 3
+    default_zoom: 8
+    entities:
+      - device_tracker.phone
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/map-hours-to-show.png
+  root: uix-forge
+  padding: 16
+  threshold: 0.02

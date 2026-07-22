@@ -1,0 +1,95 @@
+id: doc_spark_lock_styling_tile_badge
+description: "Doc image: Forge lock spark with styling on tile badge (lock.md)"
+view_path: doc-spark-lock-styling-tile-badge
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: lock
+        for: hui-tile-card $ ha-tile-icon
+        icon_unlocked: mdi:lock-open-outline
+        duration: 5s
+        locks:
+          - code: 1234
+            admins: true
+    uix:
+      style: |
+        :host {
+          --uix-lock-opacity: 1;
+          --uix-lock-icon-color: white;
+          --uix-lock-icon-background: red;
+          --uix-lock-icon-background-unlocked: green;
+        }
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/lock-styling-tile-badge.gif
+  root: uix-forge
+  padding: 16 50 550 50
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: hover
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: hui-tile-card
+          selector: ha-tile-icon
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: wa-input
+          selector: "#input"
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+    - interactions:
+        - type: hover_away
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: input_text
+          root: wa-input
+          selector: "#input"
+          text: "1234"
+          settle_ms: 50
+      frames: 14  # ~1 s
+    - interactions:
+        - type: hover
+          root: dialog-enter-code
+          selector: ha-control-button.submit
+          settle_ms: 100
+      frames: 7   # ~0.5 s
+    - interactions:
+        - type: click
+          root: dialog-enter-code
+          selector: ha-control-button.submit
+          settle_ms: 50
+      click_circle: true
+      frames: 3   # ~0.2 s
+    - interactions:
+        - type: hover_away
+      frames: 32  # ~3 s
+    

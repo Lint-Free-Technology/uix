@@ -45,3 +45,17 @@ my-awesome-theme:
   uix-card-type-energy-sankey-debug: true # Debug card which has uix class 'type-energy-sankey'
   uix-badge-my-class-debug: true # Debug badges which have my-class set by uix config
 ```
+
+!!! warning "Set theme variables in Home Assistant theme"
+    Theme debug variables are set in the Home Assistant theme which is in context, either global or applied locally via dashboard view or card (where supported). Theme debug variables are **NOT** read from `uix-theme` theme. So if these are different, make sure to set theme debug variables on the Home Assistant theme in context.
+
+    ```yaml
+    theme-mods:
+      ... UIX theme variables, styles, macros go here ...
+    
+    my-awesome-theme:
+      uix-card-type-energy-sankey-debug: true # Debug card which has uix class 'type-energy-sankey'
+      uix-badge-my-class-debug: true # Debug badges which have my-class set by uix config
+
+      uix-theme: theme-mods
+    ```
