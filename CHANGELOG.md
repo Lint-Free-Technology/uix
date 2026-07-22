@@ -1,31 +1,16 @@
-## [7.7.1-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.3...v7.7.1-beta.4) (2026-07-22)
+## [7.7.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0...v7.7.1) (2026-07-22)
 
 ### 🐞 Bug Fixes
 
+* Correct fix for [#450](https://github.com/Lint-Free-Technology/uix/issues/450) to allow ha-card dom search upwards through custom card shadow root tree. ([ca0a958](https://github.com/Lint-Free-Technology/uix/commit/ca0a958561a27d1d19ca458ba520f4e834a3b1b6)), closes [#452](https://github.com/Lint-Free-Technology/uix/issues/452)
+* **forge:** For more-info spark show any more-info child views in regular more-info dialog. ([#457](https://github.com/Lint-Free-Technology/uix/issues/457)) ([2be654f](https://github.com/Lint-Free-Technology/uix/commit/2be654fdf62a4a7cbe9c146bfa6b2224cb1b6557)), references [#456](https://github.com/Lint-Free-Technology/uix/issues/456)
+* **forge:** Map spark fit_map option may ont work on initial page load. ([6b7450c](https://github.com/Lint-Free-Technology/uix/commit/6b7450cc13d30285f741a045b30748edfd567ae0))
+* ha-card in element may incorrectly get type and styling of ancestor element ([cc5a285](https://github.com/Lint-Free-Technology/uix/commit/cc5a28525487b723b534d572f68440fd078f2e6a)), references [#450](https://github.com/Lint-Free-Technology/uix/issues/450)
 * When using `theme:` config resolve correctly to `uix-theme` when it defined but different from Home Assistant theme applied. ([#463](https://github.com/Lint-Free-Technology/uix/issues/463)) ([01e88a3](https://github.com/Lint-Free-Technology/uix/commit/01e88a350b870544596b0971116d5506ad870b63)), closes [#462](https://github.com/Lint-Free-Technology/uix/issues/462)
 
 ### ⚙️ Miscellaneous
 
 * Update panel.theme to be defined only when a view theme is defined. Add panel.globalTheme ([#465](https://github.com/Lint-Free-Technology/uix/issues/465)) ([2825ea0](https://github.com/Lint-Free-Technology/uix/commit/2825ea0a68d26c6b2c44cb2419427d49360ae840)), closes [#464](https://github.com/Lint-Free-Technology/uix/issues/464)
-
-## [7.7.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.2...v7.7.1-beta.3) (2026-07-21)
-
-### 🐞 Bug Fixes
-
-* Correct fix for [#450](https://github.com/Lint-Free-Technology/uix/issues/450) to allow ha-card dom search upwards through custom card shadow root tree. ([ca0a958](https://github.com/Lint-Free-Technology/uix/commit/ca0a958561a27d1d19ca458ba520f4e834a3b1b6)), closes [#452](https://github.com/Lint-Free-Technology/uix/issues/452)
-
-## [7.7.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.1...v7.7.1-beta.2) (2026-07-19)
-
-### 🐞 Bug Fixes
-
-* **forge:** For more-info spark show any more-info child views in regular more-info dialog. ([#457](https://github.com/Lint-Free-Technology/uix/issues/457)) ([2be654f](https://github.com/Lint-Free-Technology/uix/commit/2be654fdf62a4a7cbe9c146bfa6b2224cb1b6557)), references [#456](https://github.com/Lint-Free-Technology/uix/issues/456)
-* **forge:** Map spark fit_map option may ont work on initial page load. ([6b7450c](https://github.com/Lint-Free-Technology/uix/commit/6b7450cc13d30285f741a045b30748edfd567ae0))
-
-## [7.7.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0...v7.7.1-beta.1) (2026-07-17)
-
-### 🐞 Bug Fixes
-
-* ha-card in element may incorrectly get type and styling of ancestor element ([cc5a285](https://github.com/Lint-Free-Technology/uix/commit/cc5a28525487b723b534d572f68440fd078f2e6a)), references [#450](https://github.com/Lint-Free-Technology/uix/issues/450)
 
 ## [7.7.0](https://github.com/Lint-Free-Technology/uix/compare/v7.6.2...v7.7.0) (2026-07-14)
 

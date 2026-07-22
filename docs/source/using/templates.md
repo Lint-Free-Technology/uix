@@ -26,7 +26,7 @@ UI eXtension also makes the following variables available for templates:
   - `panel.theme`: "Blue theme"
 
 !!! info "Panel theme variables"
-    `panel.theme` is set when the dashboard view has a theme set directly, otherwise is `None`. `panel.globalTheme` is the global Home Assistant theme currently applied. The effective UIX theme is not part of the `panel` dictionary. _This change made in 7.7.1-beta.4_
+    `panel.theme` is set when the dashboard view has a theme set directly, otherwise is `None`. `panel.globalTheme` is the global Home Assistant theme currently applied. The effective UIX theme is not part of the `panel` dictionary.
 
   You can debug UIX Jinja2 templates by placing the comment `{# uix.debug #}` anywhere in your template. You will see debug messages on template binding, value updated, reuse, unbinding and final unsubscribing. Any template is kept subscribed in cache for a 20s cooldown period to assist with template application, which can bring a slight speed improvement when switching back and forth to views, or using the same template on cards on different views.
 
