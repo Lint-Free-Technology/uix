@@ -1,3 +1,9 @@
+## [7.8.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1...v7.8.0-beta.1) (2026-07-22)
+
+### ⭐ New Features
+
+* **forge:** Allow templates to be ignored by UIX Forge and included in element config unchanged using `{# uix-forge.ignore #}`. ([#466](https://github.com/Lint-Free-Technology/uix/issues/466)) ([2e4a1d1](https://github.com/Lint-Free-Technology/uix/commit/2e4a1d13cab2e1291b9b05d200c152ddcd25c515)), closes [#455](https://github.com/Lint-Free-Technology/uix/issues/455)
+
 ## [7.7.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.0...v7.7.1) (2026-07-22)
 
 ### 🐞 Bug Fixes
