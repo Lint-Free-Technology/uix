@@ -31,19 +31,35 @@ red-theme:
 ## Basic UIX theme
 
 !!! info "Theme variable"
-    The theme MUST define a variable `uix-theme` which MUST have the same value as the name of the theme. For example:
+    The theme MUST define a `uix-theme` variable whose value selects the theme
+    definition UIX uses for UIX styles and macros. `uix-theme` normally matches the Home
+    Assistant theme name, but may point to another theme when you want to reuse
+    its UIX configuration.
+
+    `uix-theme` matching Home Assistant theme.
+    
     ```yaml
     my-awesome-theme:
       uix-theme: my-awesome-theme
 
-      ... other theme variables go here ...
+      ... UIX theme variables, styles, macros go here ...
+    ```
+
+    `uix-theme` pointing to another theme.
+
+    ```yaml
+    theme-mods:
+      ... UIX theme variables, styles, macros go here ...
+    
+    my-awesome-theme:
+      uix-theme: theme-mods
     ```
 
 `/config/themes/red.yaml`
 
 ```yaml
 red-theme:
-  uix-theme: red-theme # this variable must match the theme name including case
+  uix-theme: red-theme # this variable must match a valid Home Assistant theme name including case
 
   primary-color: red
   primary-text-color: white
@@ -226,7 +242,7 @@ As you develop your UIX themes you are likely to come to a point where you start
 
 ```yaml
 red-theme:
-  uix-theme: red-theme # this variable must match the theme name including case
+  uix-theme: red-theme # this variable must match a valid Home Assistant theme name including case
 
   primary-color: red
   ha-card-border-radius: 20px

@@ -129,6 +129,12 @@ uix-local-orange:
       background-color: rgb(255, 122, 0) !important;
     }
 
+uix-local-orange-alias:
+  # Use this theme's Home Assistant variables while keeping UIX styles in
+  # uix-local-orange.
+  uix-theme: uix-local-orange
+  primary-color: "#ff7a00"
+
 uix-global-green:
   uix-theme: uix-global-green
   primary-color: "#00aa00"
