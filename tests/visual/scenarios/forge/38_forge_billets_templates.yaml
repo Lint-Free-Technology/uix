@@ -1,0 +1,52 @@
+id: forge_billets_templates
+description: "UIX Forge having templates renders hui-error-card with error message"
+view_path: forge-billets-templates
+
+cards:
+  - type: "custom:uix-forge"
+    forge:
+      mold: card
+      billets:
+        test: |
+          {{ "Hello World" }}
+  - type: "custom:uix-forge"
+    forge:
+      mold: card
+      billets:
+        test: |
+          {% set x = "Hello World" %}
+  - type: "custom:uix-forge"
+    forge:
+      mold: card
+      billets:
+        test: |
+          {# Hello World #}
+
+assertions:
+  - type: element_present
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(1) hui-card hui-error-card
+  - type: element_present
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(2) hui-card hui-error-card
+  - type: element_present
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(3) hui-card hui-error-card
+  - type: object_property_text_starts_with
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(1) hui-card hui-error-card
+    property: _config.message
+    expected: "UIX: Billet \"test\" contains {{ / }} or {% / %} or {# / #} which is Jinja2 template syntax. Billets in UIX Forge do not support templates — use a macro instead."
+  - type: object_property_text_starts_with
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(2) hui-card hui-error-card
+    property: _config.message
+    expected: "UIX: Billet \"test\" contains {{ / }} or {% / %} or {# / #} which is Jinja2 template syntax. Billets in UIX Forge do not support templates — use a macro instead."
+  - type: object_property_text_starts_with
+    root: hui-grid-section
+    selector: ha-sortable div.container div.card:nth-of-type(3) hui-card hui-error-card
+    property: _config.message
+    expected: "UIX: Billet \"test\" contains {{ / }} or {% / %} or {# / #} which is Jinja2 template syntax. Billets in UIX Forge do not support templates — use a macro instead."
+  - type: snapshot
+    name: "40_forge_billets_templates"
+    threshold: 0.02

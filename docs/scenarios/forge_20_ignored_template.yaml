@@ -1,0 +1,31 @@
+id: doc_forge_ignored_templates
+description: "UIX Forge with ignored template"
+view_path: doc-forge-ignored-templates
+
+cards:
+  # forged markdown card where `content` templates is rendered by UIX Forge where `config.entity` is valid
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        **config.entity**: {{ config.entity | default('light.ceiling_lights') }}
+
+  # forged markdown card where `content` template is ignored by UIX Forge
+  # config.entity does not exist for markdown card and will get default text
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        {# uix-forge.ignore #}
+        **config.entity**: {{ config.entity | default('light.ceiling_lights') }}
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/ignored-template.png
+  root: hui-grid-section
+  padding: 16
