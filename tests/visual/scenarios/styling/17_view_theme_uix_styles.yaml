@@ -1,0 +1,30 @@
+id: view_theme_uix_styles
+description: "View styles uix theme is resolved when view set to theme via alias"
+
+theme: uix-global-blue
+
+view_path: view-theme-uix-styles
+
+dashboard:
+  views:
+    - type: sections
+      sections:
+        - type: grid
+          cards:
+            - type: tile
+              entity: light.bed_light
+      theme: uix-local-orange-alias
+      title: Themed View
+      path: view-theme-uix-styles
+
+assertions:
+  - type: css_property
+    root: "hui-tile-card"
+    selector: "ha-card"
+    property: "backgroundColor"
+    expected: "rgb(255, 122, 0)"
+  - type: object_property_text_equals
+    root: "hui-tile-card"
+    selector: "uix-node"
+    property: "theme"
+    expected: "undefined"
