@@ -16,7 +16,8 @@ import {
   UixForgeConfigPath, 
   UixMacroConfig, 
   UIX_FORGE_ARRAY_MERGE_STRATEGIES, 
-  UIX_FORGE_MOLDS_WITH_BLANKS } from "./uix-forge-types";
+  UIX_FORGE_MOLDS_WITH_BLANKS, 
+  ignoreTemplate} from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -664,6 +665,10 @@ export class UixForge extends LitElement {
           if (binding) {
             unbind_template(binding.callback);
           }
+        }
+        if (ignoreTemplate(current[k])) {
+          base.nested = { keys: currentPath, value: current[k] };
+          continue;
         }
         const template = this._replaceNestedTemplateDelimiters(current[k]);
         const macroStr = buildMacros(this._macros, template);

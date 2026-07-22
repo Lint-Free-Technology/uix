@@ -208,7 +208,10 @@ element:
 
 ### Billets
 
-Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below. Billets cannot contain Jinja2 templates themselves, except inside nested `uix` objects where the template is rendered by UIX Styling and not UIX Forge.
+Billets are named YAML values defined under `forge.billets`. They are available as template constants in all forge templates **and** in any `uix:` style on the forge card or the forged element, and can be used **without parentheses**, unlike macros. Billet string values may reference other billets via `{name}` substitution — see [Billet interpolation](#billet-interpolation) below.
+
+!!! warning
+    Billets cannot contain Jinja2 templates themselves, except inside nested `uix` objects where the template is rendered by UIX Styling and not UIX Forge.
 
 ```yaml
 type: custom:uix-forge
@@ -299,9 +302,51 @@ Billets follow the same override behaviour as macros: a foundry can define bille
 
 See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on defining empty billet slots in a foundry and handling the `none` case in templates.
 
+### Ignoring templates in element config
+
+`{# uix-forge.ignore #}`
+
+If you need to pass through a whole template unchanged to the forged element, you can have UIX Forge ignore the template altogether. Use this when the forged element accepts templates as part of config and template nesting is not required.
+
+Templates are ignored by UIX Forge when they include `{# uix-forge.ignore #}`.
+
+Example markdown cards showing use of `{# uix-forge.ignore #}`. 
+
+```yaml
+cards:
+  # forged markdown card where `content` templates is rendered by UIX Forge where `config.entity` is valid
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        **config.entity:** {{ config.entity | default('light.ceiling_lights') }}
+
+  # forged markdown card where `content` template is ignored by UIX Forge
+  # config.entity does not exist for markdown card and will get default text
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        {# uix-forge.ignore #}
+        **config.entity:** {{ config.entity | default('light.ceiling_lights') }}
+```
+
+![Markdown card with ignored template example](../assets/page-assets/forge/ignored-template.png)
+
+When you need for a template to include both local forge or element template and a template for the card itself template nesting needs to be used.
+
+!!! warning "Ignoring templates and multiple nesting of UIX Forge"
+    As templates are ignored using a Jinja2 comment, `{# #}` the template as rendered will not have the comment. So when using with multiple nesting of UIX Forge template nesting will need to be used to control how templates are rendered.
+
 ### Template nesting
 
-If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
+If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to either ignore or nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
 
 ??? example "Single level template nesting example"
     Below is an example using `custom:template-entity-row` which itself supports templates. This requires any template that needs to be rendered by `custom:template-entity-row` to be nested in `<<>>` nesting characters.

@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uix"
-version = "6.2.0"
+version = "7.7.1"
 requires-python = ">=3.11"
 
 [project.optional-dependencies]
 test = [
-    "ha-testcontainer[test]>=2.6.0",
+    "ha-testcontainer[test]>=2.7.0",
 ]
 
 [tool.pytest.ini_options]
