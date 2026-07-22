@@ -1,0 +1,40 @@
+id: global_theme_uix_styles_more_info
+description: "More info styles uix theme is resolved when more info dialog called with only a global theme applied"
+
+theme: uix-global-blue
+
+view_path: global-theme-uix-styles
+
+dashboard:
+  views:
+    - type: sections
+      sections:
+        - type: grid
+          cards:
+            - type: tile
+              entity: light.bed_light
+      title: Global Themed View
+      path: global-theme-uix-styles
+
+interactions:
+  - type: click
+    selector: "hui-tile-card"
+    target: "ha-card"
+    settle_ms: 500
+
+assertions:
+  - type: css_variable
+    root: "ha-more-info-dialog"
+    selector: "ha-more-info-info"
+    property: "--uix-theme"
+    expected: "uix-global-blue"
+  - type: object_property_text_equals
+    root: "ha-more-info-dialog"
+    selector: "uix-node"
+    property: "theme"
+    expected: "undefined"
+  - type: object_property_text_equals
+    root: "ha-more-info-dialog"
+    selector: "uix-node"
+    property: "_themeAppliedByUix"
+    expected: "false"

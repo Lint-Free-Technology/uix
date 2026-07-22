@@ -15,7 +15,7 @@ class MoreInfoDIalogPatch extends ModdedElement {
       const haDialog = this.shadowRoot.querySelector("ha-adaptive-dialog") ?? this.shadowRoot.querySelector("ha-dialog");
       if (!haDialog) return;
 
-      const theme = panelState?.panel?.theme === "default" ? undefined : panelState?.panel?.theme || undefined;
+      const theme = panelState?.panel?.theme === "default" ? undefined : panelState?.panel?.theme;
       apply_uix(
         haDialog as ModdedElement,
         "more-info",
