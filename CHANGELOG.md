@@ -1,3 +1,13 @@
+## [7.7.1-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.3...v7.7.1-beta.4) (2026-07-22)
+
+### 🐞 Bug Fixes
+
+* When using `theme:` config resolve correctly to `uix-theme` when it defined but different from Home Assistant theme applied. ([#463](https://github.com/Lint-Free-Technology/uix/issues/463)) ([01e88a3](https://github.com/Lint-Free-Technology/uix/commit/01e88a350b870544596b0971116d5506ad870b63)), closes [#462](https://github.com/Lint-Free-Technology/uix/issues/462)
+
+### ⚙️ Miscellaneous
+
+* Update panel.theme to be defined only when a view theme is defined. Add panel.globalTheme ([#465](https://github.com/Lint-Free-Technology/uix/issues/465)) ([2825ea0](https://github.com/Lint-Free-Technology/uix/commit/2825ea0a68d26c6b2c44cb2419427d49360ae840)), closes [#464](https://github.com/Lint-Free-Technology/uix/issues/464)
+
 ## [7.7.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1-beta.2...v7.7.1-beta.3) (2026-07-21)
 
 ### 🐞 Bug Fixes
