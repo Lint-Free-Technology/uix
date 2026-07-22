@@ -87,4 +87,4 @@ entities:
   - entity: sun.sun
 ```
 
-<img width="389" height="168" alt="custom-css-variables" src="https://github.com/user-attachments/assets/066c22e0-b1cd-454a-9a26-10fc05037a3e" />
+<img width="389" height="168" alt="custom-css-variables" src="../assets/page-assets/using/custom-css-variables.png" />
