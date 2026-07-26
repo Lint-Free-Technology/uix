@@ -1,3 +1,9 @@
+## [7.8.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.8.0-beta.1...v7.8.0-beta.2) (2026-07-26)
+
+### 🐞 Bug Fixes
+
+* **forge:** Fix row element editor wrap in UIX Forge adding `mold: row111` ([071e327](https://github.com/Lint-Free-Technology/uix/commit/071e327e82a3feed28bdc813c41120a5d16cc9be))
+
 ## [7.8.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1...v7.8.0-beta.1) (2026-07-22)
 
 ### ⭐ New Features
