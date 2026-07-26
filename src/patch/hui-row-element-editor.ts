@@ -138,7 +138,7 @@ class HuiRowElementEditorPatch extends LitElement {
     const forgeYaml =
       `type: custom:uix-forge\n` +
       `forge:\n` +
-      `  mold: row111\n` +
+      `  mold: row\n` +
       `element:\n` +
       `${indented}\n`;
 
