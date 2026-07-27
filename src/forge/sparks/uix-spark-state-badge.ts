@@ -12,7 +12,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   private overrideIcon: string = "";
   private overrideImage: string = "";
   private color: string = "";
-  private stateColor: boolean | undefined = undefined;
   private _badgeElement: HTMLElement | null = null;
   private readonly _id: string;
 
@@ -33,8 +32,8 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     this.entity = config.entity || "";
     this.overrideIcon = config.override_icon || "";
     this.overrideImage = config.override_image || "";
-    this.color = config.color || "";
-    this.stateColor = config.state_color !== undefined ? config.state_color : undefined;
+    const migratedStateColor = config.state_color == true ? "state" : config.state_color == false ? "none" : undefined;
+    this.color = (config.color || migratedStateColor) ?? "";
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -121,9 +120,5 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     badgeEl.overrideIcon = this.overrideIcon || undefined;
     badgeEl.overrideImage = this.overrideImage || undefined;
     badgeEl.color = this.color || undefined;
-
-    if (this.stateColor !== undefined) {
-      badgeEl.stateColor = this.stateColor;
-    }
   }
 }

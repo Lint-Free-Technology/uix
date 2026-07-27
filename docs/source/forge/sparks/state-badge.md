@@ -50,8 +50,7 @@ entities:
 | `entity` | `string` | ✅ | — | Entity ID whose current state object is passed to `state-badge`, displaying the entity's native state icon, picture, or camera feed. |
 | `override_icon` | `string` | | — | MDI icon string (e.g. `mdi:star`) that overrides the entity's default icon. Can be combined with `entity`. |
 | `override_image` | `string` | | — | URL of an image that replaces the icon entirely. Can be combined with `entity`. |
-| `color` | CSS color | | — | Fixed color applied to the badge icon. Overrides the entity state color. |
-| `state_color` | `boolean` | | — | Whether to apply the entity's state color to the icon. When omitted, `state-badge` applies its default logic (state color is active for `light` entities). |
+| `color` | string | | — | Set the icon color when the entity is active for the state badge. By default, the color is based on the `state`, `domain`, and `device_class` of the entity. To disable coloring, set to `none`. It accepts `state`, `none`, a Home Assistant [color token](https://www.home-assistant.io/dashboards/tile/#available-colors), or a hex color code. |
 
 !!! note
     - Exactly one of `after` or `before` must be provided.
@@ -111,7 +110,7 @@ entities:
               after: $ hui-generic-entity-row $ state-badge
               entity: light.ceiling_lights
               override_icon: mdi:star
-              state_color: false
+              color: none
         element:
           entity: light.bed_light
     ```
@@ -153,7 +152,7 @@ entities:
               after: $ hui-generic-entity-row $ state-badge
               entity: light.ceiling_lights
               override_icon: mdi:star
-              state_color: false
+              color: none
         element:
           entity: light.bed_light
     ```
