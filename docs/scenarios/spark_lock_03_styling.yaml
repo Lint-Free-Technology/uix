@@ -17,7 +17,6 @@ card:
     columns: 6
   entities:
     - type: custom:uix-forge
-      state_color: true
       forge:
         mold: row
         sparks:
