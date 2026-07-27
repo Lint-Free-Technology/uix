@@ -27,7 +27,6 @@ cards:
   - type: tile
     entity: input_boolean.test_boolean
   - type: entities
-    state_color: true
     entities:
       - entity: light.ceiling_lights
       - type: conditional

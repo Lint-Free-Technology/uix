@@ -23,6 +23,7 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "column_span",
   "background",
   "state_color",
+  "color",
   "entity",
   "entities",
 ];
@@ -125,6 +126,7 @@ export interface UixForgeConfig {
   element?: UixForgeElement;
   disabled?: boolean;
   state_color?: boolean;
+  color?: string;
   entity?: string;
   entities?: string[];
 }
