@@ -33,7 +33,7 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
     this.overrideIcon = config.override_icon || "";
     this.overrideImage = config.override_image || "";
     const migratedStateColor = config.state_color == true ? "state" : config.state_color == false ? "none" : undefined;
-    this.color = (config.color || migratedStateColor) ?? "";
+    this.color = (config.color || migratedStateColor) ?? "state";
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -119,6 +119,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
 
     badgeEl.overrideIcon = this.overrideIcon || undefined;
     badgeEl.overrideImage = this.overrideImage || undefined;
-    badgeEl.color = this.color || undefined;
+    badgeEl.color = this.color;
   }
 }

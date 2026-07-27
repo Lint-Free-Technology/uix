@@ -69,6 +69,15 @@ card:
             color: red
       element:
         entity: light.bed_light
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: state-badge
+            before: $ hui-generic-entity-row $ state-badge:not([data-uix-forge-state-badge-id])
+            entity: switch.decorative_lights
+      element:
+        entity: light.bed_light
 
 assertions:
   - type: object_property_text_equals
@@ -127,6 +136,14 @@ assertions:
     selector: state-badge[data-uix-forge-state-badge-id]
     property: color
     expected: red
+  - type: object_property_text_equals
+    root:
+      - "#states div:nth-of-type(6) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+    selector: state-badge[data-uix-forge-state-badge-id]
+    property: color
+    expected: state
   - type: css_property
     root:
       - "#states div:nth-of-type(1) uix-forge"
@@ -172,6 +189,15 @@ assertions:
     selector: ha-state-icon
     property: color
     expected: "rgb(244, 67, 54)" # this is HA '--red-color'
+  - type: css_property
+    root:
+      - "#states div:nth-of-type(6) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge[data-uix-forge-state-badge-id]
+    selector: ha-state-icon
+    property: color
+    expected: rgb(255, 193, 7)
   - type: snapshot
     name: "43_forge_spark_state_badge_color"
     threshold: 0.02
