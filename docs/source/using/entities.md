@@ -42,7 +42,6 @@ Rows in entities conditional rows can be styled directly. If you style the condi
     Styling a conditional row directly. Only the entity row.
     ```yaml
     type: entities
-    state_color: true
     entities:
       - entity: light.ceiling_lights
       - type: conditional
@@ -61,7 +60,6 @@ Rows in entities conditional rows can be styled directly. If you style the condi
     Styling a conditional row config using shadowRoot. This method is available for legacy configurations.
     ```yaml
     type: entities
-    state_color: true
     entities:
       - entity: light.ceiling_lights
       - type: conditional
@@ -85,7 +83,6 @@ Rows in entities conditional rows can be styled directly. If you style the condi
     Styling a conditional config where styles will 'leak' to all rows.
     ```yaml
     type: entities
-    state_color: true
     entities:
       - entity: light.ceiling_lights
       - type: conditional
@@ -170,27 +167,31 @@ The elements in a picture-elements conditional element can be styled directly. I
     Styling the conditional config where styles will 'leak' to all elements.
     ```yaml
     type: picture-elements
-    image:
-      media_content_id: https://demo.home-assistant.io/stub_config/t-shirt-promo.png
-    elements:
-      - type: conditional
-        conditions:
-          - entity: input_boolean.test_boolean
-            state: "on"
+        image:
+          media_content_id: https://picsum.photos/id/870/200/100?grayscale&blur=2
         elements:
           - type: state-badge
-            entity: sun.sun
+            entity: light.ceiling_lights
             style:
               left: 25%
-              top: 25%
-        uix:
-          style: |
-            :host {
-              --primary-text-color: purple;
-            }
+              top: 50%
+          - type: conditional
+            conditions:
+              - entity: input_boolean.test_boolean
+                state: "on"
+            elements:
+              - type: state-badge
+                entity: light.bed_light
+                style:
+                  left: 75%
+                  top: 50%
+            uix:
+              style: |
+                :host {
+                  --primary-text-color: white;
+                }
     ```
     ![Conditional picture element styling leakage](../assets/page-assets/using/elements-conditional-leakage.gif)
-
 
 ## Styling entity markers on a map
 
