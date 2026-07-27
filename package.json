@@ -25,7 +25,7 @@
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^11.0.1",
     "conventional-changelog-conventionalcommits": "^10.2.0",
-    "rollup": "^4.62.2",
+    "rollup": "^4.62.3",
     "rollup-plugin-esbuild": "^6.2.1",
     "semantic-release": "^25.0.8",
     "tslib": "^2.8.1",
