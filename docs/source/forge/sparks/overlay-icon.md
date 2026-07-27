@@ -46,8 +46,8 @@ element:
 | `image_url` | string | — | Static image applied as overlay. Supports `media-source://` URIs. Use one of `icon` or `image_url`. |
 | `entity` | string | — | If provided a state icon is rendered (`ha-state-icon`). When `entity` is set, `icon` and `image_url` are ignored. |
 | `value` | string | — | If `entity` is provided you can override the state value used to generate the icon. |
-| `state_color` | boolean | `true` | If `entity` is provided whether state color is used for the icon. |
-| `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, `var(--primary-color)` otherwise | CSS color for the icon. Overrides state color if set. |
+| `color` | string | `state` | If `entity` is provided set the icon color when the entity is active for the overlay icon. By default, the color is based on the `state`, `domain`, and `device_class` of the entity. To take default color, set to `none`. It accepts `state`, `none`, a Home Assistant [color token](https://www.home-assistant.io/dashboards/tile/#available-colors), or a hex color code. Default color when `none` is set is `var(--white-color)` when target is `ha-tile-icon`, otherwise `var(--primary-color)` |
+| `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, otherwise `var(--primary-color)` | CSS color for the icon. Overrides `color` if set. |
 | `icon_position` | object | when target is `hui-generic-entity-row`: `{top: '8px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}`; otherwise not set | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
 | `icon_size` | number or string | `12px` when target is `ha-tile-icon`, `24px` otherwise | Size of the icon. Numbers are treated as pixels; strings are passed through as-is. |
 | `icon_background` | CSS background | `var(--primary-color)` when target is `ha-tile-icon`, otherwise not set | Explicit CSS background for the icon (overrides the default background-color behavior). |
