@@ -1,3 +1,16 @@
+## [8.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.8.0-beta.2...v8.0.0-beta.1) (2026-07-28)
+
+### ⚠ BREAKING CHANGES
+
+* **forge:** Home Assistant 2026.8.0 or greater required.
+
+### ⚙️ Miscellaneous
+
+* **forge:** Accept `color` as forge config and pass to forged element (support forged entities card). Migrate `state_color` to `color` for both forge config and element config. `color` always overrides `state_color` if present in forge or element config. These changes reflect changes in Home Assistant 2026.8.0. ([c05767f](https://github.com/Lint-Free-Technology/uix/commit/c05767fecac482f08fd74c8d2d98793d9cbcb8d0))
+* **forge:** Migrate `state_color` to `color` for Overlay icon spark. Map existing `state_color: true` to `color: state` and `state_color: false` to `color: none`.  `color` defaults to `state`. These changes reflect changes in Home Assistant 2026.8.0. ([#478](https://github.com/Lint-Free-Technology/uix/issues/478)) ([89ae527](https://github.com/Lint-Free-Technology/uix/commit/89ae527a9e84883d74d92dd9845677e11fd209a1))
+* **forge:** Migrate `state_color` to `color` for State badge spark. Map existing `state_color: true` to `color: true` and `state_color: false` to `color: none`.  These changes reflect changes in Home Assistant 2026.8.0. ([#477](https://github.com/Lint-Free-Technology/uix/issues/477)) ([1a5e75f](https://github.com/Lint-Free-Technology/uix/commit/1a5e75f02d96d6b7443c8aaf2cd04487f24d4a88))
+* Set minimum HA Version to 2026.8.0.dev0 so HACS will allow against dev builds and greater. ([d5e0f40](https://github.com/Lint-Free-Technology/uix/commit/d5e0f4029d669430fc78362dd8e3e92c37d8bc50))
+
 ## [7.8.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v7.8.0-beta.1...v7.8.0-beta.2) (2026-07-26)
 
 ### 🐞 Bug Fixes
