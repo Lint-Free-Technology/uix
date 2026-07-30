@@ -32,6 +32,7 @@ person:
 
 light:
   - platform: group
+    unique_id: uix_group_all_lights
     name: "All Lights"
     entities:
       - light.bed_light
