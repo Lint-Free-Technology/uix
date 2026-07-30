@@ -16,6 +16,11 @@ const _load_yaml2json = async () => {
             component_name: "config",
           },
         ],
+        auth: {
+          data: {
+            hassUrl: location.origin,
+          }
+        }
       };
       ppr._updateRoutes();
 
