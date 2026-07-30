@@ -29,7 +29,6 @@ class MoreInfoDIalogPatch extends ModdedElement {
       );
     }
 
-    console.log("showDialog called with params:", params);
     const coordinator = (window as any).uixCoordinator;
     if (coordinator?.dialogApplyAfterShow) {
       this.addEventListener("after-show", () => {
