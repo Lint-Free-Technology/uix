@@ -1,3 +1,10 @@
+## [8.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0-beta.1...v8.0.0-beta.2) (2026-07-30)
+
+### 🐞 Bug Fixes
+
+* Console error in settings page in 2026.8.0 ([af74dc0](https://github.com/Lint-Free-Technology/uix/commit/af74dc0f0f7f97ac4d9be4f3e98edeeb2634afc0)), references [#481](https://github.com/Lint-Free-Technology/uix/issues/481)
+* Remove debug console log for more-info dialog patch "showDialog called with params" ([ef03713](https://github.com/Lint-Free-Technology/uix/commit/ef0371377702d1177fb08e1250895327a74f7069))
+
 ## [8.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v7.8.0-beta.2...v8.0.0-beta.1) (2026-07-28)
 
 ### ⚠ BREAKING CHANGES
