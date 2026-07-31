@@ -5,15 +5,12 @@ view_path: doc-entity-marker
 # Create a static device tracker with a fixed GPS location before the page
 # loads so the map marker position is deterministic across doc generation runs.
 setup:
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: uix_test_person
-      gps:
-        - 51.5074
-        - -0.1278
-      gps_accuracy: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_uix_test_person
+    payload:
+      latitude: 51.5074
+      longitude: -0.1278
+      resolution: 1
   - type: wait
     ms: 2000
 

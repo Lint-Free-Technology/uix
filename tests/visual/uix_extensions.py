@@ -77,7 +77,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
-
 from ha_testcontainer.visual.scenario_runner import (
     _write_config_file,
     register_interaction_type,
@@ -388,6 +387,23 @@ def _mock_history(page: "Page | None", interaction: dict[str, Any], ha: Any = No
     page.add_init_script(js_script)
 
 
+def _webhook(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Send a webhook via fetch() in the page JavaScript context."""
+    if ha is None:
+        raise ValueError(
+            "webhook interaction requires the ha container — "
+            "pass ha= to run_interactions()"
+        )
+    
+    webhook_id: str = interaction["webhook_id"]
+    payload: dict[str, Any] = interaction.get("payload", {})
+
+    ha.api(
+        "POST",
+        f"webhook/{webhook_id}",
+        json=payload,
+    ).raise_for_status()
+
 # ---------------------------------------------------------------------------
 # Registration — executed at import time
 # ---------------------------------------------------------------------------
@@ -399,3 +415,4 @@ register_interaction_type("remove_foundry_file", _remove_foundry_file)
 register_interaction_type("reload_foundry_files", _reload_foundry_files)
 register_interaction_type("set_theme_file", _set_theme_file)
 register_interaction_type("mock_history", _mock_history)
+register_interaction_type("webhook", _webhook)

@@ -48,3 +48,72 @@ zone:
     longitude: -0.1300
     radius: 1000
     passive: false
+
+# Template device trackers to use with webhooks
+template:
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_tablet
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: tablet
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_phone
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: phone
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_uix_test_person
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: uix_test_person  
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_uix_test_person_slider
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: uix_test_person_slider
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_uix_tracker_one
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: uix_tracker_one
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"
+  - triggers:
+    - trigger: webhook     
+      webhook_id: uix_device_tracker_uix_tracker_two
+      allowed_methods:
+        - POST
+        - PUT 
+    device_tracker:
+      - name: uix_tracker_two
+        longitude: "{{ trigger.json.longitude }}"
+        latitude: "{{ trigger.json.latitude }}"
+        location_accuracy: "{{ trigger.json.resolution }}"

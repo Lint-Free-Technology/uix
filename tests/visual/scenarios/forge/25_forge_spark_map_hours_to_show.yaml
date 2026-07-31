@@ -15,15 +15,12 @@ setup:
       - lat: 51.5220
         lng: -0.1280
         age_hours: 2
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: uix_test_person_slider
-      gps:
-        - 51.5220
-        - -0.1280
-      gps_accuracy: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_uix_test_person_slider
+    payload:
+      latitude: 51.5220
+      longitude: -0.1280
+      resolution: 1
   - type: wait
     ms: 2000
 
