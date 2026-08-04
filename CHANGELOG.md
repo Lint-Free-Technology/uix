@@ -1,3 +1,13 @@
+## [8.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0-beta.2...v8.0.0-beta.3) (2026-08-04)
+
+### ⭐ New Features
+
+* **forge:** For lock spark select multiple locks for same user based on active property ([#488](https://github.com/Lint-Free-Technology/uix/issues/488)) ([7f55326](https://github.com/Lint-Free-Technology/uix/commit/7f55326ae2a04acf3cb946f08ea4e1f16e1acfef)), references [#484](https://github.com/Lint-Free-Technology/uix/issues/484)
+
+### 📔 Documentation
+
+* **forge:** Update button spark `size` allowed variants to `s` and `m`. Adjust your config if you use button spark and wish to have small.b This both makes small size work and remove ha-button console deprecation warning. ([2ac14fe](https://github.com/Lint-Free-Technology/uix/commit/2ac14fefb299531abb199baa4f0f848fb40d399c))
+
 ## [8.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0-beta.1...v8.0.0-beta.2) (2026-07-30)
 
 ### 🐞 Bug Fixes
