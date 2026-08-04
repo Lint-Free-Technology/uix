@@ -73,15 +73,16 @@ entities:
 `locks` is an ordered list. The **first matching entry** determines what the current user must do to unlock. An entry matches according to these rules:
 
 | Configuration | Who it matches |
-|---|---|
+| --- | --- |
 | `users` list present | Users whose name is in the list. If `admins: true`, also admins. |
 | No `users` list | All non-admin users not in the `except` list. |
 | No `users` list + `admins: true` | **All users** (admin and non-admin) not in the `except` list. |
 
 `admins` is an **additive** flag. On a no-`users`-list entry it *extends* the default scope (all non-admins) to also include admins, making the entry match everyone. Admins are **excluded by default** from every entry that does not explicitly set `admins: true` or list them in `users`.
 
-When an entry has `active: false`, matched users are **not locked** (the overlay is hidden for them).  
-When no entry matches:
+When an entry has `active: false`, further locks are searched for a matched lock that is `active: true`. If no locks are `active: true` the first lock which matches the user with `active: false` is matched as an inactive lock, with matched users of the inactive lock **not locked** (the overlay is hidden for them).  
+
+When no entry matches at all, including `active: false`:
 
 - `permissive: true` → element is accessible for everyone (no overlay shown).
 - `permissive: false` (default) → **admins auto-bypass** (no overlay); non-admins are permanently blocked with no unlock path.
@@ -93,7 +94,7 @@ When no entry matches:
 ### Top-level keys
 
 | Key | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `type` | string | — | Must be `lock`. |
 | `for` | string | `element` | UIX selector for the element to overlay. When the UIX Forge element is using [Blank card config](../forge.md#blank-card-config), the default is `uix-forge-blank-card $ div.content`. Otherwise, the default of `element` refers to the root of the forged element. |
 | `action` | string | `tap` | Gesture that triggers the unlock flow. One of `tap`, `hold`, `double_tap`. |
@@ -115,7 +116,7 @@ When no entry matches:
 Controls the appearance of the PIN / passphrase entry dialog shown when a lock entry requires a code. For the number dialog, title will be prominent, and submit text will show as a tooltip when the tick is hovered over. For the passphrase dialog all options will show prominently.
 
 | Key | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `title` | string | HA default | Dialog title. When omitted Home Assistant's built-in default title is used. |
 | `submit_text` | string | HA default | Label for the confirm/submit button. When omitted Home Assistant's built-in default label is used. |
 | `cancel_text` | string | HA default | Label for the cancel button. When omitted Home Assistant's built-in default label is used. |
@@ -123,7 +124,7 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 ### `unlocked_action`
 
 | Value | Effect |
-|---|---|
+| --- | --- |
 | `action: element_tap` | Fires the target element's `tap_action`. |
 | `action: element_hold` | Fires the target element's `hold_action`. |
 | `action: element_double_tap` | Fires the target element's `double_tap_action`. |
@@ -132,7 +133,7 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 ### Lock entry keys
 
 | Key | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `active` | boolean | `true` | Set to `false` to explicitly unlock for matched users (no overlay). |
 | `code` | string or number | — | Code to enter. Numeric values display the HA numpad; text values display a password field. |
 | `pin` | string or number | — | Alias for `code`. |
@@ -316,7 +317,7 @@ element:
 The lock overlay respects a set of CSS custom properties. Set these on the forged element's `uix.style` (or in a theme) to customise the look:
 
 | CSS variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `--uix-lock-z-index` | `10` | Stack order of the overlay. |
 | `--uix-lock-display` | `block` | CSS display of the lock overlay. Adjust for any positioning workarounds required with target element scenarios. |
 | `--uix-lock-opacity` | `0.5` | Opacity of the overlay (icon and background combined). |
