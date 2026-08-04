@@ -511,25 +511,39 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
     const userName: string = user?.name ?? "";
     const isAdmin: boolean = user?.is_admin === true;
 
+    let firstInactiveMatch: LockEntry | null = null;
+
     for (const lock of this._locks) {
       const hasUsersList = Array.isArray(lock.users) && lock.users.length > 0;
+      let matches = false;
 
       if (hasUsersList) {
         // Case A: explicit user list
-        if (lock.users!.includes(userName)) return lock;
-        // admins: true additionally covers admin users for this entry
-        if (isAdmin && lock.admins === true) return lock;
+        if (lock.users!.includes(userName)) {
+          matches = true;
+        } else if (isAdmin && lock.admins === true) {
+          // admins: true additionally covers admin users for this entry
+          matches = true;
+        }
       } else {
         // Case B: no users list — applies to everyone by default, but admins are
         // excluded unless admins: true (which makes the entry apply to all users)
         if (isAdmin && lock.admins !== true) continue;
         const hasExcept = Array.isArray(lock.except) && lock.except.length > 0;
         if (hasExcept && lock.except!.includes(userName)) continue;
-        return lock;
+        matches = true;
+      }
+
+      if (matches) {
+        if (lock.active !== false) {
+          return lock;
+        } else if (firstInactiveMatch === null) {
+          firstInactiveMatch = lock;
+        }
       }
     }
 
-    return null;
+    return firstInactiveMatch;
   }
 
   private async _handleUnlockAttempt(overlay: HTMLElement) {
