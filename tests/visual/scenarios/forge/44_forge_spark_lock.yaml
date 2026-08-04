@@ -1,0 +1,147 @@
+id: forge_spark_lock
+description: "UIX Forge lock spark"
+view_path: forge-spark-lock
+
+# turn on bed light and test boolean and then turn both off to test the lock spark
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+    settle_ms: 50
+  - type: ha_service
+    domain: input_boolean
+    service: turn_on
+    data:
+      entity_id: input_boolean.test_boolean
+    settle_ms: 50
+  - type: ha_service
+    domain: light
+    service: turn_off
+    data:
+      entity_id: light.bed_light
+    settle_ms: 50
+  - type: ha_service
+    domain: input_boolean
+    service: turn_off
+    data:
+      entity_id: input_boolean.test_boolean
+    settle_ms: 50
+
+interactions:
+  - type: click
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+    selector: hui-toggle-entity-row
+    settle_ms: 500 # time for dialog to open
+
+card:
+  type: entities
+  entities:
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: lock
+            for: $ hui-generic-entity-row
+            locks:
+              - admins: true
+                code: 1234
+                active: |
+                  {{ is_state("input_boolean.test_boolean", "on") }}
+                confirmation:
+                  title: First Lock
+                  text: |
+                    {{ entity_name(config.element.entity) }}
+              - admins: true
+                active: |
+                  {{ is_state("light.bed_light", "on" )}}
+                confirmation:
+                  title: Second Lock
+                  text: |
+                    {{ entity_name(config.element.entity) }}
+        uix:
+          style: |
+            hui-toggle-entity-row {
+              --uix-lock-background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='red' fill-opacity='.18' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(200,0,0,0.08);
+              --uix-lock-background-unlocked: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='green' fill-opacity='.08' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(0,200,0,0.04);
+              --uix-lock-opacity: 1;
+              --uix-lock-border-radius: 8px;          
+            }
+      element:
+        entity: light.bed_light
+    - type: custom:uix-forge
+      forge:
+        mold: row
+        sparks:
+          - type: lock
+            for: $ hui-generic-entity-row
+            locks:
+              - admins: true
+                code: 1234
+                active: |
+                  {{ is_state("input_boolean.test_boolean", "on") }}
+                confirmation:
+                  title: First Lock
+                  text: |
+                    {{ entity_name(config.element.entity) }}
+              - admins: true
+                confirmation:
+                  title: Second Lock
+                  text: |
+                    {{ entity_name(config.element.entity) }}
+        uix:
+          style: |
+            hui-toggle-entity-row {
+              --uix-lock-background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='red' fill-opacity='.18' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(200,0,0,0.08);
+              --uix-lock-background-unlocked: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='green' fill-opacity='.08' d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E") 0 0/20px 20px repeat, rgba(0,200,0,0.04);
+              --uix-lock-opacity: 1;
+              --uix-lock-border-radius: 8px;          
+            }
+      element:
+        entity: light.bed_light
+
+
+assertions:
+  - type: element_present
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(1) uix-forge"
+      - hui-toggle-entity-row
+    selector: div[data-uix-forge-lock-id]
+  - type: element_present
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+      - hui-toggle-entity-row
+    selector: div[data-uix-forge-lock-id]
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(1) uix-forge"
+      - hui-toggle-entity-row
+    selector: div[data-uix-forge-lock-id]
+    property: display
+    expected: none
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+      - hui-toggle-entity-row
+    selector: div[data-uix-forge-lock-id]
+    property: display
+    expected: block
+  - type: element_present
+    root: dialog-box
+    selector: ha-dialog-header
+  - type: text_equals
+    root: dialog-box
+    selector: "#dialog-box-title"
+    expected: "Second Lock"
+  - type: snapshot
+    name: "45_forge_spark_lock"
+    threshold: 0.02
