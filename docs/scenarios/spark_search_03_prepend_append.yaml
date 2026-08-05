@@ -1,0 +1,26 @@
+id: doc_spark_search_prepend_append
+description: "Doc image: Forge Search spark (search.md)"
+view_path: doc-spark-search-prepend-append
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: search
+        for: hui-entities-card $ div:nth-child(1) hui-sensor-entity-row $ hui-generic-entity-row $
+        query: .info
+        actions:
+          prepend_text: "[ "
+          append_text: " ]"
+  element:
+    type: entities
+    entities:
+      - sensor.carbon_dioxide_battery
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/search-prepend-append.png
+  root: uix-forge
+  padding: 16

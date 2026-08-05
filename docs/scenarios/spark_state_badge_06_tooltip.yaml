@@ -34,7 +34,7 @@ card:
             after: $ hui-generic-entity-row $ state-badge
             entity: light.ceiling_lights
             override_icon: mdi:star
-            state_color: false
+            color: none
       element:
         entity: light.bed_light
 

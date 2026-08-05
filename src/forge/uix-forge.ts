@@ -16,7 +16,8 @@ import {
   UixForgeConfigPath, 
   UixMacroConfig, 
   UIX_FORGE_ARRAY_MERGE_STRATEGIES, 
-  UIX_FORGE_MOLDS_WITH_BLANKS } from "./uix-forge-types";
+  UIX_FORGE_MOLDS_WITH_BLANKS, 
+  ignoreTemplate} from "./uix-forge-types";
 import { property, state } from "lit/decorators.js";
 import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
@@ -409,8 +410,13 @@ export class UixForge extends LitElement {
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     const elementConfig = { ...resolvedElement };
-    if (this.config?.state_color !== undefined) {
-      elementConfig.state_color = this.config.state_color;
+    if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+      elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+      delete elementConfig.state_color;
+    }
+    if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+      const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+      elementConfig.color = this.config.color ?? configStateColorMigrated;
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
@@ -553,8 +559,13 @@ export class UixForge extends LitElement {
       delete forgeConfig.template_nesting;
       delete forgeConfig.uix;
       const elementConfig = { ...resolved.element };
-      if (this.config?.state_color !== undefined && !elementConfig.state_color) {
-        elementConfig.state_color = this.config.state_color;
+      if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+        elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+        delete elementConfig.state_color;
+      }
+      if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+        const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+        elementConfig.color = this.config.color ?? configStateColorMigrated;
       }
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
@@ -665,6 +676,10 @@ export class UixForge extends LitElement {
             unbind_template(binding.callback);
           }
         }
+        if (ignoreTemplate(current[k])) {
+          base.nested = { keys: currentPath, value: current[k] };
+          continue;
+        }
         const template = this._replaceNestedTemplateDelimiters(current[k]);
         const macroStr = buildMacros(this._macros, template);
         const billetStr = buildBillets(this._billets, macroStr + template);
@@ -722,8 +737,13 @@ export class UixForge extends LitElement {
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     const elementConfig = { ...resolved.element };
-    if (this.config?.state_color !== undefined) {
-      elementConfig.state_color = this.config.state_color;
+    if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+      elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+      delete elementConfig.state_color;
+    }
+    if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+      const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+      elementConfig.color = this.config.color ?? configStateColorMigrated;
     }
     if (this.config?.entities !== undefined) {
       elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];

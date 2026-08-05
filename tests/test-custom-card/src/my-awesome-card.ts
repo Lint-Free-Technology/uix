@@ -1,17 +1,16 @@
-const LitElement = customElements.get("ha-panel-lovelace")
-  ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace"))
-  : Object.getPrototypeOf(customElements.get("hc-lovelace"));
-const html = LitElement.prototype.html;
+import { LitElement, html } from "lit";
 
 class MyAwesomeCard extends LitElement {
-  setConfig(config) {
+  _config: any;
+  
+  setConfig(config: any) {
     this._config = config;
   }
 
   firstUpdated() {
     customElements
       .whenDefined("uix-node")
-      .then((uix) =>
+      .then((uix: any) =>
         uix.applyToElement(
           this,
           "card",

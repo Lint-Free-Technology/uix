@@ -1,0 +1,55 @@
+id: forge_ignored_template
+description: "UIX Forge having ignored template renders correctly"
+view_path: forge-ignored-template
+
+cards:
+    # forged markdown card where `content` templates is rendered by UIX Forge where `config.entity` is valid
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        config.entity: {{ config.entity | default('light.ceiling_lights') }}
+    # forged markdown card where `content` template is ignored by UIX Forge
+    # config.entity does not exist for markdown card and will get default text
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element:
+      type: markdown
+      content: |
+        {# uix-forge.ignore #}
+        config.entity: {{ config.entity | default('light.ceiling_lights') }}
+
+assertions:
+  - type: element_present
+    root: 
+      - hui-grid-section
+      - ha-sortable div.container div.card:nth-of-type(1) hui-card uix-forge
+      - hui-markdown-card
+    selector: ha-markdown
+  - type: element_present
+    root: 
+      - hui-grid-section
+      - ha-sortable div.container div.card:nth-of-type(2) hui-card uix-forge
+      - hui-markdown-card
+    selector: ha-markdown
+  - type: text_equals
+    root: 
+      - hui-grid-section
+      - ha-sortable div.container div.card:nth-of-type(1) hui-card uix-forge
+      - hui-markdown-card
+      - ha-markdown
+    selector: ha-markdown-element p
+    expected: "config.entity: light.bed_light"
+  - type: text_equals
+    root: 
+      - hui-grid-section
+      - ha-sortable div.container div.card:nth-of-type(2) hui-card uix-forge
+      - hui-markdown-card
+      - ha-markdown
+    selector: ha-markdown-element p
+    expected: "config.entity: light.ceiling_lights"

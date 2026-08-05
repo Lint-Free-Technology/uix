@@ -29,7 +29,7 @@ card:
             after: $ hui-generic-entity-row $ state-badge
             entity: light.ceiling_lights
             override_image: /local/media/daniel_craig_cropped.jpg
-            state_color: false
+            color: none
       element:
         entity: light.bed_light
 

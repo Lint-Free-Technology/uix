@@ -35,6 +35,7 @@ HA_PLUGINS_YAML
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -65,6 +66,13 @@ os.environ.setdefault("HA_CONFIG_PATH", str(_REPO_ROOT / "tests" / "ha-config"))
 os.environ.setdefault("HA_CUSTOM_COMPONENTS_PATH", str(_REPO_ROOT / "custom_components"))
 os.environ.setdefault("HA_SETUP_INTEGRATION", "uix")
 os.environ.setdefault("HA_PLUGINS_YAML", str(_REPO_ROOT / "tests" / "plugins.yaml"))
+
+# ---------------------------------------------------------------------------
+# Build test-card before running any tests.  This ensures that the card is always up-to-date
+# with the current UIX code, and avoids the need for a separate build step in CI or local development. 
+# ---------------------------------------------------------------------------
+
+subprocess.run(["npm", "run", "build-test-card"], check=True)
 
 # ---------------------------------------------------------------------------
 # Make tests/visual/ importable so uix_extensions can be imported before

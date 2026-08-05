@@ -20,7 +20,7 @@ card:
         for: hui-tile-card $ ha-tile-icon
         entity: light.bed_light
         value: "on"
-        state_color: false
+        color: none
   element:
     type: tile
     entity: light.bed_light

@@ -1,0 +1,40 @@
+id: doc_theme_css_vars_template
+description: "Doc image: use CSS vars from theme using template (cards.md)"
+view_path: doc-theme-css-vars-template
+theme: uix-theme-css-vars-template
+
+setup:
+  - type: ha_service
+    domain: input_boolean
+    service: turn_off
+    data:
+      entity_id: input_boolean.test_boolean
+
+card:
+  type: entities
+  entities:
+    - entity: sun.sun
+      uix:
+        style: |
+          hui-generic-entity-row {
+            background: var(--darkslateblue-if-dark);
+            color: var(--slategrey-if-dark);
+            --state-icon-color: var(--slategrey-if-dark);
+          }
+    - entity: sun.sun
+      uix:
+        style: |
+          hui-generic-entity-row {
+            background: var(--yellow-if-not-dark);
+            color: var(--orange-if-not-dark);
+            --state-icon-color: var(--orange-if-not-dark);
+          }
+    - entity: sun.sun
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/custom-css-variables.png
+  root: hui-entities-card
+  padding: 16
+  threshold: 1

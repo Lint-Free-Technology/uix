@@ -1,10 +1,11 @@
 {
   "name": "uix",
   "private": true,
-  "version": "7.7.1",
+  "version": "8.0.0-beta.3",
   "description": "UIX - UI eXtension for Home Assistant",
   "scripts": {
     "build": "rollup -c",
+    "build-test-card": "rollup -c tests/test-custom-card/rollup.config.mjs",
     "update-manifest-version": "node -e \"const pkg = require('./package.json'); const manifest = require('./custom_components/uix/manifest.json'); manifest.version = pkg.version; require('fs').writeFileSync('./custom_components/uix/manifest.json', JSON.stringify(manifest, null, 2) + '\\n');\"",
     "compress-build-artifacts": "node -e \"const fs = require('fs'); const path = require('path'); const zlib = require('zlib'); const buildDir = path.join(__dirname, 'custom_components/uix'); fs.readdirSync(buildDir).forEach(file => { if (file.endsWith('.js')) { const filePath = path.join(buildDir, file); const fileContents = fs.readFileSync(filePath); const compressed = zlib.gzipSync(fileContents); fs.writeFileSync(filePath + '.gz', compressed); } });\"",
     "prebuild": "npm run update-manifest-version",
@@ -23,9 +24,9 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/exec": "^7.1.0",
-    "@semantic-release/git": "^11.0.0",
+    "@semantic-release/git": "^11.0.1",
     "conventional-changelog-conventionalcommits": "^10.2.0",
-    "rollup": "^4.62.2",
+    "rollup": "^4.62.4",
     "rollup-plugin-esbuild": "^6.2.1",
     "semantic-release": "^25.0.8",
     "tslib": "^2.8.1",
@@ -33,7 +34,7 @@
   },
   "dependencies": {
     "@watchable/unpromise": "^1.0.2",
-    "color-name": "^2.1.0",
+    "color-name": "^2.1.1",
     "compare-versions": "^6.1.1",
     "lit": "^3.3.3",
     "memoize-one": "^6.0.0",

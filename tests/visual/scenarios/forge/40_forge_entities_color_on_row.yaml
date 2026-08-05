@@ -1,0 +1,126 @@
+id: forge_entities_color_on_row
+description: "UIX Forge wrapping entities row renders state_color and color correctly"
+view_path: forge-entities-color-on-row
+
+setup:
+  - type: ha_service
+    domain: switch
+    service: turn_on
+    data:
+      entity_id: switch.decorative_lights
+
+card:
+  type: entities
+  entities:
+    - type: "custom:uix-forge"
+      forge:
+        mold: row
+      element:
+        state_color: true
+        entity: "switch.decorative_lights"
+    - type: "custom:uix-forge"
+      forge:
+        mold: row
+      element:
+        state_color: false
+        entity: "switch.decorative_lights"
+    - type: "custom:uix-forge"
+      forge:
+        mold: row
+      element:
+        color: state
+        entity: "switch.decorative_lights"
+    - type: "custom:uix-forge"
+      forge:
+        mold: row
+      element:
+        color: none
+        entity: "switch.decorative_lights"
+    - type: "custom:uix-forge"
+      forge:
+        mold: row
+      element:
+        color: red
+        entity: "switch.decorative_lights"
+
+assertions:
+  - type: object_property_absent
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(1) uix-forge"
+    selector: hui-toggle-entity-row
+    property: "_config.state_color"
+  - type: object_property_absent
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+    selector: hui-toggle-entity-row
+    property: "_config.state_color"    
+  - type: object_property_text_equals
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(1) uix-forge"
+    selector: hui-toggle-entity-row
+    property: "_config.color"
+    expected: "state"
+  - type: object_property_text_equals
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+    selector: hui-toggle-entity-row
+    property: "_config.color"
+    expected: "none"
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(1) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge
+    selector: ha-state-icon
+    property: "color"
+    expected: "rgb(255, 193, 7)"
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(2) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge
+    selector: ha-state-icon
+    property: "color"
+    expected: "rgb(68, 115, 158)"
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(3) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge
+    selector: ha-state-icon
+    property: "color"
+    expected: "rgb(255, 193, 7)"
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(4) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge
+    selector: ha-state-icon
+    property: "color"
+    expected: "rgb(68, 115, 158)"
+  - type: css_property
+    root:
+      - hui-entities-card
+      - "#states div:nth-of-type(5) uix-forge"
+      - hui-toggle-entity-row
+      - hui-generic-entity-row
+      - state-badge
+    selector: ha-state-icon
+    property: "color"
+    expected: "rgb(244, 67, 54)" # this is HA '--red-color'
+
+  - type: snapshot
+    name: "41_forge_entities_color_on_row"
+    threshold: 0.02

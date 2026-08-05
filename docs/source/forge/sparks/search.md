@@ -70,27 +70,36 @@ forge:
     - type: search
       for: hui-calendar-card $ ha-full-calendar $
       query: .fc-event-title
-      text: "^(Meeting|Standup)"
+      text: ^(Future|Timetravel)
       actions:
         add_class:
-          - work-event
+          - future-event
 element:
   type: calendar
   entities:
-    - calendar.work
+    - calendar.calendar_1
+    - calendar.calendar_2
   uix:
-    ha-full-calendar $: |
-      .work-event {
-        background: teal;
-        color: white;
-        font-weight: 900;
-      }
-      .fc-daygrid-event:has(.work-event) {
-        background-color: teal !important;
-        border-color: blue !important;
-        border-width: 2px;
-      }
+    style:
+      ha-full-calendar $: |
+        .future-event {
+          background: teal;
+          color: white;
+          font-weight: 900;
+        }
+        .fc-daygrid-event:has(.future-event) {
+          background-color: teal !important;
+          border-color: blue !important;
+          border-width: 2px;
+        }
+        .fc-event-time:has(+ .future-event) {
+          background: teal;
+          color: white;
+          font-weight: 900;      
+        }
 ```
+
+![Search spark calendar example](../../assets/page-assets/forge/sparks/search-calendar.png)
 
 ### Remove an attribute from all matched elements
 
@@ -102,49 +111,30 @@ forge:
   mold: card
   sparks:
     - type: search
-      for: hui-markdown-card $ ha-markdown $
-      query: a[title]
-      actions:
-        remove_attribute:
-          - title
-element:
-  type: markdown
-  content: |
-    [Home Assistant](https://home-assistant.io "Open source home automation")
-```
-
-### Rewrite text inside matched elements
-
-Replace a static unit label in 2nd sensor row:
-
-```yaml
-type: custom:uix-forge
-forge:
-  mold: card
-  sparks:
-    - type: search
       for: >-
         hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $ hui-generic-entity-row $
       query: .info
-      text: Max 0
+      text: Carbon dioxide
       actions:
         replace_text:
-          find: Max 0
-          replace: Max
+          find: Carbon dioxide
+          replace: CO2
     - type: search
       for: hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $
       query: hui-generic-entity-row
-      text: °C
+      text: ppm
       actions:
         replace_text:
-          find: °C
-          replace: C
+          find: ppm
+          replace: parts per million
 element:
   type: entities
   entities:
     - sun.sun
-    - sensor.place_temp_max_0
+    - sensor.carbon_dioxide
 ```
+
+![Search spark entities example](../../assets/page-assets/forge/sparks/search-entities.png)
 
 ### Prepend and append text
 
@@ -164,12 +154,16 @@ forge:
 element:
   type: entities
   entities:
-    - sensor.battery_level
+    - sensor.carbon_dioxide_battery
 ```
+
+![Search prepend append example](../../assets/page-assets/forge/sparks/search-prepend-append.png)
 
 ### Match text inside child elements
 
-The `text` filter matches the **full** text content of each element, including text wrapped inside child elements like `<a>`, `<span>`, etc.:
+The `text` filter matches the **full** text content of each element, including text wrapped inside child elements like `<a>`, `<span>`, etc.
+
+This example builds on from the earlier calendar example to include highlighting list events by adding the `future-event` class by querying `.fc-list-event-title`. Additional styling also added, using a selector that enables to select a preceding sibling of `.future-event` by using `:has` pseudo class with subsequent sibling combinator `+`.
 
 ```yaml
 type: custom:uix-forge
@@ -178,16 +172,64 @@ forge:
   sparks:
     - type: search
       for: hui-calendar-card $ ha-full-calendar $
-      query: .fc-list-event-title
-      text: "Holiday"         # matches even if "Holiday" is inside <a>Holiday</a>
+      query: .fc-event-title
+      text: ^(Future|Timetravel)
       actions:
         add_class:
-          - holiday-event
+          - future-event
+    - type: search
+      for: hui-calendar-card $ ha-full-calendar $
+      query: .fc-list-event-title
+      text: ^(Future|Timetravel) # Matches even though `Future` is in child <a> link
+      actions:
+        add_class:
+          - future-event
 element:
   type: calendar
+  initial_view: listWeek
   entities:
-    - calendar.holidays
+    - calendar.calendar_1
+    - calendar.calendar_2
+  uix:
+    style:
+      ha-full-calendar $: |
+        .future-event {
+          background: teal;
+          color: white;
+          font-weight: 900;
+        }
+        .fc-daygrid-event:has(.future-event) {
+          background-color: teal !important;
+          border-color: blue !important;
+        }
+        .fc-event-time:has(+ .future-event) {
+          background: teal;
+          color: white;
+          font-weight: 900;      
+        }
+        .fc-list-event-graphic:has(+ .future-event) {
+          background: teal;
+          color: white;
+          font-weight: 900;   
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+        .fc-list-event-time:has(~ .future-event) {
+          background: teal;
+          color: white;
+          font-weight: 900;   
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+        .fc-list-event-title.future-event {
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
 ```
+
+![Search calendar example 2](../../assets/page-assets/forge/sparks/search-calendar-2.png)
+
+![Search calendar example 3](../../assets/page-assets/forge/sparks/search-calendar-3.png)
 
 !!! note
     - **All** elements returned by `query` receive the actions. Use `text` to narrow the selection to elements whose text content matches a regex.

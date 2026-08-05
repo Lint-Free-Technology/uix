@@ -23,6 +23,7 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "column_span",
   "background",
   "state_color",
+  "color",
   "entity",
   "entities",
 ];
@@ -53,6 +54,8 @@ export const UIX_FORGE_MOLDS_WITH_BLANKS = [
 export const UIX_FORGE_DEFAULT_TEMPLATE_VALUE = "##UIX_FORGE_DEFAULT_VALUE##";
 export const UIX_FORGE_PASSTHROUGH_MARKER = "##UIX_FORGE_PASSTHROUGH##";
 
+export const UIX_FORGE_IGNORE_TEMPLATE_STRING = "uix-forge.ignore";
+
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN = "<<";
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE = ">>";
 export const UIX_FORGE_NESTED_TEMPLATE_MARKER = "{#uix#}";
@@ -60,6 +63,10 @@ export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_OUTPUT = `{% raw %}${UIX_FORGE_N
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_OUTPUT = `{% raw %}}}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
 export const UIX_FORGE_NESTED_TEMPLATE_OPEN_RAW_STATEMENT = `{% raw %}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{%{% endraw %}`;
 export const UIX_FORGE_NESTED_TEMPLATE_CLOSE_RAW_STATEMENT = `{% raw %}%}${UIX_FORGE_NESTED_TEMPLATE_MARKER}{% endraw %}`;
+
+export function ignoreTemplate(value: string): boolean {
+  return value.includes(UIX_FORGE_IGNORE_TEMPLATE_STRING);
+}
 
 /**
  * Returns the raw Jinja delimiter placeholders for a nested template opener.
@@ -119,6 +126,7 @@ export interface UixForgeConfig {
   element?: UixForgeElement;
   disabled?: boolean;
   state_color?: boolean;
+  color?: string;
   entity?: string;
   entities?: string[];
 }
@@ -214,6 +222,8 @@ export class UixForgeConfigBuilder {
       for (const key of Object.keys(value)) {
         if (key === "uix") continue;
         const val = value[key];
+        // If template is marked to be ignored, we consider it ready.
+        if (typeof val === "string" && ignoreTemplate(val)) continue;
         // Passthrough values (multi-level nested templates stripped to the next nesting level) are considered ready.
         if (typeof val === "string" && val.startsWith(UIX_FORGE_PASSTHROUGH_MARKER)) continue;
         // If we have nested template marker but not the raw open marker, this means the template is ready.

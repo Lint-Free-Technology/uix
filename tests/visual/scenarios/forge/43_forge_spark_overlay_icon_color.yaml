@@ -1,0 +1,169 @@
+id: forge_spark_overlay_icon_color
+description: "UIX Forge overlay icon spark with state_color and color"
+view_path: forge-spark-overlay-icon-color
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+  - type: ha_service
+    domain: switch
+    service: turn_on
+    data:
+      entity_id: switch.decorative_lights
+
+cards:
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'on'
+          state_color: true
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'on'
+          state_color: false
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'on'
+          color: state
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'on'
+          color: none
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'on'
+          color: red
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+          value: 'off'
+          color: red
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: full
+      sparks:
+        - type: overlay-icon
+          for: hui-tile-card $ ha-tile-icon
+          entity: switch.decorative_lights
+    element:
+      type: tile
+      entity: light.bed_light
+
+assertions:
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(1) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 193, 7)
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(2) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 255, 255)
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(3) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 193, 7)
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(4) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 255, 255)
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(5) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: "rgb(244, 67, 54)" # this is HA '--red-color'
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(6) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 255, 255)
+  - type: css_property
+    root:
+      - "div.card:nth-of-type(7) hui-card uix-forge"
+      - hui-tile-card
+    selector: div[data-uix-forge-overlay-icon-id] ha-state-icon
+    property: color
+    expected: rgb(255, 193, 7)
+  - type: snapshot
+    name: "44_forge_spark_overlay_icon_color"
+    threshold: 0.02

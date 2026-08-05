@@ -47,3 +47,44 @@ uix:
 ```
 
 `uix.theme` overrides the inherited/current theme for that UIX node and its UIX child paths unless a child sets its own `theme`. See [UIX Themes - Override with `uix.theme`](./themes.md#local-theme-override-with-uixtheme) for a full example.
+
+### Custom CSS variables
+UIX themes can be leveraged with [custom css variables](https://uix-guides.lf.technology/elements/2026/03/02/css-vars-entities.html), by declaring those high in the Frontend hierarchy, say `uix-drawer`, `uix-view`, or `uix-root`:
+
+```yaml
+uix-drawer: |
+
+    :host {
+      {% set isDark = is_state('sun.sun','below_horizon') %}
+      --darkslateblue-if-dark: {{ 'darkslateblue' if isDark else 'red' }};
+      --slategrey-if-dark: {{ 'slategrey' if isDark else 'green' }};
+      --yellow-if-not-dark: {{ 'yellow' if not isDark else 'pink' }};
+      --orange-if-not-dark: {{ 'orange' if not isDark else 'purple' }};
+    }
+```
+
+and use those custom css variables lower in the frontend hierarchy, say `uix-card` or `uix-dialog`, or even in a direct UIX card styling:
+
+```yaml
+type: entities
+entities:
+  - entity: sun.sun
+    uix:
+      style: |
+        hui-generic-entity-row {
+          background: var(--darkslateblue-if-dark);
+          color: var(--slategrey-if-dark);
+          --state-icon-color: var(--slategrey-if-dark);
+        }
+  - entity: sun.sun
+    uix:
+      style: |
+        hui-generic-entity-row {
+          background: var(--yellow-if-not-dark);
+          color: var(--orange-if-not-dark);
+          --state-icon-color: var(--orange-if-not-dark);
+        }
+  - entity: sun.sun
+```
+
+<img width="389" height="168" alt="custom-css-variables" src="../assets/page-assets/using/custom-css-variables.png" />

@@ -66,10 +66,10 @@ function _resolveBilletString(
   const reportError = throwOnError
     ? (msg: string) => { throw new Error(msg); }
     : (msg: string) => console.error(msg);
-  if (!allowTemplates && /\{\{|\}\}/.test(value)) {
+  if (!allowTemplates && (/\{\{|\}\}/.test(value) || /\{%|%\}/.test(value) || /\{#|#\}/.test(value))) {
     reportError(
-      `UIX: Billet "${billetName}" contains {{ or }} which is Jinja2 template syntax. ` +
-      `Billets do not support templates — use a macro instead.`
+      `UIX: Billet "${billetName}" contains {{ / }} or {% / %} or {# / #} which is Jinja2 template syntax. ` +
+      `Billets in UIX Forge do not support templates — use a macro instead.`
     );
     return value;
   }

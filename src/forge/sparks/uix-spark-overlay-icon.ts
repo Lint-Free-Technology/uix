@@ -6,6 +6,8 @@ import {
   OverlayIconTargetAdapter,
   getOverlayIconTargetAdapter,
 } from "./overlay-icon-target-adapters";
+import { stateActive } from "../../helpers/common/entity/state_active";
+import { computeCssColor } from "../../helpers/common/entity/compute_color";
 
 const OVERLAY_ICON_ID_ATTR = "data-uix-forge-overlay-icon-id";
 const MEDIA_SOURCE_PREFIX = "media-source://";
@@ -29,7 +31,7 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   private _imageUrl: string = "";
   private _entity: string = "";
   private _value: string = "";
-  private _stateColor: boolean = true;
+  private _color: string = "";
   private _iconColor: string = "";
   private _iconPosition: IconPosition | null = null;
   private _iconSize: string | null = null;
@@ -73,7 +75,8 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
     // Preserve explicit empty-string overrides while treating null/undefined as "no override".
     this._value = config.value !== undefined && config.value !== null ? String(config.value) : "";
-    this._stateColor = config.state_color !== undefined ? config.state_color !== false : true;
+    const migratedStateColor = config.state_color == true ? "state" : config.state_color == false ? "none" : undefined;
+    this._color = (config.color || migratedStateColor) ?? "state";
     this._iconColor = config.icon_color || "";
     this._iconPosition = this._parseIconPosition(config.icon_position);
     this._iconSize = config.icon_size !== undefined && config.icon_size !== null
@@ -107,10 +110,16 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
 
   private _getEffectiveIconColor(stateObj: any): string {
     if (this._iconColor) return this._iconColor;
-    if (this._entity && this._stateColor && stateObj) {
+    if (this._entity && this._color === "state" && stateObj) {
       const state = this._value || undefined;
       const stateColor = stateColorCss(stateObj, state);
       if (stateColor) return stateColor;
+    }
+    if (this._color && this._color !== "none" && stateObj) {
+      const colorStateObj = this._value
+          ? { ...stateObj, state: this._value }
+          : stateObj;
+      if (stateActive(colorStateObj)) return computeCssColor(this._color);
     }
     return this._targetAdapter?.defaultIconColor() ?? "var(--primary-color, #03a9f4)";
   }
@@ -391,3 +400,4 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
   }
 }
+

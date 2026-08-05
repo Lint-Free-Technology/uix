@@ -1,26 +1,20 @@
-id: doc_forge_map_spark_entity_filter
+id: doc_forge_map_spark_entity_filter_non_group
 description: "Doc image: UIX Forge map spark with entity filter (map.md)"
-view_path: doc-forge-map-spark-entity-filter
+view_path: doc-forge-map-spark-entity-filter-non-group
 
 setup:
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: phone
-      gps:
-        - 51.752985
-        - -1.257988
-      gps_accuracy: 1
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: tablet
-      gps:
-        - 51.752985
-        - -1.257988
-      gps_accuracy: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_phone
+    payload:
+      latitude: 51.752985
+      longitude: -1.257988
+      resolution: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_tablet
+    payload:
+      latitude: 51.752985
+      longitude: -1.257988
+      resolution: 1
 
 card:
   type: custom:uix-forge

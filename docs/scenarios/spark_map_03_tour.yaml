@@ -3,24 +3,18 @@ description: "Doc image: UIX Forge map spark tour (map.md)"
 view_path: doc-forge-map-spark-tour
 
 setup:
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: phone
-      gps:
-        - 51.5074
-        - -0.1278
-      gps_accuracy: 1
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: tablet
-      gps:
-        - 51.752985
-        - -1.257988
-      gps_accuracy: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_phone
+    payload:
+      latitude: 51.5074
+      longitude: -0.1278
+      resolution: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_tablet
+    payload:
+      latitude: 51.752985
+      longitude: -1.257988
+      resolution: 1
 
 card:
   type: custom:uix-forge

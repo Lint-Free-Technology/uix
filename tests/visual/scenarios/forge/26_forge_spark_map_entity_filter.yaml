@@ -3,24 +3,18 @@ description: "Map spark in entity_filter mode renders an interactive dropdown ch
 view_path: forge-spark-map-entity-filter
 
 setup:
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: uix_tracker_one
-      gps:
-        - 51.5200
-        - -0.1300
-      gps_accuracy: 1
-  - type: ha_service
-    domain: device_tracker
-    service: see
-    data:
-      dev_id: uix_tracker_two
-      gps:
-        - 51.5210
-        - -0.1295
-      gps_accuracy: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_uix_tracker_one
+    payload:
+      latitude: 51.5200
+      longitude: -0.1300
+      resolution: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_uix_tracker_two
+    payload:
+      latitude: 51.5210
+      longitude: -0.1295
+      resolution: 1
   - type: wait
     ms: 2000
 

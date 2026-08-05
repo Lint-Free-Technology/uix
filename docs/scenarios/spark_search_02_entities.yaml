@@ -1,0 +1,38 @@
+id: doc_spark_search_entities
+description: "Doc image: Forge Search spark (search.md)"
+view_path: doc-spark-search-entities
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: search
+        for: >-
+          hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $ hui-generic-entity-row $
+        query: .info
+        text: Carbon dioxide
+        actions:
+          replace_text:
+            find: Carbon dioxide
+            replace: CO2
+      - type: search
+        for: hui-entities-card $ div:nth-child(2) hui-sensor-entity-row $
+        query: hui-generic-entity-row
+        text: ppm
+        actions:
+          replace_text:
+            find: ppm
+            replace: parts per million
+  element:
+    type: entities
+    entities:
+      - sun.sun
+      - sensor.carbon_dioxide
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/search-entities.png
+  root: uix-forge
+  padding: 16
