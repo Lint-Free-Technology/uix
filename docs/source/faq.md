@@ -12,6 +12,9 @@ hide:
 - If you use extra_module_url for card-mod resource, remove and restart Home Assistant.
 - Proceed to follow the [UI eXtension quick start guide](./quick-start.md).
 
+!!! tip "Add UI eXtension as a Service"
+    UI eXtension is an integration and needs to be added as a Service once you have downloaded by HACS. Make sure you don't miss the **Add UI eXtension service** step. This is something you may miss if you are not accustomed to adding integrations like UIX as a Service.
+
 ## Is UI eXtension a drop in replacement for Card-mod?
 
 Yes, UI eXtension is a drop in replacement for Card-mod versions up to 4.2.1. All Card-mod card and themes configurations are supported. While you are encouraged to update to use `uix:` in your cards and `uix-<thing>(-yaml)` for your themes, it is not required.
