@@ -1,0 +1,71 @@
+id: doc_spark_search_calendar_2
+description: "Doc image: Forge Search spark (search.md)"
+view_path: doc-spark-search-calendar-2
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: search
+        for: hui-calendar-card $ ha-full-calendar $
+        query: .fc-event-title
+        text: ^(Future|Timetravel)
+        actions:
+          add_class:
+            - future-event
+      - type: search
+        for: hui-calendar-card $ ha-full-calendar $
+        query: .fc-list-event-title
+        text: ^(Future|Timetravel) # Matches even though `Future` is in child <a> link
+        actions:
+          add_class:
+            - future-event
+  element:
+    type: calendar
+    initial_view: listWeek
+    entities:
+      - calendar.calendar_1
+      - calendar.calendar_2
+    uix:
+      style:
+        ha-full-calendar $: |
+          .future-event {
+            background: teal;
+            color: white;
+            font-weight: 900;
+          }
+          .fc-daygrid-event:has(.future-event) {
+            background-color: teal !important;
+            border-color: blue !important;
+          }
+          .fc-event-time:has(+ .future-event) {
+            background: teal;
+            color: white;
+            font-weight: 900;      
+          }
+          .fc-list-event-graphic:has(+ .future-event) {
+            background: teal;
+            color: white;
+            font-weight: 900;   
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+          .fc-list-event-time:has(~ .future-event) {
+            background: teal;
+            color: white;
+            font-weight: 900;   
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+          .fc-list-event-title.future-event {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/search-calendar-2.png
+  root: uix-forge
+  padding: 16

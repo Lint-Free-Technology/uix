@@ -1,0 +1,53 @@
+id: doc_spark_search_calendar
+description: "Doc image: Forge Search spark (search.md)"
+view_path: doc-spark-search-calendar
+
+interactions:
+  - type: click
+    root: ha-full-calendar
+    selector: .fc-daygrid-more-link.fc-more-link
+    settle_ms: 500
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: search
+        for: hui-calendar-card $ ha-full-calendar $
+        query: .fc-event-title
+        text: ^(Future|Timetravel)
+        actions:
+          add_class:
+            - future-event
+  element:
+    type: calendar
+    entities:
+      - calendar.calendar_1
+      - calendar.calendar_2
+    uix:
+      style:
+        ha-full-calendar $: |
+          .future-event {
+            background: teal;
+            color: white;
+            font-weight: 900;
+          }
+          .fc-daygrid-event:has(.future-event) {
+            background-color: teal !important;
+            border-color: blue !important;
+            border-width: 2px;
+          }
+          .fc-event-time:has(+ .future-event) {
+            background: teal;
+            color: white;
+            font-weight: 900;      
+          }
+
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/search-calendar.png
+  root: uix-forge
+  padding: 16
