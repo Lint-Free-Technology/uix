@@ -1,3 +1,9 @@
+## [8.0.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0...v8.0.1-beta.1) (2026-08-06)
+
+### 🐞 Bug Fixes
+
+* Send foundries on initial backend connect so they are immediately available. ([193ff15](https://github.com/Lint-Free-Technology/uix/commit/193ff158eac79d561eea27f80ca7dd62b58a6f1f)), references [#494](https://github.com/Lint-Free-Technology/uix/issues/494)
+
 ## [8.0.0](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1...v8.0.0) (2026-08-05)
 
 ### ⚠ BREAKING CHANGES
