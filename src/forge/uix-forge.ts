@@ -857,7 +857,7 @@ export class UixForge extends LitElement {
         this.forgedElement.preview = this._mold.isPreview();
         this.style.setProperty("position", "static");
         this.style.setProperty("transform", "none");
-        this._mold.callAuxiliaryFunction("setupNearestRoutedTypeDelegation");
+        void this._mold.callAuxiliaryFunction("setupNearestRoutedTypeDelegation");
       });
     }
     if (this._mold.isFooter()) {
