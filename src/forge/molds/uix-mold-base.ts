@@ -99,4 +99,15 @@ export abstract class UixForgeMoldBase {
   async cardHelpers() {
     return await (window as any).loadCardHelpers();
   }
+
+  getAuxiliaryFunctions(): Record<string, Function> {
+    return {};
+  }
+
+  async callAuxiliaryFunction(functionName: string, ...args: any[]): Promise<any> {
+    const auxiliaryFunctions = this.getAuxiliaryFunctions();
+    if (functionName in auxiliaryFunctions) {
+      return await auxiliaryFunctions[functionName].apply(this, args);
+    }
+  }
 }
