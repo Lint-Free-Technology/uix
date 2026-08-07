@@ -17,16 +17,13 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.isNearestRoutedType()) {
-      this.forge?.addEventListener("action", this.actionDelegationHandler);
-    }
+    // forgedElementConfig.type may not be available yet here; wiring is done in
+    // setupNearestRoutedTypeDelegation() once the forged element is created.
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this.isNearestRoutedType()) {
-      this.forge?.removeEventListener("action", this.actionDelegationHandler);
-    }
+    this.forge?.removeEventListener("action", this.actionDelegationHandler);
   }
 
   getAuxiliaryFunctions(): Record<string, Function> {
