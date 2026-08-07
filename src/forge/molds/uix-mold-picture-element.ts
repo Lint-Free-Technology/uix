@@ -17,8 +17,7 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
 
   connectedCallback() {
     super.connectedCallback();
-    // forgedElementConfig.type may not be available yet here; wiring is done in
-    // setupNearestRoutedTypeDelegation() once the forged element is created.
+    this.forge?.addEventListener("action", this.actionDelegationHandler);
   }
 
   disconnectedCallback() {
@@ -46,9 +45,6 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
     this.getPictureElement()?.dispatchEvent(
       new CustomEvent("action", {
         detail: customEvent.detail,
-        bubbles: true,
-        composed: true,
-        cancelable: customEvent.cancelable,
       })
     );
   }
@@ -75,6 +71,7 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
   }
 
   setupNearestRoutedTypeDelegation() {
+    this.forge?.addEventListener("action", this.actionDelegationHandler);
     if (this.isNearestRoutedType() && this.forge) {
       (this.forge as any).delegatedActions = true;
       (this.forge as any).getHitInfo = () => { return this.getHitInfo(); };

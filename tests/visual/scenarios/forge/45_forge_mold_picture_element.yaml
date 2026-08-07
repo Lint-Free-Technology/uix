@@ -127,9 +127,6 @@ card:
           left: 50%
           top: 55%
         title: Toggle
-        target:
-          entity_id:
-            - light.bed_light
         action: input_number.increment
         target:
           entity_id: input_number.test_number
