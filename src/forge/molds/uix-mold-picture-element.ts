@@ -37,13 +37,23 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
   }
 
   private actionDelegationHandler = (event: Event) => {
-    event.stopPropagation();
     if (!this.isNearestRoutedType()) return;
+
+    // Only delegate actions emitted on the forge element itself.
+    // (Delegated events dispatched from the inner picture-element will bubble back up.)
+    if (event.target !== this.forge) return;
+
     const customEvent = event as CustomEvent;
-    const actionEvent = new CustomEvent("action", {
-      detail: customEvent.detail
-    });
-    this.getPictureElement()?.dispatchEvent(actionEvent);
+    customEvent.stopPropagation();
+
+    this.getPictureElement()?.dispatchEvent(
+      new CustomEvent("action", {
+        detail: customEvent.detail,
+        bubbles: true,
+        composed: true,
+        cancelable: customEvent.cancelable,
+      })
+    );
   }
 
   private getHitInfo() {
