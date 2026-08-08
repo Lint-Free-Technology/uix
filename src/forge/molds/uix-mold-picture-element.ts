@@ -50,7 +50,7 @@ export class UixForgeMoldPictureElement extends UixForgeMoldBase {
   }
 
   private getHitInfo() {
-    return this.getPictureElement()?.getHitInfo?.() ?? {};
+    return this.getPictureElement()?.getHitInfo?.() ?? null;
   }
 
   private getPictureElement(): any {

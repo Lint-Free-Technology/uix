@@ -156,6 +156,19 @@ card:
           perform_action: input_number.increment
           target:
             entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: state-icon
+        style:
+          left: 90%
+          top: 90%
+        entity: light.bed_light
+        tap_action: # no action to test that the mold doesn't cause other errors when no action is defined
+          action: none
+        hold_action:
+          action: none
   image: https://demo.home-assistant.io/stub_config/floorplan.png
 
 assertions:
