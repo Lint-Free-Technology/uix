@@ -1,3 +1,9 @@
+## [8.0.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.2...v8.0.1-beta.3) (2026-08-08)
+
+### 🐞 Bug Fixes
+
+* **forge:** Also fix actions not working in Home Assistant 2026.8.0 for forged picture-elements of types icon, state-badge, state-icon and state-label when one of these has no actions. ([4a47eff](https://github.com/Lint-Free-Technology/uix/commit/4a47eff4f8590a616b3145caead8f69dd264c865))
+
 ## [8.0.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.1...v8.0.1-beta.2) (2026-08-07)
 
 ### 🐞 Bug Fixes
