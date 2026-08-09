@@ -13,8 +13,8 @@ const ERROR_LABELS: Record<string, string> = {
     "The 'uix_foundries' key must be a YAML mapping of foundry names to configurations.",
 };
 
-@patch_element("developer-yaml-config")
-class DeveloperYamlConfigPatch extends ModdedElement {
+@patch_element("tools-yaml-config")
+class ToolsYamlConfigPatch extends ModdedElement {
   declare hass: any;
 
   updated(_orig, changedProperties) {
@@ -25,7 +25,7 @@ class DeveloperYamlConfigPatch extends ModdedElement {
   _uixEnsureReloadBtn(): void {
     if (!this.shadowRoot) return;
 
-    // NOTE: ha-card order is tied to developer-yaml-config's internal DOM
+    // NOTE: ha-card order is tied to tools-yaml-config's internal DOM
     // structure. If HA changes this, the injection won't happen.
     const cards = this.shadowRoot.querySelectorAll("ha-card");
     if (cards.length < 2) return;
