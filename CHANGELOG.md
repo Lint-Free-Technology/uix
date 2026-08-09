@@ -1,3 +1,9 @@
+## [8.0.1-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.3...v8.0.1-beta.4) (2026-08-09)
+
+### 🐞 Bug Fixes
+
+* **forge:** Correctly apply overlay-icon spark right and bottom parts of icon_position. ([#502](https://github.com/Lint-Free-Technology/uix/issues/502)) ([53aef12](https://github.com/Lint-Free-Technology/uix/commit/53aef1230399cd6d119fbf99700fe655711d59bc)), references [#501](https://github.com/Lint-Free-Technology/uix/issues/501)
+
 ## [8.0.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.2...v8.0.1-beta.3) (2026-08-08)
 
 ### 🐞 Bug Fixes
