@@ -372,13 +372,13 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     if (iconPos) {
       this._iconElement.style.setProperty("position", "relative");
       if (iconPos.top !== undefined || iconPos.bottom !== undefined) {
-        const top = iconPos.top ?? `calc(100% - var(--uix-overlay-icon-size, 24px) - ${iconPos.bottom})`;
+        const top = iconPos.top ?? `calc(100% - var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()}) - ${iconPos.bottom})`;
         this._iconElement.style.setProperty("top", top);
       } else {
         this._iconElement.style.removeProperty("top");
       }
       if (iconPos.left !== undefined || iconPos.right !== undefined) {
-        const left = iconPos.left ?? `calc(100% - var(--uix-overlay-icon-size, 24px) - ${iconPos.right})`;
+        const left = iconPos.left ?? `calc(100% - var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()}) - ${iconPos.right})`;
         this._iconElement.style.setProperty("left", left);
       } else {
         this._iconElement.style.removeProperty("left");
