@@ -1,0 +1,50 @@
+id: forge_spark_overlay_icon_right_bottom
+description: "Overlay icon spark uses right-bottom position"
+view_path: forge-spark-overlay-icon-right-bottom
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: overlay-icon
+        for: hui-tile-card $
+        icon: mdi:lightbulb
+        icon_position:
+          right: 2px
+          bottom: 2px
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions:
+  - type: element_present
+    root: 
+      - uix-forge
+      - hui-tile-card
+    selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
+
+  - type: css_property
+    root: 
+      - uix-forge
+      - hui-tile-card
+    selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "left"
+    expected: "220px"
+
+  - type: css_property
+    root: 
+      - uix-forge
+      - hui-tile-card
+    selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
+    property: "top"
+    expected: "30px"
