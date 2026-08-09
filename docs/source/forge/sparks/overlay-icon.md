@@ -5,6 +5,9 @@ icon: material/star-four-points-outline
 
 # :material-star-four-points-outline: Overlay Icon spark
 
+!!! note
+    Correct application of `right` and `bottom` of `icon_position` fixed in v8.0.0-beta.4.
+
 The `overlay-icon` spark overlays an icon on any element inside a [UIX Forge](../index.md) forged element.
 
 - If `entity` is set, the spark renders a `ha-state-icon`.
