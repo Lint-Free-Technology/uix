@@ -107,7 +107,7 @@ File contents are read when foundries are first requested by the browser and whe
 
 If your dashboard is in **YAML mode**, you can also use the dashboard's built-in **Refresh** button — UIX listens for the `config-refresh` event that the refresh button dispatches and automatically re-reads all registered foundry files.
 
-Home Assistant developer tools YAML tab also has a `UIX Foundries` reload button which will show any errors in file foundries.
+Home Assistant Tools YAML tab also has a `UIX Foundries` reload button which will show any errors in file foundries.
 
 #### Removing a file registration
 
