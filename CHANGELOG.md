@@ -1,3 +1,9 @@
+## [8.0.1-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.4...v8.0.1-beta.5) (2026-08-09)
+
+### 🐞 Bug Fixes
+
+* Restore UIX Foundries to YAML tab on Frontend Tools after 2026.8.0 ([350000f](https://github.com/Lint-Free-Technology/uix/commit/350000f0845d8c954bb5fa2175cd6f4eb6f8b511))
+
 ## [8.0.1-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.3...v8.0.1-beta.4) (2026-08-09)
 
 ### 🐞 Bug Fixes
