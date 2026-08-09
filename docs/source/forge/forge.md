@@ -4,10 +4,10 @@ description: UIX Forge config details including macros, billets, template nestin
 ---
 # UIX Forge
 
-UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines template-driven configuration with additional behaviours called **sparks**. Use it to:
+UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines template-driven configuration with additional behaviors called **sparks**. Use it to:
 
 - **Forge** any standard Home Assistant element from templates, allowing the entire element config to react to entity states, user, browser and other template variables.
-- **Add sparks** — self-contained behaviours that augment the forged element.
+- **Add sparks** — self-contained behaviors that augment the forged element.
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
 !!! tip "Wrap in UIX Forge"
@@ -32,7 +32,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviours within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviors within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#template-variables-and-macros). |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -141,12 +141,14 @@ entities:
 !!! tip
     The blank card content div will be given a height of `var(--row-height, 56px)` when no other content has been applied via a spark, either as a sibling to or child of the div. However when there is a sibling to the div but it is empty, the height will be `0px`. IN all cases this height can be styled explicitly using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
 
-### Template variables and macros
+## Template variables and macros
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
 
 Templates will run in different contexts for forging, UIX styling the forge and UIX styling the element. The table below summarizes the different contexts.
 
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD046 -->
 | Context | Template variables |
 | - | - |
 | Templates in forge and element, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
@@ -173,7 +175,38 @@ Templates will run in different contexts for forging, UIX styling the forge and 
 
     ![Example using config entity](../assets/page-assets/forge/config-entity.png)
 
-#### Full example including macro
+!!! warning
+    To use `config.entity` as a template variable in either `forge` or `element` templates you need to define `entity` in global `uix-forge` config as a string (templates not supported). If you wish to compose an entity in a [foundry](foundries.md) from a variable string part you can use `billets` and [billet interpolation](#billet-interpolation).
+
+    Example of a file foundry with an entity using billet interpolation.
+
+    ```yaml
+    uix_foundries:
+      uix_media_player:
+        forge:
+          mold: card
+          billets:
+            player_entity: media_player.cast_{player}
+            player: ~ 
+            name: ~ 
+            icon: music
+        element:
+          type: custom:mini-media-player
+          artwork: material
+          adaptive_color: true
+          entity: "{{ player_entity }}"
+          icon: mdi:{{ icon }}
+          name: >
+            {% if is_state_attr(player_entity,'app_name','Spotify') %}
+              {{ name }}: Spotify
+            {% elif is_state_attr(player_entity,'app_name','Music Assistant') %}
+              {{ name }}: Music Assistant
+            {% else %}
+              {{ name }}
+            {% endif %}
+    ```
+
+### Full example including macro
 
 !!! example inline end "Full example including macro"
     ![Example output](../assets/page-assets/forge/config-entity-full.png)
@@ -264,7 +297,7 @@ The YAML type of a billet determines how it is represented in templates:
 | String | `my_billet: hello` | `str` | `{{ my_billet }}` → `hello` |
 | Number | `my_billet: 42` | `int` or `float` | `{{ my_billet + 1 }}` → `43` |
 | Boolean | `my_billet: true` | `bool` | `{% if my_billet %}…{% endif %}` |
-| List | `my_billet: [1, 2, 3]` | `list` | `{{ my_billet | join(', ') }}` |
+| List | `my_billet: [1, 2, 3]` | `list` | `{{ my_billet \| join(', ') }}` |
 | Mapping | `my_billet: {a: 1}` | `dict` | `{{ my_billet.a }}` |
 
 Each billet is injected as a `{%- set name = value -%}` statement, preserving the native Jinja2 type for all YAML types — no macro wrapper is needed.
@@ -298,7 +331,7 @@ billets:
 
 #### Billets and foundries
 
-Billets follow the same override behaviour as macros: a foundry can define billets, and local forge config can override individual billet entries. Only the billets whose names are referenced in a template are included in that template's preamble.
+Billets follow the same override behavior as macros: a foundry can define billets, and local forge config can override individual billet entries. Only the billets whose names are referenced in a template are included in that template's preamble.
 
 See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on defining empty billet slots in a foundry and handling the `none` case in templates.
 
@@ -310,7 +343,7 @@ If you need to pass through a whole template unchanged to the forged element, yo
 
 Templates are ignored by UIX Forge when they include `{# uix-forge.ignore #}`.
 
-Example markdown cards showing use of `{# uix-forge.ignore #}`. 
+Example markdown cards showing use of `{# uix-forge.ignore #}`.
 
 ```yaml
 cards:
@@ -476,7 +509,7 @@ element:
 
 When UIX processes the template, it prepends `{%- set id = "living_room" -%}`. HA then evaluates the template body, resolving `{{id}}` to `living_room`. The expression received by `auto-entities` is:
 
-```
+```jinja
 {#uix#}{{ device_entities(device_id('switch.living_room'))|reject('search','device')|list }}{#uix#}
 ```
 
@@ -526,7 +559,7 @@ UIX Forge supports `custom:auto-entities` in two ways:
     card_param: cards
     ```
 
-    ![Example using auto-entites](../assets/page-assets/forge/forge-auto-entities.gif)
+    ![Example using auto-entities](../assets/page-assets/forge/forge-auto-entities.gif)
 
 ## UIX styling
 
