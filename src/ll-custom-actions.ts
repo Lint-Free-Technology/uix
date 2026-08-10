@@ -78,7 +78,7 @@ export class Actions {
         })
       );
     };
-    if (dataExtensible.action) {
+    if (dataExtensible.action && typeof dataExtensible.action === "object") {
       const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {};
       dataExtensible.action = {
         ...dataExtensible.action,
@@ -87,6 +87,18 @@ export class Actions {
         },
       };
       delete dataExtensible.action.tap_action;
+    }
+    if (dataExtensible.secondary_action && typeof dataExtensible.secondary_action === "object") {
+      dataExtensible.secondaryAction = { ...dataExtensible.secondary_action };
+      delete dataExtensible.secondary_action;
+      const secondaryAction = dataExtensible.secondaryAction.tap_action ? { ...dataExtensible.secondaryAction.tap_action } : {};
+      dataExtensible.secondaryAction = {
+        ...dataExtensible.secondaryAction,
+        action: () => {
+          _triggerHassAction(secondaryAction, base as HTMLElement);
+        },
+      };
+      delete dataExtensible.secondaryAction.tap_action;
     }
     const event = new CustomEvent(eventName, {
       detail: dataExtensible,
