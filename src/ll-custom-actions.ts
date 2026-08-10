@@ -96,11 +96,14 @@ export class Actions {
     base.dispatchEvent(event);
   }
   static async javascript(data: Record<string, any>) {
-    if (!data || typeof data.code !== "string") {
-      console.error("UIX: Invalid data for javascript action:", data);
+    if (!data || typeof data.code !== "string" || !data.code.trim()) {
+      console.error("UIX: Invalid or empty code for javascript action:", data);
       return;
     }
-    if (data.variables && typeof data.variables !== "object") {
+    if (
+      data.variables != null &&
+      (typeof data.variables !== "object" || Array.isArray(data.variables))
+    ) {
       console.error("UIX: Variables must be an object for javascript action:", data.variables);
       return;
     }
