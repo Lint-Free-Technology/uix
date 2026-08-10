@@ -111,3 +111,31 @@ tap_action:
 ```
 
 ![UIX toast action example](../assets/page-assets/extras/extra-toast-action.gif)
+
+## `javascript` - run javascript code in Browser session
+
+Runs javascript code in the Browser session with optional `hass` variable and optional `variables` object.
+
+| config | setting | default | description |
+| --- | --- | --- | --- |
+| `action: javascript` | - | - | Runs javascript code with options set with `data:` |
+| `data:` | - | - | Javascript options. |
+| | `code` | **REQUIRED** | Javascript code to run. |
+| | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variable.<name>`. Named variables can be of any type. |
+
+Example javascript action with variable and using hass object to turn off a light.
+
+```yaml
+type: tile
+entity: light.bed_light
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: javascript
+    data:
+      variables:
+        entity_id: light.bed_light
+      code: |
+        console.log("UIX: Custom javascript action executed!");
+        hass.callService("light", "turn_off", {}, { entity_id: variables.entity_id });
+```

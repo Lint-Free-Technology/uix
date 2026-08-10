@@ -1,0 +1,40 @@
+id: extra_javascript_action
+description: "UIX javascript action on a tile card"
+view_path: extra-javascript-action
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+card:
+  type: tile
+  entity: light.bed_light
+  tap_action:
+    action: fire-dom-event
+    uix:
+      action: javascript
+      data:
+        variables:
+          entity_id: light.bed_light
+        code: |
+          console.log("UIX: Custom javascript action executed!");
+          hass.callService("light", "turn_off", {}, { entity_id: variables.entity_id });
+
+interactions:
+  - type: click
+    root: hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+  
+assertions:
+  - type: element_present
+    root: hui-tile-card
+    selector: ha-tile-icon[data-state="off"]
+  - type: snapshot
+    name: 47_extra_javascript_action
+    threshold: 0.02

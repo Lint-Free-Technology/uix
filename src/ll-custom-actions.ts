@@ -1,4 +1,4 @@
-import { hass_base_el } from "./helpers/hass";
+import { hass, hass_base_el } from "./helpers/hass";
 
 // Add a listener to execute UIX custom actions via the Home Assistant `fire-dom-event` / `ll-custom` action
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
@@ -95,6 +95,28 @@ export class Actions {
     });
     base.dispatchEvent(event);
   }
+  static async javascript(data: Record<string, any>) {
+    if (!data || typeof data.code !== "string") {
+      console.error("UIX: Invalid data for javascript action:", data);
+      return;
+    }
+    if (data.variables && typeof data.variables !== "object") {
+      console.error("UIX: Variables must be an object for javascript action:", data.variables);
+      return;
+    }
+    const hs = await hass();
+    const code = `
+      "use strict";
+      ${data.code}
+    `;
+
+    const fn = new Function(
+      "hass",
+      "variables",
+      code
+    );
+    fn(hs, data.variables ?? {});
+  }
 }
 
 const actionList: Record<string, Function> = {
@@ -103,4 +125,5 @@ const actionList: Record<string, Function> = {
   toast: Actions.toast,
   "clear-cache": Actions.clear_cache,
   "more-info": Actions.more_info,
+  javascript: Actions.javascript,
 };
