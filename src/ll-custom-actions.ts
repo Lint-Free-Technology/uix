@@ -113,12 +113,22 @@ export class Actions {
       ${data.code}
     `;
 
-    const fn = new Function(
-      "hass",
-      "variables",
-      code
-    );
-    fn(hs, data.variables ?? {});
+    let fn: Function;
+    try {
+      fn = new Function("hass", "variables", code);
+    } catch (error) {
+      console.error(
+        "UIX: Failed to compile javascript action code (CSP may block unsafe-eval):",
+        error
+      );
+      return;
+    }
+
+    try {
+      fn(hs, data.variables ?? {});
+    } catch (error) {
+      console.error("UIX: Error while executing javascript action code:", error);
+    }
   }
 }
 
