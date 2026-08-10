@@ -37,7 +37,6 @@ card:
             translationKey: ui.dialogs.more_info_control.light.toggle
           tap_action:
             action: perform-action
-            primary: true
             perform_action: light.toggle
             target:
               entity_id: light.ceiling_lights
