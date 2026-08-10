@@ -123,7 +123,7 @@ Runs JavaScript code in the browser session with `hass` provided and an optional
 | `action: javascript` | - | - | Runs javascript code with options set with `data:` |
 | `data:` | - | - | Javascript options. |
 | | `code` | **REQUIRED** | Javascript code to run. |
-| | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variable.<name>`. Named variables can be of any type. |
+| | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variables.<name>`. Named variables can be of any type. |
 
 Example javascript action with variable and using hass object to turn off a light.
 
