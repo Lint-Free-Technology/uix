@@ -114,8 +114,10 @@ tap_action:
 
 ## `javascript` - run javascript code in Browser session
 
-Runs javascript code in the Browser session with optional `hass` variable and optional `variables` object.
+Runs JavaScript code in the browser session with `hass` provided and an optional `variables` object.
 
+!!! warning
+    This action executes arbitrary JavaScript in the current Home Assistant frontend session. Only use trusted code/config and be aware it can access data available to the browser session.
 | config | setting | default | description |
 | --- | --- | --- | --- |
 | `action: javascript` | - | - | Runs javascript code with options set with `data:` |
