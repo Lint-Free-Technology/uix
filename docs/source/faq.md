@@ -15,6 +15,11 @@ hide:
 !!! tip "Add UI eXtension as a Service"
     UI eXtension is an integration and needs to be added as a Service once you have downloaded by HACS. Make sure you don't miss the **Add UI eXtension service** step. This is something you may miss if you are not accustomed to adding integrations like UIX as a Service.
 
+??? warning "UI Lovelace Minimalist may load card-mod resource"
+    If you have UI Lovelace Minimalist installed it may load card-mod resource. Due to load order of integrations, UI eXtension cannot check for this conflict. To continue to use UI Lovelace Minimalist with UI eXtension you need to turn off UI Lovelace Minimalist config option `Include custom card resources it's depending on` and load any required custom cards through HACS or manually.
+
+    ![UI Minimalist custom card option](../assets/page-assets/faq/ui-minimalist-option.png)
+
 ## Is UI eXtension a drop in replacement for Card-mod?
 
 Yes, UI eXtension is a drop in replacement for Card-mod versions up to 4.2.1. All Card-mod card and themes configurations are supported. While you are encouraged to update to use `uix:` in your cards and `uix-<thing>(-yaml)` for your themes, it is not required.

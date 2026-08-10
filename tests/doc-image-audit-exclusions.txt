@@ -7,6 +7,9 @@
 # lines are ignored.  Run `make doc_audit` (or `pytest tests/test_doc_audit.py`)
 # to verify that all doc images are either covered by a scenario or listed here.
 
+# FAQ - UI Minimalist custom_card option
+docs/source/assets/page-assets/faq/ui-minimalist-option.png
+
 # Brand / logo assets
 docs/source/assets/images/mixed.png
 
