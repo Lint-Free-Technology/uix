@@ -1,0 +1,35 @@
+id: custom_card_lit_scoped_custom_registry
+description: "UIX applies a uix-node and a background-color style onto a custom card that uses LitElement and a scoped custom registry"
+view_path: custom-card-lit-scoped-custom-registry
+
+setup:
+  - type: ha_service
+    domain: climate
+    service: set_temperature
+    data:
+      entity_id: climate.heatpump
+      temperature: 22
+card:
+  type: custom:mini-climate
+  entity: climate.heatpump
+  uix:
+    style:
+      mc-target-temperature $: |
+        div.controls-wrap { height:200px; }
+
+assertions:
+  - type: element_present
+    root: "mini-climate"
+    selector: "uix-node"
+  - type: element_present
+    root: "mc-target-temperature"
+    selector: "uix-node"
+  - type: css_property
+    root: "mc-target-temperature"
+    selector: "div.controls-wrap"
+    property: "height"
+    expected: "200px"
+
+  - type: snapshot
+    name: "48_custom_card_lit_scoped_custom_registry"
+    threshold: 0.02
