@@ -192,12 +192,7 @@ export class Uix extends LitElement {
     const localTheme = normalizeThemeName(this.theme);
     if (localTheme || this._themeAppliedByUix) {
       const styleHost = getThemeTargetElement(this);
-      const restoreMainTheme = !localTheme && this._themeAppliedByUix;
-      const applied = await applyFrontendThemeOnElement(
-        styleHost,
-        localTheme,
-        restoreMainTheme
-      );
+      const applied = await applyFrontendThemeOnElement(styleHost, localTheme);
       this._themeAppliedByUix = applied && !!localTheme;
     }
 

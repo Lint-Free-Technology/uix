@@ -57,7 +57,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
 
   private _restore() {
     if (!this._targetElement) return;
-    void applyFrontendThemeOnElement(this._targetElement, undefined, true);
+    void applyFrontendThemeOnElement(this._targetElement, undefined);
     this._targetElement = null;
     this._notifyThemeUpdate();
   }
@@ -72,7 +72,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._targetElement = element;
     await applyFrontendThemeOnElement(element, this._theme);
     if (generation !== this._callGeneration) {
-      void applyFrontendThemeOnElement(element, undefined, true);
+      void applyFrontendThemeOnElement(element, undefined);
       this._targetElement = null;
       return;
     }
