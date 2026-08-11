@@ -1,5 +1,5 @@
 id: custom_card_lit_scoped_custom_registry
-description: "UIX applies a uix-node and a background-color style onto a custom card that uses LitElement and a scoped custom registry"
+description: "UIX applies a uix-node and styles onto a custom card that uses LitElement and a scoped custom registry"
 view_path: custom-card-lit-scoped-custom-registry
 
 setup:
