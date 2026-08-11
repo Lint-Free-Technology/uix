@@ -1,3 +1,14 @@
+## [8.0.1-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.5...v8.0.1-beta.6) (2026-08-11)
+
+### 🐞 Bug Fixes
+
+* Correctly apply uix theme config, theme spark or more-info theme following view. ([#511](https://github.com/Lint-Free-Technology/uix/issues/511)) ([29d20de](https://github.com/Lint-Free-Technology/uix/commit/29d20de885fa3349accfc01324c160377c3a288e)), closes [#510](https://github.com/Lint-Free-Technology/uix/issues/510)
+* custom cards that use Lit local scoped customElements registry correctly apply uix on cards customElement shadow roots. ([#513](https://github.com/Lint-Free-Technology/uix/issues/513)) ([00a8e37](https://github.com/Lint-Free-Technology/uix/commit/00a8e37ba073c70990d0935eadec090dd5c4ed7c)), references [#512](https://github.com/Lint-Free-Technology/uix/issues/512)
+
+### ⚙️ Miscellaneous
+
+* Remove no longer used ha-developer-tools patch. Update documentation removing Developer from any reference to Home Assistant tools. ([a150edb](https://github.com/Lint-Free-Technology/uix/commit/a150edb89c0a3e38799e29714c6210920eed3875))
+
 ## [8.0.1-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.4...v8.0.1-beta.5) (2026-08-09)
 
 ### 🐞 Bug Fixes
