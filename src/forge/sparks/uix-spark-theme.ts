@@ -1,5 +1,5 @@
 import { PropertyValues } from "lit";
-import { ThemeElement, applyFrontendThemeOnElement } from "../../helpers/frontend_themes";
+import { applyFrontendThemeOnElement } from "../../helpers/frontend_themes";
 import type { UixForgeSparkController } from "./uix-spark-controller";
 import { UixForgeSparkBase } from "./uix-spark-base";
 
@@ -57,7 +57,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
 
   private _restore() {
     if (!this._targetElement) return;
-    void applyFrontendThemeOnElement(this._targetElement as ThemeElement, undefined);
+    void applyFrontendThemeOnElement(this._targetElement, undefined);
     this._targetElement = null;
     this._notifyThemeUpdate();
   }

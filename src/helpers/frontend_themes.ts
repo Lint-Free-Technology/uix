@@ -1,16 +1,16 @@
-import { LitElement } from "lit";
 import { hass } from "./hass";
 
-interface huiViewContainerSurrogate extends LitElement {
+interface HuiViewContainerSurrogate extends HTMLElement {
   _applyTheme: () => void;
 }
 
-export interface ThemeElement extends LitElement {
-  hass: any;
-  theme: string;
+export interface ThemeElement extends HTMLElement {
+  hass?: any;
+  theme?: string;
+  updateComplete?: Promise<unknown>;
 }
 
-let huiViewContainerSurrogate: huiViewContainerSurrogate | undefined = undefined;
+let huiViewContainerSurrogate: HuiViewContainerSurrogate | undefined = undefined;
 
 export async function applyFrontendThemeOnElement(
   element: ThemeElement,
@@ -23,7 +23,7 @@ export async function applyFrontendThemeOnElement(
 
   try {
     if (!huiViewContainerSurrogate && customElements.get("hui-view-container")) {
-      huiViewContainerSurrogate = document.createElement("hui-view-container") as huiViewContainerSurrogate;
+      huiViewContainerSurrogate = document.createElement("hui-view-container") as HuiViewContainerSurrogate;
     }
     
     // If hui-view-container is not available then we are not on a dashboard so applying theme is not possible
