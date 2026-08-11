@@ -23,7 +23,7 @@ import {
   UixStyle,
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
-import { applyFrontendThemeOnElement } from "./helpers/frontend_themes";
+import { applyFrontendThemeOnElement, ThemeElement } from "./helpers/frontend_themes";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -192,11 +192,9 @@ export class Uix extends LitElement {
     const localTheme = normalizeThemeName(this.theme);
     if (localTheme || this._themeAppliedByUix) {
       const styleHost = getThemeTargetElement(this);
-      const restoreMainTheme = !localTheme && this._themeAppliedByUix;
       const applied = await applyFrontendThemeOnElement(
-        styleHost,
+        styleHost as ThemeElement,
         localTheme,
-        restoreMainTheme
       );
       this._themeAppliedByUix = applied && !!localTheme;
     }
