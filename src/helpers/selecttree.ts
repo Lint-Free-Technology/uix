@@ -154,11 +154,14 @@ function pseudoMatches(element: Element, selector: string): boolean {
 
 export async function await_element(el, hard = false) {
   if (el.localName?.includes("-")) {
-    const registry =
-      el.getRootNode?.() instanceof ShadowRoot &&
-      "customElements" in el.getRootNode()
-        ? el.getRootNode().customElements
-        : customElements;
+    const rootNode = el.getRootNode?.();
+    const scopedRegistry =
+      rootNode instanceof ShadowRoot &&
+      (rootNode as any).customElements &&
+      typeof (rootNode as any).customElements.whenDefined === "function"
+        ? (rootNode as any).customElements
+        : undefined;
+    const registry = scopedRegistry ?? customElements;
     await registry.whenDefined(el.localName);
   }
   if (el.updateComplete) await el.updateComplete;
