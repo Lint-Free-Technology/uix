@@ -40,19 +40,19 @@ Only test if instructed to. Otherwise submit work only.
 
 Testing needs a virtual python environment. If `.venv` exists assume you are working on a setup environment and proceed ro run Home Assistant persistent server.
 
-- python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[test]' && playwright install chromium
+- `python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[test]' && playwright install chromium`
 
 For a session you save considerable time running Home Assistant persistent server
 
-- source .venv/bin/activate && HA_VERSION=$(awk 'NF && $1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true) && HA_VERSION=${HA_VERSION:-stable} HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
+- `source .venv/bin/activate && HA_VERSION=$(awk 'NF && $1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true) && HA_VERSION=${HA_VERSION:-stable} HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server`
 
 Then run specific test
 
-- source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'
+- `source .venv/bin/activate && source .ha_env 2>/dev/null; pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'`
 
 To update a specific test when snapshot output already exists
 
-- source .venv/bin/activate && source .ha_env 2>/dev/null; SNAPSHOT_UPDATE=1 pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'
+- `source .venv/bin/activate && source .ha_env 2>/dev/null; SNAPSHOT_UPDATE=1 pytest tests/visual/test_scenarios.py -k '${input:scenarioId}'`
 
 Never run all tests as this will bog down your session
 
