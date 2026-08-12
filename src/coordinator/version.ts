@@ -139,7 +139,6 @@ export const VersionMixin = (SuperClass) => {
               action,
               secondaryAction,
               duration: -1,
-              dismissable: true,
               dismiss,
             },
           })
