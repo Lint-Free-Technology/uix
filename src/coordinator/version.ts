@@ -123,8 +123,13 @@ export const VersionMixin = (SuperClass) => {
       const showToast = () => {
         const message = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reloading in ${seconds}s...`;
         const action = {
-          text: "Reload",
+          text: "Reload Now",
           action: activateReload,
+          primary: true,
+        };
+        const secondaryAction = {
+          text: "Cancel",
+          action: dismiss,
         };
         base.dispatchEvent(
           new CustomEvent("hass-notification", {
@@ -132,6 +137,7 @@ export const VersionMixin = (SuperClass) => {
               id: "uix-reload",
               message,
               action,
+              secondaryAction,
               duration: -1,
               dismissable: true,
               dismiss,
