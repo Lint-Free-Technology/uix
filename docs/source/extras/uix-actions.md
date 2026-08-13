@@ -124,3 +124,34 @@ tap_action:
 ```
 
 ![UIX toast action example](../assets/page-assets/extras/extra-toast-action.gif)
+
+## `javascript` - run javascript code in Browser session
+
+Runs JavaScript code in the browser session with `hass` provided and an optional `variables` object.
+
+!!! warning
+    This action executes arbitrary JavaScript in the current Home Assistant frontend session. Only use trusted code/config and be aware it can access data available to the browser session.
+
+| config | setting | default | description |
+| --- | --- | --- | --- |
+| `action: javascript` | - | - | Runs javascript code with options set with `data:` |
+| `data:` | - | - | Javascript options. |
+| | `code` | **REQUIRED** | Javascript code to run. |
+| | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variables.<name>`. Named variables can be of any type. |
+
+Example javascript action with variable and using hass object to turn off a light.
+
+```yaml
+type: tile
+entity: light.bed_light
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: javascript
+    data:
+      variables:
+        entity_id: light.bed_light
+      code: |
+        console.log("UIX: Custom javascript action executed!");
+        hass.callService("light", "turn_off", {}, { entity_id: variables.entity_id });
+```
