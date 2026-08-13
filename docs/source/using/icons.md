@@ -51,7 +51,6 @@ Templates are supported.
         uix:
           style: |
             ha-tile-icon {
-              {%- set entityString = config.entity.replace('.','_') -%}
               --uix-icon: mdi:thermometer-bluetooth;
               --uix-icon-color:
               {%- set raw = states(config.entity) -%}
@@ -74,7 +73,6 @@ Templates are supported.
         uix:
           style: |
             ha-tile-icon {
-              {%- set entityString = config.entity.replace('.','_') -%}
               --uix-icon: mdi:thermometer-bluetooth;
               --uix-icon-color:
               {%- set raw = states(config.entity) -%}
@@ -97,7 +95,6 @@ Templates are supported.
         uix:
           style: |
             ha-tile-icon {
-              {%- set entityString = config.entity.replace('.','_') -%}
               --uix-icon: mdi:thermometer-bluetooth;
               --uix-icon-color:
               {%- set raw = states(config.entity) -%}
@@ -120,7 +117,6 @@ Templates are supported.
         uix:
           style: |
             ha-tile-icon {
-              {%- set entityString = config.entity.replace('.','_') -%}
               --uix-icon: mdi:thermometer-bluetooth;
               --uix-icon-color:
               {%- set raw = states(config.entity) -%}
