@@ -52,8 +52,8 @@ Templates are supported.
           style: |
             ha-tile-icon {
               {%- set entityString = config.entity.replace('.','_') -%}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
-              --uix-icon-color-for-{{ entityString }}:
+              --uix-icon: mdi:thermometer-bluetooth;
+              --uix-icon-color:
               {%- set raw = states(config.entity) -%}
               {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
               {%- else -%}
@@ -75,8 +75,8 @@ Templates are supported.
           style: |
             ha-tile-icon {
               {%- set entityString = config.entity.replace('.','_') -%}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
-              --uix-icon-color-for-{{ entityString }}:
+              --uix-icon: mdi:thermometer-bluetooth;
+              --uix-icon-color:
               {%- set raw = states(config.entity) -%}
               {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
               {%- else -%}
@@ -98,8 +98,8 @@ Templates are supported.
           style: |
             ha-tile-icon {
               {%- set entityString = config.entity.replace('.','_') -%}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
-              --uix-icon-color-for-{{ entityString }}:
+              --uix-icon: mdi:thermometer-bluetooth;
+              --uix-icon-color:
               {%- set raw = states(config.entity) -%}
               {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
               {%- else -%}
@@ -121,8 +121,8 @@ Templates are supported.
           style: |
             ha-tile-icon {
               {%- set entityString = config.entity.replace('.','_') -%}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
-              --uix-icon-color-for-{{ entityString }}:
+              --uix-icon: mdi:thermometer-bluetooth;
+              --uix-icon-color:
               {%- set raw = states(config.entity) -%}
               {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
               {%- else -%}
