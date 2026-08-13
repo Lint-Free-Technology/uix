@@ -63,7 +63,6 @@ export const ConnectionMixin = (SuperClass) => {
         .catch((err) => {
           console.log(`UIX: ${err}. User Frontend settings have not been applied`);
         });
-      this.fetchFoundries();
     }
 
     // WebSocket has connected
@@ -132,7 +131,7 @@ export const ConnectionMixin = (SuperClass) => {
       // This works for all users (admin and non-admin) without requiring a separate event subscription.
       if (cfg.foundries !== undefined) {
         this._foundries = cfg.foundries;
-        this.LOG("Foundries updated via push:", this._foundries);
+        this.LOG("Foundries updated:", this._foundries);
         this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
       }
 
@@ -149,7 +148,7 @@ export const ConnectionMixin = (SuperClass) => {
           type: "uix/get_foundries",
         });
         this._foundries = (result as any)?.foundries ?? {};
-        this.LOG("Foundries loaded:", this._foundries);
+        this.LOG("Foundries retrieved:", this._foundries);
         this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
       } catch (err) {
         console.log("UIX: Error fetching foundries:", err);

@@ -5,6 +5,9 @@ icon: material/star-four-points-outline
 
 # :material-star-four-points-outline: Overlay Icon spark
 
+!!! note
+    Correct application of `right` and `bottom` of `icon_position` fixed in v8.0.0-beta.4.
+
 The `overlay-icon` spark overlays an icon on any element inside a [UIX Forge](../index.md) forged element.
 
 - If `entity` is set, the spark renders a `ha-state-icon`.
@@ -48,7 +51,7 @@ element:
 | `value` | string | — | If `entity` is provided you can override the state value used to generate the icon. |
 | `color` | string | `state` | If `entity` is provided set the icon color when the entity is active for the overlay icon. By default, the color is based on the `state`, `domain`, and `device_class` of the entity. To take default color, set to `none`. It accepts `state`, `none`, a Home Assistant [color token](https://www.home-assistant.io/dashboards/tile/#available-colors), or a hex color code. Default color when `none` is set is `var(--white-color)` when target is `ha-tile-icon`, otherwise `var(--primary-color)` |
 | `icon_color` | string | `var(--white-color)` when target is `ha-tile-icon`, otherwise `var(--primary-color)` | CSS color for the icon. Overrides `color` if set. |
-| `icon_position` | object | when target is `hui-generic-entity-row`: `{top: '8px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}`; otherwise not set | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_position` | object | when target is `hui-generic-entity-row`: `{top: '8px', left: '30px'}`; when target is `ha-tile-icon`: `{top: '2px', left: '30px'}`; otherwise not set | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` and `left`, `right`. Numbers are treated as pixels; strings accept any CSS value. `left` takes precedence over `right`. `top` takes precedence over `bottom`. NOTE: Due to the overlay mechanism of the icon in the overlay container, `right` is set as `left: calc(100% - var(--uix-overlay-icon-size, <icon_size>) - <icon_position.right>)` and `bottom` is set as `top: calc(100% - var(--uix-overlay-icon-size, <icon_size>) - <icon_position.bottom>)` |
 | `icon_size` | number or string | `12px` when target is `ha-tile-icon`, `24px` otherwise | Size of the icon. Numbers are treated as pixels; strings are passed through as-is. |
 | `icon_background` | CSS background | `var(--primary-color)` when target is `ha-tile-icon`, otherwise not set | Explicit CSS background for the icon (overrides the default background-color behavior). |
 
@@ -69,7 +72,7 @@ The overlay icon respects CSS custom properties. Set these on the forged element
 | `--uix-overlay-icon-background` | `transparent`; `var(--primary-color)` when target is `ha-tile-icon` | Background color of the icon element when `icon_background` is not explicitly set. |
 | `--uix-overlay-icon-border-radius` | `none`; `50%` when target is `ha-tile-icon` | Border radius of the icon element. |
 | `--uix-overlay-icon-padding` | `0`; `2px` when target is `ha-tile-icon` | Padding around the icon. |
-| `--uix-overlay-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). |
+| `--uix-overlay-icon-position` | `none` | CSS `translate` value applied to the icon (e.g. `30px 6px`). Both `icon_position` if set and `--uix-overlay-icon-position` will combine to provide the final icon position. |
 
 !!! warning
     As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements displayed inline. This means overlay-icon spark can only apply to an entire entity row.

@@ -1,0 +1,184 @@
+id: forge_mold_picture_element
+description: "UIX Forge mold picture element"
+view_path: forge-mold-picture-element
+
+# turn on bed light and test boolean and then turn both off to test the lock spark
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+    settle_ms: 50
+  - type: ha_service
+    domain: input_number
+    service: set_value
+    data:
+      entity_id: input_number.test_number
+      value: 1
+    settle_ms: 50
+
+interactions:
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(1)"
+    selector: hui-state-icon-element
+    settle_ms: 250
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(2)"
+    selector: hui-state-label-element
+    settle_ms: 250
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(3)"
+    selector: hui-state-badge-element
+    settle_ms: 250
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(4)"
+    selector: hui-icon-element
+    settle_ms: 250
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(5)"
+    selector: hui-service-button-element
+    settle_ms: 250
+  - type: click
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(6)"
+    selector: hui-image-element
+    settle_ms: 250
+
+card:
+  type: picture-elements
+  elements:
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: state-icon
+        style:
+          left: 50%
+          top: 10%
+        entity: light.bed_light
+        tap_action:
+          action: perform-action
+          perform_action: input_number.increment
+          target:
+            entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: state-label
+        style:
+          left: 50%
+          top: 17%
+        entity: input_number.test_number
+        tap_action:
+          action: perform-action
+          perform_action: input_number.increment
+          target:
+            entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: state-badge
+        style:
+          left: 50%
+          top: 30%
+        entity: sensor.sun_next_dawn
+        tap_action:
+          action: perform-action
+          perform_action: input_number.increment
+          target:
+            entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: icon
+        style:
+          left: 50%
+          top: 45%
+        icon: mdi:alert-circle
+        entity: light.bed_light
+        tap_action:
+          action: perform-action
+          perform_action: input_number.increment
+          target:
+            entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: action-button
+        style:
+          left: 50%
+          top: 55%
+        title: Toggle
+        action: input_number.increment
+        target:
+          entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: image
+        style:
+          left: 50%
+          top: 80%
+        image:
+          media_content_id: media-source://media_source/local/daniel_craig_cropped.jpg
+          media_content_type: image/jpeg
+          metadata:
+            title: daniel_craig_cropped.jpg
+            thumbnail: null
+            media_class: image
+            children_media_class: null
+            navigateIds:
+              - {}
+              - media_content_type: app
+                media_content_id: media-source://media_source
+        entity: light.bed_light
+        tap_action:
+          action: perform-action
+          perform_action: input_number.increment
+          target:
+            entity_id: input_number.test_number
+    - type: custom:uix-forge
+      forge:
+        mold: picture-element
+      element:
+        type: state-icon
+        style:
+          left: 90%
+          top: 90%
+        entity: light.bed_light
+        tap_action: # no action to test that the mold doesn't cause other errors when no action is defined
+          action: none
+        hold_action:
+          action: none
+  image: https://demo.home-assistant.io/stub_config/floorplan.png
+
+assertions:
+  - type: text_equals
+    root:
+      - hui-picture-elements-card
+      - "uix-forge:nth-of-type(2)"
+      - hui-state-label-element
+    selector: div
+    expected: "7"
+  - type: snapshot
+    name: "46_forge_mold_picture_element"
+    threshold: 0.02

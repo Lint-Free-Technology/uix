@@ -371,25 +371,17 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     const iconPos = this._getEffectiveIconPosition();
     if (iconPos) {
       this._iconElement.style.setProperty("position", "relative");
-      if (iconPos.top !== undefined) {
-        this._iconElement.style.setProperty("top", iconPos.top);
+      if (iconPos.top !== undefined || iconPos.bottom !== undefined) {
+        const top = iconPos.top ?? `calc(100% - var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()}) - ${iconPos.bottom})`;
+        this._iconElement.style.setProperty("top", top);
       } else {
         this._iconElement.style.removeProperty("top");
       }
-      if (iconPos.bottom !== undefined) {
-        this._iconElement.style.setProperty("bottom", iconPos.bottom);
-      } else {
-        this._iconElement.style.removeProperty("bottom");
-      }
-      if (iconPos.left !== undefined) {
-        this._iconElement.style.setProperty("left", iconPos.left);
+      if (iconPos.left !== undefined || iconPos.right !== undefined) {
+        const left = iconPos.left ?? `calc(100% - var(--uix-overlay-icon-size, ${this._getEffectiveIconSize()}) - ${iconPos.right})`;
+        this._iconElement.style.setProperty("left", left);
       } else {
         this._iconElement.style.removeProperty("left");
-      }
-      if (iconPos.right !== undefined) {
-        this._iconElement.style.setProperty("right", iconPos.right);
-      } else {
-        this._iconElement.style.removeProperty("right");
       }
     } else {
       this._iconElement.style.removeProperty("position");

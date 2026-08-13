@@ -26,6 +26,14 @@ input_boolean:
     name: Festive Day
     initial: off
 
+input_number:
+  test_number:
+    name: Test Number
+    initial: 1
+    min: 1
+    max: 100
+    step: 1
+
 person:
   - name: James Bond 007
     id: james_bond007

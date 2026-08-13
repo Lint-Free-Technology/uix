@@ -2,6 +2,15 @@ id: forge_spark_overlay_icon_media_source_shadowroot
 description: "Overlay icon spark resolves media-source image_url and attaches to ShadowRoot targets"
 view_path: forge-spark-overlay-icon-media-source-shadowroot
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
 card:
   type: custom:uix-forge
   forge:

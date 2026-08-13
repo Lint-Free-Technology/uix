@@ -1,9 +1,7 @@
 import { hass } from "./helpers/hass";
-import { invalidateFrontendThemeCache } from "./helpers/frontend_themes";
 import { Unpromise } from "@watchable/unpromise";
 
 function refresh_theme() {
-  invalidateFrontendThemeCache();
   document.dispatchEvent(new Event("uix_update"));
 }
 

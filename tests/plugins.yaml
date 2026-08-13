@@ -29,3 +29,7 @@
 
 - local_path: ./test-custom-card/dist/my-awesome-card.js
   filename: my-awesome-card.js
+
+- repo: artem-sedykh/mini-climate-card
+  asset: mini-climate-card-bundle.js
+  filename: mini-climate-card-bundle.js

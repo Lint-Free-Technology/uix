@@ -2,6 +2,15 @@ id: forge_spark_overlay_icon_row_defaults
 description: "Overlay icon spark uses row-default position and renders ha-icon without entity"
 view_path: forge-spark-overlay-icon-row-defaults
 
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
 card:
   type: entities
   entities:

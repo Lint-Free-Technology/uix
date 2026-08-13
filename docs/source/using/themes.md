@@ -289,7 +289,6 @@ red-theme:
 - `uix-top-app-bar-fixed`
 - `uix-dialog`
 - `uix-toast`
-- `uix-developer-tools`
 - `uix-grid-section`
 - `uix-calendar`
 - `uix-todo`

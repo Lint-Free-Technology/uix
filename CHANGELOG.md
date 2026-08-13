@@ -1,3 +1,44 @@
+## [8.0.1-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.5...v8.0.1-beta.6) (2026-08-11)
+
+### 🐞 Bug Fixes
+
+* Correctly apply uix theme config, theme spark or more-info theme following view. ([#511](https://github.com/Lint-Free-Technology/uix/issues/511)) ([29d20de](https://github.com/Lint-Free-Technology/uix/commit/29d20de885fa3349accfc01324c160377c3a288e)), closes [#510](https://github.com/Lint-Free-Technology/uix/issues/510)
+* custom cards that use Lit local scoped customElements registry correctly apply uix on cards customElement shadow roots. ([#513](https://github.com/Lint-Free-Technology/uix/issues/513)) ([00a8e37](https://github.com/Lint-Free-Technology/uix/commit/00a8e37ba073c70990d0935eadec090dd5c4ed7c)), references [#512](https://github.com/Lint-Free-Technology/uix/issues/512)
+
+### ⚙️ Miscellaneous
+
+* Remove no longer used ha-developer-tools patch. Update documentation removing Developer from any reference to Home Assistant tools. ([a150edb](https://github.com/Lint-Free-Technology/uix/commit/a150edb89c0a3e38799e29714c6210920eed3875))
+
+## [8.0.1-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.4...v8.0.1-beta.5) (2026-08-09)
+
+### 🐞 Bug Fixes
+
+* Restore UIX Foundries to YAML tab on Frontend Tools after 2026.8.0 ([350000f](https://github.com/Lint-Free-Technology/uix/commit/350000f0845d8c954bb5fa2175cd6f4eb6f8b511))
+
+## [8.0.1-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.3...v8.0.1-beta.4) (2026-08-09)
+
+### 🐞 Bug Fixes
+
+* **forge:** Correctly apply overlay-icon spark right and bottom parts of icon_position. ([#502](https://github.com/Lint-Free-Technology/uix/issues/502)) ([53aef12](https://github.com/Lint-Free-Technology/uix/commit/53aef1230399cd6d119fbf99700fe655711d59bc)), references [#501](https://github.com/Lint-Free-Technology/uix/issues/501)
+
+## [8.0.1-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.2...v8.0.1-beta.3) (2026-08-08)
+
+### 🐞 Bug Fixes
+
+* **forge:** Also fix actions not working in Home Assistant 2026.8.0 for forged picture-elements of types icon, state-badge, state-icon and state-label when one of these has no actions. ([4a47eff](https://github.com/Lint-Free-Technology/uix/commit/4a47eff4f8590a616b3145caead8f69dd264c865))
+
+## [8.0.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1-beta.1...v8.0.1-beta.2) (2026-08-07)
+
+### 🐞 Bug Fixes
+
+* **forge:** Fix actions not working in Home Assistant 2026.8.0 for forged picture-elements of types icon, state-badge, state-icon and state-label. ([#497](https://github.com/Lint-Free-Technology/uix/issues/497)) ([3225c92](https://github.com/Lint-Free-Technology/uix/commit/3225c929b1d3b934c6f57bd9144ae228e0b2a348)), closes [#495](https://github.com/Lint-Free-Technology/uix/issues/495)
+
+## [8.0.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0...v8.0.1-beta.1) (2026-08-06)
+
+### 🐞 Bug Fixes
+
+* Send foundries on initial backend connect so they are immediately available. ([193ff15](https://github.com/Lint-Free-Technology/uix/commit/193ff158eac79d561eea27f80ca7dd62b58a6f1f)), references [#494](https://github.com/Lint-Free-Technology/uix/issues/494)
+
 ## [8.0.0](https://github.com/Lint-Free-Technology/uix/compare/v7.7.1...v8.0.0) (2026-08-05)
 
 ### ⚠ BREAKING CHANGES

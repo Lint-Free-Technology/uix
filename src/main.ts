@@ -1,4 +1,4 @@
-// Any bootstrap listeners to be included prior to card-mod import
+// Any bootstrap listeners to be included prior to uix import
 import "./ll-custom-actions";
 import "./console_debug";
 import "./coordinator/coordinator";
@@ -34,8 +34,7 @@ import "./patch/hui-dialog-edit-card";
 import "./patch/hui-dialog-edit-badge";
 import "./patch/ha-panel-config";
 import "./patch/ha-panel-profile";
-import "./patch/ha-panel-developer-tools";
-import "./patch/developer-yaml-config";
+import "./patch/tools-yaml-config";
 import "./patch/ha-panel-calendar";
 import "./patch/ha-panel-todo";
 import "./patch/ha-panel-history";
