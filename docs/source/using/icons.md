@@ -140,7 +140,7 @@ Templates are supported.
 
 ## Full theme example
 
-This example uses two macros in UIX theme and applying those macros in styling for theme variables `uix-root-yaml` and `uix-more-info-yaml`. While the root selector `.:` is the only selector used, teh example uses the `-yaml` variants as you may already have these variants in your [theme](./themes.md).
+This example uses two macros in UIX theme and applying those macros in styling for theme variables `uix-root-yaml` and `uix-more-info-yaml`. While the root selector `.:` is the only selector used, the example uses the `-yaml` variants as you may already have these variants in your [theme](./themes.md).
 
 Theme:
 
