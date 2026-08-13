@@ -7,8 +7,15 @@
     "actionhandler",
     "apexcharts",
     "culori",
+    "darkgreen",
+    "dodgerblue",
     "elif",
+    "endfor",
     "endmacro",
-    "endraw"
+    "endraw",
+    "hvac",
+    "precendece",
+    "selectattr",
+    "stylable"
   ]
 }

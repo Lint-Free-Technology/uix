@@ -1,0 +1,40 @@
+id: doc_theme_icon_color_entity
+description: "Doc image: theme with icon overrides (icons.md)"
+view_path: doc-theme-icon-color-entity
+theme: uix-doc-icon-for-entity-theme
+
+setup:
+  - type: ha_service
+    domain: climate
+    service: set_hvac_mode
+    data:
+      entity_id: climate.hvac
+      hvac_mode: auto
+
+cards:
+  - type: heading
+    heading: Temperatures
+    heading_style: title
+  - type: tile
+    entity: sensor.sauna_temperature
+    icon: mdi:thermometer-auto
+  - type: tile
+    entity: sensor.basement_temperature
+  - type: tile
+    entity: sensor.kitchen_temperature
+    uix:
+      style: |
+        ha-tile-icon {
+          {% if is_state('climate.hvac', 'auto') %}
+            --uix-icon: mdi:thermometer-auto;
+          {% endif %}
+        }
+  - type: tile
+    entity: sensor.attic_temperature
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/using/theme-icon-color-entity.png
+  root: hui-grid-section
+  padding: 16

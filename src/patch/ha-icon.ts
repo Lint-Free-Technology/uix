@@ -11,14 +11,63 @@ Patch various icon elements to consider the following variables:
 --uix-icon-dim
 */
 
+/*
+Patch state-icon to consider the following variable:
+--uix-icon-for-<entity_id_with_dots_as_underscores>
+
+e.g. to override the background image for person.jim:
+  --uix-icon-for-light_bed_light: mdi:globe-light-outline
+
+If the element is for that entity, the replacement will take place.
+If not, it is ignored.
+
+Supported elements:
+- ha-tile-icon
+- ha-state-icon
+- ha-icon
+- state-badge
+*/
+
+const getEntityId = (el: any): string | null => {
+  const tag = el.tagName.toLowerCase();
+  switch (tag) {
+    case "ha-tile-icon":
+      // Entity ID is on ha-tile-card
+      const parentCard = el.closest("ha-card")?.parentNode?.host;
+      return parentCard?._config?.entity || null;
+    case "ha-state-icon":
+      return el.stateObj?.entity_id || null;
+    case "state-badge":
+      return el.stateObj?.entity_id || null;
+    case "ha-icon":
+      // Entity ID may be on stateObj of host
+      const host = el.parentNode?.host;
+      return host?.stateObj?.entity_id || null;
+    default:
+      return null;
+  }
+};
+
 let haIconAvailable = false;
 
 const updateIcon = (el) => {
   const styles = window.getComputedStyle(el);
 
-  const icon = styles.getPropertyValue("--uix-icon") || styles.getPropertyValue("--card-mod-icon");
-  if (icon && el.icon !== undefined) {
-    el.icon = icon.trim();
+  let icon = styles.getPropertyValue("--uix-icon").trim() || styles.getPropertyValue("--card-mod-icon").trim();
+  let color = styles.getPropertyValue("--uix-icon-color").trim() || styles.getPropertyValue("--card-mod-icon-color").trim();
+  if (!icon || !color) {
+    const entityId = getEntityId(el);
+    if (!icon && entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      icon = styles.getPropertyValue(`--uix-icon-for-${slug}`).trim();
+    }
+    if (!color && entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      color = styles.getPropertyValue(`--uix-icon-color-for-${slug}`).trim();
+    }
+  }
+  if (icon && "icon" in el) {
+    el.icon = icon;
   } else if (icon && el.tagName.toLowerCase() === "ha-svg-icon" && haIconAvailable) {
     const iconEl: LitElement = el.querySelector("ha-icon") || document.createElement("ha-icon") as LitElement;
     if (!el.contains(iconEl)) {
@@ -32,7 +81,6 @@ const updateIcon = (el) => {
     });
   }
 
-  const color = styles.getPropertyValue("--uix-icon-color") || styles.getPropertyValue("--card-mod-icon-color");
   if (color) el.style.color = color;
 
   const filter = styles.getPropertyValue("--uix-icon-dim") || styles.getPropertyValue("--card-mod-icon-dim");
@@ -99,6 +147,7 @@ class HaIconPatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((this.parentNode as any)?.host?.localName === "ha-state-icon") return;
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
