@@ -159,85 +159,85 @@ This example uses two macros in UIX theme and applying those macros in styling f
 
 Theme:
 
-    ```yaml
-    uix-doc-icon-for-entity-theme:
-      uix-theme: uix-doc-icon-for-entity-theme
-      uix-macros-yaml: |
-        temp_icon_color:
-          params:
-            - entity_id
-          template: >
-            {%- set entityString = entity_id.replace('.','_') -%}
-            --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
-            --uix-icon-color-for-{{ entityString }}:
-            {%- set raw = states(entity_id) -%}
-            {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
-            {%- else -%}
-            {%- set state = raw|float(-5) -%}
-            {%- if state < 5 -%} dodgerblue
-            {%- elif state < 10 -%} lightblue
-            {%- elif state < 15 -%} turquoise
-            {%- elif state < 20 -%} green
-            {%- elif state < 25 -%} darkgreen
-            {%- elif state < 30 -%} orange
-            {%- elif state < 35 -%} crimson
-            {%- else -%} firebrick
-            {%- endif -%};
-            {%- endif -%}
-        temp_icon_color_all:
-          template: >
-            {% set entities = states.sensor 
-              | selectattr('attributes.device_class', 'defined') 
-              | selectattr('attributes.device_class', 'eq', 'temperature') 
-              | selectattr('attributes.state_class', 'defined')
-              | selectattr('attributes.state_class', 'eq', 'measurement')
-              | map(attribute='entity_id') | list %}
-            {% for entity in entities %}
-              {{ temp_icon_color(entity) }}
-            {% endfor %}
+```yaml
+uix-doc-icon-for-entity-theme:
+  uix-theme: uix-doc-icon-for-entity-theme
+  uix-macros-yaml: |
+    temp_icon_color:
+      params:
+        - entity_id
+      template: >
+        {%- set entityString = entity_id.replace('.','_') -%}
+        --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
+        --uix-icon-color-for-{{ entityString }}:
+        {%- set raw = states(entity_id) -%}
+        {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+        {%- else -%}
+        {%- set state = raw|float(-5) -%}
+        {%- if state < 5 -%} dodgerblue
+        {%- elif state < 10 -%} lightblue
+        {%- elif state < 15 -%} turquoise
+        {%- elif state < 20 -%} green
+        {%- elif state < 25 -%} darkgreen
+        {%- elif state < 30 -%} orange
+        {%- elif state < 35 -%} crimson
+        {%- else -%} firebrick
+        {%- endif -%};
+        {%- endif -%}
+    temp_icon_color_all:
+      template: >
+        {% set entities = states.sensor 
+          | selectattr('attributes.device_class', 'defined') 
+          | selectattr('attributes.device_class', 'eq', 'temperature') 
+          | selectattr('attributes.state_class', 'defined')
+          | selectattr('attributes.state_class', 'eq', 'measurement')
+          | map(attribute='entity_id') | list %}
+        {% for entity in entities %}
+          {{ temp_icon_color(entity) }}
+        {% endfor %}
 
-      uix-root-yaml: |
-        .: |
-          :host {
-            {{ temp_icon_color_all() }}
-          }
-      
-      uix-more-info-yaml: |
-        .: |
-          :host {
-            {{ temp_icon_color_all() }}
-          }
-    ```
+  uix-root-yaml: |
+    .: |
+      :host {
+        {{ temp_icon_color_all() }}
+      }
+  
+  uix-more-info-yaml: |
+    .: |
+      :host {
+        {{ temp_icon_color_all() }}
+      }
+```
 
 !!! tip
     `--uix-icon` and `--uix-icon-color` take precedence over `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`. See the `sensor.kitchen_temperature` tile in the example.
 
 Dashboard cards (section):
 
-    ```yaml
-    type: grid
-    cards:
-      - type: heading
-        heading: Temperatures
-        heading_style: title
-      - type: tile
-        entity: sensor.sauna_temperature
-        icon: ''
-        vertical: false
-        features_position: bottom
-      - type: tile
-        entity: sensor.basement_temperature
-      - type: tile
-        entity: sensor.kitchen_temperature
-        uix:
-          style: |
-            ha-tile-icon {
-              {% if is_state('climate.hvac', 'auto') %}
-                --uix-icon: mdi:thermometer-auto;
-              {% endif %}
-            }
-      - type: tile
-        entity: sensor.attic_temperature
-    ```
+```yaml
+type: grid
+cards:
+  - type: heading
+    heading: Temperatures
+    heading_style: title
+  - type: tile
+    entity: sensor.sauna_temperature
+    icon: ''
+    vertical: false
+    features_position: bottom
+  - type: tile
+    entity: sensor.basement_temperature
+  - type: tile
+    entity: sensor.kitchen_temperature
+    uix:
+      style: |
+        ha-tile-icon {
+          {% if is_state('climate.hvac', 'auto') %}
+            --uix-icon: mdi:thermometer-auto;
+          {% endif %}
+        }
+  - type: tile
+    entity: sensor.attic_temperature
+```
 
 ![Icon override by entity in theme](../assets/page-assets/using/theme-icon-color-entity.png)
