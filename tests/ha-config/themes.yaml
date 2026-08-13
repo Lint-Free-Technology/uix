@@ -280,9 +280,11 @@ uix-icon-for-entity-theme:
         {% set entityString = entity_id.replace('.','_') %}
         --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
         --uix-icon-color-for-{{ entityString }}:
-        {%- set state = states(entity_id)|int(-5) -%}
-        {%- if state == 'unknown'-%} gray
-        {%- elif state < 5 -%} dodgerblue
+        {%- set raw = states(entity_id) -%}
+        {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+        {%- else -%}
+        {%- set state = raw|float(-5) -%}
+        {%- if state < 5 -%} dodgerblue
         {%- elif state < 10 -%} lightblue
         {%- elif state < 15 -%} turquoise
         {%- elif state < 20 -%} green
@@ -291,6 +293,7 @@ uix-icon-for-entity-theme:
         {%- elif state < 35 -%} crimson
         {%- else -%} firebrick
         {%- endif -%};
+        {%- endif -%}
     temp_icon_color_for_all:
       template: >
         {% set entities = ['sensor.outside_temperature'] %}
