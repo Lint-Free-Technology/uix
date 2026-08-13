@@ -1,0 +1,36 @@
+id: icon_color_for_entity_more_info
+description: "more-info: Icon and color styling for an entity can be set via a theme variable and macro"
+view_path: icon-color-for-entity-more-info
+
+theme: uix-icon-for-entity-theme
+
+card:
+  type: tile
+  entity: sensor.outside_temperature
+
+interactions:
+  - type: click
+    root: "hui-tile-card"
+    selector: "ha-card"
+    settle_ms: 1000
+
+assertions:
+  - type: object_property_text_equals
+    root: 
+      - "state-card-display"
+      - "state-info"
+      - "state-badge"
+    selector: "ha-state-icon"
+    property: "icon"
+    expected: "mdi:thermometer-bluetooth"
+  - type: css_property
+    root: 
+      - "state-card-display"
+      - "state-info"
+      - "state-badge"
+    selector: "ha-state-icon"
+    property: "color"
+    expected: "rgb(0, 128, 0)"
+  - type: snapshot
+    name: "50_icon_color_for_entity_more_info"
+    threshold: 0.01
