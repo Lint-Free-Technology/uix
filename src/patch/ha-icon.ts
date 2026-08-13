@@ -106,7 +106,7 @@ class GlobalStyleWatcher {
 }
 
 // Bind single runtime instance to window context
-(window as any).__globalStyleWatcher = (window as any).__globalStyleWatcher || new GlobalStyleWatcher();
+(window as any).__uixGlobalStyleWatcher = (window as any).__uixGlobalStyleWatcher || new GlobalStyleWatcher();
 
 class StyleReactiveComponent {
   el: any;
@@ -142,7 +142,7 @@ class StyleReactiveComponent {
     if (supportsHoudini && supportsDiscrete) {
       this.setupNativeTransitions();
     } else {
-      (window as any).__globalStyleWatcher.register(this);
+      (window as any).__uixGlobalStyleWatcher.register(this);
     }
   }
 
@@ -150,11 +150,12 @@ class StyleReactiveComponent {
     try {
       this.properties.forEach(prop => {
         try {
+          const currentVal = window.getComputedStyle(this.el).getPropertyValue(prop).trim();
           (window as any).CSS.registerProperty({
             name: prop,
-            syntax: '*',
+            syntax: prop.includes('color') ? '<color>' : '*',
             inherits: true,
-            initialValue: prop.includes('color') ? '' : ''
+            initialValue: currentVal || (prop.includes('color') ? 'transparent' : 'initial')
           });
         } catch (e) {
           // Absorb exceptions if another application module already declared these names
@@ -163,9 +164,10 @@ class StyleReactiveComponent {
     } catch (e) {}
 
     // Apply native micro-transitions to local component styles
-    const prevProp = this.el.style.transitionProperty;
-    const prevDur = this.el.style.transitionDuration;
-    const prevBeh = this.el.style.transitionBehavior;
+    const computed = window.getComputedStyle(this.el);
+    const prevProp = computed.transitionProperty !== 'all' ? computed.transitionProperty : '';
+    const prevDur = computed.transitionDuration;
+    const prevBeh = (computed as any).transitionBehavior || '';
     
     const props = this.properties.join(', ');
     const durs = this.properties.map(() => '0.001s').join(', ');
@@ -188,8 +190,8 @@ class StyleReactiveComponent {
 
   destroy() {
     this.el.removeEventListener('transitionend', this._transitionEndHandler);
-    if ((window as any).__globalStyleWatcher) {
-      (window as any).__globalStyleWatcher.unregister(this);
+    if ((window as any).__uixGlobalStyleWatcher) {
+      (window as any).__uixGlobalStyleWatcher.unregister(this);
     }
   }
 }
@@ -272,28 +274,7 @@ const bindUix = async (el) => {
       });
     }
 
-    // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
     updateIcon(el);
-    el._boundUix = el._boundUix ?? new Set();
-    const newUix = await findParentUix(el);
-
-    for (const uix of newUix) {
-      if (el._boundUix.has(uix)) continue;
-
-      uix.addEventListener("uix-styles-update", async () => {
-        // Coalesce rapid style-update events to a single update per frame
-        if (el._updateIconPending) return;
-        el._updateIconPending = true;
-        try {
-          await uix.updateComplete;
-          await nextAnimationFrame();
-          updateIcon(el);
-        } finally {
-          el._updateIconPending = false;
-        }
-      });
-      el._boundUix.add(uix);
-    }
   } finally {
     el._bindUixPending = false;
   }
@@ -343,31 +324,7 @@ class HaSvgIconPatch extends ModdedElement {
   }
 }
 
-function joinSet(dst: Set<any>, src: Set<any>) {
-  for (const s of src) dst.add(s);
-}
 
-async function findParentUix(node: any, step = 0): Promise<Set<Uix>> {
-  let uixElements: Set<Uix> = new Set();
-  if (step == 10) return uixElements;
-  if (!node) return uixElements;
-
-  if (node.updateComplete) await node.updateComplete;
-
-  if (node._uix) {
-    for (const uix of node._uix) {
-      if (uix.styles) uixElements.add(uix);
-    }
-  }
-
-  if (node.parentElement)
-    joinSet(uixElements, await findParentUix(node.parentElement, step + 1));
-  else if (node.parentNode)
-    joinSet(uixElements, await findParentUix(node.parentNode, step + 1));
-  if ((node as any).host)
-    joinSet(uixElements, await findParentUix((node as any).host, step + 1));
-  return uixElements;
-}
 
 window.addEventListener("uix-bootstrap", () => {
   window.customElements.whenDefined("ha-icon").then(() => {
