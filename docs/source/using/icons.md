@@ -51,9 +51,11 @@ Templates are supported.
                 {% set entityString = config.entity.replace('.','_') %}
                 --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
                 --uix-icon-color-for-{{ entityString }}:
-                {%- set state = states(config.entity)|int(-5) -%}
-                {%- if state == 'unknown'-%} gray
-                {%- elif state < 5 -%} dodgerblue
+                {%- set raw = states(config.entity) -%}
+                {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+                {%- else -%}
+                {%- set state = raw|float(-5) -%}
+                {%- if state < 5 -%} dodgerblue
                 {%- elif state < 10 -%} lightblue
                 {%- elif state < 15 -%} turquoise
                 {%- elif state < 20 -%} green
@@ -62,6 +64,7 @@ Templates are supported.
                 {%- elif state < 35 -%} crimson
                 {%- else -%} firebrick
                 {%- endif -%};
+                {%- endif -%}
             }
       - type: tile
         entity: sensor.basement_temperature
