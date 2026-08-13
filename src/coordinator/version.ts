@@ -8,6 +8,7 @@ export const VersionMixin = (SuperClass) => {
   return class VersionMixinClass extends SuperClass {
     _browserVersion: string;
     _versionNotificationPending: boolean = false;
+    _reloadIntervalId?: any;
 
     constructor() {
       super();
@@ -17,6 +18,10 @@ export const VersionMixin = (SuperClass) => {
       });
       this.addEventListener("uix-disconnected", () => {
         this._versionNotificationPending = false;
+        if (this._reloadIntervalId !== undefined) {
+          clearInterval(this._reloadIntervalId);
+          this._reloadIntervalId = undefined;
+        }
       });
     }
 
@@ -93,22 +98,63 @@ export const VersionMixin = (SuperClass) => {
 
     async _reloadNotification(serverVersion, clientVersion) {
       await this._waitForNoToast();
-      const message = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reload to update.`;
-      const action = {
-        text: "Reload",
-        action: () => Actions.clear_cache(),
-      };
+      if (this._reloadIntervalId !== undefined) {
+        clearInterval(this._reloadIntervalId);
+        this._reloadIntervalId = undefined;
+      }
+      let seconds = 60;
       const base = await hass_base_el();
-      base.dispatchEvent(
-        new CustomEvent("hass-notification", {
-          detail: {
-            message,
-            action,
-            duration: -1,
-            dismissable: true,
-          },
-        })
-      );
+
+      const activateReload = () => {
+        if (this._reloadIntervalId !== undefined) {
+          clearInterval(this._reloadIntervalId);
+          this._reloadIntervalId = undefined;
+        }
+        Actions.clear_cache();
+      };
+
+      const dismiss = () => {
+        if (this._reloadIntervalId !== undefined) {
+          clearInterval(this._reloadIntervalId);
+          this._reloadIntervalId = undefined;
+        }
+      };
+
+      const showToast = () => {
+        const message = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reloading in ${seconds}s...`;
+        const action = {
+          text: "Reload Now",
+          action: activateReload,
+          primary: true,
+        };
+        const secondaryAction = {
+          text: "Cancel",
+          action: dismiss,
+        };
+        base.dispatchEvent(
+          new CustomEvent("hass-notification", {
+            detail: {
+              id: "uix-reload",
+              message,
+              action,
+              secondaryAction,
+              duration: -1,
+              dismiss,
+            },
+          })
+        );
+      };
+
+      showToast();
+
+      this._reloadIntervalId = window.setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+          activateReload();
+        } else {
+          showToast();
+        }
+      }, 1000);
     }
   };
 };
