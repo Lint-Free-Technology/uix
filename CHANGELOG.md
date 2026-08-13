@@ -1,3 +1,16 @@
+## [8.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1...v8.1.0-beta.1) (2026-08-13)
+
+### ⭐ New Features
+
+* Allow for icon and icon color override by entity for ha-state-icon, ha-icon, ha-svg-icon ([#519](https://github.com/Lint-Free-Technology/uix/issues/519)) ([0ef0c43](https://github.com/Lint-Free-Technology/uix/commit/0ef0c431fb21090904ec91c5c51bbda71d19b608))
+* Enhance `toast` UIX action with `secondary_action` button which is now available in Home Assistant 2026.8.0. Adds `primary` to style either action button in primary style. ([#505](https://github.com/Lint-Free-Technology/uix/issues/505)) ([8450cd7](https://github.com/Lint-Free-Technology/uix/commit/8450cd7a9937a71a6485a0cd8b3f6a3bb338ec62))
+* Implement 60-second countdown for version mismatch reload toast. Auto reload on countdown finished. ([#517](https://github.com/Lint-Free-Technology/uix/issues/517)) ([09f8a86](https://github.com/Lint-Free-Technology/uix/commit/09f8a86ff2127eac644eb5ff66d21f8405602a35))
+* UIX action `javascript` to enable javascript code to be run. `hass` provided as well as optional `variables` object. ([#506](https://github.com/Lint-Free-Technology/uix/issues/506)) ([7197a6e](https://github.com/Lint-Free-Technology/uix/commit/7197a6e5f698d631fa8e535bafe1d239f614dd62))
+
+### ⚙️ Miscellaneous
+
+* Use js-yaml directly to load theme YAML rather than loading ha-yaml-editor via surrogate tools event tab. ([#520](https://github.com/Lint-Free-Technology/uix/issues/520)) ([b014858](https://github.com/Lint-Free-Technology/uix/commit/b0148580237b6568616d7a8390b0048bb87bcce1)), references [#518](https://github.com/Lint-Free-Technology/uix/issues/518)
+
 ## [8.0.1](https://github.com/Lint-Free-Technology/uix/compare/v8.0.0...v8.0.1) (2026-08-13)
 
 ### 🐞 Bug Fixes
