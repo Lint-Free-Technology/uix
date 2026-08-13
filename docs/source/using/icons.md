@@ -33,27 +33,29 @@ Templates are supported.
 
 ??? example "Generic override example"
     ```yaml
-    - type: heading
-      heading: House Temperatures
-      heading_style: title
-      icon: mdi:checkbox-blank-outline
-      uix:
-        style: |
-          ha-icon {
-            --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
-            --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
-          }
-    - type: tile
-      entity: sensor.sauna_temperature
-      uix:
-        style: |
-          ha-tile-icon {
-              {% set entityString = config.entity.replace('.','_') %}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+      - type: heading
+        heading: House Temperatures
+        heading_style: title
+        icon: mdi:checkbox-blank-outline
+        uix:
+          style: |
+            ha-icon {
+              --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
+              --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
+            }
+      - type: tile
+        entity: sensor.sauna_temperature
+        uix:
+          style: |
+            ha-tile-icon {
+              {%- set entityString = config.entity.replace('.','_') -%}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
               --uix-icon-color-for-{{ entityString }}:
-              {%- set state = states(config.entity)|int(-5) -%}
-              {%- if state == 'unknown'-%} gray
-              {%- elif state < 5 -%} dodgerblue
+              {%- set raw = states(config.entity) -%}
+              {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+              {%- else -%}
+              {%- set state = raw|float(-5) -%}
+              {%- if state < 5 -%} dodgerblue
               {%- elif state < 10 -%} lightblue
               {%- elif state < 15 -%} turquoise
               {%- elif state < 20 -%} green
@@ -62,18 +64,21 @@ Templates are supported.
               {%- elif state < 35 -%} crimson
               {%- else -%} firebrick
               {%- endif -%};
-          }
-    - type: tile
-      entity: sensor.basement_temperature
-      uix:
-        style: |
-          ha-tile-icon {
-              {% set entityString = config.entity.replace('.','_') %}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              {%- endif -%}
+            }
+      - type: tile
+        entity: sensor.basement_temperature
+        uix:
+          style: |
+            ha-tile-icon {
+              {%- set entityString = config.entity.replace('.','_') -%}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
               --uix-icon-color-for-{{ entityString }}:
-              {%- set state = states(config.entity)|int(-5) -%}
-              {%- if state == 'unknown'-%} gray
-              {%- elif state < 5 -%} dodgerblue
+              {%- set raw = states(config.entity) -%}
+              {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+              {%- else -%}
+              {%- set state = raw|float(-5) -%}
+              {%- if state < 5 -%} dodgerblue
               {%- elif state < 10 -%} lightblue
               {%- elif state < 15 -%} turquoise
               {%- elif state < 20 -%} green
@@ -82,18 +87,21 @@ Templates are supported.
               {%- elif state < 35 -%} crimson
               {%- else -%} firebrick
               {%- endif -%};
-          }
-    - type: tile
-      entity: sensor.kitchen_temperature
-      uix:
-        style: |
-          ha-tile-icon {
-              {% set entityString = config.entity.replace('.','_') %}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              {%- endif -%}
+            }
+      - type: tile
+        entity: sensor.kitchen_temperature
+        uix:
+          style: |
+            ha-tile-icon {
+              {%- set entityString = config.entity.replace('.','_') -%}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
               --uix-icon-color-for-{{ entityString }}:
-              {%- set state = states(config.entity)|int(-5) -%}
-              {%- if state == 'unknown'-%} gray
-              {%- elif state < 5 -%} dodgerblue
+              {%- set raw = states(config.entity) -%}
+              {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+              {%- else -%}
+              {%- set state = raw|float(-5) -%}
+              {%- if state < 5 -%} dodgerblue
               {%- elif state < 10 -%} lightblue
               {%- elif state < 15 -%} turquoise
               {%- elif state < 20 -%} green
@@ -102,18 +110,21 @@ Templates are supported.
               {%- elif state < 35 -%} crimson
               {%- else -%} firebrick
               {%- endif -%};
-          }
-    - type: tile
-      entity: sensor.attic_temperature
-      uix:
-        style: |
-          ha-tile-icon {
-              {% set entityString = config.entity.replace('.','_') %}
-              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              {%- endif -%}
+            }
+      - type: tile
+        entity: sensor.attic_temperature
+        uix:
+          style: |
+            ha-tile-icon {
+              {%- set entityString = config.entity.replace('.','_') -%}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
               --uix-icon-color-for-{{ entityString }}:
-              {%- set state = states(config.entity)|int(-5) -%}
-              {%- if state == 'unknown'-%} gray
-              {%- elif state < 5 -%} dodgerblue
+              {%- set raw = states(config.entity) -%}
+              {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+              {%- else -%}
+              {%- set state = raw|float(-5) -%}
+              {%- if state < 5 -%} dodgerblue
               {%- elif state < 10 -%} lightblue
               {%- elif state < 15 -%} turquoise
               {%- elif state < 20 -%} green
@@ -122,18 +133,19 @@ Templates are supported.
               {%- elif state < 35 -%} crimson
               {%- else -%} firebrick
               {%- endif -%};
-          }
-    - type: tile
-      entity: climate.hvac
-      grid_options:
-        columns: 12
-        rows: 1
-      uix:
-        style: |
-          ha-state-icon {
-            --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
-            --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
-          }
+              {%- endif -%}
+            }
+      - type: tile
+        entity: climate.hvac
+        grid_options:
+          columns: 12
+          rows: 1
+        uix:
+          style: |
+            ha-state-icon {
+              --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
+              --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
+            }
     ```
 
     ![Icon generic override example](../assets/page-assets/using/icons-direct-icon-color-entity.png)
