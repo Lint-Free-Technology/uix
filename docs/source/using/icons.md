@@ -7,6 +7,9 @@ With UI eXtension installed, the `ha-state-icon`, `<ha-icon>` or `ha-svg-icon` e
 
 ## Specifying for an entity override
 
+!!! note
+    Styling for an entity override available in 8.1.0-beta.1
+
 Define CSS variables of the form `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`, where every `.` in the entity ID is replaced with `_`. When an icon is rendered its icon and/or color is replaced with the supplied icon and/or color.
 
 Templates are supported. For use see [Full theme example](#full-theme-example).

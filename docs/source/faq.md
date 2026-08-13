@@ -65,7 +65,10 @@ No, being an integration, UI eXtension manages its resource URLs directly. You d
 
 ## Does UI eXtension need manual cache clear after upgrade for Browsers and device Companion Apps?
 
-UI eXtension will show a toast message when it detects that a reload is needed to clear caches, with a convenient `Reload` button.
+UI eXtension will show a toast message when it detects that a reload is needed to clear caches, with a convenient `Reload Now` button and auto reload after 60s.
+
+!!! note
+    While the Auto reload code is in 8.1.0-beta.1, auto Reload will be available when you install 8.1.0-beta.2. When you install 8.1.0-beta.1, device will still be running 8.0.0 code which does not have the auto reload feature.
 
 ## How do I uninstall UI eXtension?
 
