@@ -24,6 +24,7 @@ card:
         dismissable: true
         bottomOffset: 550
         action:
+          primary: true
           text:
             translationKey: ui.dialogs.more_info_control.light.toggle
           tap_action:
@@ -31,6 +32,13 @@ card:
             perform_action: light.toggle
             target:
               entity_id: light.bed_light
+        secondary_action:
+          text: Custom
+          tap_action:
+            action: perform-action
+            perform_action: light.toggle
+            target:
+              entity_id: light.ceiling_lights
   
 doc_animation:
   output: docs/source/assets/page-assets/extras/extra-toast-action.gif
