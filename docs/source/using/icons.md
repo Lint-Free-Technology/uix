@@ -195,7 +195,7 @@ Theme:
     ```
 
 !!! tip
-    `--uix-icon` and `--uix-icon-color` take precendece over `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`.
+    `--uix-icon` and `--uix-icon-color` take precedence over `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`.
 
 Dashboard cards (section):
 
