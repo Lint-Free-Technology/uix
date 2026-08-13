@@ -12,10 +12,10 @@ Patch various icon elements to consider the following variables:
 */
 
 /*
-Patch state-icon to consider the following variable:
+Patch icon elements to consider the following variable:
 --uix-icon-for-<entity_id_with_dots_as_underscores>
 
-e.g. to override the background image for person.jim:
+e.g. to override the icon for light.bed_light:
   --uix-icon-for-light_bed_light: mdi:globe-light-outline
 
 If the element is for that entity, the replacement will take place.
