@@ -129,7 +129,7 @@ template:
         location_accuracy: "{{ trigger.json.resolution }}"
   - sensor:
       - name: Sauna Temperature
-        state: 32
+        state: 75
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
