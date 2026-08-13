@@ -320,7 +320,7 @@ uix-doc-icon-for-entity-theme:
       params:
         - entity_id
       template: >
-        {% set entityString = entity_id.replace('.','_') %}
+        {%- set entityString = entity_id.replace('.','_') -%}
         --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
         --uix-icon-color-for-{{ entityString }}:
         {%- set raw = states(entity_id) -%}

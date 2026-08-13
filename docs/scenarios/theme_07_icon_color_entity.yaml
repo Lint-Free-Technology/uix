@@ -38,3 +38,4 @@ doc_image:
   output: docs/source/assets/page-assets/using/theme-icon-color-entity.png
   root: hui-grid-section
   padding: 16
+  threshold: 0.01

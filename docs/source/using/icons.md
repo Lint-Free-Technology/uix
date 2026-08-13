@@ -33,110 +33,107 @@ Templates are supported.
 
 ??? example "Generic override example"
     ```yaml
-      - type: heading
-        heading: House Temperatures
-        heading_style: title
-        icon: mdi:checkbox-blank-outline
-        uix:
-          style: |
-            ha-icon {
-              --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
-              --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
-            }
-      - type: tile
-        entity: sensor.sauna_temperature
-        uix:
-          style: |
-            ha-tile-icon {
-                {% set entityString = config.entity.replace('.','_') %}
-                --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
-                --uix-icon-color-for-{{ entityString }}:
-                {%- set raw = states(config.entity) -%}
-                {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
-                {%- else -%}
-                {%- set state = raw|float(-5) -%}
-                {%- if state < 5 -%} dodgerblue
-                {%- elif state < 10 -%} lightblue
-                {%- elif state < 15 -%} turquoise
-                {%- elif state < 20 -%} green
-                {%- elif state < 25 -%} darkgreen
-                {%- elif state < 30 -%} orange
-                {%- elif state < 35 -%} crimson
-                {%- else -%} firebrick
-                {%- endif -%};
-                {%- endif -%}
-            }
-      - type: tile
-        entity: sensor.basement_temperature
-        uix:
-          style: |
-            ha-tile-icon {
-                {% set entityString = config.entity.replace('.','_') %}
-                --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
-                --uix-icon-color-for-{{ entityString }}:
-                {%- set state = states(config.entity)|int(-5) -%}
-                {%- if state == 'unknown'-%} gray
-                {%- elif state < 5 -%} dodgerblue
-                {%- elif state < 10 -%} lightblue
-                {%- elif state < 15 -%} turquoise
-                {%- elif state < 20 -%} green
-                {%- elif state < 25 -%} darkgreen
-                {%- elif state < 30 -%} orange
-                {%- elif state < 35 -%} crimson
-                {%- else -%} firebrick
-                {%- endif -%};
-            }
-      - type: tile
-        entity: sensor.kitchen_temperature
-        uix:
-          style: |
-            ha-tile-icon {
-                {% set entityString = config.entity.replace('.','_') %}
-                --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
-                --uix-icon-color-for-{{ entityString }}:
-                {%- set state = states(config.entity)|int(-5) -%}
-                {%- if state == 'unknown'-%} gray
-                {%- elif state < 5 -%} dodgerblue
-                {%- elif state < 10 -%} lightblue
-                {%- elif state < 15 -%} turquoise
-                {%- elif state < 20 -%} green
-                {%- elif state < 25 -%} darkgreen
-                {%- elif state < 30 -%} orange
-                {%- elif state < 35 -%} crimson
-                {%- else -%} firebrick
-                {%- endif -%};
-            }
-      - type: tile
-        entity: sensor.attic_temperature
-        uix:
-          style: |
-            ha-tile-icon {
-                {% set entityString = config.entity.replace('.','_') %}
-                --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
-                --uix-icon-color-for-{{ entityString }}:
-                {%- set state = states(config.entity)|int(-5) -%}
-                {%- if state == 'unknown'-%} gray
-                {%- elif state < 5 -%} dodgerblue
-                {%- elif state < 10 -%} lightblue
-                {%- elif state < 15 -%} turquoise
-                {%- elif state < 20 -%} green
-                {%- elif state < 25 -%} darkgreen
-                {%- elif state < 30 -%} orange
-                {%- elif state < 35 -%} crimson
-                {%- else -%} firebrick
-                {%- endif -%};
-            }
-      - type: tile
-        entity: climate.hvac
-        grid_options:
-          columns: 12
-          rows: 1
-        uix:
-          style: |
-            ha-state-icon {
-              --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
-              --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
-            }
+    - type: heading
+      heading: House Temperatures
+      heading_style: title
+      icon: mdi:checkbox-blank-outline
+      uix:
+        style: |
+          ha-icon {
+            --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
+            --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
+          }
+    - type: tile
+      entity: sensor.sauna_temperature
+      uix:
+        style: |
+          ha-tile-icon {
+              {% set entityString = config.entity.replace('.','_') %}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              --uix-icon-color-for-{{ entityString }}:
+              {%- set state = states(config.entity)|int(-5) -%}
+              {%- if state == 'unknown'-%} gray
+              {%- elif state < 5 -%} dodgerblue
+              {%- elif state < 10 -%} lightblue
+              {%- elif state < 15 -%} turquoise
+              {%- elif state < 20 -%} green
+              {%- elif state < 25 -%} darkgreen
+              {%- elif state < 30 -%} orange
+              {%- elif state < 35 -%} crimson
+              {%- else -%} firebrick
+              {%- endif -%};
+          }
+    - type: tile
+      entity: sensor.basement_temperature
+      uix:
+        style: |
+          ha-tile-icon {
+              {% set entityString = config.entity.replace('.','_') %}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              --uix-icon-color-for-{{ entityString }}:
+              {%- set state = states(config.entity)|int(-5) -%}
+              {%- if state == 'unknown'-%} gray
+              {%- elif state < 5 -%} dodgerblue
+              {%- elif state < 10 -%} lightblue
+              {%- elif state < 15 -%} turquoise
+              {%- elif state < 20 -%} green
+              {%- elif state < 25 -%} darkgreen
+              {%- elif state < 30 -%} orange
+              {%- elif state < 35 -%} crimson
+              {%- else -%} firebrick
+              {%- endif -%};
+          }
+    - type: tile
+      entity: sensor.kitchen_temperature
+      uix:
+        style: |
+          ha-tile-icon {
+              {% set entityString = config.entity.replace('.','_') %}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              --uix-icon-color-for-{{ entityString }}:
+              {%- set state = states(config.entity)|int(-5) -%}
+              {%- if state == 'unknown'-%} gray
+              {%- elif state < 5 -%} dodgerblue
+              {%- elif state < 10 -%} lightblue
+              {%- elif state < 15 -%} turquoise
+              {%- elif state < 20 -%} green
+              {%- elif state < 25 -%} darkgreen
+              {%- elif state < 30 -%} orange
+              {%- elif state < 35 -%} crimson
+              {%- else -%} firebrick
+              {%- endif -%};
+          }
+    - type: tile
+      entity: sensor.attic_temperature
+      uix:
+        style: |
+          ha-tile-icon {
+              {% set entityString = config.entity.replace('.','_') %}
+              --uix-icon-for-{{ entityString }}: mdi:thermometer-lines;
+              --uix-icon-color-for-{{ entityString }}:
+              {%- set state = states(config.entity)|int(-5) -%}
+              {%- if state == 'unknown'-%} gray
+              {%- elif state < 5 -%} dodgerblue
+              {%- elif state < 10 -%} lightblue
+              {%- elif state < 15 -%} turquoise
+              {%- elif state < 20 -%} green
+              {%- elif state < 25 -%} darkgreen
+              {%- elif state < 30 -%} orange
+              {%- elif state < 35 -%} crimson
+              {%- else -%} firebrick
+              {%- endif -%};
+          }
+    - type: tile
+      entity: climate.hvac
+      grid_options:
+        columns: 12
+        rows: 1
+      uix:
+        style: |
+          ha-state-icon {
+            --uix-icon: {{ 'mdi:hvac' if is_state('climate.hvac', 'auto') else 'mdi:hvac-off' }};
+            --uix-icon-color: {{ 'var(--state-climate-auto-color)' if is_state('climate.hvac', 'auto') else 'var(--state-inactive-color)' }};
+          }
     ```
 
     ![Icon generic override example](../assets/page-assets/using/icons-direct-icon-color-entity.png)
@@ -155,12 +152,14 @@ Theme:
           params:
             - entity_id
           template: >
-            {% set entityString = entity_id.replace('.','_') %}
+            {%- set entityString = entity_id.replace('.','_') -%}
             --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
             --uix-icon-color-for-{{ entityString }}:
-            {%- set state = states(entity_id)|int(-5) -%}
-            {%- if state == 'unknown'-%} gray
-            {%- elif state < 5 -%} dodgerblue
+            {%- set raw = states(entity_id) -%}
+            {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+            {%- else -%}
+            {%- set state = raw|float(-5) -%}
+            {%- if state < 5 -%} dodgerblue
             {%- elif state < 10 -%} lightblue
             {%- elif state < 15 -%} turquoise
             {%- elif state < 20 -%} green
@@ -169,6 +168,7 @@ Theme:
             {%- elif state < 35 -%} crimson
             {%- else -%} firebrick
             {%- endif -%};
+            {%- endif -%}
         temp_icon_color_all:
           template: >
             {% set entities = states.sensor 
@@ -195,7 +195,7 @@ Theme:
     ```
 
 !!! tip
-    `--uix-icon` and `--uix-icon-color` take precedence over `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`.
+    `--uix-icon` and `--uix-icon-color` take precedence over `--uix-icon-for-<entity_id>` and/or `--uix-icon-color-for-<entity_id>`. See the `sensor.kitchen_temperature` tile in the example.
 
 Dashboard cards (section):
 

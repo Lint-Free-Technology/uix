@@ -119,3 +119,4 @@ doc_image:
   output: docs/source/assets/page-assets/using/icons-direct-icon-color-entity.png
   root: hui-grid-section
   padding: 16
+  threshold: 0.01
