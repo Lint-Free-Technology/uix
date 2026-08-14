@@ -89,11 +89,13 @@ const updateIcon = (el) => {
         el.appendChild(iconEl);
       }
       (iconEl as any).icon = icon;
+      const token = (el._uixIconSvgToken = (el._uixIconSvgToken ?? 0) + 1);
       if (el.path !== el._uixIconLastOverriddenPath || el.secondaryPath !== el._uixIconLastOverriddenSecondaryPath) {
         el._uixIconOriginalPath = el.path;
         el._uixIconOriginalSecondaryPath = el.secondaryPath;
       }
       iconEl.updateComplete.then(() => {
+        if (el._uixIconSvgToken !== token) return;
         const newPath = (iconEl as any)._path;
         const newSecPath = (iconEl as any)._secondaryPath;
         el.path = newPath;
@@ -102,6 +104,8 @@ const updateIcon = (el) => {
         el._uixIconLastOverriddenSecondaryPath = newSecPath;
       });
     } else {
+      // Invalidate any pending updateComplete handler from a previous override.
+      el._uixIconSvgToken = (el._uixIconSvgToken ?? 0) + 1;
       if (el._uixIconOriginalPath !== undefined) {
         el.path = el._uixIconOriginalPath;
         el.secondaryPath = el._uixIconOriginalSecondaryPath;
