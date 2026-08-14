@@ -100,10 +100,8 @@ export class StyleWatcher {
   }
 
   init() {
-    // 1. Structural runtime feature detection
     const supportsHoudini = (window as any).CSS && typeof (window as any).CSS.registerProperty === 'function';
-    const supportsDiscrete = CSS.supports('transition-behavior', 'allow-discrete');
-
+    const supportsDiscrete = typeof (window as any).CSS?.supports === 'function' && (window as any).CSS.supports('transition-behavior', 'allow-discrete');
     // 2. Select execution path based on device capability
     if (supportsHoudini && supportsDiscrete) {
       this.nativeTransitions = true;
