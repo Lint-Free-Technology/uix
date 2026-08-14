@@ -1,3 +1,10 @@
+## [8.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.2...v8.1.0-beta.3) (2026-08-14)
+
+### 🐞 Bug Fixes
+
+* Reverts - Update UIX icon styling to use modern `allow-discrete` transitions to watch for `--uix-icon-...` changes with optimized animation frame based global poll fallback for legacy browsers. Fixes `--uix-icon...` changes not always applying when styled on DOM ancestor. ([a5b6e3a](https://github.com/Lint-Free-Technology/uix/commit/a5b6e3a5823b66d64241830c8e118ef0d6a22a56))
+* Support whitespace padding in billet interpolation braces and list indices ([#530](https://github.com/Lint-Free-Technology/uix/issues/530)) ([26c266e](https://github.com/Lint-Free-Technology/uix/commit/26c266e4699f16325e22c6eeb8bfb7138e6f2c47)), references [#503](https://github.com/Lint-Free-Technology/uix/issues/503)
+
 ## [8.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.1...v8.1.0-beta.2) (2026-08-14)
 
 ### ⭐ New Features
