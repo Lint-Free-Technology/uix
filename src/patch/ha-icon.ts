@@ -166,6 +166,13 @@ const bindUix = async (el) => {
   }
 };
 
+const unbindUix = (el) => {
+  clearTimeout(el._uixIconBindDebounce);
+  el._uixIconBindDebounce = undefined;
+  el._uixIconStyleWatcher?.destroy();
+  el._uixIconStyleWatcher = undefined;
+};
+
 @patch_element("ha-state-icon")
 class HaStateIconPatch extends ModdedElement {
   _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
@@ -173,6 +180,10 @@ class HaStateIconPatch extends ModdedElement {
     _orig?.(...args);
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
+  }
+  disconnectedCallback(_orig?: () => void) {
+    _orig?.();
+    unbindUix(this);
   }
 }
 
@@ -185,6 +196,10 @@ class HaIconPatch extends ModdedElement {
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
+  disconnectedCallback(_orig?: () => void) {
+    _orig?.();
+    unbindUix(this);
+  }
 }
 
 @patch_element("ha-svg-icon")
@@ -195,6 +210,10 @@ class HaSvgIconPatch extends ModdedElement {
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
+  }
+  disconnectedCallback(_orig?: () => void) {
+    _orig?.();
+    unbindUix(this);
   }
 }
 
