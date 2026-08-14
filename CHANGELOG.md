@@ -1,3 +1,13 @@
+## [8.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.1...v8.1.0-beta.2) (2026-08-14)
+
+### ⭐ New Features
+
+* Add performance option to disable icon styling patching. ([#526](https://github.com/Lint-Free-Technology/uix/issues/526)) ([08db74d](https://github.com/Lint-Free-Technology/uix/commit/08db74dd389bc24da1ae9aa6a5adb0e6f8b52cef))
+
+### ⚙️ Miscellaneous
+
+* Update UIX icon styling to use modern `allow-discrete` transitions to watch for `--uix-icon-...` changes with optimized animation frame based global poll fallback for legacy browsers. Fixes `--uix-icon...` changes not always applying when styled on DOM ancestor. ([#525](https://github.com/Lint-Free-Technology/uix/issues/525)) ([a3dd49f](https://github.com/Lint-Free-Technology/uix/commit/a3dd49f66d2593fb80b48f083185502b4e1b439f)), references [#523](https://github.com/Lint-Free-Technology/uix/issues/523)
+
 ## [8.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1...v8.1.0-beta.1) (2026-08-13)
 
 ### ⭐ New Features
