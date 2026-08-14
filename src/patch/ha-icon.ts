@@ -14,9 +14,11 @@ Patch various icon elements to consider the following variables:
 /*
 Patch icon elements to consider the following variable:
 --uix-icon-for-<entity_id_with_dots_as_underscores>
+--uix-icon-color-for-<entity_id_with_dots_as_underscores>
 
 e.g. to override the icon for light.bed_light:
   --uix-icon-for-light_bed_light: mdi:globe-light-outline
+  --uix-icon-color-for-light_bed_light: red
 
 If the element is for that entity, the replacement will take place.
 If not, it is ignored.
