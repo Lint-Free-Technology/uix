@@ -2,7 +2,7 @@ import { LitElement } from "lit";
 import { ModdedElement } from "../helpers/apply_uix";
 import { patch_element } from "../helpers/patch_function";
 import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
-import { Uix } from "../uix";
+import { StyleWatcher } from "../helpers/style_watcher";
 
 /*
 Patch various icon elements to consider the following variables:
@@ -66,19 +66,51 @@ const updateIcon = (el) => {
       color = styles.getPropertyValue(`--uix-icon-color-for-${slug}`).trim();
     }
   }
-  if (icon && "icon" in el) {
-    el.icon = icon;
-  } else if (icon && el.tagName.toLowerCase() === "ha-svg-icon" && haIconAvailable) {
-    const iconEl: LitElement = el.querySelector("ha-icon") || document.createElement("ha-icon") as LitElement;
-    if (!el.contains(iconEl)) {
-      iconEl.style.display = "none";
-      el.appendChild(iconEl);
+
+  if ("icon" in el) {
+    if (icon) {
+      if (el.icon !== el._uixIconLastOverriddenIcon) {
+        el._uixIconOriginalIcon = el.icon;
+      }
+      el.icon = icon;
+      el._uixIconLastOverriddenIcon = icon;
+    } else {
+      if (el._uixIconOriginalIcon !== undefined) {
+        el.icon = el._uixIconOriginalIcon;
+        delete el._uixIconOriginalIcon;
+      }
+      delete el._uixIconLastOverriddenIcon;
     }
-    (iconEl as any).icon = icon;
-    iconEl.updateComplete.then(() => {
-      el.path = (iconEl as any)._path;
-      el.secondaryPath = (iconEl as any)._secondaryPath;
-    });
+  } else if (el.tagName.toLowerCase() === "ha-svg-icon") {
+    if (icon && haIconAvailable) {
+      const iconEl: LitElement = el.querySelector("ha-icon") || document.createElement("ha-icon") as LitElement;
+      if (!el.contains(iconEl)) {
+        iconEl.style.display = "none";
+        el.appendChild(iconEl);
+      }
+      (iconEl as any).icon = icon;
+      if (el.path !== el._uixIconLastOverriddenPath || el.secondaryPath !== el._uixIconLastOverriddenSecondaryPath) {
+        el._uixIconOriginalPath = el.path;
+        el._uixIconOriginalSecondaryPath = el.secondaryPath;
+      }
+      iconEl.updateComplete.then(() => {
+        const newPath = (iconEl as any)._path;
+        const newSecPath = (iconEl as any)._secondaryPath;
+        el.path = newPath;
+        el.secondaryPath = newSecPath;
+        el._uixIconLastOverriddenPath = newPath;
+        el._uixIconLastOverriddenSecondaryPath = newSecPath;
+      });
+    } else {
+      if (el._uixIconOriginalPath !== undefined) {
+        el.path = el._uixIconOriginalPath;
+        el.secondaryPath = el._uixIconOriginalSecondaryPath;
+        delete el._uixIconOriginalPath;
+        delete el._uixIconOriginalSecondaryPath;
+      }
+      delete el._uixIconLastOverriddenPath;
+      delete el._uixIconLastOverriddenSecondaryPath;
+    }
   }
 
   if (color) el.style.color = color;
@@ -89,108 +121,77 @@ const updateIcon = (el) => {
 
 const bindUix = async (el) => {
   // Coalesce: if a bindUix run is already in progress for this element, skip
-  if (el._bindUixPending) return;
-  el._bindUixPending = true;
+  if (el._uixIconBindPending) return;
+  el._uixIconBindPending = true;
   try {
     // Wait for next animation frame before computing styles: batches reflow reads
     await nextAnimationFrame();
 
-    // Find the most relevant uix-nodes in order to listen to change events so we can react quickly
+    const entityId = getEntityId(el);
+    const properties = [
+      "--uix-icon",
+      "--card-mod-icon",
+      "--uix-icon-color",
+      "--card-mod-icon-color",
+      "--uix-icon-dim",
+      "--card-mod-icon-dim"
+    ];
+    if (entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      properties.push(`--uix-icon-for-${slug}`);
+      properties.push(`--uix-icon-color-for-${slug}`);
+    }
 
-    updateIcon(el);
-    el._boundUix = el._boundUix ?? new Set();
-    const newUix = await findParentUix(el);
+    if (el._uixIconStyleWatcher && JSON.stringify(el._uixIconStyleWatcher.properties) !== JSON.stringify(properties)) {
+      el._uixIconStyleWatcher.destroy();
+      el._uixIconStyleWatcher = undefined;
+    }
 
-    for (const uix of newUix) {
-      if (el._boundUix.has(uix)) continue;
-
-      uix.addEventListener("uix-styles-update", async () => {
-        // Coalesce rapid style-update events to a single update per frame
-        if (el._updateIconPending) return;
-        el._updateIconPending = true;
-        try {
-          await uix.updateComplete;
-          await nextAnimationFrame();
+    if (!el._uixIconStyleWatcher) {
+      el._uixIconStyleWatcher = new StyleWatcher(el, properties, () => {
+        if (el._uixIconUpdatePending) return;
+        el._uixIconUpdatePending = true;
+        nextAnimationFrame().then(() => {
           updateIcon(el);
-        } finally {
-          el._updateIconPending = false;
-        }
+          el._uixIconUpdatePending = false;
+        });
       });
-      el._boundUix.add(uix);
     }
   } finally {
-    el._bindUixPending = false;
-  }
-
-  // Find uix elements created later, increased interval
-  if (el.uix_retries < 5) {
-    el.uix_retries++;
-    window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
+    el._uixIconBindPending = false;
   }
 };
 
 @patch_element("ha-state-icon")
 class HaStateIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
-    this.uix_retries = 0;
-    clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
+    clearTimeout(this._uixIconBindDebounce);
+    this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-icon")
 class HaIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     if ((this.parentNode as any)?.host?.localName === "ha-state-icon") return;
-    this.uix_retries = 0;
-    clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
+    clearTimeout(this._uixIconBindDebounce);
+    this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
 }
 
 @patch_element("ha-svg-icon")
 class HaSvgIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
-    this.uix_retries = 0;
-    clearTimeout(this._bindUixDebounce);
-    this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
+    clearTimeout(this._uixIconBindDebounce);
+    this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
-}
-
-function joinSet(dst: Set<any>, src: Set<any>) {
-  for (const s of src) dst.add(s);
-}
-
-async function findParentUix(node: any, step = 0): Promise<Set<Uix>> {
-  let uixElements: Set<Uix> = new Set();
-  if (step == 10) return uixElements;
-  if (!node) return uixElements;
-
-  if (node.updateComplete) await node.updateComplete;
-
-  if (node._uix) {
-    for (const uix of node._uix) {
-      if (uix.styles) uixElements.add(uix);
-    }
-  }
-
-  if (node.parentElement)
-    joinSet(uixElements, await findParentUix(node.parentElement, step + 1));
-  else if (node.parentNode)
-    joinSet(uixElements, await findParentUix(node.parentNode, step + 1));
-  if ((node as any).host)
-    joinSet(uixElements, await findParentUix((node as any).host, step + 1));
-  return uixElements;
 }
 
 window.addEventListener("uix-bootstrap", () => {

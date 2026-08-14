@@ -1,0 +1,194 @@
+id: icon_color_for_entity_theme_refresh
+description: "Icon and color styling for an entity can be set via a theme variable and macro and updated dynamically"
+view_path: icon-color-for-entity-theme-refresh
+
+theme: uix-icon-for-entity-theme
+
+cards:
+  - type: heading
+    icon: mdi:border-none-variant
+    heading: Weather
+    heading_style: title
+    uix:
+      style: |
+        ha-icon {
+          --uix-icon: mdi:weather-sunny;
+          --uix-icon-color: orange;
+        }
+  - type: tile
+    entity: sensor.outside_temperature
+  - type: tile
+    entity: sensor.outside_temperature
+    uix:
+      style: |
+        ha-tile-icon {
+          --uix-icon: mdi:thermometer-lines;
+          --uix-icon-color: red;
+        }
+  - type: tile
+    entity: sensor.outside_temperature
+    uix:
+      style: |
+        ha-tile-icon {
+          --uix-icon-for-sensor_outside_temperature: mdi:thermometer-alert;
+          --uix-icon-color-for-sensor_outside_temperature: purple;
+        }
+
+interactions:
+  - type: set_theme_file
+    theme: uix-icon-for-entity-theme
+    values:
+      uix-theme: uix-icon-for-entity-theme
+      uix-macros-yaml: |
+        temp_icon_color:
+          params:
+            - entity_id
+          template: >
+            {% set entityString = entity_id.replace('.','_') %}
+            --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
+            --uix-icon-color-for-{{ entityString }}:
+            {%- set raw = states(entity_id) -%}
+            {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+            {%- else -%}
+            {%- set state = raw|float(-5) -%}
+            {%- if state < 5 -%} dodgerblue
+            {%- elif state < 10 -%} lightblue
+            {%- elif state < 15 -%} turquoise
+            {%- elif state < 20 -%} red
+            {%- elif state < 25 -%} darkgreen
+            {%- elif state < 30 -%} orange
+            {%- elif state < 35 -%} crimson
+            {%- else -%} firebrick
+            {%- endif -%};
+            {%- endif -%}
+        temp_icon_color_for_all:
+          template: >
+            {% set entities = ['sensor.outside_temperature'] %}
+            {% for entity in entities %}
+              {{ temp_icon_color(entity) }}
+            {% endfor %}
+      uix-root-yaml: |
+        .: |
+          :host {
+            {{ temp_icon_color_for_all() }}
+          }
+      uix-more-info-yaml: |
+        .: |
+          :host {
+            {{ temp_icon_color_for_all() }}
+          }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 2000
+
+assertions:
+  - type: object_property_text_equals
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(1) hui-heading-card"
+    selector: "ha-icon"
+    property: "icon"
+    expected: "mdi:weather-sunny"
+  - type: css_property
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(1) hui-heading-card"
+    selector: "ha-icon"
+    property: "color"
+    expected: "rgb(255, 165, 0)"
+  - type: object_property_text_equals
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(2) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "icon"
+    expected: "mdi:thermometer-bluetooth"
+  #- type: css_property
+  #  root: 
+  #    - "hui-grid-section"
+  #    - "div.card:nth-of-type(2) hui-tile-card"
+  #  selector: "ha-state-icon"
+  #  property: "color"
+  #  expected: "rgb(255, 0, 0)"
+  - type: object_property_text_equals
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(3) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "icon"
+    expected: "mdi:thermometer-lines"
+  - type: css_property
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(3) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "color"
+    expected: "rgb(255, 0, 0)"
+  - type: object_property_text_equals
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(4) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "icon"
+    expected: "mdi:thermometer-alert"
+  - type: css_property
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(4) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "color"
+    expected: "rgb(128, 0, 128)"
+  - type: snapshot
+    name: "51_icon_color_for_entity_theme_refresh"
+    threshold: 0.005
+
+teardown:
+  - type: set_theme_file
+    theme: uix-icon-for-entity-theme
+    values:
+      uix-theme: uix-icon-for-entity-theme
+      uix-macros-yaml: |
+        temp_icon_color:
+          params:
+            - entity_id
+          template: >
+            {% set entityString = entity_id.replace('.','_') %}
+            --uix-icon-for-{{ entityString }}: mdi:thermometer-bluetooth;
+            --uix-icon-color-for-{{ entityString }}:
+            {%- set raw = states(entity_id) -%}
+            {%- if raw in ['unknown', 'unavailable', 'none'] -%} gray;
+            {%- else -%}
+            {%- set state = raw|float(-5) -%}
+            {%- if state < 5 -%} dodgerblue
+            {%- elif state < 10 -%} lightblue
+            {%- elif state < 15 -%} turquoise
+            {%- elif state < 20 -%} green
+            {%- elif state < 25 -%} darkgreen
+            {%- elif state < 30 -%} orange
+            {%- elif state < 35 -%} crimson
+            {%- else -%} firebrick
+            {%- endif -%};
+            {%- endif -%}
+        temp_icon_color_for_all:
+          template: >
+            {% set entities = ['sensor.outside_temperature'] %}
+            {% for entity in entities %}
+              {{ temp_icon_color(entity) }}
+            {% endfor %}
+      uix-root-yaml: |
+        .: |
+          :host {
+            {{ temp_icon_color_for_all() }}
+          }
+      uix-more-info-yaml: |
+        .: |
+          :host {
+            {{ temp_icon_color_for_all() }}
+          }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 2000
