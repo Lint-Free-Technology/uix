@@ -182,7 +182,6 @@ export class StyleWatcher {
       this.proxyEl.removeEventListener('transitionend', this._transitionEndHandler);
       this.proxyEl.remove();
       this.proxyElStyles.clear();
-      this.proxyElStyles = undefined;
       this.proxyEl = undefined;
     }
     if (!this.nativeTransitions && (window as any).__uixGlobalLegacyStyleWatcher) {
