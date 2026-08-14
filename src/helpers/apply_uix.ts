@@ -52,9 +52,9 @@ export interface UixConfig {
 export type BilletConfig = Record<string, any>;
 
 // Matches {name} and {name[N]} — used for interpolation/replacement (captures index for array access)
-const _BILLET_INTERPOLATION_RE = /\{(\w+)(?:\[(\d+)\])?\}/g;
+const _BILLET_INTERPOLATION_RE = /\{\s*(\w+)\s*(?:\[\s*(\d+)\s*\])?\s*\}/g;
 // Same pattern without index capture — used only for dependency graph construction
-const _BILLET_DEP_RE = /\{(\w+)(?:\[\d+\])?\}/g;
+const _BILLET_DEP_RE = /\{\s*(\w+)\s*(?:\[\s*\d+\s*\])?\s*\}/g;
 
 function _resolveBilletString(
   value: string,
