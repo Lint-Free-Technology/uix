@@ -126,6 +126,10 @@ const updateIcon = (el) => {
 };
 
 const bindUix = async (el) => {
+  if ((window as any).uixCoordinator?.disableIconStyling) {
+    unbindUix(el);
+    return;
+  }
   // Coalesce: if a bindUix run is already in progress for this element, skip
   if (el._uixIconBindPending) return;
   el._uixIconBindPending = true;
@@ -173,6 +177,23 @@ const unbindUix = (el) => {
   el._uixIconBindDebounce = undefined;
   el._uixIconStyleWatcher?.destroy();
   el._uixIconStyleWatcher = undefined;
+
+  // Restore original properties if overridden
+  if (el._uixIconOriginalIcon !== undefined) {
+    el.icon = el._uixIconOriginalIcon;
+    delete el._uixIconOriginalIcon;
+  }
+  delete el._uixIconLastOverriddenIcon;
+
+  if (el._uixIconOriginalPath !== undefined) {
+    el.path = el._uixIconOriginalPath;
+    el.secondaryPath = el._uixIconOriginalSecondaryPath;
+    delete el._uixIconOriginalPath;
+    delete el._uixIconOriginalSecondaryPath;
+  }
+  delete el._uixIconLastOverriddenPath;
+  delete el._uixIconLastOverriddenSecondaryPath;
+  delete el._uixIconSvgToken;
 };
 
 @patch_element("ha-state-icon")
@@ -180,6 +201,10 @@ class HaStateIconPatch extends ModdedElement {
   _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) {
+      unbindUix(this);
+      return;
+    }
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
   }
@@ -194,6 +219,10 @@ class HaIconPatch extends ModdedElement {
   _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) {
+      unbindUix(this);
+      return;
+    }
     if ((this.parentNode as any)?.host?.localName === "ha-state-icon") return;
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -209,6 +238,10 @@ class HaSvgIconPatch extends ModdedElement {
   _uixIconBindDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) {
+      unbindUix(this);
+      return;
+    }
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
     clearTimeout(this._uixIconBindDebounce);
     this._uixIconBindDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);

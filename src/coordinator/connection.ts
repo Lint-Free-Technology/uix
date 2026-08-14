@@ -13,6 +13,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _hassThrottleOverride: { enable?: boolean; ms?: number } | null = null;
     private _dialogApplyAfterShowOverride: boolean | null = null;
     private _disableHashTemplateVariableOverride: boolean | null = null;
+    private _disableIconStylingOverride: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -247,6 +248,13 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.disable_hash_template_variable ?? false;
     }
 
+    get disableIconStyling(): boolean {
+      if (this._disableIconStylingOverride !== null) {
+        return this._disableIconStylingOverride;
+      }
+      return this._data?.disable_icon_styling ?? false;
+    }
+
     /**
      * Set a client-side override for the hass throttle settings.
      *
@@ -308,6 +316,19 @@ export const ConnectionMixin = (SuperClass) => {
      */
     public setDisableHashTemplateVariableOverride(value: boolean | null = null): void {
       this._disableHashTemplateVariableOverride = value;
+    }
+
+    /**
+     * Set a client-side override for disabling icon styling.
+     *
+     * This allows integrations to disable icon styling for the current
+     * browser session without changing backend settings.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     */
+    public setDisableIconStylingOverride(value: boolean | null = null): void {
+      this._disableIconStylingOverride = value;
     }
   }
 
