@@ -12,6 +12,14 @@ class GlobalLegacyStyleWatcher {
 
   unregister(componentInstance: any) {
     this.components.delete(componentInstance);
+
+    const elementId = componentInstance?.uniqueId;
+    if (elementId && Array.isArray(componentInstance?.properties)) {
+      componentInstance.properties.forEach((prop: string) => {
+        this.cache.delete(`${elementId}_${prop}`);
+      });
+    }
+
     if (this.components.size === 0) {
       this.isPolling = false;
     }
