@@ -21,7 +21,8 @@ card:
       # Step 3: references step 2 via {room} — declared BEFORE its dependencies to prove order-independence
       label: "Room: {room}"
       # Step 2: references step 1 via {channel}
-      room: "{channel}room"
+      # Include whitespace to prove that whitespace is ignored in the interpolation expression.
+      room: "{ channel }room"
       # Step 1: plain scalar — declared LAST to prove out-of-order resolution works
       channel: "bed"
       bg: "rgb(0, 100, 200)"
