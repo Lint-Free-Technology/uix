@@ -105,7 +105,7 @@ export async function bind_template(
     callback(defaultValue);
 
     const includesIconVars =
-      template.includes("--uix-icon-for") || template.includes("--uix-icon-color-for");
+      template.includes("--uix-icon-for-") || template.includes("--uix-icon-color-for-");
 
     if (template.includes("uix.debug") || template.includes("card_mod.debug")) {
       debug = true;
