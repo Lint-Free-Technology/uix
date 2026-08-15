@@ -50,9 +50,7 @@ export const IconMixin = (SuperClass) => {
     _unregisterIconForEntityCallback = (el, iconVar: string) => {
       const elCallbacks = this._iconForEntityCallbacks.get(iconVar, el);
       if (!elCallbacks) return;
-      elCallbacks.forEach(callback => {
-        elCallbacks.delete(callback);
-      });
+      elCallbacks.clear();
       if (elCallbacks.size === 0) {
         this._iconForEntityCallbacks.delete(iconVar, el);
       }
