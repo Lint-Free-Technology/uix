@@ -1,10 +1,13 @@
 import "../helpers/event-target-polyfill.js";
 import { ConnectionMixin } from "./connection.js";
 import { VersionMixin } from "./version.js";
+import { IconMixin } from "./icon.js";
 
 class UixCoordinator extends 
   VersionMixin(
-    ConnectionMixin(EventTarget) 
+    IconMixin(
+      ConnectionMixin(EventTarget)
+    )
   ) {
     constructor() {
         super();

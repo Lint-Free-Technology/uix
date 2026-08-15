@@ -105,13 +105,13 @@ assertions:
     selector: "ha-state-icon"
     property: "icon"
     expected: "mdi:thermometer-bluetooth"
-  #- type: css_property
-  #  root: 
-  #    - "hui-grid-section"
-  #    - "div.card:nth-of-type(2) hui-tile-card"
-  #  selector: "ha-state-icon"
-  #  property: "color"
-  #  expected: "rgb(255, 0, 0)"
+  - type: css_property
+    root: 
+      - "hui-grid-section"
+      - "div.card:nth-of-type(2) hui-tile-card"
+    selector: "ha-state-icon"
+    property: "color"
+    expected: "rgb(255, 0, 0)"
   - type: object_property_text_equals
     root: 
       - "hui-grid-section"

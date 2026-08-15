@@ -11,6 +11,7 @@ interface CachedTemplate {
   unsubscribe: Promise<() => Promise<void>>;
   cooldownTimeoutID?: number;
   error?: RenderTemplateError;
+  includesIconVars: boolean;
 }
 
 interface RenderTemplateResult {
@@ -45,6 +46,7 @@ function template_updated(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
         value: cache.value,
         error: cache.error
       });
@@ -57,6 +59,7 @@ function template_updated(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
         value: cache.value,
         error: cache.error
       });
@@ -64,6 +67,12 @@ function template_updated(
     }
   }
   cache.callbacks.forEach((f) => f(cache.value));
+  if (cache.includesIconVars) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshIconStyles) {
+      uixCoordinator._refreshIconStyles(cache.value, cache.debug);
+    }
+  }
 }
 
 export function hasTemplate(str) {
@@ -95,12 +104,16 @@ export async function bind_template(
     unbind_template(callback);
     callback(defaultValue);
 
+    const includesIconVars =
+      template.includes("--uix-icon-for-") || template.includes("--uix-icon-color-for-");
+
     if (template.includes("uix.debug") || template.includes("card_mod.debug")) {
       debug = true;
       console.groupCollapsed("UIX: Binding template");
       console.log( { 
         template, 
-        variables
+        variables,
+        includesIconVars
       });
       console.groupEnd();
     }
@@ -120,6 +133,7 @@ export async function bind_template(
           report_errors: debug,
         }
       ),
+      includesIconVars,
     };
   } else {
     if (cache.debug) {
@@ -127,6 +141,7 @@ export async function bind_template(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
         value: cache.value,
         error: cache.error
       });
@@ -153,7 +168,8 @@ export function unbind_template(
           );
           console.log( { 
             template: cache.template, 
-            variables: cache.variables
+            variables: cache.variables,
+            includesIconVars: cache.includesIconVars,
           });
           console.groupEnd();
         }
@@ -178,7 +194,8 @@ async function unsubscribe_template(key: string) {
     console.groupCollapsed("UIX: Unsubscribing template after cooldown");
     console.log( { 
       template: cache.template, 
-      variables: cache.variables
+      variables: cache.variables,
+      includesIconVars: cache.includesIconVars,
     });
     console.groupEnd();
   }
