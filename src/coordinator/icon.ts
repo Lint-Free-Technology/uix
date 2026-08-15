@@ -72,7 +72,7 @@ export const IconMixin = (SuperClass) => {
         console.log(iconVars);
         console.groupEnd();
       }
-      for (const iconVar of iconVars) {
+      for (const iconVar of new Set(iconVars)) {
         this._iconForEntityDispatcher(iconVar);
       }
     }
