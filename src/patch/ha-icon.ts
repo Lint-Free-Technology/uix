@@ -56,7 +56,7 @@ const subscribeIconVars = (el, iconVars: { iconVar: string; iconColorVar: string
     clearTimeout(el._uixIconForEntityDebounce);
     el._uixIconForEntityDebounce = undefined;
   }
-  if (iconVars === el._uixIconVars) return;
+  if (el._uixIconVars?.iconVar === iconVars.iconVar && el._uixIconVars?.iconColorVar === iconVars.iconColorVar) return;
   const uixCoordinator = (window as any)?.uixCoordinator;
   if (!uixCoordinator) return;
   if (!uixCoordinator._registerIconForEntityCallback || !uixCoordinator._unregisterIconForEntityCallback) return;
