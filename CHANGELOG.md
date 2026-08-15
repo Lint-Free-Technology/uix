@@ -1,3 +1,9 @@
+## [8.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.3...v8.1.0-beta.4) (2026-08-15)
+
+### ⭐ New Features
+
+* Add icon styling coordinator to dispatch refresh to icons when theme style templates include `--uix-icon-for-<entity_id>` or `--uix-icon-color-for-<entity_id>` ([#532](https://github.com/Lint-Free-Technology/uix/issues/532)) ([72f4efe](https://github.com/Lint-Free-Technology/uix/commit/72f4efe05738004cbfe0a82bb978090b27736571))
+
 ## [8.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.2...v8.1.0-beta.3) (2026-08-14)
 
 ### 🐞 Bug Fixes
