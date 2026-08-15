@@ -69,7 +69,7 @@ function template_updated(
   cache.callbacks.forEach((f) => f(cache.value));
   if (cache.includesIconVars) {
     const uixCoordinator = (window as any).uixCoordinator;
-    if (uixCoordinator) {
+    if (uixCoordinator?._refreshIconStyles) {
       uixCoordinator._refreshIconStyles(cache.value, cache.debug);
     }
   }
