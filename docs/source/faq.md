@@ -40,24 +40,34 @@ No, UI eXtension code has been updated so that UIX is primary domain and config 
 
 Yes, see the table below.
 
-Feature | Card-mod | UIX
---- | --- | ---
-[Forge](https://uix.lf.technology/forge/) (custom lovelace element) | No | Yes
-[Foundries](https://uix.lf.technology/forge/foundries/) (reusable forges) | No | Yes
-[Macros](https://uix.lf.technology/using/templates/#macros) (reusable jinja templates) | No | Yes
-[Sparks](https://uix.lf.technology/forge/sparks/) (self-contained behaviours that augment forged elements) | No | Yes
-[Frontend state throttling](https://uix.lf.technology/extras/frontend-states-throttling/) (optional) | No | Yes
-[Dialog Styling delay](https://uix.lf.technology/extras/dialog-styling-delay/) (optional) | No | Yes
-[Dashboard view backgrounds](https://uix.lf.technology/using/view-backgrounds/) | No | Yes
-[Section backgrounds](https://uix.lf.technology/using/section-backgrounds/) | No | Yes
-Reload/Clear cache popup | No | Yes
-Expansive documentation including visual examples | Limited | Yes
-Mod-Card | Yes | Yes
-CSS styling in themes | Yes | Yes
-Reload/Clear cache service/action | Yes | Yes
-Provides variables (e.g current user) | Yes | Yes
-CSS styling | Yes | Yes
-Resource url | Yes | N/A
+<!-- markdownlint-disable MD033 -->
+| Feature | Card-mod | UIX |
+| --- | :---: | :---: |
+| Correctly loads `...-yaml` theme variables | ❌<br>Since 2026.8.0 | Yes |
+| Correctly handles `...-more-info(-yaml)` theme variable | ❌<br>Since 2026.3.0 | Yes |
+| Correctly patches adaptive dialogs for `...-dialog(-yaml) theme variable | ❌<br>Since 2026.3.0 | Yes |
+| [DOM inspection helpers](https://uix.lf.technology/concepts/dom/#dom-inspection-helpers) | No | Yes |
+| [Host/element path selection](https://uix.lf.technology/concepts/dom/#hostelement-path-selection) | No | Yes |
+| [Express search selector](https://uix.lf.technology/concepts/dom/#express-search-selector) | No | Yes |
+| [Forge](https://uix.lf.technology/forge/) (custom lovelace element) | No | Yes |
+| [Foundries](https://uix.lf.technology/forge/foundries/) (reusable forges) | No | Yes |
+| [Macros](https://uix.lf.technology/using/templates/#macros) (reusable jinja templates) | No | Yes |
+| [Sparks](https://uix.lf.technology/forge/sparks/) (self-contained behaviours that augment forged elements) | No | Yes |
+| [Frontend state throttling](https://uix.lf.technology/extras/frontend-states-throttling/) (optional) | No | Yes |
+| [Dialog Styling delay](https://uix.lf.technology/extras/dialog-styling-delay/) (optional) | No | Yes |
+| [Dashboard view backgrounds](https://uix.lf.technology/using/view-backgrounds/) | No | Yes |
+| [Section backgrounds](https://uix.lf.technology/using/section-backgrounds/) | No | Yes |
+| [View backgrounds](https://uix.lf.technology/using/view-backgrounds/) | No | Yes |
+| [Icon styling - entity override](https://uix.lf.technology/using/icons/#specifying-for-an-entity-override) | No | Yes |
+| [Styling entity images](https://uix.lf.technology/using/images/) | No | Yes |
+| Reload/Clear cache popup | No | Yes |
+| Expansive documentation including visual examples | Limited | Yes |
+| Mod-Card | Yes | Yes |
+| CSS styling in themes | Yes | Yes |
+| Reload/Clear cache service/action | Yes | Yes |
+| Provides variables (e.g current user) | Yes | Yes |
+| CSS styling | Yes | Yes |
+| Resource url | Yes | N/A |
 
 ## Does UI eXtension have resource URL issues?
 
