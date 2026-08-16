@@ -45,7 +45,7 @@ Yes, see the table below.
 | --- | :---: | :---: |
 | Correctly loads `...-yaml` theme variables | ❌<br>Since 2026.8.0 | Yes |
 | Correctly handles `...-more-info(-yaml)` theme variable | ❌<br>Since 2026.3.0 | Yes |
-| Correctly patches adaptive dialogs for `...-dialog(-yaml) theme variable | ❌<br>Since 2026.3.0 | Yes |
+| Correctly patches adaptive dialogs for `...-dialog(-yaml)` theme variable | ❌<br>Since 2026.3.0 | Yes |
 | [DOM inspection helpers](https://uix.lf.technology/concepts/dom/#dom-inspection-helpers) | No | Yes |
 | [Host/element path selection](https://uix.lf.technology/concepts/dom/#hostelement-path-selection) | No | Yes |
 | [Express search selector](https://uix.lf.technology/concepts/dom/#express-search-selector) | No | Yes |
