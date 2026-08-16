@@ -137,6 +137,7 @@ const applyImage = (el: any, imageUrl: string | null): void => {
 };
 
 const updateImageDebounced = (el) => {
+  if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
   if (!el.isConnected) return;
   if (el._uixImageForEntityDebounce) return;
   el._uixImageForEntityDebounce = setTimeout(() => {
@@ -151,6 +152,7 @@ const updateImageDebounced = (el) => {
 };
 
 const updateImage = (el: any): void => {
+  if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
   const styles = window.getComputedStyle(el);
   let imagePath = styles.getPropertyValue(`--uix-image`).trim();
   if (!imagePath) {
@@ -219,6 +221,7 @@ class HaEntityMarkerPatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), UIX_PATCH_DEBOUNCE_MS);
@@ -263,6 +266,7 @@ class HaTileIconPatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -275,6 +279,7 @@ class HaStateBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -287,6 +292,7 @@ class HaUserBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -299,6 +305,7 @@ class HaPersonBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);

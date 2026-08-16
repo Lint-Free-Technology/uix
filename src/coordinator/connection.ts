@@ -14,6 +14,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _dialogApplyAfterShowOverride: boolean | null = null;
     private _disableHashTemplateVariableOverride: boolean | null = null;
     private _disableIconStylingOverride: boolean | null = null;
+    private _disableEntityPictureImageOverrideOverride: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -255,6 +256,13 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.disable_icon_styling ?? false;
     }
 
+    get disableEntityPictureImageOverride(): boolean {
+      if (this._disableEntityPictureImageOverrideOverride !== null) {
+        return this._disableEntityPictureImageOverrideOverride;
+      }
+      return this._data?.disable_entity_picture_image_override ?? false;
+    }
+
     /**
      * Set a client-side override for the hass throttle settings.
      *
@@ -329,6 +337,19 @@ export const ConnectionMixin = (SuperClass) => {
      */
     public setDisableIconStylingOverride(value: boolean | null = null): void {
       this._disableIconStylingOverride = value;
+    }
+
+    /**
+     * Set a client-side override for disabling entity picture image overrides.
+     *
+     * This allows integrations to disable entity picture image overrides for the
+     * current browser session without changing backend settings.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     */
+    public setDisableEntityPictureImageOverrideOverride(value: boolean | null = null): void {
+      this._disableEntityPictureImageOverrideOverride = value;
     }
   }
 

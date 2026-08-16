@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONNECTION_TS_PATH = REPO_ROOT / "src" / "coordinator" / "connection.ts"
 
 
-def test_disable_icon_styling_setting_and_override() -> None:
+def test_disable_entity_picture_image_override_setting_and_override() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -33,12 +33,12 @@ def test_disable_icon_styling_setting_and_override() -> None:
                 "const { ConnectionMixin } = moduleObj.exports;"
                 "const Mixed = ConnectionMixin(class {});"
                 "const inst = new Mixed();"
-                "inst._data = { disable_icon_styling: true };"
-                "const fromConfig = inst.disableIconStyling;"
-                "inst.setDisableIconStylingOverride(false);"
-                "const fromOverride = inst.disableIconStyling;"
-                "inst.setDisableIconStylingOverride(null);"
-                "const afterClear = inst.disableIconStyling;"
+                "inst._data = { disable_entity_picture_image_override: true };"
+                "const fromConfig = inst.disableEntityPictureImageOverride;"
+                "inst.setDisableEntityPictureImageOverrideOverride(false);"
+                "const fromOverride = inst.disableEntityPictureImageOverride;"
+                "inst.setDisableEntityPictureImageOverrideOverride(null);"
+                "const afterClear = inst.disableEntityPictureImageOverride;"
                 "process.stdout.write(JSON.stringify({ fromConfig, fromOverride, afterClear }));"
             ),
             str(CONNECTION_TS_PATH),

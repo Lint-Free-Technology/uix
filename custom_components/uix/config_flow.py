@@ -28,6 +28,7 @@ from .const import (
     CONF_DIALOG_APPLY_AFTER_SHOW,
     CONF_DISABLE_HASH_TEMPLATE_VARIABLE,
     CONF_DISABLE_ICON_STYLING,
+    CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
     EVENT_FOUNDRIES_UPDATED,
 )
 from .helpers import validate_foundry_file
@@ -155,6 +156,7 @@ class UixOptionsFlow(OptionsFlow):
                     CONF_DIALOG_APPLY_AFTER_SHOW: user_input[CONF_DIALOG_APPLY_AFTER_SHOW],
                     CONF_DISABLE_HASH_TEMPLATE_VARIABLE: user_input[CONF_DISABLE_HASH_TEMPLATE_VARIABLE],
                     CONF_DISABLE_ICON_STYLING: user_input[CONF_DISABLE_ICON_STYLING],
+                    CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: user_input[CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE],
                 },
             )
 
@@ -189,6 +191,10 @@ class UixOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_DISABLE_ICON_STYLING,
                         default=self._config_entry.options.get(CONF_DISABLE_ICON_STYLING, False),
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
+                        default=self._config_entry.options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False),
                     ): BooleanSelector(),
                 }
             ),
