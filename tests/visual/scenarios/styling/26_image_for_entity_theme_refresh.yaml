@@ -1,0 +1,80 @@
+id: image_for_entity_theme_refresh
+description: "Image styling for an entity can be set via a theme variable and macro"
+view_path: image-for-entity-theme-refresh
+
+theme: uix-image-for-entity-theme
+
+card:
+  type: tile
+  entity: person.james_bond_007
+
+interactions:
+  - type: set_theme_file
+    theme: uix-image-for-entity-theme
+    values:
+      uix-theme: uix-image-for-entity-theme
+      uix-macros-yaml: |
+        image_person_james_bond:
+          template: >
+            {% if is_state('person.james_bond_007', 'unknown') %}
+              --uix-image-for-person_james_bond_007: /local/media/daniel_craig_cropped.jpg;
+            {% else %}
+              --uix-image-for-person_james_bond_007: /local/media/kitchen.jpg;
+            {% endif %}
+      uix-root-yaml: |
+        .: |
+          :host {
+            {{ image_person_james_bond() }}
+          }
+      uix-more-info-yaml: |
+        .: |
+          :host {
+            {{ image_person_james_bond() }}
+          }
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 2000
+
+assertions:
+  - type: object_property_text_ends_with
+    root: hui-tile-card
+    selector: ha-tile-icon
+    property: imageUrl
+    expected: "daniel_craig_cropped.jpg"
+  - type: element_present
+    root: ha-tile-icon
+    selector: img
+  - type: snapshot
+    name: "53_image_for_entity_theme_refresh"
+    threshold: 0.01
+
+teardown:
+  - type: set_theme_file
+    theme: uix-image-for-entity-theme
+    values:
+      uix-theme: uix-image-for-entity-theme
+      uix-macros-yaml: |
+        image_person_james_bond:
+          template: >
+            {% if is_state('person.james_bond_007', 'unknown') %}
+              --uix-image-for-person_james_bond_007: /local/media/question_mark_cropped.jpg;
+            {% else %}
+              --uix-image-for-person_james_bond_007: /local/media/daniel_craig_cropped.jpg;
+            {% endif %}
+      uix-root-yaml: |
+        .: |
+          :host {
+            {{ image_person_james_bond() }}
+          }
+      uix-more-info-yaml: |
+        .: |
+          :host {
+            {{ image_person_james_bond() }}
+          } 
+  - type: ha_service
+    domain: frontend
+    service: reload_themes
+  - type: wait
+    ms: 2000

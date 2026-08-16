@@ -1,0 +1,26 @@
+id: image_for_entity
+description: "Image styling for an entity can be set via a theme variable and macro"
+view_path: image-for-entity
+
+theme: uix-image-for-entity-theme
+
+card:
+  type: tile
+  entity: person.james_bond_007
+
+interactions:
+  - type: wait
+    ms: 1000
+
+assertions:
+  - type: object_property_text_ends_with
+    root: hui-tile-card
+    selector: ha-tile-icon
+    property: imageUrl
+    expected: "question_mark_cropped.jpg"
+  - type: element_present
+    root: ha-tile-icon
+    selector: img
+  - type: snapshot
+    name: "52_image_for_entity"
+    threshold: 0.01

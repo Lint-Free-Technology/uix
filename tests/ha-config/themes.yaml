@@ -360,3 +360,26 @@ uix-doc-icon-for-entity-theme:
       :host {
         {{ temp_icon_color_all() }}
       }
+
+uix-image-for-entity-theme:
+  uix-theme: uix-image-for-entity-theme
+  uix-macros-yaml: |
+    image_person_james_bond:
+      template: >
+        {% if is_state('person.james_bond_007', 'unknown') %}
+          --uix-image-for-person_james_bond_007: /local/media/question_mark_cropped.jpg
+        {% else %}
+          --uix-image-for-person_james_bond_007: /local/media/daniel_craig_cropped.jpg;
+        {% endif %}
+
+  uix-root-yaml: |
+    .: |
+      :host {
+        {{ image_person_james_bond() }}
+      }
+  
+  uix-more-info-yaml: |
+    .: |
+      :host {
+        {{ image_person_james_bond() }}
+      }
