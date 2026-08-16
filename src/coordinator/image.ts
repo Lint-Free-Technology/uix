@@ -58,7 +58,7 @@ export const ImageMixin = (SuperClass) => {
 
     _refreshImageStyles(styles: string, debug: boolean) {
       // Look for `--uix-image-for-<entity_id>` in the styles 
-      // Compose list of vars and call dispatch function for each to update all icon patches
+      // Compose list of vars and call dispatch function for each to update all image patches
       // that have registered for that var
       const imageVars = [];
       const matches = styles.match(/--uix-image-for-[a-zA-Z0-9_-]+/g);
