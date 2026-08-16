@@ -82,23 +82,35 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       }
       break;
     case "ha-user-badge":
-      if (imageUrl) {
-        el._uix_replaced_image = el._uix_replaced_image ?? el._personPicture ?? false;
-        el._personPicture = imageUrl;
-      } else if (el._uix_replaced_image !== undefined) {
-        el._personPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
-        delete el._uix_replaced_image;
-      }
-      break;
-    case "ha-person-badge": {
+    case "ha-person-badge":
       const pictureEl = el.shadowRoot?.querySelector(".picture");
       if (pictureEl) {
         if (imageUrl) {
-          el._uix_replaced_image = el._uix_replaced_image ?? pictureEl.style.backgroundImage ?? false;
-          pictureEl.style.backgroundImage = `url(${imageUrl})`;
-        } else if (el._uix_replaced_image !== undefined) {
-          pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
-          delete el._uix_replaced_image;
+          let imageEL = el.shadowRoot?.querySelector(".picture.uix-image");
+          if (!imageEL) {
+            imageEL = document.createElement("div");
+            imageEL?.classList.add("picture", "uix-image");
+            el.shadowRoot?.prepend(imageEL);
+          } 
+          if (imageEL) {
+            imageEL.style.backgroundImage = `url(${imageUrl})`;
+          }
+          let style = el.shadowRoot?.querySelector("#uix-image");
+          if (!style) {
+            style = document.createElement("style");
+            style.id = "uix-image";
+            style.textContent = `.picture:not(.uix-image) { display: none !important; }`;
+            el.shadowRoot?.prepend(style);
+          }
+        } else {
+          const imageEL = el.shadowRoot?.querySelector(".picture.uix-image");
+          if (imageEL) {
+            imageEL.remove();
+          }
+          const style = el.shadowRoot?.querySelector("#uix-image");
+          if (style) {
+            style.remove();
+          }
         }
       }
       break;
