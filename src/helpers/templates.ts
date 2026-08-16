@@ -12,6 +12,7 @@ interface CachedTemplate {
   cooldownTimeoutID?: number;
   error?: RenderTemplateError;
   includesIconVars: boolean;
+  includesImageVars?: boolean;
 }
 
 interface RenderTemplateResult {
@@ -47,6 +48,7 @@ function template_updated(
         template: cache.template, 
         variables: cache.variables, 
         includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -60,6 +62,7 @@ function template_updated(
         template: cache.template, 
         variables: cache.variables, 
         includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -67,10 +70,16 @@ function template_updated(
     }
   }
   cache.callbacks.forEach((f) => f(cache.value));
-  if (cache.includesIconVars) {
+  if (cache.includesIconVars && ! cache.cooldownTimeoutID) {
     const uixCoordinator = (window as any).uixCoordinator;
     if (uixCoordinator?._refreshIconStyles) {
       uixCoordinator._refreshIconStyles(cache.value, cache.debug);
+    }
+  }
+  if (cache.includesImageVars && ! cache.cooldownTimeoutID) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshImageStyles) {
+      uixCoordinator._refreshImageStyles(cache.value, cache.debug);
     }
   }
 }
@@ -106,6 +115,8 @@ export async function bind_template(
 
     const includesIconVars =
       template.includes("--uix-icon-for-") || template.includes("--uix-icon-color-for-");
+    const includesImageVars =
+      template.includes("--uix-image-for-");
 
     if (template.includes("uix.debug") || template.includes("card_mod.debug")) {
       debug = true;
@@ -113,7 +124,8 @@ export async function bind_template(
       console.log( { 
         template, 
         variables,
-        includesIconVars
+        includesIconVars,
+        includesImageVars
       });
       console.groupEnd();
     }
@@ -134,6 +146,7 @@ export async function bind_template(
         }
       ),
       includesIconVars,
+      includesImageVars,
     };
   } else {
     if (cache.debug) {
@@ -142,6 +155,7 @@ export async function bind_template(
         template: cache.template, 
         variables: cache.variables, 
         includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -170,6 +184,7 @@ export function unbind_template(
             template: cache.template, 
             variables: cache.variables,
             includesIconVars: cache.includesIconVars,
+            includesImageVars: cache.includesImageVars,
           });
           console.groupEnd();
         }
@@ -196,6 +211,7 @@ async function unsubscribe_template(key: string) {
       template: cache.template, 
       variables: cache.variables,
       includesIconVars: cache.includesIconVars,
+      includesImageVars: cache.includesImageVars,
     });
     console.groupEnd();
   }
