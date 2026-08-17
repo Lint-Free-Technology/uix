@@ -1,0 +1,71 @@
+id: extra_toast_theme_stacked
+description: "UIX multiple toast with only first toast styled by theme"
+view_path: extra-toast-theme-stacked
+
+theme: uix-stacked-toast-theme
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+cards:
+  - type: tile
+    entity: light.bed_light
+    tap_action:
+      action: fire-dom-event
+      uix:
+        action: toast
+        data:
+          id: toast-message-1
+          message: "Toast Message 1"
+          duration: 10000
+          bottomOffset: 500
+    settle_ms: 500
+  - type: tile
+    entity: light.bed_light
+    tap_action:
+      action: fire-dom-event
+      uix:
+        action: toast
+        data:
+          message: "Toast Message 2"
+          duration: 10000
+          bottomOffset: 500
+    settle_ms: 500
+
+interactions:
+  - type: click
+    root: div.card:nth-of-type(1) hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+  - type: click
+    root: div.card:nth-of-type(2) hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+  
+assertions:
+  - type: element_present
+    root: notification-manager
+    selector: ha-toast[data-notification-key="identified-toast-message-1"]
+  - type: css_property
+    root: 
+      - notification-manager
+      - ha-toast[data-notification-key="identified-toast-message-1"]
+    selector: div.toast
+    property: backgroundColor
+    expected: rgb(206, 50, 38)
+  - type: css_property
+    root: 
+      - notification-manager
+      - ha-toast[data-notification-key^="anonymous"]
+    selector: div.toast
+    property: backgroundColor
+    expected: rgb(32, 32, 32)
+  - type: snapshot
+    name: 54_extra_toast_theme_stacked
+    threshold: 0.01
