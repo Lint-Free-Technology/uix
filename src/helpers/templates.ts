@@ -9,6 +9,7 @@ interface CachedTemplate {
   debug: boolean;
   callbacks: Set<(string) => void>;
   unsubscribe: Promise<() => Promise<void>>;
+  activeUnsubscribe?: () => Promise<void>;
   cooldownTimeoutID?: number;
   error?: RenderTemplateError;
   includesIconVars: boolean;
@@ -62,8 +63,17 @@ export class TemplateCache {
         });
         console.groupEnd();
       }
+      // Try unsubscribe the previous one first to avoid duplicate responses
+      if (cache.activeUnsubscribe) {
+        try {
+          await cache.activeUnsubscribe();
+        } catch (err) {
+          console.error("UIX: Error unsubscribing previous template during resubscribe:", err);
+        }
+        cache.activeUnsubscribe = undefined;
+      }
       // Re-subscribe on the connection
-      cache.unsubscribe = connection.subscribeMessage(
+      const subscribePromise = connection.subscribeMessage(
         (result: RenderTemplateResult) => template_updated(key, result),
         {
           type: "render_template",
@@ -71,9 +81,11 @@ export class TemplateCache {
           variables: cache.variables,
           report_errors: cache.debug,
         }
-      ).catch((err) => {
+      );
+      subscribePromise.then((unsub) => {
+        cache.activeUnsubscribe = unsub;
+      }).catch((err) => {
         console.error("UIX: Error re-subscribing template:", err);
-        return () => Promise.resolve();
       });
     }
   }
@@ -184,24 +196,39 @@ export async function bind_template(
       console.groupEnd();
     }
 
+    const managedUnsubscribe = async () => {
+      if (cache.activeUnsubscribe) {
+        await cache.activeUnsubscribe();
+      }
+    };
+
     cache = {
       template,
       variables,
       value: "",
       callbacks: new Set([callback]),
       debug,
-      unsubscribe: connection.subscribeMessage(
-        (result: RenderTemplateResult) => template_updated(cacheKey, result),
-        {
-          type: "render_template",
-          template,
-          variables,
-          report_errors: debug,
-        }
-      ),
+      unsubscribe: Promise.resolve(managedUnsubscribe),
       includesIconVars,
       includesImageVars,
     };
+
+    const subscribePromise = connection.subscribeMessage(
+      (result: RenderTemplateResult) => template_updated(cacheKey, result),
+      {
+        type: "render_template",
+        template,
+        variables,
+        report_errors: debug,
+      }
+    );
+
+    subscribePromise.then((unsub) => {
+      cache.activeUnsubscribe = unsub;
+    }).catch((err) => {
+      console.error("UIX: Error subscribing template:", err);
+    });
+
     cachedTemplates.set(cacheKey, cache);
   } else {
     if (cache.debug) {
