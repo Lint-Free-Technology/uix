@@ -37,15 +37,15 @@ export class TemplateCache<T = any> {
   }
 }
 
-export const cachedTemplates = new TemplateCache();
-
-export const CacheMixin = (SuperClass) => {
-  return class CacheMixinClass extends SuperClass {
-    public templateCache: TemplateCache;
-
-    constructor() {
-      super();
-      this.templateCache = cachedTemplates;
-    }
-  };
-};
+export const CacheMixin = Object.assign(
+  (SuperClass: any) => {
+    return class CacheMixinClass extends SuperClass {
+      public get templateCache(): TemplateCache {
+        return CacheMixin.templateCache;
+      }
+    };
+  },
+  {
+    templateCache: new TemplateCache(),
+  }
+);

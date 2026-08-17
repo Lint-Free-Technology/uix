@@ -3,7 +3,7 @@ import { BrowserID } from "./browser_id";
 import { getPanelState } from "./panel";
 import {
   TemplateCache,
-  cachedTemplates as rawCachedTemplates,
+  CacheMixin,
 } from "../coordinator/cache";
 
 export interface CachedTemplate {
@@ -30,7 +30,7 @@ export interface RenderTemplateError {
   level: "ERROR" | "WARNING";
 }
 
-const cachedTemplates = rawCachedTemplates as TemplateCache<CachedTemplate>;
+const cachedTemplates = CacheMixin.templateCache as TemplateCache<CachedTemplate>;
 
 export function template_updated(
   key: string,
