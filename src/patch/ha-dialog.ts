@@ -116,7 +116,7 @@ class HaNotificationPatch extends ModdedElement {
 
     this.requestUpdate();
     this.updateComplete.then(async () => {
-      let haToast: HTMLElement | null;
+      let haToast: Element | null;
       // If the notification has an id, we can use it to find the toast element
       // Otherwise it is the last toast element in the notification manager
       if (params.id) {
