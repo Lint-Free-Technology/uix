@@ -116,7 +116,18 @@ class HaNotificationPatch extends ModdedElement {
 
     this.requestUpdate();
     this.updateComplete.then(async () => {
-      let haToast: HTMLElement | null = this.shadowRoot.querySelector("ha-toast");
+      let haToast: Element | null;
+      // If the notification has an id, we can use it to find the toast element
+      // Otherwise it is the last toast element in the notification manager
+      if (params.id) {
+        const key = `identified-${params.id}`;
+        haToast =
+          Array.from(this.shadowRoot.querySelectorAll("ha-toast")).find(
+            (t) => t.getAttribute("data-notification-key") === key
+          ) ?? null;
+      } else {
+        haToast = this.shadowRoot.querySelector("ha-toast:last-of-type");
+      }
       if (!haToast) return;
 
       const toastUix = (haToast as ModdedElement)._uix?.[0];
