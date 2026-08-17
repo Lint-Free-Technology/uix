@@ -120,8 +120,11 @@ export const VersionMixin = (SuperClass) => {
         }
       };
 
+      const messageBase = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reloading in... `;
       const showToast = () => {
-        const message = `💡 UIX has been updated to ${serverVersion} 💡 Browser is running ${clientVersion}. Reloading in ${seconds}s...`;
+        // First message is shown without seconds so we can either style :after if available to avoid flashing 
+        // or create a new toast message every second if not available at which stage we add the seconds remaining
+        const message = `${messageBase}${seconds == 60 ? '' : seconds + 's'}`;
         const action = {
           text: "Reload Now",
           action: activateReload,
@@ -147,12 +150,35 @@ export const VersionMixin = (SuperClass) => {
 
       showToast();
 
-      this._reloadIntervalId = window.setInterval(() => {
+      this._reloadIntervalId = window.setInterval(async () => {
+        const first = seconds === 60;
         seconds--;
         if (seconds <= 0) {
           activateReload();
         } else {
-          showToast();
+          // On first refresh If we found toast message update directly then we style :after to add the seconds remaining to avoid flashing. 
+          // If we don't find the toast message on first refresh then we create a new one with the seconds remaining.
+          // We can only set an :after style on first refresh as after that the toast message will show XXs so would be a double up.
+          const toastMessage = await selectTree(base, "$ notification-manager $ ha-toast[data-notification-key='identified-uix-reload'] $", false, 950);
+          if (toastMessage) {
+            let style = toastMessage.querySelector("style[data-uix-style]");
+            if (!style && first) {
+              style = document.createElement("style");
+              style.setAttribute("data-uix-style", "");
+              toastMessage.prepend(style);
+            }
+            if (style) {
+              style.textContent = `
+                span.message::after {
+                  content: "${seconds}s";
+                }
+              `;
+            } else {
+              showToast();
+            }
+          } else {
+            showToast();
+          }
         }
       }, 1000);
     }
