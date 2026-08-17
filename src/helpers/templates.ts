@@ -101,7 +101,7 @@ cachedTemplates.onResubscribe(async (connection) => {
       try {
         await cache.activeUnsubscribe();
       } catch (err) {
-        console.error("UIX: Error unsubscribing previous template during resubscribe:", err);
+        // Silently ignore failures as the subscription may have already expired on the server
       }
       cache.activeUnsubscribe = undefined;
     }

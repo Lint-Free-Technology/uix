@@ -37,11 +37,7 @@ export class TemplateCache<T = any> {
   }
 }
 
-(window as any).uix_template_cache =
-  (window as any).uix_template_cache || new TemplateCache();
-
-export const cachedTemplates: TemplateCache = (window as any)
-  .uix_template_cache;
+export const cachedTemplates = new TemplateCache();
 
 export const CacheMixin = (SuperClass) => {
   return class CacheMixinClass extends SuperClass {
@@ -49,7 +45,7 @@ export const CacheMixin = (SuperClass) => {
 
     constructor() {
       super();
-      this.templateCache = (window as any).uix_template_cache;
+      this.templateCache = cachedTemplates;
     }
   };
 };
