@@ -383,3 +383,14 @@ uix-image-for-entity-theme:
       :host {
         {{ image_person_james_bond() }}
       }
+
+uix-stacked-toast-theme:
+  uix-theme: uix-stacked-toast-theme
+  uix-toast-yaml: |
+    $: |
+      {% if 'id' in params and params.id == 'toast-message-1' %}
+      div.toast {
+        background: rgb(206, 50, 38);
+        color: white;
+      }
+      {% endif %}
