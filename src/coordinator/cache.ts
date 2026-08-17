@@ -46,6 +46,11 @@ export const CacheMixin = Object.assign(
     };
   },
   {
-    templateCache: new TemplateCache(),
+    get templateCache(): TemplateCache {
+      if (!(window as any).uix_template_cache) {
+        (window as any).uix_template_cache = new TemplateCache();
+      }
+      return (window as any).uix_template_cache;
+    },
   }
 );
