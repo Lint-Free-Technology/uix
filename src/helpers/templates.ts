@@ -3,11 +3,125 @@ import { BrowserID } from "./browser_id";
 import { getPanelState } from "./panel";
 import {
   TemplateCache,
-  CachedTemplate,
-  RenderTemplateResult,
-  cachedTemplates,
-  template_updated,
+  cachedTemplates as rawCachedTemplates,
 } from "../coordinator/cache";
+
+export interface CachedTemplate {
+  template: string;
+  variables: object;
+  value: string;
+  debug: boolean;
+  callbacks: Set<(string) => void>;
+  unsubscribe: Promise<() => Promise<void>>;
+  activeUnsubscribe?: () => Promise<void>;
+  cooldownTimeoutID?: number;
+  error?: RenderTemplateError;
+  includesIconVars: boolean;
+  includesImageVars?: boolean;
+}
+
+export interface RenderTemplateResult {
+  result: string;
+  listeners: any;
+}
+
+export interface RenderTemplateError {
+  error: string;
+  level: "ERROR" | "WARNING";
+}
+
+const cachedTemplates = rawCachedTemplates as TemplateCache<CachedTemplate>;
+
+export function template_updated(
+  key: string,
+  result: RenderTemplateResult
+): void {
+  const cache = cachedTemplates.get(key);
+  if (!cache) {
+    return;
+  }
+  if ("error" in result) {
+    cache.error = result as unknown as RenderTemplateError;
+    cache.value = "";
+    if (cache.debug) {
+      console.groupCollapsed(`UIX: Template ${cache.error.level}`);
+      console.log( { 
+        template: cache.template, 
+        variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
+        value: cache.value,
+        error: cache.error
+      });
+      console.groupEnd();
+    }
+  } else {
+    cache.value = result.result;
+    if (cache.debug) {
+      console.groupCollapsed("UIX: Template updated");
+      console.log( { 
+        template: cache.template, 
+        variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
+        value: cache.value,
+        error: cache.error
+      });
+      console.groupEnd();
+    }
+  }
+  cache.callbacks.forEach((f) => f(cache.value));
+  if (cache.includesIconVars && ! cache.cooldownTimeoutID) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshIconStyles) {
+      uixCoordinator._refreshIconStyles(cache.value, cache.debug);
+    }
+  }
+  if (cache.includesImageVars && ! cache.cooldownTimeoutID) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshImageStyles) {
+      uixCoordinator._refreshImageStyles(cache.value, cache.debug);
+    }
+  }
+}
+
+// Register the resubscription handler to decouple logic from cache.ts
+cachedTemplates.onResubscribe(async (connection) => {
+  for (const [key, cache] of cachedTemplates.entries()) {
+    if (cache.debug) {
+      console.groupCollapsed("UIX: Re-subscribing template on reconnect");
+      console.log({
+        template: cache.template,
+        variables: cache.variables,
+      });
+      console.groupEnd();
+    }
+    // Try unsubscribe the previous one first to avoid duplicate responses
+    if (cache.activeUnsubscribe) {
+      try {
+        await cache.activeUnsubscribe();
+      } catch (err) {
+        console.error("UIX: Error unsubscribing previous template during resubscribe:", err);
+      }
+      cache.activeUnsubscribe = undefined;
+    }
+    // Re-subscribe on the connection
+    const subscribePromise = connection.subscribeMessage(
+      (result: RenderTemplateResult) => template_updated(key, result),
+      {
+        type: "render_template",
+        template: cache.template,
+        variables: cache.variables,
+        report_errors: cache.debug,
+      }
+    );
+    subscribePromise.then((unsub) => {
+      cache.activeUnsubscribe = unsub;
+    }).catch((err) => {
+      console.error("UIX: Error re-subscribing template:", err);
+    });
+  }
+});
 
 export function hasTemplate(str) {
   if (!str) return false;
