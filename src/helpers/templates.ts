@@ -25,17 +25,71 @@ interface RenderTemplateError {
   level: "ERROR" | "WARNING";
 }
 
-(window as any).uix_template_cache =
-  (window as any).uix_template_cache || {};
+export class TemplateCache {
+  private _cache: Record<string, CachedTemplate> = {};
 
-const cachedTemplates: Record<string, CachedTemplate> = (window as any)
+  public get(key: string): CachedTemplate | undefined {
+    return this._cache[key];
+  }
+
+  public set(key: string, value: CachedTemplate): void {
+    this._cache[key] = value;
+  }
+
+  public has(key: string): boolean {
+    return key in this._cache;
+  }
+
+  public delete(key: string): void {
+    delete this._cache[key];
+  }
+
+  public keys(): string[] {
+    return Object.keys(this._cache);
+  }
+
+  public entries(): [string, CachedTemplate][] {
+    return Object.entries(this._cache);
+  }
+
+  public async resubscribe(connection: any): Promise<void> {
+    for (const [key, cache] of Object.entries(this._cache)) {
+      if (cache.debug) {
+        console.groupCollapsed("UIX: Re-subscribing template on reconnect");
+        console.log({
+          template: cache.template,
+          variables: cache.variables,
+        });
+        console.groupEnd();
+      }
+      // Re-subscribe on the connection
+      cache.unsubscribe = connection.subscribeMessage(
+        (result: RenderTemplateResult) => template_updated(key, result),
+        {
+          type: "render_template",
+          template: cache.template,
+          variables: cache.variables,
+          report_errors: cache.debug,
+        }
+      ).catch((err) => {
+        console.error("UIX: Error re-subscribing template:", err);
+        return () => Promise.resolve();
+      });
+    }
+  }
+}
+
+(window as any).uix_template_cache =
+  (window as any).uix_template_cache || new TemplateCache();
+
+const cachedTemplates: TemplateCache = (window as any)
   .uix_template_cache;
 
 function template_updated(
   key: string,
   result: RenderTemplateResult
 ): Promise<void> {
-  const cache = cachedTemplates[key];
+  const cache = cachedTemplates.get(key);
   if (!cache) {
     return;
   }
@@ -107,7 +161,7 @@ export async function bind_template(
   };
 
   const cacheKey = JSON.stringify([template, variables]);
-  let cache = cachedTemplates[cacheKey];
+  let cache = cachedTemplates.get(cacheKey);
   if (!cache) {
     let debug = false;
     unbind_template(callback);
@@ -130,7 +184,7 @@ export async function bind_template(
       console.groupEnd();
     }
 
-    cachedTemplates[cacheKey] = cache = {
+    cache = {
       template,
       variables,
       value: "",
@@ -148,6 +202,7 @@ export async function bind_template(
       includesIconVars,
       includesImageVars,
     };
+    cachedTemplates.set(cacheKey, cache);
   } else {
     if (cache.debug) {
       console.groupCollapsed("UIX: Reusing template");
@@ -172,7 +227,7 @@ export async function bind_template(
 export function unbind_template(
   callback: (string) => void
 ): void {
-  for (const [key, cache] of Object.entries(cachedTemplates)) {
+  for (const [key, cache] of cachedTemplates.entries()) {
     if (cache.callbacks.has(callback)) {
       cache.callbacks.delete(callback);
       if (cache.callbacks.size == 0) {
@@ -200,7 +255,7 @@ export function unbind_template(
 }
 
 async function unsubscribe_template(key: string) {
-  const cache = cachedTemplates[key];
+  const cache = cachedTemplates.get(key);
   if (!cache) return;
   if (cache.cooldownTimeoutID) {
     clearTimeout(cache.cooldownTimeoutID);
@@ -215,7 +270,7 @@ async function unsubscribe_template(key: string) {
     });
     console.groupEnd();
   }
-  delete cachedTemplates[key];
+  cachedTemplates.delete(key);
   await (
     await cache.unsubscribe
   )();

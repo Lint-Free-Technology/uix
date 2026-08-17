@@ -3,12 +3,15 @@ import { ConnectionMixin } from "./connection.js";
 import { VersionMixin } from "./version.js";
 import { IconMixin } from "./icon.js";
 import { ImageMixin } from "./image.js";
+import { CacheMixin } from "./cache.js";
 
 class UixCoordinator extends 
-  VersionMixin(
-    ImageMixin(
-      IconMixin(
-        ConnectionMixin(EventTarget)
+  CacheMixin(
+    VersionMixin(
+      ImageMixin(
+        IconMixin(
+          ConnectionMixin(EventTarget)
+        )
       )
     )
   ) {

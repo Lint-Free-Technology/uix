@@ -71,6 +71,9 @@ export const ConnectionMixin = (SuperClass) => {
     private onConnected = () => {
       this._connected = true;
       this.LOG("WebSocket connected");
+      if ((this as any).templateCache) {
+        (this as any).templateCache.resubscribe(this.connection);
+      }
     }
 
     // WebSocket has disconnected
