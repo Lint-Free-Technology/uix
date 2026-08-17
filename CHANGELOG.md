@@ -1,3 +1,16 @@
+## [8.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.4...v8.1.0-beta.5) (2026-08-17)
+
+### ⭐ New Features
+
+* Add image for entity styling coordinator to dispatch refresh to images when theme style templates include --uix-image-for-<entity_id> ([#533](https://github.com/Lint-Free-Technology/uix/issues/533)) ([27fb83d](https://github.com/Lint-Free-Technology/uix/commit/27fb83d296b293a922194a24c6f68f7e2d6aa7b2)), references [#528](https://github.com/Lint-Free-Technology/uix/issues/528)
+* Add performance option to disable entity picture image styling ([#534](https://github.com/Lint-Free-Technology/uix/issues/534)) ([daa590e](https://github.com/Lint-Free-Technology/uix/commit/daa590e2896e8ec405510b36d1575571486d4f64)), references [#529](https://github.com/Lint-Free-Technology/uix/issues/529)
+* Update 60s countdown for version mismatch reload toast to use `:after` style for seconds remaining if available to stop any toast UIX styling from causing flashing due to toast reloads. ([#535](https://github.com/Lint-Free-Technology/uix/issues/535)) ([8314904](https://github.com/Lint-Free-Technology/uix/commit/8314904fa714a4029b8f45fb8a861a427221a3b4))
+
+### 🐞 Bug Fixes
+
+* entity image override for ha-user-badge not working since Home Assistant 2026.7. For ha-user-badge and ha-person-badge, use inserted div.picture.uix-image and style existing div.picture as hidden while overridden to stop flickering. ([a25b9e3](https://github.com/Lint-Free-Technology/uix/commit/a25b9e305527a91e42ba23616e9c8c66b88f7d10))
+* UIX styling of toast removed if another stacked toast message subsequently shows. ([#536](https://github.com/Lint-Free-Technology/uix/issues/536)) ([04e89d1](https://github.com/Lint-Free-Technology/uix/commit/04e89d12af317fdf9509d12ae39d3cc83bbb0d7a))
+
 ## [8.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.3...v8.1.0-beta.4) (2026-08-15)
 
 ### ⭐ New Features
