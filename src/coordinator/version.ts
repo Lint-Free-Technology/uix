@@ -124,7 +124,7 @@ export const VersionMixin = (SuperClass) => {
       const showToast = () => {
         // First message is shown without seconds so we can either style :after if available to avoid flashing 
         // or create a new toast message every second if not available at which stage we add the seconds remaining
-        const message = `${messageBase}${seconds == 60 ? '' : seconds + 's'}`;
+        const message = `${messageBase}${seconds === 60 ? "" : seconds + "s"}`;
         const action = {
           text: "Reload Now",
           action: activateReload,
