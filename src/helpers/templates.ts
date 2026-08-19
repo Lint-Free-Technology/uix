@@ -188,10 +188,20 @@ export function unbind_template(
           });
           console.groupEnd();
         }
+        // When hidden partial-panel-resolver disconnects the view
+        // The app may also be suspending so we can't delay unsubscribe as it won't happen until 
+        // after hass.connection is suspended causing the unsubscribe to never happen and lead to duplicate subscriptions 
+        // which will match the same template and variables and cause multiple callbacks to be called for the same template update.
+        // So when document is hidden we unsubscribe immediately instead of waiting for the cooldown.
+        if (document.hidden) {
+          window.setTimeout(() => unsubscribe_template(key, true), 0);
+          return;
+        }
         cache.cooldownTimeoutID = window.setTimeout(
           unsubscribe_template,
           20000,
-          key
+          key,
+          false
         );
       }
       break;
@@ -199,14 +209,18 @@ export function unbind_template(
   }
 }
 
-async function unsubscribe_template(key: string) {
+async function unsubscribe_template(key: string, immediate = false) {
   const cache = cachedTemplates[key];
   if (!cache) return;
   if (cache.cooldownTimeoutID) {
     clearTimeout(cache.cooldownTimeoutID);
   }
   if (cache.debug) {
-    console.groupCollapsed("UIX: Unsubscribing template after cooldown");
+    console.groupCollapsed(
+      immediate ? 
+      "UIX: Unsubscribing template immediately" : 
+      "UIX: Unsubscribing template after cooldown"
+    );
     console.log( { 
       template: cache.template, 
       variables: cache.variables,
