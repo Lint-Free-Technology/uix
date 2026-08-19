@@ -194,7 +194,10 @@ export function unbind_template(
         // which will match the same template and variables and cause multiple callbacks to be called for the same template update.
         // So when document is hidden we unsubscribe immediately instead of waiting for the cooldown.
         if (document.hidden) {
-          window.setTimeout(() => unsubscribe_template(key, true), 0);
+          cache.cooldownTimeoutID = window.setTimeout(
+            () => unsubscribe_template(key, true),
+            0
+          );
           return;
         }
         cache.cooldownTimeoutID = window.setTimeout(
