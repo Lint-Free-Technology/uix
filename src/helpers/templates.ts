@@ -194,17 +194,22 @@ export function unbind_template(
         // which will match the same template and variables and cause multiple callbacks to be called for the same template update.
         // So when document is hidden we unsubscribe immediately instead of waiting for the cooldown.
         if (document.hidden) {
-          cache.cooldownTimeoutID = window.setTimeout(
-            () => unsubscribe_template(key, true),
-            0
-          );
+          delete cachedTemplates[key];
+          console.groupCollapsed("UIX: Unsubscribing template immediately due to document hidden");
+          console.log( { 
+            template: cache.template, 
+            variables: cache.variables,
+            includesIconVars: cache.includesIconVars,
+            includesImageVars: cache.includesImageVars,
+          });
+          console.groupEnd();
+          cache.unsubscribe.then((unsubscribe) => unsubscribe());
           return;
         }
         cache.cooldownTimeoutID = window.setTimeout(
           unsubscribe_template,
           20000,
-          key,
-          false
+          key
         );
       }
       break;
@@ -212,18 +217,14 @@ export function unbind_template(
   }
 }
 
-async function unsubscribe_template(key: string, immediate = false) {
+async function unsubscribe_template(key: string) {
   const cache = cachedTemplates[key];
   if (!cache) return;
   if (cache.cooldownTimeoutID) {
     clearTimeout(cache.cooldownTimeoutID);
   }
   if (cache.debug) {
-    console.groupCollapsed(
-      immediate ? 
-      "UIX: Unsubscribing template immediately" : 
-      "UIX: Unsubscribing template after cooldown"
-    );
+    console.groupCollapsed("UIX: Unsubscribing template after cooldown");
     console.log( { 
       template: cache.template, 
       variables: cache.variables,
