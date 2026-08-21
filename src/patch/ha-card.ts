@@ -12,6 +12,7 @@ Patch the ha-card element to on first update:
 @patch_element("ha-card")
 class HaCardPatch extends ModdedElement {
   _uix = [];
+  _uixPatchPromise?: Promise<unknown>;
   async firstUpdated(_orig, ...args) {
     await _orig?.(...args);
 
@@ -29,7 +30,7 @@ class HaCardPatch extends ModdedElement {
     }
 
     const cls = `type-${config?.type?.replace?.(":", "-")}`;
-    await apply_uix(
+    const patchPromise = apply_uix(
       this,
       "card",
       config?.uix ?? config?.card_mod ?? undefined,
@@ -37,6 +38,14 @@ class HaCardPatch extends ModdedElement {
       false,
       cls
     );
+    this._uixPatchPromise = patchPromise;
+    try {
+      await patchPromise;
+    } finally {
+      if (this._uixPatchPromise === patchPromise) {
+        this._uixPatchPromise = undefined;
+      }
+    }
 
     // Don't patch generic-card parent
     if (config.type == "generic-card") return;
@@ -52,19 +61,27 @@ class HaCardPatch extends ModdedElement {
     _orig?.(...args);
     
     const coordinator = (window as any).uixCoordinator;
-    if (coordinator?.alwaysPatchHaCard && (!this._uix || this._uix.length === 0)) {
+    if (coordinator?.alwaysPatchHaCard && !this._uixPatchPromise && (!this._uix || this._uix.length === 0)) {
       const huiCard = (this.parentNode as any)?.host?.parentNode;
       if (huiCard && huiCard.localName === "hui-card") return;
       
       // Make sure generic ha-card is patched if it was not patched on firstUpdated
       const cls = `type-generic-card`;
-      apply_uix(
+      const patchPromise = apply_uix(
         this,
         "card",
         undefined,
         { config: { type: "generic-card" } },
         false,
         cls
+      );
+      this._uixPatchPromise = patchPromise;
+      patchPromise.then(
+        () => {
+          if (this._uixPatchPromise === patchPromise) {
+            this._uixPatchPromise = undefined;
+          }
+        }
       );
     }
   }

@@ -368,6 +368,9 @@ export const ConnectionMixin = (SuperClass) => {
      *
      * Call with `null` (or no argument) to clear the override and revert to
      * the server-configured value.
+     * 
+     * A page refresh will be required to cover all ha-card instances on the page, 
+     * as this setting is only checked when a ha-card is first patched or updated
      */
     public setAlwaysPatchHaCardOverride(value: boolean | null = null): void {
       this._always_patch_ha_card = value;
