@@ -61,6 +61,8 @@ class HaCardPatch extends ModdedElement {
     _orig?.(...args);
     
     const coordinator = (window as any).uixCoordinator;
+    // Await any firstUpdated patching to complete before checking if we need to patch
+    // due to firstUpdate not being patched due to early load ha-card before UIX running
     if (coordinator?.alwaysPatchHaCard && !this._uixPatchPromise && (!this._uix || this._uix.length === 0)) {
       const huiCard = (this.parentNode as any)?.host?.parentNode;
       if (huiCard && huiCard.localName === "hui-card") return;
