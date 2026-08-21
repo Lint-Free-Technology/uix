@@ -47,6 +47,27 @@ class HaCardPatch extends ModdedElement {
     patch_object(parent, ModdedElement);
     parent._uix = this._uix;
   }
+
+  updated(_orig, ...args) {
+    _orig?.(...args);
+    
+    const coordinator = (window as any).uixCoordinator;
+    if (coordinator?.alwaysPatchHaCard && this._uix.length === 0) {
+      const huiCard = (this.parentNode as any)?.host?.parentNode;
+      if (huiCard && huiCard.localName === "hui-card") return;
+      
+      // Make sure generic ha-card is patched if it was not patched on firstUpdated
+      const cls = `type-generic-card`;
+      apply_uix(
+        this,
+        "card",
+        undefined,
+        { config: { type: "generic-card" } },
+        false,
+        cls
+      );
+    }
+  }
 }
 
 interface LovelaceCard extends Node {
