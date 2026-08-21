@@ -1,3 +1,9 @@
+## [8.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.5...v8.1.0-beta.6) (2026-08-21)
+
+### 🐞 Bug Fixes
+
+* Multiple template subscriptions make be created for same UIX Styling node when Home Assistant app is suspended and restored in Browser. This causes multiple updates to the UIX Styling node when the template updates which may cause visual artifacts and will add up to a small resource increase over time. ([#540](https://github.com/Lint-Free-Technology/uix/issues/540)) ([791ea08](https://github.com/Lint-Free-Technology/uix/commit/791ea08e88336b5e7b811e86f82840c0cc06a40c))
+
 ## [8.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.4...v8.1.0-beta.5) (2026-08-17)
 
 ### ⭐ New Features
