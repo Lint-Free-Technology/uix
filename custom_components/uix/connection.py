@@ -65,6 +65,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     disable_hash_template_variable = False
                     disable_icon_styling = False
                     disable_entity_picture_image_override = False
+                    always_patch_ha_card = False
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
                         file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
@@ -107,6 +108,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         disable_hash_template_variable = False
         disable_icon_styling = False
         disable_entity_picture_image_override = False
+        always_patch_ha_card = False
         if entries:
             foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
             file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
