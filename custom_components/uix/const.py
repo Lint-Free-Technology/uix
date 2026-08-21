@@ -21,6 +21,8 @@ CONF_DISABLE_HASH_TEMPLATE_VARIABLE = "disable_hash_template_variable"
 CONF_DISABLE_ICON_STYLING = "disable_icon_styling"
 CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE = "disable_entity_picture_image_override"
 
+CONF_ALWAYS_PATCH_HA_CARD = "always_patch_ha_card"
+
 WS_GET_FOUNDRIES = f"{DOMAIN}/get_foundries"
 WS_SET_FOUNDRY = f"{DOMAIN}/set_foundry"
 WS_DELETE_FOUNDRY = f"{DOMAIN}/delete_foundry"
