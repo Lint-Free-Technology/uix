@@ -20,7 +20,7 @@ The option is **unset by default**. To set the option:
 3. Toggle **Always patch ha-card** on.
 4. Save.
 
-The setting is available immediately across all connected browser sessions. A page reload may be required for the setting to take affect.
+The setting is available immediately across all connected browser sessions. A page reload may be required for the setting to take effect.
 
 ## Behavior when set
 
