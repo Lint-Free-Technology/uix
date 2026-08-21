@@ -52,7 +52,7 @@ class HaCardPatch extends ModdedElement {
     _orig?.(...args);
     
     const coordinator = (window as any).uixCoordinator;
-    if (coordinator?.alwaysPatchHaCard && this._uix.length === 0) {
+    if (coordinator?.alwaysPatchHaCard && (!this._uix || this._uix.length === 0)) {
       const huiCard = (this.parentNode as any)?.host?.parentNode;
       if (huiCard && huiCard.localName === "hui-card") return;
       

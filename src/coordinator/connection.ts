@@ -15,6 +15,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _disableHashTemplateVariableOverride: boolean | null = null;
     private _disableIconStylingOverride: boolean | null = null;
     private _disableEntityPictureImageOverrideOverride: boolean | null = null;
+    private _always_patch_ha_card: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
