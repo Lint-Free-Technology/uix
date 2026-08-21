@@ -264,7 +264,7 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     get alwaysPatchHaCard(): boolean {
-      if (this._always_patch_ha_card !== undefined) {
+      if (this._always_patch_ha_card !== null) {
         return this._always_patch_ha_card;
       }
       return this._data?.always_patch_ha_card ?? false;
