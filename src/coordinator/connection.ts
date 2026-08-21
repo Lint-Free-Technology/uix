@@ -263,6 +263,13 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.disable_entity_picture_image_override ?? false;
     }
 
+    get alwaysPatchHaCard(): boolean {
+      if (this._always_patch_ha_card !== undefined) {
+        return this._always_patch_ha_card;
+      }
+      return this._data?.always_patch_ha_card ?? false;
+    }
+
     /**
      * Set a client-side override for the hass throttle settings.
      *
@@ -350,6 +357,19 @@ export const ConnectionMixin = (SuperClass) => {
      */
     public setDisableEntityPictureImageOverrideOverride(value: boolean | null = null): void {
       this._disableEntityPictureImageOverrideOverride = value;
+    }
+
+    /** 
+     * Set a client-side override for always patching ha-card.
+     *
+     * This allows integrations to always patch ha-card for the current
+     * browser session without changing backend settings.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     */
+    public setAlwaysPatchHaCardOverride(value: boolean | null = null): void {
+      this._always_patch_ha_card = value;
     }
   }
 

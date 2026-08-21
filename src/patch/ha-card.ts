@@ -18,18 +18,28 @@ class HaCardPatch extends ModdedElement {
     const huiCard = (this.parentNode as any)?.host?.parentNode;
     if (huiCard && huiCard.localName === "hui-card") return;
 
-    const config = findConfig(this);
-    if (!config) return;
+    let config = findConfig(this);
+    if (!config) {
+      const coordinator = (window as any).uixCoordinator;
+      if (coordinator?.alwaysPatchHaCard) {
+        config = { type: "generic-card" };
+      } else {
+        return;
+      }
+    }
 
     const cls = `type-${config?.type?.replace?.(":", "-")}`;
     await apply_uix(
       this,
       "card",
-      config?.uix ?? config?.card_mod,
+      config?.uix ?? config?.card_mod ?? undefined,
       { config },
       false,
       cls
     );
+
+    // Don't patch generic-card parent
+    if (config.type == "generic-card") return;
 
     const parent = (this.parentNode as any)?.host;
     if (!parent) return;
@@ -49,8 +59,9 @@ export function findConfig(node: LovelaceCard) {
   if (node.config) return node.config;
   if (node._config) return node._config;
   // If we have made it to a custom element, we can stop searching
-  const nodeName = node.nodeName.toLowerCase();
+  const nodeName = node.nodeName?.toLowerCase();
   if (
+    nodeName &&
     nodeName !== "ha-card" && 
     window.customElements.get(nodeName) && 
     (nodeName.startsWith("hui-") || nodeName.startsWith("ha-"))

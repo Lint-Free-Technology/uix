@@ -17,6 +17,7 @@ from .checks import (
     check_card_mod_frontend_script_resource
 )
 from .const import (
+    CONF_ALWAYS_PATCH_HA_CARD,
     DOMAIN, 
     NAME, 
     CARD_MOD_FRONTEND_SCRIPT_URL,
@@ -157,6 +158,7 @@ class UixOptionsFlow(OptionsFlow):
                     CONF_DISABLE_HASH_TEMPLATE_VARIABLE: user_input[CONF_DISABLE_HASH_TEMPLATE_VARIABLE],
                     CONF_DISABLE_ICON_STYLING: user_input[CONF_DISABLE_ICON_STYLING],
                     CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: user_input[CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE],
+                    CONF_ALWAYS_PATCH_HA_CARD: user_input[CONF_ALWAYS_PATCH_HA_CARD],
                 },
             )
 
@@ -195,6 +197,10 @@ class UixOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
                         default=self._config_entry.options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False),
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_ALWAYS_PATCH_HA_CARD,
+                        default=self._config_entry.options.get(CONF_ALWAYS_PATCH_HA_CARD, False),
                     ): BooleanSelector(),
                 }
             ),
