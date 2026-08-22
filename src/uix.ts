@@ -24,6 +24,7 @@ import {
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
 import { applyFrontendThemeOnElement } from "./helpers/frontend_themes";
+import { getCustomPanelName, isEmbeddedPanel } from "./helpers/hass";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -395,7 +396,7 @@ export class Uix extends LitElement {
 if (!customElements.get("uix-node")) {
   customElements.define("uix-node", Uix);
   console.groupCollapsed(
-    `%c💡 UIX ${pjson.version} IS INSTALLED 💡`,
+    `%c💡 UIX ${pjson.version} IS INSTALLED 💡${isEmbeddedPanel() ? ` for ${getCustomPanelName() ?? "unknown"}` : ""}`,
     'color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;',
   );
   console.log('Documentation:', 'https://uix.lf.technology/');
@@ -407,7 +408,13 @@ if (!customElements.get("uix-node")) {
   // and then redefine uix-node if necessary
   // otherwise the customElements registry uix-node is defined in
   // may get overwritten by the polyfill if uix-node is loaded as a module
-  while (customElements.get("home-assistant") === undefined)
+  let baseElementName: string | undefined = undefined;
+  if (isEmbeddedPanel()) {
+    baseElementName = getCustomPanelName();
+  } else {
+    baseElementName = "home-assistant";
+  }
+  while (customElements.get(baseElementName) === undefined)
     await new Promise((resolve) => window.setTimeout(resolve, 100));
 
   if (!customElements.get("uix-node")) {

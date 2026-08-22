@@ -1,13 +1,17 @@
-from homeassistant.core import HomeAssistant
-from homeassistant.components.frontend import (
-    add_extra_js_url, 
-    remove_extra_js_url
-)
+from homeassistant.components.frontend import add_extra_js_url, remove_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace.resources import ResourceStorageCollection
+from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, FRONTEND_SCRIPT_URL
+from .const import (
+    DOMAIN,
+    FRONTEND_SCRIPT_CUSTOM_ES5_LOADER,
+    FRONTEND_SCRIPT_CUSTOM_LOADER,
+    FRONTEND_SCRIPT_CUSTOM_PANEL,
+    FRONTEND_SCRIPT_URL,
+)
 from .helpers import get_version
+
 
 async def async_register_static_path(hass: HomeAssistant) -> None:
     """Register the static path for the frontend script."""
@@ -18,7 +22,22 @@ async def async_register_static_path(hass: HomeAssistant) -> None:
                     f"/{DOMAIN}/{FRONTEND_SCRIPT_URL}",
                     hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_URL}"),
                     True,
-                )
+                ),
+                StaticPathConfig(
+                    f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_PANEL}",
+                    hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_PANEL}"),
+                    True,
+                ), 
+                StaticPathConfig(
+                    f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_LOADER}",
+                    hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_LOADER}"),
+                    True,
+                ), 
+                StaticPathConfig(
+                    f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_ES5_LOADER}",
+                    hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_ES5_LOADER}"),
+                    True,
+                ), 
             ]
         )   
     except RuntimeError:

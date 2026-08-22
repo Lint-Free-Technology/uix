@@ -1,5 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
+import pjson from "../../package.json";
 
 /*
 Patch ha-panel-config for theme styling
@@ -26,6 +27,18 @@ class HaPanelCustomPatch extends ModdedElement {
   updated(_orig, ...args) {
     _orig?.(...args);
     apply_uix(this, "panel-custom", { prepend: true });
+  }
+  _createPanel(_orig, ...args) {
+    const origWindowCustomPanelJS = (window as any).customPanelJS;
+    let uixCustomPaneLoader: string | undefined = undefined;
+    if ((window as any).latestJS) {
+      uixCustomPaneLoader = `/uix/uixCustomPanelLoader.js?v=${pjson.version}`;
+    } else {
+      uixCustomPaneLoader = `/uix/uixCustomPanelEs5Loader.js?v=${pjson.version}`;
+    }
+    (window as any).customPanelJS = uixCustomPaneLoader;
+    _orig?.(...args);
+    (window as any).customPanelJS = origWindowCustomPanelJS;
   }
 }
 
