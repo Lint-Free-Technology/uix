@@ -4,9 +4,6 @@ description: Learn how to disable entity picture image overrides and when to use
 ---
 # Disable entity picture image overrides
 
-!!! note
-    Disabling of entity picture image overrides available in 8.1.0-beta.4
-
 By default, UIX patches standard Home Assistant badge and marker elements (`ha-entity-marker`, `ha-tile-icon`, `state-badge`, `ha-user-badge`, `ha-person-badge`) to allow custom entity picture image overrides (such as `--uix-image` or `--uix-image-for-<entity_id>`). UIX provides an option to disable this patching behavior to improve rendering performance and reduce CPU overhead on low-power devices.
 
 ## Setting via the integration UI
