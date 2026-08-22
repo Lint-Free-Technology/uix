@@ -1,4 +1,4 @@
-import { hass_base_el } from "./helpers/hass";
+import { hass, hass_base_el } from "./helpers/hass";
 
 // Add a listener to execute UIX custom actions via the Home Assistant `fire-dom-event` / `ll-custom` action
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
@@ -78,7 +78,7 @@ export class Actions {
         })
       );
     };
-    if (dataExtensible.action) {
+    if (dataExtensible.action && typeof dataExtensible.action === "object") {
       const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {};
       dataExtensible.action = {
         ...dataExtensible.action,
@@ -88,12 +88,59 @@ export class Actions {
       };
       delete dataExtensible.action.tap_action;
     }
+    if (dataExtensible.secondary_action && typeof dataExtensible.secondary_action === "object") {
+      dataExtensible.secondaryAction = { ...dataExtensible.secondary_action };
+      delete dataExtensible.secondary_action;
+      const secondaryAction = dataExtensible.secondaryAction.tap_action ? { ...dataExtensible.secondaryAction.tap_action } : {};
+      dataExtensible.secondaryAction = {
+        ...dataExtensible.secondaryAction,
+        action: () => {
+          _triggerHassAction(secondaryAction, base as HTMLElement);
+        },
+      };
+      delete dataExtensible.secondaryAction.tap_action;
+    }
     const event = new CustomEvent(eventName, {
       detail: dataExtensible,
       bubbles: true,
       composed: true,
     });
     base.dispatchEvent(event);
+  }
+  static async javascript(data: Record<string, any>) {
+    if (!data || typeof data.code !== "string" || !data.code.trim()) {
+      console.error("UIX: Invalid or empty code for javascript action:", data);
+      return;
+    }
+    if (
+      data.variables != null &&
+      (typeof data.variables !== "object" || Array.isArray(data.variables))
+    ) {
+      console.error("UIX: Variables must be an object for javascript action:", data.variables);
+      return;
+    }
+    const hs = await hass();
+    const code = `
+      "use strict";
+      ${data.code}
+    `;
+
+    let fn: Function;
+    try {
+      fn = new Function("hass", "variables", code);
+    } catch (error) {
+      console.error(
+        "UIX: Failed to compile javascript action code (CSP may block unsafe-eval):",
+        error
+      );
+      return;
+    }
+
+    try {
+      fn(hs, data.variables ?? {});
+    } catch (error) {
+      console.error("UIX: Error while executing javascript action code:", error);
+    }
   }
 }
 
@@ -103,4 +150,5 @@ const actionList: Record<string, Function> = {
   toast: Actions.toast,
   "clear-cache": Actions.clear_cache,
   "more-info": Actions.more_info,
+  javascript: Actions.javascript,
 };

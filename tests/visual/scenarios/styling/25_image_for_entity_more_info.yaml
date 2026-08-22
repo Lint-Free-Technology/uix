@@ -1,0 +1,29 @@
+id: image_for_entity_more_info
+description: "Image styling for an entity more-info can be set via a theme variable and macro"
+view_path: image-for-entity-more-info
+
+theme: uix-image-for-entity-theme
+
+card:
+  type: tile
+  entity: person.james_bond_007
+
+interactions:
+  - type: wait
+    ms: 1000
+  - type: click
+    root: "hui-tile-card"
+    selector: "ha-card"
+    settle_ms: 1000
+
+assertions:
+  - type: object_property_text_ends_with
+    root: 
+      - "state-card-display"
+      - "state-info"
+    selector: "state-badge"
+    property: "overrideImage"
+    expected: "question_mark_cropped.jpg"
+  - type: snapshot
+    name: "53_image_for_entity_more_info"
+    threshold: 0.01

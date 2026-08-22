@@ -57,7 +57,9 @@ zone:
     radius: 1000
     passive: false
 
-# Template device trackers to use with webhooks
+# Template entities
+# device_tracker template entities are used to simulate device_tracker entities for testing purposes.
+# sensors for extra temperature sensors
 template:
   - triggers:
     - trigger: webhook     
@@ -125,3 +127,24 @@ template:
         longitude: "{{ trigger.json.longitude }}"
         latitude: "{{ trigger.json.latitude }}"
         location_accuracy: "{{ trigger.json.resolution }}"
+  - sensor:
+      - name: Sauna Temperature
+        state: 75
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+      - name: Basement Temperature
+        state: 12
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+      - name: Attic Temperature
+        state: 8
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+      - name: Kitchen Temperature
+        state: 22
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement

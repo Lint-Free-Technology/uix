@@ -71,6 +71,9 @@ tap_action:
 
 ## `toast` - show Home Assistant toast notification
 
+!!! note
+    `secondary` action and `action.primary` available in 8.1.0-beta.1.
+
 Shows a Home Assistant toast notification.
 
 | config | setting | default | description |
@@ -82,9 +85,14 @@ Shows a Home Assistant toast notification.
 | | `duration` | `4000` | Duration in ms for which to show the toast. Any duration less than 4000 will be set to 4000 (4 seconds). Use `-1` to have the toast to show indefinitely - will be replaced if another toast is shown. |
 | | `dismissable` | `false` | Shows a close icon to allow the toast message to be immediately dismissed by the user. |
 | | `bottomOffset` | `0` | A positive offset to add to the vertical position above the bottom of the Browser window. toast messages show at a position `--ha-space-4` (Default: 16px) above the bottom of safe area of the Browser window. |
-| | `action` | - | If provided shows a button which will execute the configured action when clicked. |
+| | `action` | - | If provided shows a button which will execute the configured `action.tap_action` when clicked. |
+| | `action.primary` | - | If `true` renders the `action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
 | | `action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
 | | `action.tap_action` | **REQUIRED** | Home Assistant action config |
+| | `secondary_action` | - | If provided shows a button to the left of the `action` button which will execute the configured `secondary_action.tap_action` when clicked. |
+| | `secondary_action.primary` | - | If `true` renders the `secondary_action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
+| | `secondary_action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `secondary_action.tap_action` | **REQUIRED** | Home Assistant action config |
 
 Example toast with action with translated action text.
 
@@ -101,6 +109,7 @@ tap_action:
       dismissable: true
       bottomOffset: 550
       action:
+        primary: true
         text:
           translationKey: ui.dialogs.more_info_control.light.toggle
         tap_action:
@@ -108,6 +117,47 @@ tap_action:
           perform_action: light.toggle
           target:
             entity_id: light.bed_light
+      secondary_action:
+        text: Custom
+        tap_action:
+          action: perform-action
+          perform_action: light.toggle
+          target:
+            entity_id: light.ceiling_lights
 ```
 
 ![UIX toast action example](../assets/page-assets/extras/extra-toast-action.gif)
+
+## `javascript` - run javascript code in Browser session
+
+!!! note
+    `javascript` action available in 8.1.0-beta.1
+
+Runs JavaScript code in the browser session with `hass` provided and an optional `variables` object.
+
+!!! warning
+    This action executes arbitrary JavaScript in the current Home Assistant frontend session. Only use trusted code/config and be aware it can access data available to the browser session.
+
+| config | setting | default | description |
+| --- | --- | --- | --- |
+| `action: javascript` | - | - | Runs javascript code with options set with `data:` |
+| `data:` | - | - | Javascript options. |
+| | `code` | **REQUIRED** | Javascript code to run. |
+| | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variables.<name>`. Named variables can be of any type. |
+
+Example javascript action with variable and using hass object to turn off a light.
+
+```yaml
+type: tile
+entity: light.bed_light
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: javascript
+    data:
+      variables:
+        entity_id: light.bed_light
+      code: |
+        console.log("UIX: Custom javascript action executed!");
+        hass.callService("light", "turn_off", {}, { entity_id: variables.entity_id });
+```

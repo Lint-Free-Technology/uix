@@ -11,6 +11,8 @@ interface CachedTemplate {
   unsubscribe: Promise<() => Promise<void>>;
   cooldownTimeoutID?: number;
   error?: RenderTemplateError;
+  includesIconVars: boolean;
+  includesImageVars?: boolean;
 }
 
 interface RenderTemplateResult {
@@ -45,6 +47,8 @@ function template_updated(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -57,6 +61,8 @@ function template_updated(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -64,6 +70,18 @@ function template_updated(
     }
   }
   cache.callbacks.forEach((f) => f(cache.value));
+  if (cache.includesIconVars && ! cache.cooldownTimeoutID) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshIconStyles) {
+      uixCoordinator._refreshIconStyles(cache.value, cache.debug);
+    }
+  }
+  if (cache.includesImageVars && ! cache.cooldownTimeoutID) {
+    const uixCoordinator = (window as any).uixCoordinator;
+    if (uixCoordinator?._refreshImageStyles) {
+      uixCoordinator._refreshImageStyles(cache.value, cache.debug);
+    }
+  }
 }
 
 export function hasTemplate(str) {
@@ -95,12 +113,19 @@ export async function bind_template(
     unbind_template(callback);
     callback(defaultValue);
 
+    const includesIconVars =
+      template.includes("--uix-icon-for-") || template.includes("--uix-icon-color-for-");
+    const includesImageVars =
+      template.includes("--uix-image-for-");
+
     if (template.includes("uix.debug") || template.includes("card_mod.debug")) {
       debug = true;
       console.groupCollapsed("UIX: Binding template");
       console.log( { 
         template, 
-        variables
+        variables,
+        includesIconVars,
+        includesImageVars
       });
       console.groupEnd();
     }
@@ -120,6 +145,8 @@ export async function bind_template(
           report_errors: debug,
         }
       ),
+      includesIconVars,
+      includesImageVars,
     };
   } else {
     if (cache.debug) {
@@ -127,6 +154,8 @@ export async function bind_template(
       console.log( { 
         template: cache.template, 
         variables: cache.variables, 
+        includesIconVars: cache.includesIconVars,
+        includesImageVars: cache.includesImageVars,
         value: cache.value,
         error: cache.error
       });
@@ -153,9 +182,29 @@ export function unbind_template(
           );
           console.log( { 
             template: cache.template, 
-            variables: cache.variables
+            variables: cache.variables,
+            includesIconVars: cache.includesIconVars,
+            includesImageVars: cache.includesImageVars,
           });
           console.groupEnd();
+        }
+        // When hidden partial-panel-resolver disconnects the view
+        // The app may also be suspending so we can't delay unsubscribe as it won't happen until 
+        // after hass.connection is suspended causing the unsubscribe to never happen and lead to duplicate subscriptions 
+        // which will match the same template and variables and cause multiple callbacks to be called for the same template update.
+        // So when document is hidden we unsubscribe immediately instead of waiting for the cooldown.
+        if (document.hidden) {
+          delete cachedTemplates[key];
+          console.groupCollapsed("UIX: Unsubscribing template immediately due to document hidden");
+          console.log( { 
+            template: cache.template, 
+            variables: cache.variables,
+            includesIconVars: cache.includesIconVars,
+            includesImageVars: cache.includesImageVars,
+          });
+          console.groupEnd();
+          cache.unsubscribe.then((unsubscribe) => unsubscribe());
+          return;
         }
         cache.cooldownTimeoutID = window.setTimeout(
           unsubscribe_template,
@@ -178,7 +227,9 @@ async function unsubscribe_template(key: string) {
     console.groupCollapsed("UIX: Unsubscribing template after cooldown");
     console.log( { 
       template: cache.template, 
-      variables: cache.variables
+      variables: cache.variables,
+      includesIconVars: cache.includesIconVars,
+      includesImageVars: cache.includesImageVars,
     });
     console.groupEnd();
   }

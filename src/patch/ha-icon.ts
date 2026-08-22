@@ -11,14 +11,107 @@ Patch various icon elements to consider the following variables:
 --uix-icon-dim
 */
 
+/*
+Patch icon elements to consider the following variable:
+--uix-icon-for-<entity_id_with_dots_as_underscores>
+
+e.g. to override the icon for light.bed_light:
+  --uix-icon-for-light_bed_light: mdi:globe-light-outline
+
+If the element is for that entity, the replacement will take place.
+If not, it is ignored.
+
+Supported elements:
+- ha-tile-icon
+- ha-state-icon
+- ha-icon
+- state-badge
+*/
+
+const getEntityId = (el: any): string | null => {
+  const tag = el.tagName.toLowerCase();
+  switch (tag) {
+    case "ha-tile-icon":
+      // Entity ID is on ha-tile-card
+      const parentCard = el.closest("ha-card")?.parentNode?.host;
+      return parentCard?._config?.entity || null;
+    case "ha-state-icon":
+      return el.stateObj?.entity_id || null;
+    case "state-badge":
+      return el.stateObj?.entity_id || null;
+    case "ha-icon":
+      // Entity ID may be on stateObj of host
+      const host = el.parentNode?.host;
+      return host?.stateObj?.entity_id || null;
+    default:
+      return null;
+  }
+};
+
 let haIconAvailable = false;
 
+const subscribeIconVars = (el, iconVars: { iconVar: string; iconColorVar: string }) => {
+  // Subscription happens when updating so clear any debounced updates
+  if (el._uixIconForEntityDebounce) {
+    clearTimeout(el._uixIconForEntityDebounce);
+    el._uixIconForEntityDebounce = undefined;
+  }
+  if (el._uixIconVars?.iconVar === iconVars.iconVar && el._uixIconVars?.iconColorVar === iconVars.iconColorVar) return;
+  const uixCoordinator = (window as any)?.uixCoordinator;
+  if (!uixCoordinator) return;
+  if (!uixCoordinator._registerIconForEntityCallback || !uixCoordinator._unregisterIconForEntityCallback) return;
+  if (el._uixIconVars?.iconVar) {
+    uixCoordinator._unregisterIconForEntityCallback(el, el._uixIconVars.iconVar);
+  }
+  if (el._uixIconVars?.iconColorVar) {
+    uixCoordinator._unregisterIconForEntityCallback(el, el._uixIconVars.iconColorVar);
+  }
+  el._uixIconVars = iconVars;
+  uixCoordinator._registerIconForEntityCallback(el, iconVars.iconVar, () => updateIconDebounced(el));
+  uixCoordinator._registerIconForEntityCallback(el, iconVars.iconColorVar, () => updateIconDebounced(el));
+};
+
+const updateIconDebounced = (el) => {
+  if ((window as any).uixCoordinator?.disableIconStyling) return;
+  if (!el.isConnected) return;
+  if (el._uixIconForEntityDebounce) return;
+  el._uixIconForEntityDebounce = setTimeout(() => {
+    el._uixIconForEntityDebounce = undefined;
+    el._uixIconPending = true;
+    try {
+      updateIcon(el);
+    } finally {
+      el._uixIconPending = false;
+    }
+  }, UIX_PATCH_DEBOUNCE_MS);
+};
+
 const updateIcon = (el) => {
+  if ((window as any).uixCoordinator?.disableIconStyling) return;
+  if (!el.isConnected) return;
   const styles = window.getComputedStyle(el);
 
-  const icon = styles.getPropertyValue("--uix-icon") || styles.getPropertyValue("--card-mod-icon");
-  if (icon && el.icon !== undefined) {
-    el.icon = icon.trim();
+  let icon = styles.getPropertyValue("--uix-icon").trim() || styles.getPropertyValue("--card-mod-icon").trim();
+  let color = styles.getPropertyValue("--uix-icon-color").trim() || styles.getPropertyValue("--card-mod-icon-color").trim();
+  if (!icon || !color) {
+    const entityId = getEntityId(el);
+    if (entityId) {
+      const slug = entityId.replace(/\./g, "_");
+      const iconVar = `--uix-icon-for-${slug}`;
+      const iconColorVar = `--uix-icon-color-for-${slug}`;
+      if (!icon) {
+        icon = styles.getPropertyValue(iconVar).trim();
+      }
+      if (!color) {
+        color = styles.getPropertyValue(iconColorVar).trim();
+      }
+      if (icon || color) {
+        subscribeIconVars(el, { iconVar, iconColorVar });
+      }
+    }
+  }
+  if (icon && "icon" in el) {
+    el.icon = icon;
   } else if (icon && el.tagName.toLowerCase() === "ha-svg-icon" && haIconAvailable) {
     const iconEl: LitElement = el.querySelector("ha-icon") || document.createElement("ha-icon") as LitElement;
     if (!el.contains(iconEl)) {
@@ -32,7 +125,6 @@ const updateIcon = (el) => {
     });
   }
 
-  const color = styles.getPropertyValue("--uix-icon-color") || styles.getPropertyValue("--card-mod-icon-color");
   if (color) el.style.color = color;
 
   const filter = styles.getPropertyValue("--uix-icon-dim") || styles.getPropertyValue("--card-mod-icon-dim");
@@ -58,14 +150,14 @@ const bindUix = async (el) => {
 
       uix.addEventListener("uix-styles-update", async () => {
         // Coalesce rapid style-update events to a single update per frame
-        if (el._updateIconPending) return;
-        el._updateIconPending = true;
+        if (el._uixIconPending) return;
+        el._uixIconPending = true;
         try {
           await uix.updateComplete;
           await nextAnimationFrame();
           updateIcon(el);
         } finally {
-          el._updateIconPending = false;
+          el._uixIconPending = false;
         }
       });
       el._boundUix.add(uix);
@@ -83,10 +175,11 @@ const bindUix = async (el) => {
 
 @patch_element("ha-state-icon")
 class HaStateIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  uix_retries;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) return;
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -95,10 +188,12 @@ class HaStateIconPatch extends ModdedElement {
 
 @patch_element("ha-icon")
 class HaIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  uix_retries;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) return;
+    if ((this.parentNode as any)?.host?.localName === "ha-state-icon") return;
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -107,10 +202,11 @@ class HaIconPatch extends ModdedElement {
 
 @patch_element("ha-svg-icon")
 class HaSvgIconPatch extends ModdedElement {
-  uix_retries = 0;
-  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
+  uix_retries;
+  _bindUixDebounce: ReturnType<typeof setTimeout> | undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableIconStyling) return;
     if ((this.parentNode as any)?.host?.localName === "ha-icon") return;
     this.uix_retries = 0;
     clearTimeout(this._bindUixDebounce);

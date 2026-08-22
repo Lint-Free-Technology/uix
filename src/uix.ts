@@ -364,7 +364,13 @@ export class Uix extends LitElement {
     this._styles = "";
     this.cancelStyleChild();
     await unbind_template(this._renderer);
-    this.uix_parent?.refresh?.();
+    if (this.uix_parent) {
+      if (this.uix_parent?.isConnected) {
+        this.uix_parent.refresh?.();
+      } else {
+        this.uix_parent._processStylesOnConnect = true;
+      }
+    }
   }
 
   private _style_rendered(result: string) {

@@ -24,6 +24,12 @@
 - Source: Photo by Adi Goldstein
 - Changes: None
 
+## question_mark_cropped.jpg
+
+- License: <https://unsplash.com/license>
+- Source: Photo by Simone Secci
+- Changes: cropped square
+
 ## Lorem Piscum
 
 - License: <https://unsplash.com/license>

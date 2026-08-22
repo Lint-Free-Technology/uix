@@ -26,8 +26,9 @@ card:
       colors:
         - "rgb(0, 100, 200)"
         - "rgb(200, 50, 0)"
-      # String billet interpolating a list element via {colors[0]}
-      chosen_color: "{colors[0]}"
+      # String billet interpolating a list element via { colors [ 0 ] } 
+      # also demonstrates that whitespace is ignored in the interpolation expression.
+      chosen_color: "{ colors [ 0 ] }"
     style: |
       ha-card {
         background: {{ chosen_color }} !important;

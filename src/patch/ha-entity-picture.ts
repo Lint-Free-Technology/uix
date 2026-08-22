@@ -39,6 +39,25 @@ const getEntityId = (el: any): string | null => {
   }
 };
 
+const subscribeImageVars = (el, imageVars: { imageVar: string }) => {
+  // Subscription happens when updating so clear any debounced updates
+  if (el._uixImageForEntityDebounce) {
+    clearTimeout(el._uixImageForEntityDebounce);
+    el._uixImageForEntityDebounce = undefined;
+  }
+  if (el._uixImageVars?.imageVar === imageVars.imageVar) return;
+  const uixCoordinator = (window as any)?.uixCoordinator;
+  if (!uixCoordinator) return;
+  if (!uixCoordinator._registerImageForEntityCallback || !uixCoordinator._unregisterImageForEntityCallback) return;
+  if (el._uixImageVars?.imageVar) {
+    uixCoordinator._unregisterImageForEntityCallback(el, el._uixImageVars.imageVar);
+  }
+  el._uixImageVars = imageVars;
+  uixCoordinator._registerImageForEntityCallback(el, imageVars.imageVar, () => {
+    updateImageDebounced(el);
+  });
+};
+
 const applyImage = (el: any, imageUrl: string | null): void => {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
@@ -82,38 +101,69 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       }
       break;
     case "ha-user-badge":
-      if (imageUrl) {
-        el._uix_replaced_image = el._uix_replaced_image ?? el._personPicture ?? false;
-        el._personPicture = imageUrl;
-      } else if (el._uix_replaced_image !== undefined) {
-        el._personPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
-        delete el._uix_replaced_image;
-      }
-      break;
-    case "ha-person-badge": {
+    case "ha-person-badge":
       const pictureEl = el.shadowRoot?.querySelector(".picture");
       if (pictureEl) {
         if (imageUrl) {
-          el._uix_replaced_image = el._uix_replaced_image ?? pictureEl.style.backgroundImage ?? false;
-          pictureEl.style.backgroundImage = `url(${imageUrl})`;
-        } else if (el._uix_replaced_image !== undefined) {
-          pictureEl.style.backgroundImage = el._uix_replaced_image ? el._uix_replaced_image : "";
-          delete el._uix_replaced_image;
+          let imageEL = el.shadowRoot?.querySelector(".picture.uix-image");
+          if (!imageEL) {
+            imageEL = document.createElement("div");
+            imageEL?.classList.add("picture", "uix-image");
+            el.shadowRoot?.prepend(imageEL);
+          } 
+          if (imageEL) {
+            imageEL.style.backgroundImage = `url(${imageUrl})`;
+          }
+          let style = el.shadowRoot?.querySelector("#uix-image");
+          if (!style) {
+            style = document.createElement("style");
+            style.id = "uix-image";
+            style.textContent = `.picture:not(.uix-image) { display: none !important; }`;
+            el.shadowRoot?.prepend(style);
+          }
+        } else {
+          const imageEL = el.shadowRoot?.querySelector(".picture.uix-image");
+          if (imageEL) {
+            imageEL.remove();
+          }
+          const style = el.shadowRoot?.querySelector("#uix-image");
+          if (style) {
+            style.remove();
+          }
         }
       }
       break;
-    }
   }
 };
 
+const updateImageDebounced = (el) => {
+  if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
+  if (!el.isConnected) return;
+  if (el._uixImageForEntityDebounce) return;
+  el._uixImageForEntityDebounce = setTimeout(() => {
+    el._uixImageForEntityDebounce = undefined;
+    el._uixImagePending = true;
+    try {
+      updateImage(el);
+    } finally {
+      el._uixImagePending = false;
+    }
+  }, UIX_PATCH_DEBOUNCE_MS);
+};
+
 const updateImage = (el: any): void => {
+  if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
   const styles = window.getComputedStyle(el);
   let imagePath = styles.getPropertyValue(`--uix-image`).trim();
   if (!imagePath) {
     const entityId = getEntityId(el);
     if (entityId) {
       const slug = entityId.replace(/\./g, "_");
-      imagePath = styles.getPropertyValue(`--uix-image-for-${slug}`).trim();
+      const imageVar = `--uix-image-for-${slug}`;
+      imagePath = styles.getPropertyValue(imageVar).trim();
+      if (imagePath) {
+        subscribeImageVars(el, { imageVar });
+      }
     }
   }
   const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
@@ -137,14 +187,14 @@ const bindUix = async (el: any) => {
 
       uix.addEventListener("uix-styles-update", async () => {
         // Coalesce rapid style-update events to a single update per frame
-        if (el._updateImagePending) return;
-        el._updateImagePending = true;
+        if (el._uixImagePending) return;
+        el._uixImagePending = true;
         try {
           await uix.updateComplete;
           await nextAnimationFrame();
           updateImage(el);
         } finally {
-          el._updateImagePending = false;
+          el._uixImagePending = false;
         }
       });
       el._boundUixImage.add(uix);
@@ -171,6 +221,7 @@ class HaEntityMarkerPatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => this._applyUix().then(() => bindUix(this)), UIX_PATCH_DEBOUNCE_MS);
@@ -215,6 +266,7 @@ class HaTileIconPatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -227,6 +279,7 @@ class HaStateBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -239,6 +292,7 @@ class HaUserBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
@@ -251,6 +305,7 @@ class HaPersonBadgePatch extends ModdedElement {
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
   updated(_orig, ...args) {
     _orig?.(...args);
+    if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
