@@ -4,9 +4,6 @@ description: Learn how to disable icon styling patching and when to use this per
 ---
 # Disable icon styling patching
 
-!!! note
-    Disabling of icon styling patching available in 8.1.0-beta.2
-
 By default, UIX patches standard Home Assistant icon elements (`ha-icon`, `ha-state-icon`, `ha-svg-icon`) to allow custom styling and overrides (such as `--uix-icon`, `--uix-icon-color`, `--uix-icon-dim`, or `--uix-icon-for-<entity_id>`). UIX provides an option to disable this icon patching behavior to improve rendering performance and reduce CPU overhead on low-power devices.
 
 ## Setting via the integration UI
