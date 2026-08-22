@@ -1,3 +1,30 @@
+## [8.1.0](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1...v8.1.0) (2026-08-22)
+
+### ⭐ New Features
+
+* Add icon styling coordinator to dispatch refresh to icons when theme style templates include `--uix-icon-for-<entity_id>` or `--uix-icon-color-for-<entity_id>` ([#532](https://github.com/Lint-Free-Technology/uix/issues/532)) ([72f4efe](https://github.com/Lint-Free-Technology/uix/commit/72f4efe05738004cbfe0a82bb978090b27736571))
+* Add image for entity styling coordinator to dispatch refresh to images when theme style templates include --uix-image-for-<entity_id> ([#533](https://github.com/Lint-Free-Technology/uix/issues/533)) ([27fb83d](https://github.com/Lint-Free-Technology/uix/commit/27fb83d296b293a922194a24c6f68f7e2d6aa7b2)), references [#528](https://github.com/Lint-Free-Technology/uix/issues/528)
+* Add performance option to disable entity picture image styling ([#534](https://github.com/Lint-Free-Technology/uix/issues/534)) ([daa590e](https://github.com/Lint-Free-Technology/uix/commit/daa590e2896e8ec405510b36d1575571486d4f64)), references [#529](https://github.com/Lint-Free-Technology/uix/issues/529)
+* Add performance option to disable icon styling patching. ([#526](https://github.com/Lint-Free-Technology/uix/issues/526)) ([08db74d](https://github.com/Lint-Free-Technology/uix/commit/08db74dd389bc24da1ae9aa6a5adb0e6f8b52cef))
+* Allow for icon and icon color override by entity for ha-state-icon, ha-icon, ha-svg-icon ([#519](https://github.com/Lint-Free-Technology/uix/issues/519)) ([0ef0c43](https://github.com/Lint-Free-Technology/uix/commit/0ef0c431fb21090904ec91c5c51bbda71d19b608))
+* Enhance `toast` UIX action with `secondary_action` button which is now available in Home Assistant 2026.8.0. Adds `primary` to style either action button in primary style. ([#505](https://github.com/Lint-Free-Technology/uix/issues/505)) ([8450cd7](https://github.com/Lint-Free-Technology/uix/commit/8450cd7a9937a71a6485a0cd8b3f6a3bb338ec62))
+* Implement 60-second countdown for version mismatch reload toast. Auto reload on countdown finished. ([#517](https://github.com/Lint-Free-Technology/uix/issues/517)) ([09f8a86](https://github.com/Lint-Free-Technology/uix/commit/09f8a86ff2127eac644eb5ff66d21f8405602a35))
+* UIX action `javascript` to enable javascript code to be run. `hass` provided as well as optional `variables` object. ([#506](https://github.com/Lint-Free-Technology/uix/issues/506)) ([7197a6e](https://github.com/Lint-Free-Technology/uix/commit/7197a6e5f698d631fa8e535bafe1d239f614dd62))
+* Update 60s countdown for version mismatch reload toast to use `:after` style for seconds remaining if available to stop any toast UIX styling from causing flashing due to toast reloads. ([#535](https://github.com/Lint-Free-Technology/uix/issues/535)) ([8314904](https://github.com/Lint-Free-Technology/uix/commit/8314904fa714a4029b8f45fb8a861a427221a3b4))
+
+### 🐞 Bug Fixes
+
+* entity image override for ha-user-badge not working since Home Assistant 2026.7. For ha-user-badge and ha-person-badge, use inserted div.picture.uix-image and style existing div.picture as hidden while overridden to stop flickering. ([a25b9e3](https://github.com/Lint-Free-Technology/uix/commit/a25b9e305527a91e42ba23616e9c8c66b88f7d10))
+* Multiple template subscriptions make be created for same UIX Styling node when Home Assistant app is suspended and restored in Browser. This causes multiple updates to the UIX Styling node when the template updates which may cause visual artifacts and will add up to a small resource increase over time. ([#540](https://github.com/Lint-Free-Technology/uix/issues/540)) ([791ea08](https://github.com/Lint-Free-Technology/uix/commit/791ea08e88336b5e7b811e86f82840c0cc06a40c))
+* Reverts - Update UIX icon styling to use modern `allow-discrete` transitions to watch for `--uix-icon-...` changes with optimized animation frame based global poll fallback for legacy browsers. Fixes `--uix-icon...` changes not always applying when styled on DOM ancestor. ([a5b6e3a](https://github.com/Lint-Free-Technology/uix/commit/a5b6e3a5823b66d64241830c8e118ef0d6a22a56))
+* Support whitespace padding in billet interpolation braces and list indices ([#530](https://github.com/Lint-Free-Technology/uix/issues/530)) ([26c266e](https://github.com/Lint-Free-Technology/uix/commit/26c266e4699f16325e22c6eeb8bfb7138e6f2c47)), references [#503](https://github.com/Lint-Free-Technology/uix/issues/503)
+* UIX styling of toast removed if another stacked toast message subsequently shows. ([#536](https://github.com/Lint-Free-Technology/uix/issues/536)) ([04e89d1](https://github.com/Lint-Free-Technology/uix/commit/04e89d12af317fdf9509d12ae39d3cc83bbb0d7a))
+
+### ⚙️ Miscellaneous
+
+* Update UIX icon styling to use modern `allow-discrete` transitions to watch for `--uix-icon-...` changes with optimized animation frame based global poll fallback for legacy browsers. Fixes `--uix-icon...` changes not always applying when styled on DOM ancestor. ([#525](https://github.com/Lint-Free-Technology/uix/issues/525)) ([a3dd49f](https://github.com/Lint-Free-Technology/uix/commit/a3dd49f66d2593fb80b48f083185502b4e1b439f)), references [#523](https://github.com/Lint-Free-Technology/uix/issues/523)
+* Use js-yaml directly to load theme YAML rather than loading ha-yaml-editor via surrogate tools event tab. ([#520](https://github.com/Lint-Free-Technology/uix/issues/520)) ([b014858](https://github.com/Lint-Free-Technology/uix/commit/b0148580237b6568616d7a8390b0048bb87bcce1)), references [#518](https://github.com/Lint-Free-Technology/uix/issues/518)
+
 ## [8.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0-beta.5...v8.1.0-beta.6) (2026-08-21)
 
 ### 🐞 Bug Fixes
