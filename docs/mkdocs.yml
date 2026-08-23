@@ -112,6 +112,7 @@ nav:
       - extras/hash-template-variable-updates.md
       - extras/disable-icon-styling.md
       - extras/disable-entity-picture-image-override.md
+      - extras/always-patch-ha-card.md
   - UIX Guides: 'guides.md'
   - FAQ: 'faq.md'
 repo_url: https://github.com/Lint-Free-Technology/uix

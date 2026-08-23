@@ -19,7 +19,8 @@
                 "menu_options": {
                     "foundry_menu": "UI‑foundries beheren",
                     "foundry_file_menu": "Foundry‑bestanden beheren",
-                    "performance_settings": "Prestatie‑instellingen"
+                    "performance_settings": "Prestatie‑instellingen",
+                    "experimental_settings": "Experimentele instellingen"
                 }
             },
             "foundry_menu": {
@@ -58,6 +59,16 @@
                     "disable_hash_template_variable": "Wanneer ingeschakeld, is de hash (het deel na # in de URL) templatevariabele niet beschikbaar en veroorzaken hash‑wijzigingen geen UIX‑template‑rebinds of UIX Forge‑updates.",
                     "disable_icon_styling": "Wanneer ingeschakeld, wordt het patchen van icoon-elementen (ha-icon, ha-state-icon, ha-svg-icon) voor aangepaste styling of overschrijvingen uitgeschakeld. Dit kan de CPU-belasting op tragere apparaten verminderen.",
                     "disable_entity_picture_image_override": "Wanneer ingeschakeld, wordt het patchen van badge- en markerelementen (ha-entity-marker, ha-tile-icon, state-badge, ha-user-badge, ha-person-badge) voor aangepaste entiteitsafbeelding-overschrijvingen uitgeschakeld. Dit kan de CPU-belasting op tragere apparaten verminderen."
+                }
+            },
+            "experimental_settings": {
+                "title": "Experimentele instellingen",
+                "description": "Configureer experimentele functies voor UIX.",
+                "data": {
+                    "always_patch_ha_card": "Altijd ha-card patchen"
+                },
+                "data_description": {
+                    "always_patch_ha_card": "Wanneer ingeschakeld, wordt ha-card altijd gepatcht, zelfs wanneer er geen kaartconfiguratie is. Dit maakt patching mogelijk wanneer ha-card wordt gebruikt in instellingen dashboards of aangepaste panelen."
                 }
             },
             "add_foundry": {
