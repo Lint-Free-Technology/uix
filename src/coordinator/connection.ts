@@ -15,7 +15,8 @@ export const ConnectionMixin = (SuperClass) => {
     private _disableHashTemplateVariableOverride: boolean | null = null;
     private _disableIconStylingOverride: boolean | null = null;
     private _disableEntityPictureImageOverrideOverride: boolean | null = null;
-    private _always_patch_ha_card: boolean | null = null;
+    private _alwaysPatchHaCardOverride: boolean | null = null;
+    private _styleCustomPanelsOverride: boolean | null = null;
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -265,10 +266,17 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     get alwaysPatchHaCard(): boolean {
-      if (this._always_patch_ha_card !== null) {
-        return this._always_patch_ha_card;
+      if (this._alwaysPatchHaCardOverride !== null) {
+        return this._alwaysPatchHaCardOverride;
       }
       return this._data?.always_patch_ha_card ?? false;
+    }
+
+    get styleCustomPanels(): boolean {
+      if (this._styleCustomPanelsOverride !== null) {
+        return this._styleCustomPanelsOverride;
+      }
+      return this._data?.style_custom_panels ?? false;
     }
 
     /**
@@ -373,7 +381,23 @@ export const ConnectionMixin = (SuperClass) => {
      * as this setting is only checked when a ha-card is first patched or updated
      */
     public setAlwaysPatchHaCardOverride(value: boolean | null = null): void {
-      this._always_patch_ha_card = value;
+      this._alwaysPatchHaCardOverride = value;
+    }
+
+    /**
+     * Set a client-side override for styling custom panels.
+     *
+     * This allows integrations to style custom panels for the current
+     * browser session without changing backend settings.
+     *
+     * Call with `null` (or no argument) to clear the override and revert to
+     * the server-configured value.
+     * 
+     * A page refresh will be required to cover any currently loaded custom panel, 
+     * as this setting is only checked when a custom panel is first patched or updated
+     */
+    public setStyleCustomPanelsOverride(value: boolean | null = null): void {
+      this._styleCustomPanelsOverride = value;
     }
   }
 

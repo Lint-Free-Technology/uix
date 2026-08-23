@@ -18,6 +18,7 @@ from .checks import (
 )
 from .const import (
     CONF_ALWAYS_PATCH_HA_CARD,
+    CONF_STYLE_CUSTOM_PANELS,
     DOMAIN, 
     NAME, 
     CARD_MOD_FRONTEND_SCRIPT_URL,
@@ -212,6 +213,7 @@ class UixOptionsFlow(OptionsFlow):
                 data={
                     **self._config_entry.options,
                     CONF_ALWAYS_PATCH_HA_CARD: user_input[CONF_ALWAYS_PATCH_HA_CARD],
+                    CONF_STYLE_CUSTOM_PANELS: user_input[CONF_STYLE_CUSTOM_PANELS],
                 },
             )
 
@@ -222,6 +224,10 @@ class UixOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_ALWAYS_PATCH_HA_CARD,
                         default=self._config_entry.options.get(CONF_ALWAYS_PATCH_HA_CARD, False),
+                    ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_STYLE_CUSTOM_PANELS,
+                        default=self._config_entry.options.get(CONF_STYLE_CUSTOM_PANELS, False),
                     ): BooleanSelector(),
                 }
             ),

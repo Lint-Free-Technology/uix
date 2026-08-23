@@ -10,6 +10,7 @@ import voluptuous as vol
 from .helpers import get_version, resolve_foundries, get_all_foundries, validate_foundry_file, check_all_foundry_files
 from .const import (
     CONF_ALWAYS_PATCH_HA_CARD,
+    CONF_STYLE_CUSTOM_PANELS,
     DOMAIN,
     WS_CONNECT,
     WS_LOG,
@@ -66,6 +67,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     disable_icon_styling = False
                     disable_entity_picture_image_override = False
                     always_patch_ha_card = False
+                    style_custom_panels = False
                     if entries:
                         foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
                         file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
@@ -76,6 +78,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                         disable_icon_styling = entries[0].options.get(CONF_DISABLE_ICON_STYLING, False)
                         disable_entity_picture_image_override = entries[0].options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False)
                         always_patch_ha_card = entries[0].options.get(CONF_ALWAYS_PATCH_HA_CARD, False)
+                        style_custom_panels = entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False)
                     send_update({
                         CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths),
                         CONF_HASS_THROTTLE_ENABLE: throttle_enable,
@@ -85,6 +88,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                         CONF_DISABLE_ICON_STYLING: disable_icon_styling,
                         CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: disable_entity_picture_image_override,
                         CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
+                        CONF_STYLE_CUSTOM_PANELS: style_custom_panels,
                     })
                 except Exception:
                     _LOGGER.exception("Error pushing foundry update to client")
@@ -109,6 +113,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         disable_icon_styling = False
         disable_entity_picture_image_override = False
         always_patch_ha_card = False
+        style_custom_panels = False
         if entries:
             foundries = dict(entries[0].options.get(CONF_FOUNDRIES, {}))
             file_paths = list(entries[0].options.get(CONF_FOUNDRY_FILES, []))
@@ -119,6 +124,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             disable_icon_styling = entries[0].options.get(CONF_DISABLE_ICON_STYLING, False)
             disable_entity_picture_image_override = entries[0].options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False)
             always_patch_ha_card = entries[0].options.get(CONF_ALWAYS_PATCH_HA_CARD, False)
+            style_custom_panels = entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False)
         send_update({
             CONF_FOUNDRIES: await hass.async_add_executor_job(get_all_foundries, hass, foundries, file_paths),
             CONF_HASS_THROTTLE_ENABLE: throttle_enable,
@@ -128,6 +134,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             CONF_DISABLE_ICON_STYLING: disable_icon_styling,
             CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: disable_entity_picture_image_override,
             CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
+            CONF_STYLE_CUSTOM_PANELS: style_custom_panels,
         })
     
     @websocket_api.websocket_command(
