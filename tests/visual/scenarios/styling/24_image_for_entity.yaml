@@ -28,6 +28,14 @@ dashboard:
                 --uix-image: 
                 {{ '/local/media/daniel_craig_cropped.jpg' if is_state('input_boolean.test_boolean', 'on') else '' }};
               }
+        - type: entity
+          entity: input_boolean.test_boolean
+          show_entity_picture: true
+          uix:
+            style: |
+              :host {
+                --uix-image: /local/media/daniel_craig_cropped.jpg;
+              }
       sections:
         - type: grid
           cards:
