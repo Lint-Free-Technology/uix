@@ -71,9 +71,6 @@ tap_action:
 
 ## `toast` - show Home Assistant toast notification
 
-!!! note
-    `secondary` action and `action.primary` available in 8.1.0-beta.1.
-
 Shows a Home Assistant toast notification.
 
 | config | setting | default | description |
@@ -129,9 +126,6 @@ tap_action:
 ![UIX toast action example](../assets/page-assets/extras/extra-toast-action.gif)
 
 ## `javascript` - run javascript code in Browser session
-
-!!! note
-    `javascript` action available in 8.1.0-beta.1
 
 Runs JavaScript code in the browser session with `hass` provided and an optional `variables` object.
 

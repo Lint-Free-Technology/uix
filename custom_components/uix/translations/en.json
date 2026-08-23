@@ -19,7 +19,8 @@
                 "menu_options": {
                     "foundry_menu": "Manage UI foundries",
                     "foundry_file_menu": "Manage foundry files",
-                    "performance_settings": "Performance settings"
+                    "performance_settings": "Performance settings",
+                    "experimental_settings": "Experimental settings"
                 }
             },
             "foundry_menu": {
@@ -59,6 +60,16 @@
                     "disable_hash_template_variable": "When enabled, hash (the part after # in the URL) template variable is not available and hash changes do not trigger UIX template rebinds or UIX Forge updates.",
                     "disable_icon_styling": "When enabled, disables patching of icon elements (ha-icon, ha-state-icon, ha-svg-icon) for custom styling. This can reduce CPU overhead on slower devices.",
                     "disable_entity_picture_image_override": "When enabled, disables patching of badge and marker elements (ha-entity-marker, ha-tile-icon, state-badge, ha-user-badge, ha-person-badge) for custom entity picture image styling. This can reduce CPU overhead on slower devices.",
+                    "always_patch_ha_card": "When enabled, always patch ha-card, even when there is no card config. This allows patching when ha-card is used in settings dashboards or custom panels."
+                }
+            },
+            "experimental_settings": {
+                "title": "Experimental Settings",
+                "description": "Configure experimental features for UIX.",
+                "data": {
+                    "always_patch_ha_card": "Always patch ha-card"
+                },
+                "data_description": {
                     "always_patch_ha_card": "When enabled, always patch ha-card, even when there is no card config. This allows patching when ha-card is used in settings dashboards or custom panels."
                 }
             },

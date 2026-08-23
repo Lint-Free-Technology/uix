@@ -97,6 +97,7 @@ class UixOptionsFlow(OptionsFlow):
                 "foundry_menu",
                 "foundry_file_menu",
                 "performance_settings",
+                "experimental_settings",
             ],
             description_placeholders={
                 "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
@@ -198,6 +199,31 @@ class UixOptionsFlow(OptionsFlow):
                         CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
                         default=self._config_entry.options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False),
                     ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_ALWAYS_PATCH_HA_CARD,
+                        default=self._config_entry.options.get(CONF_ALWAYS_PATCH_HA_CARD, False),
+                    ): BooleanSelector(),
+                }
+            ),
+        )
+
+    async def async_step_experimental_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure experimental settings."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title="",
+                data={
+                    **self._config_entry.options,
+                    CONF_ALWAYS_PATCH_HA_CARD: user_input[CONF_ALWAYS_PATCH_HA_CARD],
+                },
+            )
+
+        return self.async_show_form(
+            step_id="experimental_settings",
+            data_schema=vol.Schema(
+                {
                     vol.Optional(
                         CONF_ALWAYS_PATCH_HA_CARD,
                         default=self._config_entry.options.get(CONF_ALWAYS_PATCH_HA_CARD, False),
