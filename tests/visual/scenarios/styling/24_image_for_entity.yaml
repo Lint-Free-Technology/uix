@@ -77,6 +77,14 @@ assertions:
     selector: img
     property: src
     expected: "daniel_craig_cropped.jpg"
+  - type: element_present
+    root: hui-badge:nth-of-type(3) hui-entity-badge
+    selector: img
+  - type: object_property_text_ends_with
+    root: hui-badge:nth-of-type(3) hui-entity-badge
+    selector: img
+    property: src
+    expected: "daniel_craig_cropped.jpg"
   - type: object_property_text_ends_with
     root: hui-tile-card
     selector: ha-tile-icon
