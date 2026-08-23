@@ -394,3 +394,17 @@ uix-stacked-toast-theme:
         color: white;
       }
       {% endif %}
+
+uix-custom-panel-theme:
+  uix-theme: uix-custom-panel-theme
+  uix-test-custom-panel-yaml: |
+    .: |
+      wired-card {
+        background: red !important;
+        color: white !important;
+      }
+    wired-card $: |
+      div#overlay {
+        color: yellow;
+        box-shadow: 0 0 10px 5px yellow;
+      }
