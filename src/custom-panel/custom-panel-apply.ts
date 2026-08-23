@@ -24,7 +24,6 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     theme = customPanelRoot.hass?.themes?.theme;
     theme = theme === "default" ? customPanelRoot.hass?.themes?.default_theme : theme;
   }
-
-  const debug = true;
-  apply_uix( customPanelRoot, customPanelName, { theme, debug } );
+  
+  apply_uix( customPanelRoot, customPanelName, { theme } );
 });
