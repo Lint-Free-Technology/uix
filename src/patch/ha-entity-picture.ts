@@ -38,7 +38,7 @@ const getEntityId = (el: any): string | null => {
     case "ha-person-badge":
       return el.person?.id ? `person.${el.person.id}` : null;
     case "hui-entity-badge":
-      return el._config?.entity || null;
+      return (el.config ?? el._config)?.entity || null;
   }
 };
 
