@@ -1,0 +1,47 @@
+id: custom_panel_iframe
+description: "UIX injects to a custom panel iframe"
+view_path: custom_panel_iframe
+
+theme: uix-custom-panel-theme
+
+setup:
+  - type: ha_service
+    domain: input_boolean
+    service: turn_on
+    data:
+      entity_id: input_boolean.test_boolean
+
+cards:
+  - show_name: true
+    show_icon: false
+    type: button
+    name: Set Custom Panel Styling
+    grid_options:
+      columns: 6
+      rows: 1
+    tap_action:
+      action: fire-dom-event
+      uix:
+        action: javascript
+        data:
+          code: window.uixCoordinator.setStyleCustomPanelsOverride(true)
+  - type: shortcut
+    tap_action:
+      action: navigate
+      navigation_path: /test-custom-panel
+    vertical: false
+
+interactions:
+  - type: click
+    root: hui-button-card
+    selector: ha-card
+    settle_ms: 100
+  - type: click
+    root: hui-shortcut-card
+    selector: ha-card
+    settle_ms: 1000
+
+assertions:
+  - type: snapshot
+    name: "55_custom_panel_iframe"
+    threshold: 0.02
