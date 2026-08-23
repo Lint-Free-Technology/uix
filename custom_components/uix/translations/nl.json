@@ -50,8 +50,7 @@
                     "dialog_apply_after_show": "UIX‑styling voor dialogen pas toepassen nadat ze volledig getoond zijn",
                     "disable_hash_template_variable": "Hash‑templatevariabele en updates uitschakelen",
                     "disable_icon_styling": "Icoongebaseerde styling patching uitschakelen",
-                    "disable_entity_picture_image_override": "Entiteitsafbeelding-overschrijvingen uitschakelen",
-                    "always_patch_ha_card": "Altijd ha-card patchen"
+                    "disable_entity_picture_image_override": "Entiteitsafbeelding-overschrijvingen uitschakelen"
                 },
                 "data_description": {
                     "hass_throttle_enable": "Wanneer ingeschakeld, wordt de frequentie verlaagd waarmee de dashboard‑root opnieuw rendert wanneer entiteitstatussen snel veranderen.",
@@ -59,8 +58,7 @@
                     "dialog_apply_after_show": "Wanneer ingeschakeld, worden UIX‑stijlen voor dialogen toegepast nadat de open‑animatie van de dialoog is voltooid in plaats van onmiddellijk. Dit kan visuele flikkering verminderen op tragere apparaten.",
                     "disable_hash_template_variable": "Wanneer ingeschakeld, is de hash (het deel na # in de URL) templatevariabele niet beschikbaar en veroorzaken hash‑wijzigingen geen UIX‑template‑rebinds of UIX Forge‑updates.",
                     "disable_icon_styling": "Wanneer ingeschakeld, wordt het patchen van icoon-elementen (ha-icon, ha-state-icon, ha-svg-icon) voor aangepaste styling of overschrijvingen uitgeschakeld. Dit kan de CPU-belasting op tragere apparaten verminderen.",
-                    "disable_entity_picture_image_override": "Wanneer ingeschakeld, wordt het patchen van badge- en markerelementen (ha-entity-marker, ha-tile-icon, state-badge, ha-user-badge, ha-person-badge) voor aangepaste entiteitsafbeelding-overschrijvingen uitgeschakeld. Dit kan de CPU-belasting op tragere apparaten verminderen.",
-                    "always_patch_ha_card": "Wanneer ingeschakeld, wordt ha-card altijd gepatcht, zelfs wanneer er geen kaartconfiguratie is. Dit maakt patching mogelijk wanneer ha-card wordt gebruikt in instellingen dashboards of aangepaste panelen."
+                    "disable_entity_picture_image_override": "Wanneer ingeschakeld, wordt het patchen van badge- en markerelementen (ha-entity-marker, ha-tile-icon, state-badge, ha-user-badge, ha-person-badge) voor aangepaste entiteitsafbeelding-overschrijvingen uitgeschakeld. Dit kan de CPU-belasting op tragere apparaten verminderen."
                 }
             },
             "experimental_settings": {
