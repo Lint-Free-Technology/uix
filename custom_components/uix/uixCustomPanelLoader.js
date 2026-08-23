@@ -1,2 +1,2 @@
 import(window.parent.customPanelJSOrig);
-import("/uix/uixCustomPanel.js?v=8.2.0-alpha.0");
+import("/uix/uixCustomPanel.js?v=8.1.0");
