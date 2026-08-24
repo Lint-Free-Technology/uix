@@ -35,6 +35,26 @@ class HaPanelCustomPatch extends ModdedElement {
       let uixCustomPaneLoader: string | undefined = undefined;
       uixCustomPaneLoader = `/uix/uixCustomPanelLoader.js?v=${pjson.version}`;
       (window as any).customPanelJS = uixCustomPaneLoader;
+    } else {
+      if (!(this as any)._uixConfigUpdateRegistered) {
+        (this as any)._uixConfigUpdateRegistered = true;
+        const handleConfigUpdate = () => {
+          const coord = (window as any).uixCoordinator;
+          if (coord?.styleCustomPanels) {
+            console.log("UIX: config updated, reloading custom panel");
+            this.requestUpdate("panel", undefined);
+            cleanup();
+          }
+        };
+        const cleanup = () => {
+          const coord = (window as any).uixCoordinator;
+          coord?.removeEventListener("uix-config-update", handleConfigUpdate);
+          clearTimeout(timeoutId);
+        };
+        const coord = (window as any).uixCoordinator;
+        coord?.addEventListener("uix-config-update", handleConfigUpdate);
+        const timeoutId = setTimeout(cleanup, 30000);
+      }
     }
     try {
       _orig?.(...args);
