@@ -396,8 +396,8 @@ uix-stacked-toast-theme:
       {% endif %}
 
 uix-custom-panel-theme:
-  primary-background-color: "gray"
-  sidebar-background-color: "gray"
+  primary-background-color: "white"
+  sidebar-background-color: "white"
 
   uix-theme: uix-custom-panel-theme
   uix-test-custom-panel-yaml: |
@@ -412,7 +412,7 @@ uix-custom-panel-theme:
         background-color: gray;
       }
       wired-card {
-        background: red !important;
+        background: {{ 'red' if is_state('input_boolean.test_boolean', 'on') else 'gray' }} !important;
         color: white !important;
       }
     wired-card $: |
