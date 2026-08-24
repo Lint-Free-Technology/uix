@@ -36,6 +36,7 @@ async function _getPanel(document) {
     if (!panel && isEmbeddedPanel()) {
       const customPanelName = getCustomPanelName();
       if (customPanelName) {
+        panel = await selectTree(document, getCustomPanelName());
       } else {
         panel = undefined;
       }
