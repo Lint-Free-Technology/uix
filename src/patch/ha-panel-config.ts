@@ -36,9 +36,12 @@ class HaPanelCustomPatch extends ModdedElement {
       uixCustomPaneLoader = `/uix/uixCustomPanelLoader.js?v=${pjson.version}`;
       (window as any).customPanelJS = uixCustomPaneLoader;
     }
-    _orig?.(...args);
-    if (coordinator?.styleCustomPanels) {
-      (window as any).customPanelJS = (window as any).customPanelJSOrig;
+    try {
+      _orig?.(...args);
+    } finally {
+      if (coordinator?.styleCustomPanels) {
+        (window as any).customPanelJS = (window as any).customPanelJSOrig;
+      }
     }
   }
 }
