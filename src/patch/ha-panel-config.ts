@@ -30,7 +30,7 @@ class HaPanelCustomPatch extends ModdedElement {
   }
   _createPanel(_orig, ...args) {
     const coordinator = (window as any).uixCoordinator;
-    (window as any).customPanelJSOrig = (window as any).customPanelJS;
+    (window as any).customPanelJSOrig = (window as any).customPanelJSOrig || (window as any).customPanelJS;
     if (coordinator?.styleCustomPanels) {
       let uixCustomPaneLoader: string | undefined = undefined;
       uixCustomPaneLoader = `/uix/uixCustomPanelLoader.js?v=${pjson.version}`;
@@ -40,7 +40,8 @@ class HaPanelCustomPatch extends ModdedElement {
       _orig?.(...args);
     } finally {
       if (coordinator?.styleCustomPanels) {
-        (window as any).customPanelJS = (window as any).customPanelJSOrig;
+        (window as any).customPanelJS = (window as any).customPanelJSOrig || (window as any).customPanelJS;
+        delete (window as any).customPanelJSOrig;
       }
     }
   }
