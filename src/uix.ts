@@ -414,6 +414,7 @@ if (!customElements.get("uix-node")) {
   } else {
     baseElementName = "home-assistant";
   }
+  if (!baseElementName) return;
   while (customElements.get(baseElementName) === undefined)
     await new Promise((resolve) => window.setTimeout(resolve, 100));
 
