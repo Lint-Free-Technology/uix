@@ -25,6 +25,6 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     theme = theme === "default" ? customPanelRoot.hass?.themes?.default_theme : theme;
   }
   
-  apply_uix( customPanelRoot, customPanelName, { theme } );
+  apply_uix(customPanelRoot, customPanelName, theme === undefined ? undefined : { theme });
   // TODO - Add a listener for theme changes and reapply uix when the theme changes
 });
