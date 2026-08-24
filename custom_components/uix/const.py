@@ -4,8 +4,6 @@ NAME = "UI eXtension for Home Assistant"
 CARD_MOD_FRONTEND_SCRIPT_URL = "card-mod.js"
 FRONTEND_SCRIPT_URL = "uix.js"
 FRONTEND_SCRIPT_CUSTOM_PANEL = "uixCustomPanel.js"
-FRONTEND_SCRIPT_CUSTOM_LOADER = "uixCustomPanelLoader.js"
-FRONTEND_SCRIPT_CUSTOM_ES5_LOADER = "uixCustomPanelEs5Loader.js"
 
 DATA_EXTRA_MODULE_URL = "frontend_extra_module_url"
 

@@ -5,7 +5,6 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     DOMAIN,
-    FRONTEND_SCRIPT_CUSTOM_LOADER,
     FRONTEND_SCRIPT_CUSTOM_PANEL,
     FRONTEND_SCRIPT_URL,
 )
@@ -25,11 +24,6 @@ async def async_register_static_path(hass: HomeAssistant) -> None:
                 StaticPathConfig(
                     f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_PANEL}",
                     hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_PANEL}"),
-                    True,
-                ), 
-                StaticPathConfig(
-                    f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_LOADER}",
-                    hass.config.path(f"custom_components/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_LOADER}"),
                     True,
                 ), 
             ]

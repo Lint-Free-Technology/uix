@@ -29,40 +29,74 @@ class HaPanelCustomPatch extends ModdedElement {
     apply_uix(this, "panel-custom", { prepend: true });
   }
   _createPanel(_orig, ...args) {
+    _orig?.(...args);
     const coordinator = (window as any).uixCoordinator;
-    (window as any).customPanelJSOrig = (window as any).customPanelJSOrig || (window as any).customPanelJS;
-    if (coordinator?.styleCustomPanels) {
-      let uixCustomPaneLoader: string | undefined = undefined;
-      uixCustomPaneLoader = `/uix/uixCustomPanelLoader.js?v=${pjson.version}`;
-      (window as any).customPanelJS = uixCustomPaneLoader;
-    } else {
-      if (!(this as any)._uixConfigUpdateRegistered) {
-        (this as any)._uixConfigUpdateRegistered = true;
-        const handleConfigUpdate = () => {
-          const coord = (window as any).uixCoordinator;
-          if (coord?.styleCustomPanels) {
-            console.log("UIX: config updated, reloading custom panel");
-            this.requestUpdate("panel", undefined);
-            cleanup();
+
+    let hasRun = false;
+    let timeout: any;
+
+    const run = () => {
+      if (hasRun) return;
+      hasRun = true;
+      cleanup();
+
+      const injectLoader = (iframe: HTMLIFrameElement) => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (!doc) return;
+          if (doc.getElementById("uix-custom-panel-loader")) return;
+          const script = doc.createElement("script");
+          script.id = "uix-custom-panel-loader";
+          script.src = `/uix/uixCustomPanel.js?v=${pjson.version}`;
+          doc.head?.appendChild(script) || doc.body?.appendChild(script) || doc.documentElement.appendChild(script);
+        } catch (e) {
+          console.warn("UIX: failed to inject custom panel javascript into iframe", e);
+        }
+      };
+
+      const setupIframe = (iframe: HTMLIFrameElement) => {
+        iframe.addEventListener("load", () => {
+          injectLoader(iframe);
+        });
+        injectLoader(iframe);
+      };
+
+      const findAndSetup = () => {
+        const iframe = this.shadowRoot?.querySelector("iframe") || this.querySelector("iframe");
+        if (iframe) {
+          setupIframe(iframe as HTMLIFrameElement);
+          return true;
+        }
+        return false;
+      };
+
+      if (!findAndSetup()) {
+        const observer = new MutationObserver(() => {
+          if (findAndSetup()) {
+            observer.disconnect();
           }
-        };
-        const cleanup = () => {
-          const coord = (window as any).uixCoordinator;
-          coord?.removeEventListener("uix-config-update", handleConfigUpdate);
-          clearTimeout(timeoutId);
-        };
-        const coord = (window as any).uixCoordinator;
-        coord?.addEventListener("uix-config-update", handleConfigUpdate);
-        const timeoutId = setTimeout(cleanup, 30000);
+        });
+        observer.observe(this.shadowRoot || this, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 10000);
       }
-    }
-    try {
-      _orig?.(...args);
-    } finally {
+    };
+
+    const checkAndRun = () => {
       if (coordinator?.styleCustomPanels) {
-        (window as any).customPanelJS = (window as any).customPanelJSOrig || (window as any).customPanelJS;
-        delete (window as any).customPanelJSOrig;
+        run();
       }
+    };
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      coordinator?.removeEventListener?.("uix-config-update", checkAndRun);
+    };
+
+    if (coordinator?.styleCustomPanels) {
+      run();
+    } else {
+      coordinator?.addEventListener?.("uix-config-update", checkAndRun);
+      timeout = setTimeout(cleanup, 30000);
     }
   }
 }
