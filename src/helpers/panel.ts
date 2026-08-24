@@ -1,3 +1,4 @@
+import { isEmbeddedPanel, getCustomPanelName } from "./hass";
 import { selectTree } from "./selecttree";
 
 var PanelState: Promise<any> | null = null;
@@ -31,6 +32,9 @@ async function _getPanel(document) {
     }
     if (!panel) {
       panel = await selectTree(document, "hc-main $ hc-lovelace");
+    }
+    if (!panel && isEmbeddedPanel()) {
+      panel = await selectTree(document, getCustomPanelName());
     }
     return panel;
   }
