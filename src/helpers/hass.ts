@@ -1,6 +1,45 @@
 import { Unpromise } from "@watchable/unpromise";
 import { selectTree } from "./selecttree";
 
+export function isEmbeddedPanel() {
+  let localEmbeddedPanel: boolean | undefined;
+  try {
+    localEmbeddedPanel = window.self !== window.parent;
+  } catch (e) {
+    localEmbeddedPanel = false;
+  }
+  return localEmbeddedPanel;
+}
+
+export function getCustomPanelName() {
+  if (isEmbeddedPanel()) {
+    try {
+      const customPanel = (window.parent as any).customPanel;
+      const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
+      return customPanelName;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+export async function panel_base_el() {
+  if (isEmbeddedPanel()) {
+    const customPanelName = getCustomPanelName();
+    if (customPanelName) {
+      await customElements.whenDefined(customPanelName);
+      while (!document.querySelector(customPanelName))
+        await new Promise((r) => window.setTimeout(r, 100));
+      return document.querySelector(customPanelName);
+    } else {
+      return Promise.reject("UIX: Not in a custom panel");
+    }
+  } else {
+    return hass_base_el();
+  }
+}
+
 export async function hass_base_el() {
   await Unpromise.race([
     customElements.whenDefined("home-assistant"),
@@ -17,14 +56,36 @@ export async function hass_base_el() {
 }
 
 export async function hass() {
-  const base: any = await hass_base_el();
+  const base: any = await panel_base_el();
   while (!base.hass) await new Promise((r) => window.setTimeout(r, 100));
   return base.hass;
 }
 
 export async function provideHass(el) {
-  const base: any = await hass_base_el();
-  base.provideHass(el);
+  const base: any = await panel_base_el();
+  if (base.provideHass) {
+    base.provideHass(el);
+  } else {
+    el.hass = base.hass;
+    const hassDescriptor =
+      Object.getOwnPropertyDescriptor(base, "hass") ||
+      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(base), "hass");
+    let hass = base.hass;
+    const originalSetter = hassDescriptor?.set?.bind(base);
+
+    Object.defineProperty(base, "hass", {
+      configurable: true,
+      enumerable: hassDescriptor?.enumerable ?? true,
+      get() {
+        return hass;
+      },
+      set(value) {
+        hass = value;
+        originalSetter?.(value);
+        el.hass = value;
+      },
+    });
+  }
 }
 
 export async function getLovelaceRoot(document) {

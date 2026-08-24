@@ -65,10 +65,12 @@
                 "title": "Experimentele instellingen",
                 "description": "Configureer experimentele functies voor UIX.",
                 "data": {
-                    "always_patch_ha_card": "Altijd ha-card patchen"
+                    "always_patch_ha_card": "Altijd ha-card patchen",
+                    "style_custom_panels": "Aangepaste panelen stylen die als iframe worden geladen"
                 },
                 "data_description": {
-                    "always_patch_ha_card": "Wanneer ingeschakeld, wordt ha-card altijd gepatcht, zelfs wanneer er geen kaartconfiguratie is. Dit maakt patching mogelijk wanneer ha-card wordt gebruikt in instellingen dashboards of aangepaste panelen."
+                    "always_patch_ha_card": "Wanneer ingeschakeld, wordt ha-card altijd gepatcht, zelfs wanneer er geen kaartconfiguratie is. Dit maakt patching mogelijk wanneer ha-card wordt gebruikt in instellingen dashboards of aangepaste panelen.",
+                    "style_custom_panels": "Wanneer ingeschakeld, wordt UIX‑thema‑styling toegepast op aangepaste panelen die als iframe worden geladen."
                 }
             },
             "add_foundry": {
