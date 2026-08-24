@@ -1,3 +1,15 @@
+## [8.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0...v8.2.0-beta.1) (2026-08-24)
+
+### ⭐ New Features
+
+* Add experimental option to always patch ha-card even when there is no card config. Allows for ha-card used on settings and custom panels to be styled from theme. ([#541](https://github.com/Lint-Free-Technology/uix/issues/541)) ([3f3f74d](https://github.com/Lint-Free-Technology/uix/commit/3f3f74d2f160d7009ee61ce34e70e1f9b48119af))
+* Apply entity picture styling to entity badges. ([#548](https://github.com/Lint-Free-Technology/uix/issues/548)) ([42be874](https://github.com/Lint-Free-Technology/uix/commit/42be874ff89a6c01d512640bd70800915166c6c3)), references [#547](https://github.com/Lint-Free-Technology/uix/issues/547)
+* Apply UIX styling to custom panels loaded by iframe ([#549](https://github.com/Lint-Free-Technology/uix/issues/549)) ([45cc20c](https://github.com/Lint-Free-Technology/uix/commit/45cc20c7ec3f3a68a78d2cc0d6f3101dc87cd8fa))
+
+### 🐞 Bug Fixes
+
+* Entities card render crash for uninitialized forge molds when UIX coordinator is not ready ([#551](https://github.com/Lint-Free-Technology/uix/issues/551)) ([282a513](https://github.com/Lint-Free-Technology/uix/commit/282a51355ff5cdd53c5ba63b76163bd4d909e4a3)), references [#550](https://github.com/Lint-Free-Technology/uix/issues/550)
+
 ## [8.1.0](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1...v8.1.0) (2026-08-22)
 
 ### ⭐ New Features
