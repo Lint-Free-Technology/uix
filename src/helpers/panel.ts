@@ -34,7 +34,11 @@ async function _getPanel(document) {
       panel = await selectTree(document, "hc-main $ hc-lovelace");
     }
     if (!panel && isEmbeddedPanel()) {
-      panel = await selectTree(document, getCustomPanelName());
+      const customPanelName = getCustomPanelName();
+      if (customPanelName) {
+      } else {
+        panel = undefined;
+      }
     }
     return panel;
   }
@@ -105,6 +109,11 @@ async function _current_panel_state() {
   const coordinator = (window as any).uixCoordinator;
   const includeHash = !coordinator?.disableHashTemplateVariable;
   const panel = await _getPanel(document);
+  if (!panel) {
+    return {
+      panel: {}
+    };
+  }
   const panelAttributes = _panelAttributes(panel);
   const viewAttributes = await _viewAttributes(panel);
   const fullTitle = [];
@@ -138,6 +147,9 @@ async function _current_panel_state() {
 function _panel_state_update() {
   const update = async () => {
     var panelState = await _current_panel_state();
+    if (!panelState.panel.fullUrlPath) {
+      return panelState;
+    }
     var browserPath = window.location.pathname.slice(1).toLowerCase();
     var panelPath = panelState.panel.fullUrlPath.toLowerCase();
     let retry = 0;
