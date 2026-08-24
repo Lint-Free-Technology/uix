@@ -13,9 +13,13 @@ export function isEmbeddedPanel() {
 
 export function getCustomPanelName() {
   if (isEmbeddedPanel()) {
-    const customPanel = (window.parent as any).customPanel;
-    const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
-    return customPanelName;
+    try {
+      const customPanel = (window.parent as any).customPanel;
+      const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
+      return customPanelName;
+    } catch (e) {
+      return null;
+    }
   }
   return null;
 }
