@@ -85,7 +85,6 @@ export async function provideHass(el) {
         el.hass = value;
       },
     });
-    }
   }
 }
 
