@@ -31,6 +31,15 @@ Unpromise.race(bases).then(() => {
     document
       .querySelector("hc-main")
       ?.addEventListener("settheme", refresh_theme);
+
+    if (isEmbeddedPanel()) {
+      const customPanelName = getCustomPanelName();
+      if (customPanelName) {
+        document
+          .querySelector(customPanelName)
+          ?.addEventListener("settheme", refresh_theme);
+      }
+    }
   }, 1000);
 });
 
