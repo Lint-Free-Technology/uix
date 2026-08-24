@@ -1,4 +1,4 @@
-import { hass } from "./helpers/hass";
+import { getCustomPanelName, hass, isEmbeddedPanel } from "./helpers/hass";
 import { Unpromise } from "@watchable/unpromise";
 
 function refresh_theme() {
@@ -9,6 +9,12 @@ const bases = [
   customElements.whenDefined("home-assistant"),
   customElements.whenDefined("hc-main"),
 ];
+if (isEmbeddedPanel()) {
+  const customPanelName = getCustomPanelName();
+  if (customPanelName) {
+    bases.push(customElements.whenDefined(customPanelName));
+  }
+}
 Unpromise.race(bases).then(() => {
   window.setTimeout(async () => {
     const hs = await hass();
