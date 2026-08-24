@@ -63,21 +63,24 @@ export async function provideHass(el) {
     base.provideHass(el);
   } else {
     el.hass = base.hass;
-    const hassDescriptor = Object.getOwnPropertyDescriptor(base, "hass");
+    const hassDescriptor =
+      Object.getOwnPropertyDescriptor(base, "hass") ||
+      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(base), "hass");
     let hass = base.hass;
+    const originalSetter = hassDescriptor?.set?.bind(base);
 
-    if (!hassDescriptor?.set) {
-      Object.defineProperty(base, "hass", {
-        configurable: true,
-        enumerable: true,
-        get() {
-          return hass;
-        },
-        set(value) {
-          hass = value;
-          el.hass = value;
-        },
-      });
+    Object.defineProperty(base, "hass", {
+      configurable: true,
+      enumerable: hassDescriptor?.enumerable ?? true,
+      get() {
+        return hass;
+      },
+      set(value) {
+        hass = value;
+        originalSetter?.(value);
+        el.hass = value;
+      },
+    });
     }
   }
 }
