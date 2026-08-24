@@ -98,3 +98,6 @@ UIX Test:
 
 ??? example "HACS panel styling"
     ![HACS panel styling](../assets/page-assets/using/custom-panel-hacs.png)
+
+!!! warning "Theme updates"
+    Theme updates to the currently selected theme for user will be applied while viewing the custom panel. However, if you change the theme for the user viewing the custom panel you will need to refresh the panel to have the new theme applied.

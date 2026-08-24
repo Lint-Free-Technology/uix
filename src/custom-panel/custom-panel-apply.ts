@@ -26,4 +26,5 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
   }
   
   apply_uix( customPanelRoot, customPanelName, { theme } );
+  // TODO - Add a listener for theme changes and reapply uix when the theme changes
 });
