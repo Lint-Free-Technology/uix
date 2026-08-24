@@ -17,7 +17,7 @@ UIX styles custom panels not loaded by iframe directly. UIX can also style custo
 
 ### Styling custom panels loaded directly
 
-Use the direct custom theme variable `uix-custom-panel(-yaml)`.
+Use the direct custom theme variable `uix-panel-custom(-yaml)`.
 
 Example styling Browser Mod panel specifically:
 
