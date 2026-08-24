@@ -24,6 +24,6 @@ The setting is available immediately across all connected browser sessions. A pa
 
 When this option is set:
 
-- custom panels are styled by a patch in `ha-custom-panel` to create a patched Home Assistant Frontend `customPanelJS` file to be used by the custom panel iframe, running standard Home Assistant Frontend `customPanelJS` and then a condensed UIX javascript module.
+- custom panels are styled by a patch in `ha-panel-custom` to create a patched Home Assistant Frontend `customPanelJS` file to be used by the custom panel iframe, running standard Home Assistant Frontend `customPanelJS` and then a condensed UIX javascript module.
 - applies UIX styling to the main custom panel element.
 - if UIX detects a theme is not applied, UIX Styling is applied with the currently loaded Home Assistant Frontend theme. Some custom panels like HACS apply the theme, and in this case UIX styling will inherit the applied theme.

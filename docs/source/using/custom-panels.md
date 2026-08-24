@@ -9,7 +9,7 @@ description: Learn how to style custom panels
 UIX styles custom panels not loaded by iframe directly. UIX can also style custom panels loaded as iframe. Currently this is an experimental feature which you need to enable. See [Extras - Styling custom panels](../extras/style-custom-panels.md).
 
 !!! info "Custom panel loaded by iframe - How it works"
-    1. Custom panels loaded as iframe are styled by a patch in `ha-custom-panel` to create a patched Home Assistant Frontend `customPanelJS` file to be used by the custom panel iframe, running standard Home Assistant Frontend `customPanelJS` and then a condensed UIX javascript module.
+    1. Custom panels loaded as iframe are styled by a patch in `ha-panel-custom` to create a patched Home Assistant Frontend `customPanelJS` file to be used by the custom panel iframe, running standard Home Assistant Frontend `customPanelJS` and then a condensed UIX javascript module.
     2. If UIX detects a theme is not applied, UIX Styling is applied with the currently loaded Home Assistant Frontend theme. Some custom panels like [HACS](https://hacs.xyz) apply the theme, and in this case UIX styling will inherit the applied theme.
     3. [Home Assistant custom panels](https://www.home-assistant.io/integrations/panel_custom/) are set by config that includes `name:`. UIX Styling uses this `name` to create the UIX theme variable for styling custom panels loaded by iframe.
 
