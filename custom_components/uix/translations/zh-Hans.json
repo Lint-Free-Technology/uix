@@ -66,11 +66,11 @@
                 "description": "配置 UIX 的实验性功能。",
                 "data": {
                     "always_patch_ha_card": "始终修补 ha-card",
-                    "style_custom_panels": "为自定义面板应用 UIX 主题样式"
+                    "style_custom_panels": "为作为 iframe 加载的自定义面板应用 UIX 主题样式"
                 },
                 "data_description": {
                     "always_patch_ha_card": "启用后，即使没有卡片配置，也始终修补 ha-card。这允许在设置仪表盘或自定义面板中使用 ha-card 时进行修补。",
-                    "style_custom_panels": "启用后，将对自定义面板应用 UIX 主题样式。"
+                    "style_custom_panels": "启用后，将对作为 iframe 加载的自定义面板应用 UIX 主题样式。"
                 }
             },
             "add_foundry": {

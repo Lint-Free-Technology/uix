@@ -66,11 +66,11 @@
                 "description": "Configure experimental features for UIX.",
                 "data": {
                     "always_patch_ha_card": "Always patch ha-card",
-                    "style_custom_panels": "Style custom panels"
+                    "style_custom_panels": "Style custom panels loaded as iframe"
                 },
                 "data_description": {
                     "always_patch_ha_card": "When enabled, always patch ha-card, even when there is no card config. This allows patching when ha-card is used in settings dashboards or custom panels.",
-                    "style_custom_panels": "When enabled, apply UIX theme styling to custom panels."
+                    "style_custom_panels": "When enabled, apply UIX theme styling to custom panels loaded as iframe."
                 }
             },
             "add_foundry": {
