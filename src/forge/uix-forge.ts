@@ -500,6 +500,7 @@ export class UixForge extends LitElement {
   }
 
   get hidden() {
+    if (!this._mold) return true;
     if (this._mold.isPreview()) return false;
     if (!this.templatesReady) return true;
     if (this.forgedElement?.hidden) return true;
@@ -514,7 +515,7 @@ export class UixForge extends LitElement {
   }
 
   public getGridOptions() {
-    return this._mold.getGridOptions();
+    return this._mold ? this._mold.getGridOptions() : {};
   }
 
   public async computeCardSize() {
