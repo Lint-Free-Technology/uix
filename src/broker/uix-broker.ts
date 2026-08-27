@@ -115,6 +115,7 @@ function resolveCaptured(value: any, captured: Record<string, any>): any {
   if (Array.isArray(value)) return value.map((item) => resolveCaptured(item, captured));
   if (value && typeof value === "object") {
     return Object.entries(value).reduce<Record<string, any>>((result, [key, item]) => {
+      if (UNSAFE_PROPERTY_KEYS.has(key)) return result;
       result[key] = resolveCaptured(item, captured);
       return result;
     }, {});
@@ -181,7 +182,11 @@ export function matchesCapturedValue(actual: unknown, matcher: any, ignoreCase =
   let received: string;
   if (expected.startsWith("$$")) {
     expected = expected.slice(2);
-    received = JSON.stringify(actual) ?? "";
+    try {
+      received = JSON.stringify(actual) ?? "";
+    } catch {
+      received = "";
+    }
   } else {
     received = String(actual ?? "");
   }
