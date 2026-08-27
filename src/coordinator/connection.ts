@@ -10,6 +10,7 @@ export const ConnectionMixin = (SuperClass) => {
     private _connected = false;
     private _connectionResolve;
     private _foundries: Record<string, any> = {};
+    private _broker: Record<string, any>[] = [];
     private _hassThrottleOverride: { enable?: boolean; ms?: number } | null = null;
     private _dialogApplyAfterShowOverride: boolean | null = null;
     private _disableHashTemplateVariableOverride: boolean | null = null;
@@ -139,6 +140,11 @@ export const ConnectionMixin = (SuperClass) => {
         this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
       }
 
+      if (cfg.uix_broker !== undefined) {
+        this._broker = Array.isArray(cfg.uix_broker) ? cfg.uix_broker : [];
+        this.fireWindowEvent("uix-broker-updated", { uix_broker: this._broker });
+      }
+
       this.fireBrowserEvent("uix-config-update");
 
       // future update handling can be added here
@@ -156,6 +162,15 @@ export const ConnectionMixin = (SuperClass) => {
         this.fireWindowEvent("uix-foundries-updated", { foundries: this._foundries });
       } catch (err) {
         console.log("UIX: Error fetching foundries:", err);
+      }
+    }
+
+    private async reloadBrokerFiles() {
+      if (!this.connection) return;
+      try {
+        await this.connection.sendMessagePromise({ type: "uix/reload_broker_files" });
+      } catch (err) {
+        console.log("UIX: Error reloading Broker files:", err);
       }
     }
 
@@ -202,6 +217,7 @@ export const ConnectionMixin = (SuperClass) => {
 
       window.addEventListener("config-refresh", () => {
         this.fetchFoundries();
+        this.reloadBrokerFiles();
       });
 
       provideHass(this);
@@ -221,6 +237,10 @@ export const ConnectionMixin = (SuperClass) => {
 
     get foundries(): Record<string, any> {
       return this._foundries;
+    }
+
+    get broker(): Record<string, any>[] {
+      return this._broker;
     }
 
     get hassThrottleEnable(): boolean {

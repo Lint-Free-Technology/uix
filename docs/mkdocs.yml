@@ -54,6 +54,7 @@ nav:
        - Quick Start: /quick-start
        - UIX Styling: /using
        - UIX Forge: /forge
+       - UIX Broker: /broker
        - UIX Extras: /extras
        - UIX Guides: /guides
        - FAQ: /faq
@@ -105,6 +106,14 @@ nav:
           - forge/sparks/overlay-icon.md
           - forge/sparks/background.md
           - forge/sparks/theme.md
+  - UIX Broker:
+      - broker/index.md
+      - broker/broker.md
+      - broker/realms.md
+      - broker/interaction-anchors.md
+      - broker/rules.md
+      - broker/directives.md
+      - broker/examples.md
   - UIX Extras:
       - extras/index.md
       - extras/uix-actions.md

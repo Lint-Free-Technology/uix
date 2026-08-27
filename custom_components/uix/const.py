@@ -11,6 +11,8 @@ WS_CONNECT = f"{DOMAIN}/connect"
 WS_LOG = f"{DOMAIN}/log"
 
 CONF_FOUNDRIES = "foundries"
+CONF_UIX_BROKER = "uix_broker"
+CONF_UIX_BROKER_FILES = "uix_broker_files"
 CONF_FOUNDRY_FILES = "foundry_files"
 
 CONF_HASS_THROTTLE_ENABLE = "hass_throttle_enable"
@@ -32,5 +34,9 @@ WS_ADD_FOUNDRY_FILE = f"{DOMAIN}/add_foundry_file"
 WS_REMOVE_FOUNDRY_FILE = f"{DOMAIN}/remove_foundry_file"
 WS_RELOAD_FOUNDRY_FILES = f"{DOMAIN}/reload_foundry_files"
 WS_CHECK_FOUNDRY_FILES = f"{DOMAIN}/check_foundry_files"
+WS_ADD_BROKER_FILE = f"{DOMAIN}/add_broker_file"
+WS_REMOVE_BROKER_FILE = f"{DOMAIN}/remove_broker_file"
+WS_RELOAD_BROKER_FILES = f"{DOMAIN}/reload_broker_files"
+WS_CHECK_BROKER_FILES = f"{DOMAIN}/check_broker_files"
 
 EVENT_FOUNDRIES_UPDATED = f"{DOMAIN}_foundries_updated"
