@@ -7,11 +7,11 @@ description: UIX Broker examples
 !!! note
     UIX Broker is available in 8.2.0-beta.2
 
-## Make the Code tab the default in the UI add-card dialog
+## Make the card tab the default in the UI add-card dialog
 
 Outcome:
 
-- Select the Code tab when the add-card dialog opens.
+- Select the card tab when the add-card dialog opens.
 - Make sure the first expander, Suggested or Favorites, is open.
 - Collapse all other expanders.
 
