@@ -1,3 +1,9 @@
+## [8.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.1...v8.2.0-beta.2) (2026-08-27)
+
+### ⭐ New Features
+
+* UIX Broker. See documentation for further information. ([#556](https://github.com/Lint-Free-Technology/uix/issues/556)) ([4a6d2ff](https://github.com/Lint-Free-Technology/uix/commit/4a6d2ffecf8d55cecb6d2e80a966ef5d52916a70))
+
 ## [8.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0...v8.2.0-beta.1) (2026-08-24)
 
 ### ⭐ New Features
