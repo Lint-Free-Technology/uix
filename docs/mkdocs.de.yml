@@ -1,0 +1,117 @@
+site_name: UI eXtension - Deutsche Dokumentation
+site_url: http://127.0.0.1:8008
+docs_dir: source-de
+theme:
+  name: material
+  variant: classic
+  language: de
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.expand
+    - toc.integrate
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Zum dunklen Modus wechseln
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Zum hellen Modus wechseln
+  logo: assets/images/icon.png
+  favicon: assets/images/icon.png
+  custom_dir: overrides
+extra:
+  generator: false
+plugins:
+  - search
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.blocks.caption
+  - attr_list
+  - md_in_html
+  - zensical.extensions.glightbox
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+nav:
+  - UI eXtension:
+      - Übersicht: index.md
+      - Schnellstart: quick-start.md
+      - UIX Styling: using/index.md
+      - UIX Forge: forge/index.md
+      - UIX Extras: extras/index.md
+      - Leitfäden: guides.md
+      - FAQ: faq.md
+      - Mitwirken: contributing.md
+  - Schnellstart: quick-start.md
+  - UIX Styling:
+      - Überblick: using/index.md
+      - Karten: using/cards.md
+      - Entitäten: using/entities.md
+      - Icons: using/icons.md
+      - Bilder: using/images.md
+      - Abschnittshintergründe: using/section-backgrounds.md
+      - Ansichtshintergründe: using/view-backgrounds.md
+      - Templates: using/templates.md
+      - Themes: using/themes.md
+      - Weitere Optionen: using/other.md
+  - Konzepte:
+      - Überblick: concepts/index.md
+      - DOM: concepts/dom.md
+      - Anwendung: concepts/application.md
+  - UIX Forge:
+      - Überblick: forge/index.md
+      - Forge-Referenz: forge/forge.md
+      - Foundries: forge/foundries.md
+      - Sparks:
+          - Überblick: forge/sparks/index.md
+          - Tooltip: forge/sparks/tooltip.md
+          - Button: forge/sparks/button.md
+          - Attribute: forge/sparks/attribute.md
+          - Event: forge/sparks/event.md
+          - Tile Icon: forge/sparks/tile-icon.md
+          - State Badge: forge/sparks/state-badge.md
+          - Grid: forge/sparks/grid.md
+          - Search: forge/sparks/search.md
+          - Map: forge/sparks/map.md
+          - Lock: forge/sparks/lock.md
+          - More-info: forge/sparks/more-info.md
+          - Overlay Icon: forge/sparks/overlay-icon.md
+          - Background: forge/sparks/background.md
+          - Theme: forge/sparks/theme.md
+  - UIX Extras:
+      - Überblick: extras/index.md
+      - UIX Actions: extras/uix-actions.md
+      - Frontend State Throttling: extras/frontend-states-throttling.md
+      - Dialog Styling Delay: extras/dialog-styling-delay.md
+      - Hash-Template-Variablen: extras/hash-template-variable-updates.md
+      - Icon-Styling deaktivieren: extras/disable-icon-styling.md
+      - Entity-Picture-Override deaktivieren: extras/disable-entity-picture-image-override.md
+  - Debugging:
+      - Überblick: debugging/index.md
+      - Karten: debugging/cards.md
+      - Templates: debugging/templates.md
+      - Cache: debugging/cache.md
+  - Entwickler:
+      - Überblick: developers/index.md
+      - Karten: developers/cards.md
+      - Themes: developers/themes.md
+  - Leitfäden: guides.md
+  - FAQ: faq.md
+repo_url: https://github.com/Lint-Free-Technology/uix
+repo_name: GitHub
+edit_uri: blob/master/docs/source/
+extra_css:
+  - stylesheets/extra.css

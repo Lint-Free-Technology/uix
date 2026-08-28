@@ -1,0 +1,41 @@
+@font-face {
+  font-family: 'Beon-Regular';
+  src: url('../assets/fonts/Beon-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root  > * {
+  --md-primary-fg-color:        #CE3226;
+  --md-primary-fg-color--dark:  #a5281e;
+  --md-accent-fg-color:         #d85b51;
+  --md-typeset-a-color:         #d3473c !important;
+}
+
+.md-header__title {
+  font-family: 'Beon-Regular', sans-serif;
+  font-size: 1.2rem;
+}
+
+.md-header__topic:first-child {
+  font-weight: 500;
+}
+
+@media screen and (min-width: 45em) {
+  .md-typeset .inline {
+    width: 15rem;
+  }
+}
+
+.md-banner {
+    background: #473cd3;
+}
+
+.md-banner__inner {
+  font-family: 'Beon-Regular', sans-serif;
+  font-size: 1.5em !important;
+  font-weight: 600;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  text-align: center;
+}
