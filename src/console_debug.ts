@@ -176,6 +176,7 @@ const THEME_UIX_TYPES = new Set([
   "dialog", "root", "view", "more-info", "sidebar",
   "config", "panel-custom", "top-app-bar-fixed",
   "calendar", "history", "profile", "todo", "persistent-notification",
+  "drawer", "state-history-charts"
 ]);
 
 // ---------------------------------------------------------------------------
