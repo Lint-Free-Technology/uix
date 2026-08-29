@@ -1,28 +1,21 @@
 import { Unpromise } from "@watchable/unpromise";
 import { selectTree } from "./selecttree";
 
-export function isEmbeddedPanel() {
+function getEmbeddedCustomPanelConfig() {
   try {
-    return Boolean(
-      window.self !== window.parent &&
-        (window.parent as any).customPanel?.panel?.config?._panel_custom?.name
-    );
+    if (window.self === window.parent) return null;
+    return (window.parent as any).customPanel?.panel?.config?._panel_custom ?? null;
   } catch {
-    return false;
+    return null;
   }
 }
 
+export function isEmbeddedPanel() {
+  return getEmbeddedCustomPanelConfig() !== null;
+}
+
 export function getCustomPanelName() {
-  if (isEmbeddedPanel()) {
-    try {
-      const customPanel = (window.parent as any).customPanel;
-      const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
-      return customPanelName || null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
+  return getEmbeddedCustomPanelConfig()?.name || null;
 }
 
 export async function panel_base_el() {
