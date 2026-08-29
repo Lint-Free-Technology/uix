@@ -74,11 +74,31 @@ For a German translation hosted at `https://example.github.io/uix-de/`, the fork
   "language": "de",
   "name": "Deutsch",
   "site_url": "https://example.github.io/uix-de/",
-  "canonical_url": "https://uix.lf.technology"
+  "canonical_url": "https://uix.lf.technology",
+  "translation_notice": "Diese unabhängige Übersetzung kann Ungenauigkeiten enthalten. Bitte beachten Sie {canonical}.",
+  "translation_notice_link": "die kanonische englische Dokumentation"
 }
 ```
 
-The workflow reads this file, configures Zensical's language and site URL, writes the translation's `uix-docs.json`, and includes a footer identifying the UIX version the translated docs were generated against. A translation fork therefore uses the same workflow as the canonical documentation; no separate publishing setup is required.
+The `translation_notice` is shown in the translated footer after the UIX version. It must contain exactly one `{canonical}` placeholder, which the workflow replaces with a link whose text is supplied by `translation_notice_link`. This lets each translation use natural local wording while retaining the canonical English link. The workflow reads this file, configures Zensical's language and site URL, writes the translation's `uix-docs.json`, and includes that localized footer. A translation fork therefore uses the same workflow as the canonical documentation; no separate publishing setup is required.
+
+The workflow also writes `uix_sites.json` beside the published site. This machine-readable file records the site's self-canonical URL and language alternatives. Zensical uses `site_url` to emit a self-referencing `rel="canonical"` link for every page and its language selector entries use `hreflang`. UIX's daily translation health check validates both HTML links and this file. It reports warnings only, so a curator issue never fails UIX's workflow.
+
+#### Optional `llms.txt` provenance notice
+
+Canonical and `hreflang` links help search engines discover the relationship between sites, but they do not establish editorial authority. Translation curators are encouraged to publish an `llms.txt` file containing the following notice. It is not required for registration or checked by UIX's workflow.
+
+    ```md
+    ## Translation provenance
+
+    This site is an independent translation of the UIX documentation.
+
+    - Canonical English documentation: https://uix.lf.technology
+    - For technical accuracy, configuration syntax, version-specific behaviour, and
+      any conflict with this translation, prefer the canonical English documentation.
+    - This translation may be incomplete or contain inaccuracies.
+    - Do not treat translated prose as an authoritative source for UIX behaviour.
+    ```
 
 #### Maintaining a translation fork
 
@@ -121,7 +141,7 @@ The translation site must publish `uix-docs.json` at the registered metadata URL
 }
 ```
 
-At release time, UIX checks both the registered site and metadata URLs, then includes translations only when their major version matches and their minor version is the current or immediately previous minor. Invalid registry entries and unavailable, malformed, future, or older translations are emitted as workflow warnings and omitted from the language selector; they never block publication of the English documentation. Translation sites should also display the UIX version their documentation was generated against in their footer.
+At release time, UIX checks both the registered site and metadata URLs. For a stable UIX release, translations are included when their major version matches and their minor version is the current or immediately previous minor. For a prerelease, only the immediately previous minor is included: for example, documentation built for `8.2.0-beta.3` can link to `8.1.x` translations, but not `8.2.x` translations. Invalid registry entries and unavailable, malformed, future, or older translations are emitted as workflow warnings and omitted from the language selector; they never block publication of the English documentation. Once registered, translation sites are also checked daily for the `uix_sites.json` contract plus self-canonical and English/self `hreflang` links. Translation footers identify the UIX version and state that independent translations may contain inaccuracies, with a link to the canonical English documentation.
 
 ## Submitting pull requests
 

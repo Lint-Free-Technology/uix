@@ -1,0 +1,23 @@
+name: Check external documentation translations
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Translation health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+      - name: Check registered translations
+        run: >-
+          python docs/scripts/check_translations.py
+          --version "$(jq --raw-output .version custom_components/uix/manifest.json)"
