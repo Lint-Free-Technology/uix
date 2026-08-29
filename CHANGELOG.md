@@ -1,3 +1,32 @@
+## [8.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.2...v8.2.0-beta.3) (2026-08-29)
+
+### 🐞 Bug Fixes
+
+* **beta:** Regression with 8.2.0-beta.1 not loading UIX in regular dashboard hosted in an iFrame ([#562](https://github.com/Lint-Free-Technology/uix/issues/562)) ([6390f86](https://github.com/Lint-Free-Technology/uix/commit/6390f867dd478a2f300587e7ec30e53406595021)), references [#558](https://github.com/Lint-Free-Technology/uix/issues/558)
+* Set `drawer` and `state-history-charts` as theme types for console debug helpers so they give correct uix_path() results. ([7e24078](https://github.com/Lint-Free-Technology/uix/commit/7e240786e10ac4ef3388a41c5f4672e652942586))
+
+### 📦 Dependency Upgrades
+
+* bump js-yaml from 5.3.0 to 5.4.0 ([#560](https://github.com/Lint-Free-Technology/uix/issues/560)) ([e1b759f](https://github.com/Lint-Free-Technology/uix/commit/e1b759fd9fce92823106eeb53aa69cd63124be2f))
+
+## [8.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.1...v8.2.0-beta.2) (2026-08-27)
+
+### ⭐ New Features
+
+* UIX Broker. See documentation for further information. ([#556](https://github.com/Lint-Free-Technology/uix/issues/556)) ([4a6d2ff](https://github.com/Lint-Free-Technology/uix/commit/4a6d2ffecf8d55cecb6d2e80a966ef5d52916a70))
+
+## [8.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0...v8.2.0-beta.1) (2026-08-24)
+
+### ⭐ New Features
+
+* Add experimental option to always patch ha-card even when there is no card config. Allows for ha-card used on settings and custom panels to be styled from theme. ([#541](https://github.com/Lint-Free-Technology/uix/issues/541)) ([3f3f74d](https://github.com/Lint-Free-Technology/uix/commit/3f3f74d2f160d7009ee61ce34e70e1f9b48119af))
+* Apply entity picture styling to entity badges. ([#548](https://github.com/Lint-Free-Technology/uix/issues/548)) ([42be874](https://github.com/Lint-Free-Technology/uix/commit/42be874ff89a6c01d512640bd70800915166c6c3)), references [#547](https://github.com/Lint-Free-Technology/uix/issues/547)
+* Apply UIX styling to custom panels loaded by iframe ([#549](https://github.com/Lint-Free-Technology/uix/issues/549)) ([45cc20c](https://github.com/Lint-Free-Technology/uix/commit/45cc20c7ec3f3a68a78d2cc0d6f3101dc87cd8fa))
+
+### 🐞 Bug Fixes
+
+* Entities card render crash for uninitialized forge molds when UIX coordinator is not ready ([#551](https://github.com/Lint-Free-Technology/uix/issues/551)) ([282a513](https://github.com/Lint-Free-Technology/uix/commit/282a51355ff5cdd53c5ba63b76163bd4d909e4a3)), references [#550](https://github.com/Lint-Free-Technology/uix/issues/550)
+
 ## [8.1.0](https://github.com/Lint-Free-Technology/uix/compare/v8.0.1...v8.1.0) (2026-08-22)
 
 ### ⭐ New Features
