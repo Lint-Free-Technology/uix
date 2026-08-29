@@ -58,6 +58,65 @@ Documentation is where every UIX user can contribute. As long as you have python
     - Documentation website will then be available at `http://localhost:8000`
     - You can run zensical at another bound ip address and/or port using `--dev-addr`. e.g. `zensical serve localhost:9000` to run on port 9000.
 
+### External documentation translations
+
+Translations are hosted independently, rather than as translated Markdown in this repository. The canonical English documentation lists an external translation only when its published metadata confirms that it is current enough for the UIX version being released.
+
+#### Registering a translation
+
+First, fork this repository and translate the documentation in your fork. Configure its public documentation site in `docs/site.json`, then use the **Deploy MkDocs to GitHub Pages** workflow from the Actions tab to publish it. GitHub Pages must be enabled for the fork and configured to deploy from GitHub Actions.
+
+For a German translation hosted at `https://example.github.io/uix-de/`, the fork's `docs/site.json` would be:
+
+```json
+{
+  "schema": 1,
+  "language": "de",
+  "name": "Deutsch",
+  "site_url": "https://example.github.io/uix-de/",
+  "canonical_url": "https://uix.lf.technology"
+}
+```
+
+The workflow reads this file, configures Zensical's language and site URL, writes the translation's `uix-docs.json`, and includes a footer identifying the UIX version the translated docs were generated against. A translation fork therefore uses the same workflow as the canonical documentation; no separate publishing setup is required.
+
+Once the translation site is publicly available, submit an upstream PR that adds one entry to the `languages` array in [`docs/translations.json`](https://github.com/Lint-Free-Technology/uix/blob/master/docs/translations.json):
+
+```json
+{
+  "schema": 1,
+  "languages": [
+    {
+      "code": "de",
+      "name": "Deutsch",
+      "url": "https://docs.example.org/uix/de/",
+      "metadata_url": "https://docs.example.org/uix/de/uix-docs.json"
+    }
+  ]
+}
+```
+
+- `code` must be a lowercase ISO 639-1 language code and must not be `en`.
+- `name` is the language name shown to readers, ideally in that language.
+- `url` is the translation's public home page.
+- `metadata_url` is the location of the `uix-docs.json` file described below.
+
+Both URLs must be final public HTTPS URLs; redirects are not followed. This upstream PR must change only `docs/translations.json`; do not add translated Markdown, generated documentation, or build files to the canonical UIX repository. The documentation workflow will report a warning and leave the translation out of the selector until the translation site satisfies the checks.
+
+The translation site must publish `uix-docs.json` at the registered metadata URL. Its contract is:
+
+```json
+{
+  "schema": 1,
+  "project": "uix",
+  "language": "de",
+  "docs_version": "8.2.0",
+  "source_revision": "v8.2.0"
+}
+```
+
+At release time, UIX checks both the registered site and metadata URLs, then includes translations only when their major version matches and their minor version is the current or immediately previous minor. Invalid registry entries and unavailable, malformed, future, or older translations are emitted as workflow warnings and omitted from the language selector; they never block publication of the English documentation. Translation sites should also display the UIX version their documentation was generated against in their footer.
+
 ## Submitting pull requests
 
 - **DO NOT** include `uix.js` in your commits in a pull request. The resource file will be built on release. As UIX is an integration it can't use release assets as `uix.js` needs to be in the `custom_components/uix` folder.
