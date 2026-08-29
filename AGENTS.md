@@ -26,7 +26,8 @@ docs/
   language name, and public HTTPS site and metadata URLs.
 - A translation fork uses `docs/site.json` to set its language, native name,
   public site URL, and canonical English URL before running the same docs
-  release workflow. Preserve this workflow's fork compatibility.
+  release workflow. Its localized footer notice must contain the required
+  `{canonical}` placeholder. Preserve this workflow's fork compatibility.
 - Translation forks retain the canonical English files in `docs/source` and
   place their translated files in `docs/source-<language>`. The release
   preparation selects that directory automatically; do not change `docs_dir`
@@ -36,8 +37,12 @@ docs/
   whether it is current enough to display; unavailable, invalid, or stale
   translations must be omitted with a workflow warning rather than blocking
   publication.
+- Translation publication also generates `uix_sites.json`. Preserve its
+  canonical and language-alternate metadata, and keep the daily health check
+  warning-only: an unhealthy curator site must not fail the workflow.
 - Do not change the metadata schema, the one-minor-version eligibility policy,
-  or the generated footer version without explicit maintainer approval.
+  prerelease policy (previous minor only), or the generated footer version
+  without explicit maintainer approval.
 
 If modifying:
 
