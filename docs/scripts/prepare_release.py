@@ -299,10 +299,16 @@ def render_config(
         f"site_url: {yaml_string(site['site_url'])}",
         content,
     )
+    docs_dir = "source" if site["language"] == "en" else f"source-{site['language']}"
+    docs_source, docs_source_count = re.subn(
+        r"(?m)^docs_dir: .* # UIX_RELEASE_DOCS_DIR$",
+        f"docs_dir: {yaml_string(docs_dir)}",
+        site_url,
+    )
     language, language_count = re.subn(
         r"(?m)^  language: .* # UIX_RELEASE_LANGUAGE$",
         f"  language: {yaml_string(site['language'])}",
-        site_url,
+        docs_source,
     )
     alternate, alternate_count = re.subn(
         r"(?m)^  alternate: \[\] # UIX_RELEASE_ALTERNATES$",
@@ -316,6 +322,7 @@ def render_config(
     )
     if (
         site_url_count != 1
+        or docs_source_count != 1
         or language_count != 1
         or alternate_count != 1
         or copyright_count != 1
