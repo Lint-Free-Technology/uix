@@ -1,27 +1,22 @@
 import { Unpromise } from "@watchable/unpromise";
 import { selectTree } from "./selecttree";
 
-export function isEmbeddedPanel() {
-  let localEmbeddedPanel: boolean | undefined;
+function getEmbeddedCustomPanelConfig() {
   try {
-    localEmbeddedPanel = window.self !== window.parent;
-  } catch (e) {
-    localEmbeddedPanel = false;
+    if (window.self === window.parent) return null;
+    return (window.parent as any).customPanel?.panel?.config?._panel_custom ?? null;
+  } catch {
+    return null;
   }
-  return localEmbeddedPanel;
+}
+
+// True when UIX is running inside a Home Assistant `panel_custom` iframe (embed_iframe: true).
+export function isEmbeddedPanel() {
+  return getEmbeddedCustomPanelConfig() !== null;
 }
 
 export function getCustomPanelName() {
-  if (isEmbeddedPanel()) {
-    try {
-      const customPanel = (window.parent as any).customPanel;
-      const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
-      return customPanelName;
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
+  return getEmbeddedCustomPanelConfig()?.name || null;
 }
 
 export async function panel_base_el() {
