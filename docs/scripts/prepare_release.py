@@ -326,7 +326,11 @@ def render_alternates(alternates: list[dict[str, str]]) -> str:
 
 
 def footer_text(site: dict[str, str], version: str) -> str:
-    text = f"Documentation generated against UIX {version}"
+    license_notice = (
+        'Documentation licensed under '
+        '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'
+    )
+    text = f"Documentation for UIX {version} · {license_notice}"
     if site["language"] == "en":
         return text
     canonical_url = html.escape(site["canonical_url"], quote=True)
@@ -369,7 +373,7 @@ def render_config(
         language,
     )
     copyright, copyright_count = re.subn(
-        r'(?m)^copyright: ".*" # UIX_RELEASE_COPYRIGHT$',
+        r'(?m)^copyright: (?:".*"|\'.*\') # UIX_RELEASE_COPYRIGHT$',
         f"copyright: {yaml_string(footer_text(site, version))}",
         alternate,
     )

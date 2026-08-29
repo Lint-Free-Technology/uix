@@ -22,5 +22,9 @@ Go to [Quick Start](https://uix.lf.technology/quick-start) for installation inst
 ## Contribution
 
 Clone and create a PR to help make UIX even better.
+
+## Licensing
+
+UIX code is licensed under the [MIT License](./LICENSE.txt). UIX documentation prose and original documentation media are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); documentation code and configuration examples remain MIT. See [the documentation license](./docs/LICENSE.md) for the full scope.
 ___
 If you like UIX please make sure to ⭐️ the repository. Thank you.
