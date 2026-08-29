@@ -58,6 +58,91 @@ Documentation is where every UIX user can contribute. As long as you have python
     - Documentation website will then be available at `http://localhost:8000`
     - You can run zensical at another bound ip address and/or port using `--dev-addr`. e.g. `zensical serve localhost:9000` to run on port 9000.
 
+### External documentation translations
+
+Translations are hosted independently, rather than as translated Markdown in this repository. The canonical English documentation lists an external translation only when its published metadata confirms that it is current enough for the UIX version being released.
+
+#### Registering a translation
+
+First, fork this repository and translate the documentation in your fork. Configure its public documentation site in `docs/site.json`, then use the **Deploy MkDocs to GitHub Pages** workflow from the Actions tab to publish it. GitHub Pages must be enabled for the fork and configured to deploy from GitHub Actions.
+
+For a German translation hosted at `https://example.github.io/uix-de/`, the fork's `docs/site.json` would be:
+
+```json
+{
+  "schema": 1,
+  "language": "de",
+  "name": "Deutsch",
+  "site_url": "https://example.github.io/uix-de/",
+  "canonical_url": "https://uix.lf.technology",
+  "translation_notice": "Diese unabhängige Übersetzung kann Ungenauigkeiten enthalten. Bitte beachten Sie {canonical}.",
+  "translation_notice_link": "die kanonische englische Dokumentation"
+}
+```
+
+The `translation_notice` is shown in the translated footer after the UIX version. It must contain exactly one `{canonical}` placeholder, which the workflow replaces with a link whose text is supplied by `translation_notice_link`. This lets each translation use natural local wording while retaining the canonical English link. The workflow reads this file, configures Zensical's language and site URL, writes the translation's `uix-docs.json`, and includes that localized footer. A translation fork therefore uses the same workflow as the canonical documentation; no separate publishing setup is required.
+
+The workflow also writes `uix_sites.json` beside the published site. This machine-readable file records the site's self-canonical URL and language alternatives. Zensical uses `site_url` to emit a self-referencing `rel="canonical"` link for every page and its language selector entries use `hreflang`. UIX's daily translation health check validates both HTML links and this file. It reports warnings only, so a curator issue never fails UIX's workflow.
+
+#### Optional `llms.txt` provenance notice
+
+Canonical and `hreflang` links help search engines discover the relationship between sites, but they do not establish editorial authority. Translation curators are encouraged to publish an `llms.txt` file containing the following notice. It is not required for registration or checked by UIX's workflow.
+
+    ```md
+    ## Translation provenance
+
+    This site is an independent translation of the UIX documentation.
+
+    - Canonical English documentation: https://uix.lf.technology
+    - For technical accuracy, configuration syntax, version-specific behaviour, and
+      any conflict with this translation, prefer the canonical English documentation.
+    - This translation may be incomplete or contain inaccuracies.
+    - Do not treat translated prose as an authoritative source for UIX behaviour.
+    ```
+
+#### Maintaining a translation fork
+
+Keep `docs/source` as the unmodified English source in the translation fork. For a language code such as `de`, place the translated documentation in `docs/source-de`. The documentation workflow automatically builds `docs/source` for English and `docs/source-<language>` for every other language, based on `docs/site.json`.
+
+This layout lets you regularly pull or merge English documentation updates from the canonical UIX repository without overwriting the translation. Compare the changed English files with the matching files in `docs/source-de`, update the affected translations, and then rerun the documentation workflow. Do not change `docs_dir` in `docs/mkdocs.yml` for a translation fork.
+
+Once the translation site is publicly available, submit an upstream PR that adds one entry to the `languages` array in [`docs/translations.json`](https://github.com/Lint-Free-Technology/uix/blob/master/docs/translations.json):
+
+```json
+{
+  "schema": 1,
+  "languages": [
+    {
+      "code": "de",
+      "name": "Deutsch",
+      "url": "https://docs.example.org/uix/de/",
+      "metadata_url": "https://docs.example.org/uix/de/uix-docs.json"
+    }
+  ]
+}
+```
+
+- `code` must be a lowercase ISO 639-1 language code and must not be `en`.
+- `name` is the language name shown to readers, ideally in that language.
+- `url` is the translation's public home page.
+- `metadata_url` is the location of the `uix-docs.json` file described below.
+
+Both URLs must be final public HTTPS URLs; redirects are not followed. This upstream PR must change only `docs/translations.json`; do not add translated Markdown, generated documentation, or build files to the canonical UIX repository. The documentation workflow will report a warning and leave the translation out of the selector until the translation site satisfies the checks.
+
+The translation site must publish `uix-docs.json` at the registered metadata URL. Its contract is:
+
+```json
+{
+  "schema": 1,
+  "project": "uix",
+  "language": "de",
+  "docs_version": "8.2.0",
+  "source_revision": "v8.2.0"
+}
+```
+
+At release time, UIX checks both the registered site and metadata URLs. For a stable UIX release, translations are included when their major version matches and their minor version is the current or immediately previous minor. For a prerelease, only the immediately previous minor is included: for example, documentation built for `8.2.0-beta.3` can link to `8.1.x` translations, but not `8.2.x` translations. Invalid registry entries and unavailable, malformed, future, or older translations are emitted as workflow warnings and omitted from the language selector; they never block publication of the English documentation. Once registered, translation sites are also checked daily for the `uix_sites.json` contract plus self-canonical and English/self `hreflang` links. Translation footers identify the UIX version and state that independent translations may contain inaccuracies, with a link to the canonical English documentation.
+
 ## Submitting pull requests
 
 - **DO NOT** include `uix.js` in your commits in a pull request. The resource file will be built on release. As UIX is an integration it can't use release assets as `uix.js` needs to be in the `custom_components/uix` folder.

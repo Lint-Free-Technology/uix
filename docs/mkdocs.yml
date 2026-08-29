@@ -1,8 +1,10 @@
+# Do not remove comments marked UIX_RELEASE_*: the documentation release workflow uses them as markers.
 site_name: UI eXtension
-site_url: https://uix.lf.technology
-docs_dir: source
+site_url: https://uix.lf.technology # UIX_RELEASE_SITE_URL
+docs_dir: source # UIX_RELEASE_DOCS_DIR
 theme:
   name: material
+  language: en # UIX_RELEASE_LANGUAGE
   variant: classic
   features:
     - navigation.tabs
@@ -32,6 +34,9 @@ theme:
   custom_dir: overrides
 extra:
   generator: false
+  # Replaced in docs/mkdocs.release.yml by docs/scripts/prepare_release.py.
+  alternate: [] # UIX_RELEASE_ALTERNATES
+copyright: "Documentation generated against UIX (local build)" # UIX_RELEASE_COPYRIGHT
 plugins:
   - search
   - git-revision-date-localized:

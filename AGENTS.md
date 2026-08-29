@@ -15,6 +15,35 @@ tests/
 
 docs/
 
+## External documentation translations
+
+- The English documentation in this repository is canonical. Do not add or
+  accept translated Markdown copies here.
+- Translation curators register independently hosted translations by changing
+  only `docs/translations.json`. Do not edit generated release files or add a
+  translation directly to `docs/mkdocs.yml`.
+- Each registry entry must use a lowercase ISO 639-1 language code, a native
+  language name, and public HTTPS site and metadata URLs.
+- A translation fork uses `docs/site.json` to set its language, native name,
+  public site URL, and canonical English URL before running the same docs
+  release workflow. Its localized footer notice must contain the required
+  `{canonical}` placeholder. Preserve this workflow's fork compatibility.
+- Translation forks retain the canonical English files in `docs/source` and
+  place their translated files in `docs/source-<language>`. The release
+  preparation selects that directory automatically; do not change `docs_dir`
+  in `docs/mkdocs.yml`.
+- A translation must publish the `uix-docs.json` metadata contract described in
+  `docs/source/contributing.md`. The documentation release workflow decides
+  whether it is current enough to display; unavailable, invalid, or stale
+  translations must be omitted with a workflow warning rather than blocking
+  publication.
+- Translation publication also generates `uix_sites.json`. Preserve its
+  canonical and language-alternate metadata, and keep the daily health check
+  warning-only: an unhealthy curator site must not fail the workflow.
+- Do not change the metadata schema, the one-minor-version eligibility policy,
+  prerelease policy (previous minor only), or the generated footer version
+  without explicit maintainer approval.
+
 If modifying:
 
 - Templates → docs/source/using/templates.md
