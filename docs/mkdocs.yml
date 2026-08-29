@@ -36,7 +36,7 @@ extra:
   generator: false
   # Replaced in docs/mkdocs.release.yml by docs/scripts/prepare_release.py.
   alternate: [] # UIX_RELEASE_ALTERNATES
-copyright: "Documentation generated against UIX (local build)" # UIX_RELEASE_COPYRIGHT
+copyright: 'Documentation licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>' # UIX_RELEASE_COPYRIGHT
 plugins:
   - search
   - git-revision-date-localized:
@@ -63,6 +63,7 @@ nav:
        - UIX Guides: /guides
        - FAQ: /faq
        - Contributing: /contributing
+       - License: /license
   - Quick Start: 'quick-start.md'
   - UIX Styling:
       -  Styling:

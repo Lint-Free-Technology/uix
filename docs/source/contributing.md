@@ -40,6 +40,12 @@ The Frontend javascript resource is where all the UIX magic happens. If you have
 
 Documentation is where every UIX user can contribute. As long as you have python installed in your environment you can modify the document source and see results in real time.
 
+### Licensing documentation contributions
+
+UIX documentation prose and original documentation media are licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). By submitting documentation prose or original documentation media to UIX, you license that contribution under CC BY 4.0.
+
+This does not change the code license. UIX code, including documentation tooling, stylesheets, templates, code blocks, and configuration examples, remains licensed under the [MIT License](https://github.com/Lint-Free-Technology/uix/blob/master/LICENSE.txt). Third-party material remains subject to its own license or terms. Documentation previously published under the repository-wide MIT license remains available under that license as well.
+
 !!! tip "Documentation updating"
     UIX documentation is built from markdown source files using [Zensical](https://zensical.org/docs/get-started/). Follow these tips to serve the documentation website in your local environment:
 
@@ -65,6 +71,8 @@ Translations are hosted independently, rather than as translated Markdown in thi
 #### Registering a translation
 
 First, fork this repository and translate the documentation in your fork. Configure its public documentation site in `docs/site.json`, then use the **Deploy MkDocs to GitHub Pages** workflow from the Actions tab to publish it. GitHub Pages must be enabled for the fork and configured to deploy from GitHub Actions.
+
+Translation curators license their translated prose and original translation-specific media under CC BY 4.0 when they publish it. Code, configuration, and third-party material retain their applicable licenses.
 
 For a German translation hosted at `https://example.github.io/uix-de/`, the fork's `docs/site.json` would be:
 
