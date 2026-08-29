@@ -2,4 +2,4 @@
 
 [![light-logo-icon](./assets/images/mixed.png)](https://uix-guides.lf.technology)
 
-The UIX community curates a resource of UIX guides. These are available at <https://uix-guides.lf.technology>. UIX guides are licensed under a Creative Commons Attribution 4.0 International license where you are free to share alike.
+The UIX community curates a resource of UIX guides. These are available at <https://uix-guides.lf.technology>. UIX Guides are licensed under the [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/) (CC BY-SA 4.0).
