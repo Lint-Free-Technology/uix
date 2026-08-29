@@ -1,3 +1,14 @@
+## [8.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.2...v8.2.0-beta.3) (2026-08-29)
+
+### 🐞 Bug Fixes
+
+* **beta:** Regression with 8.2.0-beta.1 not loading UIX in regular dashboard hosted in an iFrame ([#562](https://github.com/Lint-Free-Technology/uix/issues/562)) ([6390f86](https://github.com/Lint-Free-Technology/uix/commit/6390f867dd478a2f300587e7ec30e53406595021)), references [#558](https://github.com/Lint-Free-Technology/uix/issues/558)
+* Set `drawer` and `state-history-charts` as theme types for console debug helpers so they give correct uix_path() results. ([7e24078](https://github.com/Lint-Free-Technology/uix/commit/7e240786e10ac4ef3388a41c5f4672e652942586))
+
+### 📦 Dependency Upgrades
+
+* bump js-yaml from 5.3.0 to 5.4.0 ([#560](https://github.com/Lint-Free-Technology/uix/issues/560)) ([e1b759f](https://github.com/Lint-Free-Technology/uix/commit/e1b759fd9fce92823106eeb53aa69cd63124be2f))
+
 ## [8.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.1...v8.2.0-beta.2) (2026-08-27)
 
 ### ⭐ New Features
