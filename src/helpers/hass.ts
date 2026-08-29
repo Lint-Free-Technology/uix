@@ -10,6 +10,7 @@ function getEmbeddedCustomPanelConfig() {
   }
 }
 
+// True when UIX is running inside a Home Assistant `panel_custom` iframe (embed_iframe: true).
 export function isEmbeddedPanel() {
   return getEmbeddedCustomPanelConfig() !== null;
 }
