@@ -23,7 +23,12 @@ jobs:
           python-version: 3.x
       - run: pip install zensical
         working-directory: docs
-      - run: zensical build --clean
+      - name: Prepare release documentation
+        run: >-
+          python docs/scripts/prepare_release.py
+          --version "$(jq --raw-output .version custom_components/uix/manifest.json)"
+          --source-revision "${{ github.sha }}"
+      - run: zensical build --clean --config-file mkdocs.release.yml
         working-directory: docs
       - uses: actions/upload-pages-artifact@v5
         with:
