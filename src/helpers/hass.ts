@@ -2,13 +2,14 @@ import { Unpromise } from "@watchable/unpromise";
 import { selectTree } from "./selecttree";
 
 export function isEmbeddedPanel() {
-  let localEmbeddedPanel: boolean | undefined;
   try {
-    localEmbeddedPanel = window.self !== window.parent;
-  } catch (e) {
-    localEmbeddedPanel = false;
+    return Boolean(
+      window.self !== window.parent &&
+        (window.parent as any).customPanel?.panel?.config?._panel_custom?.name
+    );
+  } catch {
+    return false;
   }
-  return localEmbeddedPanel;
 }
 
 export function getCustomPanelName() {
@@ -16,8 +17,8 @@ export function getCustomPanelName() {
     try {
       const customPanel = (window.parent as any).customPanel;
       const customPanelName = customPanel?.panel?.config?._panel_custom?.name;
-      return customPanelName;
-    } catch (e) {
+      return customPanelName || null;
+    } catch {
       return null;
     }
   }
