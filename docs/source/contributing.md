@@ -80,6 +80,12 @@ For a German translation hosted at `https://example.github.io/uix-de/`, the fork
 
 The workflow reads this file, configures Zensical's language and site URL, writes the translation's `uix-docs.json`, and includes a footer identifying the UIX version the translated docs were generated against. A translation fork therefore uses the same workflow as the canonical documentation; no separate publishing setup is required.
 
+#### Maintaining a translation fork
+
+Keep `docs/source` as the unmodified English source in the translation fork. For a language code such as `de`, place the translated documentation in `docs/source-de`. The documentation workflow automatically builds `docs/source` for English and `docs/source-<language>` for every other language, based on `docs/site.json`.
+
+This layout lets you regularly pull or merge English documentation updates from the canonical UIX repository without overwriting the translation. Compare the changed English files with the matching files in `docs/source-de`, update the affected translations, and then rerun the documentation workflow. Do not change `docs_dir` in `docs/mkdocs.yml` for a translation fork.
+
 Once the translation site is publicly available, submit an upstream PR that adds one entry to the `languages` array in [`docs/translations.json`](https://github.com/Lint-Free-Technology/uix/blob/master/docs/translations.json):
 
 ```json

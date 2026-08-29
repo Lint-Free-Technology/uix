@@ -27,6 +27,10 @@ docs/
 - A translation fork uses `docs/site.json` to set its language, native name,
   public site URL, and canonical English URL before running the same docs
   release workflow. Preserve this workflow's fork compatibility.
+- Translation forks retain the canonical English files in `docs/source` and
+  place their translated files in `docs/source-<language>`. The release
+  preparation selects that directory automatically; do not change `docs_dir`
+  in `docs/mkdocs.yml`.
 - A translation must publish the `uix-docs.json` metadata contract described in
   `docs/source/contributing.md`. The documentation release workflow decides
   whether it is current enough to display; unavailable, invalid, or stale
