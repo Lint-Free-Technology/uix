@@ -61,7 +61,7 @@ element:
 | `start_icon` | `string` | | — | MDI icon string (e.g. `mdi:play`) displayed **before** the label. |
 | `end_icon` | `string` | | — | MDI icon string (e.g. `mdi:chevron-right`) displayed **after** the label. |
 | `variant` | `string` | | — | Button color variant. One of `brand`, `neutral`, `danger`, `warning`, `success`. When omitted, the default Home Assistant button variant `brand` is used, except when `icon` is set in which case `neutral` is default. |
-| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used, except when `icon` is set in which case `plain` is default. |
+| `appearance` | `string` | | — | Button appearance. One of `accent`, `filled`, `outlined`, `plain`. When omitted, the default Home Assistant button appearance `accent` is used, except when `icon` is set in which case `plain` is default. |
 | `size` | `string` | | — | Button size which can be `s` (small) or `m` (medium). |
 | `tap_action` | action | | — | Action to perform on tap. |
 | `hold_action` | action | | — | Action to perform on hold. |

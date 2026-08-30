@@ -52,7 +52,7 @@ const BUTTON_CSS = `
 `;
 
 const BUTTON_VARIANTS = ["brand", "neutral", "danger", "warning", "success"] as const;
-const BUTTON_APPEARANCES = ["accent", "filled", "plain"] as const;
+const BUTTON_APPEARANCES = ["accent", "filled", "outlined", "plain"] as const;
 
 type ButtonVariant = typeof BUTTON_VARIANTS[number];
 type ButtonAppearance = typeof BUTTON_APPEARANCES[number];
