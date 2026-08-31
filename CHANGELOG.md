@@ -1,3 +1,9 @@
+## [8.2.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.4...v8.2.0-beta.5) (2026-08-31)
+
+### ⭐ New Features
+
+* **broker:** Add button directive which allows to add a button in UI, similar to a forge button spark. ([21e3c01](https://github.com/Lint-Free-Technology/uix/commit/21e3c01346ae73e56567fb6d9323739276be975a))
+
 ## [8.2.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.3...v8.2.0-beta.4) (2026-08-31)
 
 ### ⭐ New Features
