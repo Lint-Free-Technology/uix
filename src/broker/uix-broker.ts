@@ -509,6 +509,13 @@ export class UixBroker {
           await this.waitAfterDirective(interaction, directive, index);
           continue;
         }
+        if (directive.type === "wait") {
+          if (directive.wait === undefined) throw new Error("wait directive requires wait");
+          this.debug(interaction, "directive application", { index, directive });
+          await this.waitAfterDirective(interaction, directive, index);
+          this.debug(interaction, "directive applied", { index, directive });
+          continue;
+        }
         const directiveAnchor = await this.resolveDirectiveAnchor(directive, anchor);
         if (!directiveAnchor) {
           this.debug(interaction, "directive anchor resolution", {

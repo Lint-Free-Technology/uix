@@ -217,7 +217,19 @@ Use JavaScript only from trusted UIX configurations.
 
 ## Wait
 
-Every directive accepts `wait`, a non-negative number of milliseconds. UIX Broker waits that long after applying the directive before starting the next one. A `block` directive always runs synchronously, though it can include `wait` to delay later directives.
+Use `wait` to pause a directive sequence without performing another operation. It requires a non-negative number of milliseconds.
+
+```yaml
+directives:
+  - type: wait
+    wait: 500
+  - type: action
+    action: light.turn_on
+    target:
+      entity_id: light.example
+```
+
+Every directive also accepts `wait`, a non-negative number of milliseconds. In that form, UIX Broker waits after applying the directive before starting the next one. A `block` directive always runs synchronously, though it can include `wait` to delay later directives.
 
 ```yaml
 directives:
