@@ -250,7 +250,7 @@ Outcome: A tools button that navigates to /config/tools.
 
 Method:
 
-- Listen for the `hass-toggle0-menu` event in the `browser` realm.
+- Listen for the `hass-toggle-menu` event in the `browser` realm.
 - Uses compact absolute anchor for `ha-sidebar`
 - The matching rule only passes when `user.is_admin` property of the `hass` object on `home-assistant` is true (this could also be `user.is_owner` to match only the owner user).
 - Uses `button` directive to place button after the title using simple style object to give a box-shadow and reduced icon size.
