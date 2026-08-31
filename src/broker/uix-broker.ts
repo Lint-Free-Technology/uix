@@ -3,6 +3,13 @@ import { BrowserID } from "../helpers/browser_id";
 import { hass } from "../helpers/hass";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import {
+  createHaButton,
+  dispatchHaButtonAction,
+  HA_BUTTON_CSS,
+  UixButtonConfig,
+  updateHaButton,
+} from "../helpers/dom/ha-button";
+import {
   UixBrokerAnchor,
   UixBrokerConfig,
   UixBrokerDirective,
@@ -29,6 +36,12 @@ export type UixBrokerAnchorHistoryEntry = {
 const UNSAFE_PROPERTY_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const BROKER_SELECT_TREE_TIMEOUT_MS = 2_000;
 const BROKER_SELECT_TREE_RETRY_MS = 50;
+const BROKER_BUTTON_WRAPPER_ATTR = "data-uix-broker-button";
+
+type BrokerButtonElement = HTMLElement & {
+  uixBrokerButtonConfig?: UixButtonConfig;
+  uixBrokerStyleProperties?: string[];
+};
 
 function isElement(value: unknown): value is Element {
   return value instanceof Element;
@@ -304,8 +317,11 @@ export class UixBroker {
   private configurationVersion = 0;
   private anchorHistory: UixBrokerAnchorHistoryEntry[] = [];
   private activeInteractions = new Set<UixBrokerInteraction>();
+  private buttonWrappers = new Set<HTMLElement>();
+  private buttonWrappersByDirective = new WeakMap<UixBrokerDirective, HTMLElement>();
 
   configure(config: UixBrokerConfig | UixBrokerInteraction[]) {
+    this.removeButtons();
     this.interactions = asInteractions(config);
     this.configurationVersion += 1;
     this.interactions.filter(isEnabled).forEach((interaction) => {
@@ -576,7 +592,9 @@ export class UixBroker {
     directive: UixBrokerDirective,
     interactionAnchor: Element,
   ): Promise<Element | null> {
-    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call") return interactionAnchor;
+    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button") {
+      return interactionAnchor;
+    }
     if (directive.anchor === undefined) return interactionAnchor;
     const { path, absolute } = parseOverrideAnchor(directive.anchor, `${directive.type} directive anchor`);
     return absolute ? this.waitForSelectTreeAnchor(path) : this.waitForSelectTreeAnchor(path, interactionAnchor);
@@ -740,6 +758,8 @@ export class UixBroker {
       await this.executeCall(directive, anchor, context.captured);
     } else if (directive.type === "action") {
       await this.executeAction(directive, anchor, context);
+    } else if (directive.type === "button") {
+      await this.executeButton(directive, anchor, context.captured);
     } else {
       console.warn(`UIX Broker: unknown directive type "${directive.type}".`);
     }
@@ -832,6 +852,127 @@ export class UixBroker {
       composed: true,
       detail: { config, action: "tap" },
     }));
+  }
+
+  private async executeButton(directive: UixBrokerDirective, anchor: Element, captured: Record<string, any>) {
+    const target = await this.resolveButtonTarget(directive, anchor);
+    if (!target) return;
+    const parent = target.parentElement || target.parentNode;
+    if (!parent) return;
+
+    let wrapper = this.buttonWrappersByDirective.get(directive);
+    if (wrapper && (!wrapper.isConnected || wrapper.parentNode !== parent)) {
+      wrapper.remove();
+      this.buttonWrappers.delete(wrapper);
+      wrapper = undefined;
+    }
+
+    let button: BrokerButtonElement;
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.setAttribute(BROKER_BUTTON_WRAPPER_ATTR, "");
+      wrapper.style.display = "contents";
+      wrapper.style.pointerEvents = "auto";
+
+      const style = document.createElement("style");
+      style.textContent = HA_BUTTON_CSS;
+      wrapper.appendChild(style);
+
+      const stopPropagation = (event: Event) => event.stopPropagation();
+      wrapper.addEventListener("click", stopPropagation);
+      wrapper.addEventListener("mousedown", stopPropagation);
+      wrapper.addEventListener("touchstart", stopPropagation);
+
+      const slot = target.getAttribute("slot");
+      if (slot) wrapper.setAttribute("slot", slot);
+
+      button = createHaButton(this.buttonConfig(directive, captured), (event) => {
+        dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
+      }) as BrokerButtonElement;
+      wrapper.appendChild(button);
+      this.buttonWrappers.add(wrapper);
+      this.buttonWrappersByDirective.set(directive, wrapper);
+    } else {
+      button = wrapper.querySelector("ha-button") as BrokerButtonElement;
+      if (!button) {
+        button = createHaButton(this.buttonConfig(directive, captured), (event) => {
+          dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
+        }) as BrokerButtonElement;
+        wrapper.appendChild(button);
+      }
+    }
+
+    this.clearButtonStyle(button);
+    button.uixBrokerButtonConfig = this.buttonConfig(directive, captured);
+    updateHaButton(button, button.uixBrokerButtonConfig);
+    this.applyButtonStyle(button, directive.style, captured);
+    this.placeButton(wrapper, target, directive.before !== undefined);
+  }
+
+  private async resolveButtonTarget(directive: UixBrokerDirective, anchor: Element): Promise<Element | null> {
+    if (directive.after !== undefined && directive.before !== undefined) {
+      throw new Error("button directive accepts either after or before, not both");
+    }
+    const path = directive.before ?? directive.after;
+    if (path === undefined) return anchor;
+    if (typeof path !== "string" || !path.trim()) {
+      throw new Error("button directive after or before must be a non-empty path relative to the directive anchor");
+    }
+    return this.waitForSelectTreeAnchor(path, anchor);
+  }
+
+  private buttonConfig(directive: UixBrokerDirective, captured: Record<string, any>): UixButtonConfig {
+    return resolveCaptured({
+      entity: directive.entity,
+      icon: directive.icon,
+      color: directive.color,
+      label: directive.label,
+      size: directive.size,
+      variant: directive.variant,
+      appearance: directive.appearance,
+      start_icon: directive.start_icon,
+      end_icon: directive.end_icon,
+      tap_action: directive.tap_action,
+      hold_action: directive.hold_action,
+      double_tap_action: directive.double_tap_action,
+    }, captured);
+  }
+
+  private clearButtonStyle(button: BrokerButtonElement) {
+    button.uixBrokerStyleProperties?.forEach((property) => button.style.removeProperty(property));
+    button.uixBrokerStyleProperties = [];
+  }
+
+  private applyButtonStyle(button: BrokerButtonElement, style: unknown, captured: Record<string, any>) {
+    if (style === undefined) return;
+    const resolvedStyle = resolveCaptured(style, captured);
+    if (!resolvedStyle || typeof resolvedStyle !== "object" || Array.isArray(resolvedStyle)) {
+      throw new Error("button directive style must be an object of CSS property names and values");
+    }
+    for (const [property, value] of Object.entries(resolvedStyle)) {
+      if (!property.trim() || (typeof value !== "string" && typeof value !== "number")) {
+        throw new Error("button directive style values must be strings or numbers");
+      }
+      button.style.setProperty(property, String(value));
+      button.uixBrokerStyleProperties.push(property);
+    }
+  }
+
+  private placeButton(wrapper: HTMLElement, target: Element, before: boolean) {
+    const parent = target.parentNode;
+    if (!parent) return;
+    if (before) {
+      if (wrapper.nextSibling !== target) parent.insertBefore(wrapper, target);
+      return;
+    }
+    const nextSibling = target.nextSibling;
+    if (nextSibling !== wrapper) parent.insertBefore(wrapper, nextSibling);
+  }
+
+  private removeButtons() {
+    this.buttonWrappers.forEach((wrapper) => wrapper.remove());
+    this.buttonWrappers.clear();
+    this.buttonWrappersByDirective = new WeakMap<UixBrokerDirective, HTMLElement>();
   }
 }
 

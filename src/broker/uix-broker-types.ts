@@ -31,8 +31,8 @@ export type UixBrokerTypedRule = {
 export type UixBrokerRule = string | UixBrokerHostElementRule | UixBrokerTypedRule;
 
 export type UixBrokerDirective = {
-  type: "block" | "action" | "property" | "event" | "call";
-  /** Optional select_tree target for property, event, and call directives. */
+  type: "block" | "action" | "property" | "event" | "call" | "button";
+  /** Optional select_tree target for property, event, call, and button directives. */
   anchor?: UixBrokerSelectTreeAnchor;
   /** Milliseconds to wait before applying the next directive. */
   wait?: number;

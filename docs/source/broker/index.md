@@ -13,7 +13,7 @@ UIX Broker turns browser events, keyboard shortcuts, and Home Assistant event-bu
 Realm → Listen → Interaction anchor → Rules (Optional anchors) → Directives (Optional anchors)
 ```
 
-Use UIX Broker when an interface behaviour can be configured rather than written as a custom card, script, or patch. UIX Broker can react to a click, customise an event before redispatching it, focus an element, update an object property, invoke a safe element method, and run JavaScript actions with interaction variables available.
+Use UIX Broker when an interface behaviour can be configured rather than written as a custom card, script, or patch. UIX Broker can react to a click, customise an event before redispatching it, focus an element, update an object property, invoke a safe element method, add an interactive button, and run JavaScript actions with interaction variables available.
 
 ```yaml
 uix_broker:
@@ -36,7 +36,7 @@ uix_broker:
 - [Realms](./realms.md) — browser events, keyboard shortcuts, and Home Assistant event-bus events.
 - [Interaction Anchors](./interaction-anchors.md) — composed event-path and `select_tree` element selection.
 - [Rules](./rules.md) — host-element, captured-data, and browser-identity matching.
-- [Directives](./directives.md) — `block`, `property`, `event`, `call`, and Home Assistant actions.
+- [Directives](./directives.md) — `block`, `property`, `event`, `call`, `button`, and Home Assistant actions.
 - [Examples](./examples.md) — examples. Also see [UIX Guides](https://uix-guides.lf.technology), where further detailed examples may be published.
 
 !!! note
