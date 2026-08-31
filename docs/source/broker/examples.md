@@ -30,7 +30,7 @@ uix_broker:
   - realm: browser
     listen: show-dialog
     anchor: '&home-assistant $ hui-dialog-create-card'
-    debug: true
+
     rules:
       - '@captured.dialogTag': hui-dialog-create-card
     directives:
@@ -232,7 +232,6 @@ Method:
   - realm: browser
     listen: show-dialog
     anchor: '&home-assistant $ add-automation-element-dialog'
-    debug: true
     rules:
       - '@captured.dialogTag': add-automation-element-dialog
     directives:
@@ -259,7 +258,6 @@ Method:
   - realm: browser
     listen: hass-toggle-menu
     anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
-    debug: true
     rules:
       - anchor: "&home-assistant"
         match: "{.hass.user.is_admin=true}"
