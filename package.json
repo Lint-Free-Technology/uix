@@ -36,7 +36,7 @@
     "@watchable/unpromise": "^1.0.2",
     "color-name": "^2.1.1",
     "compare-versions": "^6.1.1",
-    "js-yaml": "^5.4.0",
+    "js-yaml": "^5.4.1",
     "lit": "^3.3.3",
     "memoize-one": "^6.0.0",
     "parse-duration": "^2.1.8",
