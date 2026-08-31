@@ -14,7 +14,9 @@ There is no style passed to apply_uix here, everything comes only from themes.
 class HaConfigPatch extends ModdedElement {
   updated(_orig, ...args) {
     _orig?.(...args);
-    apply_uix(this, "config", { prepend: true });
+    if (args[0].has("route")) {
+      apply_uix(this, "config", { prepend: true });
+    }
   }
 }
 
@@ -26,7 +28,9 @@ Patch ha-panel-custom
 class HaPanelCustomPatch extends ModdedElement {
   updated(_orig, ...args) {
     _orig?.(...args);
-    apply_uix(this, "panel-custom", { prepend: true });
+    if (args[0].has("route") || args[0].has("panel")) {
+      apply_uix(this, "panel-custom", { prepend: true });
+    }
   }
   _createPanel(_orig, ...args) {
     _orig?.(...args);
