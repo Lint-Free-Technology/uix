@@ -43,6 +43,12 @@ Each interaction is independent. All of its rules must match before directives r
 
 `reentrant: false` is useful when an interaction dispatches the same event that started it. The interaction is considered active while anchors are resolving, directives are running, and directive waits are in progress.
 
+## Broker ready event
+
+After UIX Broker applies its configuration, it dispatches a `uix-broker-ready` browser event on `window`. The event fires after Broker has registered its browser-realm listeners, so an interaction can listen to this event to apply an initial UI customisation. It also fires after every Broker configuration reload.
+
+See [Add tools button to sidebar title](./examples.md#add-tools-button-to-sidebar-title) for an example using this event.
+
 ## Configuration sources
 
 Configure interactions in one or more of the following ways:

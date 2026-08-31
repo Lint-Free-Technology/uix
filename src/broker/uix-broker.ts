@@ -333,6 +333,7 @@ export class UixBroker {
     this.rebuildBrowserListeners();
     this.rebuildShortcutListeners();
     void this.rebuildServerListeners(this.configurationVersion);
+    window.dispatchEvent(new CustomEvent("uix-broker-ready"));
   }
 
   get config(): UixBrokerInteraction[] {

@@ -256,7 +256,7 @@ Method:
 
 ```yaml
   - realm: browser
-    listen: hass-toggle-menu
+    listen: uix-broker-ready
     anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
     rules:
       - anchor: "&home-assistant"
