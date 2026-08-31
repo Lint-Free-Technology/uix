@@ -1,3 +1,10 @@
+## [8.2.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.5...v8.2.0-beta.6) (2026-08-31)
+
+### ⭐ New Features
+
+* **broker:** Add `uix-broker-ready` event which can be used as `listen` in browser realm. Update tools sidebar button example. ([3b5110f](https://github.com/Lint-Free-Technology/uix/commit/3b5110f22aaceb068f4218bc0f46d7b36b63f12a))
+* **broker:** Add standalone wait directive. ([a86e81f](https://github.com/Lint-Free-Technology/uix/commit/a86e81ff22b8cdaf06984544d6bb0bc20a167b96))
+
 ## [8.2.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.4...v8.2.0-beta.5) (2026-08-31)
 
 ### ⭐ New Features
