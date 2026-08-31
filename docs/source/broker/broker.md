@@ -77,7 +77,7 @@ Captured-data and browser-identity rules run synchronously before interaction-an
 
 Because the `block` [directive](directives.md) must run synchronously, interactions containing `block` require their [interaction anchor](interaction-anchors.md) and [host-element rule](rules.md#host-element-rules) anchors to be immediately available. UIX Broker makes one synchronous lookup; if either is unavailable, it skips the interaction.
 
-After a blocking interaction has resolved and applied `block`, anchors supplied by later `property`, `event`, and `call` directives still use the normal asynchronous retry behaviour.
+After a blocking interaction has resolved and applied `block`, anchors supplied by later `property`, `event`, `call`, and `button` directives still use the normal asynchronous retry behaviour.
 
 For interactions without `block`, missing [interaction anchors](interaction-anchors.md) and [host-element rule](rules.md#host-element-rules) anchors are retried every 50 ms for up to two seconds. This permits an interaction listening to a browser event such as `show-dialog` to wait for the dialog to mount before selecting the dialog or one of its elements as the interaction anchor.
 

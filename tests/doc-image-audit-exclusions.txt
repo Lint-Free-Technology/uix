@@ -26,3 +26,7 @@ docs/source/assets/page-assets/forge/sparks/attribute-replace-template-manually-
 
 docs/source/assets/page-assets/using/custom-panel-browser-mod.png
 docs/source/assets/page-assets/using/custom-panel-hacs.png
+
+# Broker
+
+docs/source/assets/page-assets/broker/broker-button-directive.png

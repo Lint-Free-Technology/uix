@@ -243,3 +243,38 @@ Method:
         set: _selectedGroup
         value: entity
 ```
+
+## Add tools button to sidebar title
+
+Outcome: A tools button that navigates to /config/tools.
+
+Method:
+
+- Listen for the `hass-toggle0-menu` event in the `browser` realm.
+- Uses compact absolute anchor for `ha-sidebar`
+- The matching rule only passes when `user.is_admin` property of the `hass` object on `home-assistant` is true (this could also be `user.is_owner` to match only the owner user).
+- Uses `button` directive to place button after the title using simple style object to give a box-shadow and reduced icon size.
+
+```yaml
+  - realm: browser
+    listen: hass-toggle-menu
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    debug: true
+    rules:
+      - anchor: "&home-assistant"
+        match: "{.hass.user.is_admin=true}"
+    directives:
+      - type: button
+        anchor: "$ div.menu div.title"
+        icon: mdi:hammer
+        color: purple
+        size: s
+        tap_action:
+          action: navigate
+          navigation_path: /config/tools
+        style:
+          "--ha-button-box-shadow": rgba(0, 0, 0, 0.1) 0px 4px 12px
+          "--ha-icon-button-size": 32px
+```
+
+![Broker button directive example](../assets/page-assets/broker/broker-button-directive.png){ width="450" }

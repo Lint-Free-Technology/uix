@@ -13,6 +13,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Property](#property) — set or clear a JavaScript object property.
 - [Event](#event) — dispatch a `CustomEvent`.
 - [Call](#call) — invoke an element method.
+- [Button](#button) — insert an interactive Home Assistant button.
 - [Action](#action) — run a Home Assistant, frontend, or UIX action.
 - [Wait](#wait) — delay the next directive.
 
@@ -28,7 +29,7 @@ It is available only in `browser` and `shortcut` realms. The interaction anchor 
 
 ## Directive anchors
 
-`property`, `event`, and `call` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
+`property`, `event`, `call`, and `button` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
 
 ```yaml
 directives:
@@ -105,6 +106,82 @@ Set `capture_data: true` to copy captured event data into a modified event. The 
   method: setSelectionRange
   args: [0, 5]
 ```
+
+## Button
+
+`button` inserts a Home Assistant `ha-button` beside the directive anchor. It uses the same button configuration and action handling as the [Forge button spark](../forge/sparks/button.md). The button is inserted after the directive anchor by default.
+
+Use `after` or `before` to select a different reference element. These paths are relative to the resolved directive anchor and support the usual UIX `select_tree` syntax. The button is still inserted as a sibling of the matched reference element.
+
+```yaml
+- type: button
+  label: Toggle
+  entity: light.living_room
+  tap_action:
+    action: toggle
+```
+
+```yaml
+- type: button
+  anchor: "$ ha-dialog"
+  before: "div.header"
+  label: Toggle
+  entity: light.living_room
+  tap_action:
+    action: toggle
+```
+
+Use `style` for a flat mapping of CSS property names and values. The properties are set inline on the generated `ha-button`, which is useful for button dimensions and spacing that cannot be styled from dashboard configuration.
+
+```yaml
+- type: button
+  anchor: "$ div.menu div.title"
+  icon: mdi:hammer
+  color: red
+  size: s
+  tap_action:
+    action: navigate
+    navigation_path: /config/tools
+  style:
+    "--ha-button-box-shadow": rgba(0, 0, 0, 0.1) 0px 4px 12px
+    "--ha-icon-button-size": 32px
+```
+
+### Further UIX styling
+
+Use `style` for simple inline properties. For further customisation, use UIX styling — normally through a theme. First create the button, select the generated `ha-button` in your browser's element inspector, then run `uix_path($0)` to generate the appropriate theme variable and selector path.
+
+Use a theme when you need templates or styles inside a shadow root. See [DOM navigation](../concepts/dom.md) for selector paths and [UIX application](../concepts/application.md) for how UIX styling is applied.
+
+For example, a button inserted into the sidebar can be styled through `uix-sidebar-yaml`:
+
+```yaml
+uix-sidebar-yaml: |
+  .: |
+    div[data-uix-broker-button] ha-button {
+      --uix-button-margin: 6px;
+    }
+```
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `after` | `string` | directive anchor | Relative selector for the reference element. The button is inserted after it. |
+| `before` | `string` | — | Relative selector for the reference element. The button is inserted before it. |
+| `entity` | `string` | — | Entity ID used by entity-based actions. |
+| `icon` | `string` | — | MDI icon placed in the button label slot. It takes precedence over `label`. |
+| `color` | `string` | — | Icon colour for an icon-only button. |
+| `label` | `string` | `""` | Button label. |
+| `start_icon` / `end_icon` | `string` | — | MDI icon before or after the label. |
+| `variant` | `string` | Home Assistant default | `brand`, `neutral`, `danger`, `warning`, or `success`. Icon-only buttons default to `neutral`. |
+| `appearance` | `string` | Home Assistant default | `accent`, `filled`, `outlined`, or `plain`. Icon-only buttons default to `plain`. |
+| `size` | `string` | — | `s` (small) or `m` (medium). |
+| `style` | object | — | Flat map of CSS property names and string or numeric values, set inline on `ha-button`. |
+| `tap_action` / `hold_action` / `double_tap_action` | action | — | Home Assistant action to run from the button. |
+
+!!! note
+    - Set at most one of `after` and `before`.
+    - Button clicks are isolated from the reference element's own action handler.
+    - The same `--uix-button-margin` and `--uix-button-label-text-wrap` CSS variables as the Forge button spark apply. The default margin is `-6px` for a labelled button and `0px` for an icon-only button.
 
 ## Action
 
