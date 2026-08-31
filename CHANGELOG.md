@@ -1,3 +1,17 @@
+## [8.2.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.3...v8.2.0-beta.4) (2026-08-31)
+
+### ⭐ New Features
+
+* **forge:** Add `outlined` as an appearance option to button spark. Update docs and visual example. ([0254777](https://github.com/Lint-Free-Technology/uix/commit/02547770dd7b18f129238a78393f1218fe14a4bc))
+
+### 🐞 Bug Fixes
+
+* UIX theme styling not always applied to config pages and custom panels when page/panel is initial page loaded. ([209e388](https://github.com/Lint-Free-Technology/uix/commit/209e388cb3c5594b5796b8045c7d0f2156708af0)), references [#573](https://github.com/Lint-Free-Technology/uix/issues/573)
+
+### 📔 Documentation
+
+* register German translation ([e079f50](https://github.com/Lint-Free-Technology/uix/commit/e079f50808e9488d5c5577d42f422d4627b5ca91))
+
 ## [8.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.2...v8.2.0-beta.3) (2026-08-29)
 
 ### 🐞 Bug Fixes
