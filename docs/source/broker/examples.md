@@ -300,7 +300,7 @@ Method:
 
 Outcome:
 
-- Make the device entities suggested card for section views an entities card, as it suggests for non-section views.
+- Make the device entities suggested card for section views an entities card. NOTE: This is not the same as what is suggested for other views which is based on entity domain.
 
 Method:
 
@@ -310,7 +310,7 @@ Method:
 - The interaction anchor is `&home-assistant`. Since the directives include `block`, an anchor that exists synchronously is required. Alternatively, `anchor: target` could be used as the event-path anchor, with `anchor: "&home-assistant"` set on the event directive.
 - Directives:
     - A `block` directive stops propagation on the original event.
-    - An `event` directive re-dispatches the event with a modified `dialogParams.sectionConfig`, setting `cards` to a single `entities` card with the entities used for a masonry view. `sectionConfig.type` and `sectionConfig.title` are copied from captured data using the `@captured` form. To avoid copying the rest of the event data object by object, `capture_data: deep` performs a deep merge of `sectionConfig`.
+    - An `event` directive re-dispatches the event with a modified `dialogParams.sectionConfig`, setting `cards` to a single `entities`. `sectionConfig.type` and `sectionConfig.title` are copied from captured data using the `@captured` form. To avoid copying the rest of the event data object by object, `capture_data: deep` performs a deep merge of `sectionConfig`.
 
 ```yaml
   - realm: browser
@@ -334,5 +334,5 @@ Method:
               title: "@captured.dialogParams.sectionConfig.title"
               cards:
                 - type: entities
-                  entities: "@captured.dialogParams.cardConfig.[0].entities"
+                  entities: "@captured.dialogParams.entities"
 ```
