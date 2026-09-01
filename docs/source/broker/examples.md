@@ -294,3 +294,44 @@ Method:
 ```
 
 ![Broker button directive example](../assets/page-assets/broker/broker-button-directive.png){ width="450" }
+
+## Change device entities suggested card back to entities for section views
+
+Outcome:
+
+- Make the device entities suggested card for section views an entities card, as it suggests for non-section views.
+
+Method:
+
+- Listen for the `show-dialog` event in the `browser` realm.
+- The matching rule passes only when the `show-dialog` event's `dialogTag` is `hui-dialog-suggest-card`.
+- The interaction is set as `reentrant: false` because it fires `show-dialog` itself.
+- The interaction anchor is `&home-assistant`. Since the directives include `block`, an anchor that exists synchronously is required. Alternatively, `anchor: target` could be used as the event-path anchor, with `anchor: "&home-assistant"` set on the event directive.
+- Directives:
+  - A `block` directive stops propagation on the original event.
+  - An `event` directive re-dispatches the event with a modified `dialogParams.sectionConfig`, setting `cards` to a single `entities` card with the entities used for a masonry view. `sectionConfig.type` and `sectionConfig.title` are copied from captured data using the `@captured` form. To avoid copying the rest of the event data object by object, `capture_data: deep` performs a deep merge of `sectionConfig`.
+
+```yaml
+  - realm: browser
+    listen: show-dialog
+    debug: true
+    reentrant: false
+    anchor: "&home-assistant"
+    rules:
+      - "@captured.dialogTag": hui-dialog-suggest-card
+    directives:
+      - type: block
+      - type: event
+        name: show-dialog
+        bubbles: true
+        composed: true
+        capture_data: deep
+        data:
+          dialogParams:
+            sectionConfig:
+              type: "@captured.dialogParams.sectionConfig.type"
+              title: "@captured.dialogParams.sectionConfig.title"
+              cards:
+                - type: entities
+                  entities: "@captured.dialogParams.cardConfig.[0].entities"
+```

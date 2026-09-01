@@ -64,7 +64,7 @@ See [Finding paths in the browser console](./interaction-anchors.md#finding-path
   clear: config.icon
 ```
 
-Values can refer to captured data. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
+Values can refer to captured data. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. Array indexes can use either dot notation (`items.0`) or brackets (`items[0]`). The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
 
 ```yaml
 - type: property
@@ -85,7 +85,7 @@ Values can refer to captured data. `@captured` resolves to the complete captured
     entity: light.bed_light
 ```
 
-Set `capture_data: true` to copy captured event data into a modified event. The outgoing event's `detail` starts with the initiating interaction's captured data, then overlays values from this directive's `data` object. The `capture_data` option is only available to the `event` directive.
+Set `capture_data: true` to copy captured event data into a modified event. The outgoing event's `detail` starts with the initiating interaction's captured data, then shallowly overlays values from this directive's `data` object. The `capture_data` option is only available to the `event` directive.
 
 ```yaml
 - type: event
@@ -93,6 +93,17 @@ Set `capture_data: true` to copy captured event data into a modified event. The 
   capture_data: true
   data:
     source: uixBroker
+```
+
+Set `capture_data: deep` when nested plain objects should be merged instead. Directive `data` wins for conflicting values; arrays and non-plain objects are replaced as complete values. This leaves `capture_data: true` unchanged.
+
+```yaml
+- type: event
+  name: broker-forwarded-event
+  capture_data: deep
+  data:
+    params:
+      source: uixBroker
 ```
 
 ## Call

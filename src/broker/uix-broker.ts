@@ -106,9 +106,28 @@ function isHostElementRule(rule: UixBrokerRule): rule is string | UixBrokerHostE
   );
 }
 
+/**
+ * Captured references use dot-separated properties, with numeric array indexes.
+ * Accept bracketed numeric indexes too, so `items.0` and `items[0]` are
+ * interchangeable (including the common `items.[0]` spelling).
+ */
+function capturedPathSegments(path: string): string[] | null {
+  const segments: string[] = [];
+  for (const part of path.split(".")) {
+    if (!part) return null;
+    const match = /^([^\[\]]+)?((?:\[\d+\])*)$/.exec(part);
+    if (!match || (!match[1] && !match[2])) return null;
+    if (match[1]) segments.push(match[1]);
+    for (const index of match[2].match(/\[\d+\]/g) ?? []) segments.push(index.slice(1, -1));
+  }
+  return segments;
+}
+
 function getCapturedPathValue(value: unknown, path: string): { exists: boolean; value: unknown } {
   let current = value;
-  for (const key of path.split(".")) {
+  const segments = capturedPathSegments(path);
+  if (!segments) return { exists: false, value: undefined };
+  for (const key of segments) {
     if (current == null || UNSAFE_PROPERTY_KEYS.has(key)) return { exists: false, value: undefined };
     const target = Object(current) as Record<string, unknown>;
     if (!Object.prototype.hasOwnProperty.call(target, key)) return { exists: false, value: undefined };
@@ -134,6 +153,35 @@ function resolveCaptured(value: any, captured: Record<string, any>): any {
     }, {});
   }
   return value;
+}
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Recursively overlays plain-object values without mutating captured event data.
+ * Arrays and non-plain objects are complete replacements, matching normal event
+ * detail expectations.
+ */
+function deepMergeEventData(
+  captured: Record<string, any>,
+  data: Record<string, any>,
+): Record<string, any> {
+  const merged: Record<string, any> = {};
+  for (const [key, capturedValue] of Object.entries(captured)) {
+    if (!UNSAFE_PROPERTY_KEYS.has(key)) merged[key] = capturedValue;
+  }
+  for (const [key, dataValue] of Object.entries(data)) {
+    if (UNSAFE_PROPERTY_KEYS.has(key)) continue;
+    const capturedValue = merged[key];
+    merged[key] = capturedValue !== dataValue && isPlainObject(capturedValue) && isPlainObject(dataValue)
+      ? deepMergeEventData(capturedValue, dataValue)
+      : dataValue;
+  }
+  return merged;
 }
 
 /**
@@ -798,8 +846,11 @@ export class UixBroker {
   private executeEvent(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     if (typeof directive.name !== "string" || !directive.name) throw new Error("event directive requires name");
     const data = resolveCaptured(directive.data ?? {}, context.captured);
+    const eventData = data && typeof data === "object" && !Array.isArray(data) ? data : {};
     const detail = directive.capture_data
-      ? { ...context.captured, ...(data && typeof data === "object" && !Array.isArray(data) ? data : {}) }
+      ? directive.capture_data === "deep"
+        ? deepMergeEventData(context.captured, eventData)
+        : { ...context.captured, ...eventData }
       : data;
     const event = new CustomEvent(directive.name, {
       bubbles: directive.bubbles ?? false,
