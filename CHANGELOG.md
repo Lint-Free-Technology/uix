@@ -1,3 +1,9 @@
+## [8.2.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.6...v8.2.0-beta.7) (2026-09-01)
+
+### ⭐ New Features
+
+* **broker+action:** Add `event` UIX Action. Inject target of UIX Broker button action to UIX Action as `event` dispatch target. Allows UIX Broker buttons to fire a Browser event on its target. ([d5ef901](https://github.com/Lint-Free-Technology/uix/commit/d5ef90106067d9ebf548a806371300c94bfdddf6))
+
 ## [8.2.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.5...v8.2.0-beta.6) (2026-08-31)
 
 ### ⭐ New Features
