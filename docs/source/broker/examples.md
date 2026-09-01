@@ -76,6 +76,7 @@ Combine this with the following example to allow changing YAML mode; by itself, 
 Outcome:
 
 - Set the automation sidebar to YAML mode.
+- Add button in automation sidebar header to toggle YAML mode.
 
 Method:
 
@@ -84,6 +85,7 @@ Method:
 - The interaction anchor is `manual-automation-editor`, which is found through an outward search across the event's composed path and shadow-root boundaries.
 - Use a short-form host-element path selection rule to continue only when `uixBlockAutoYamlMode` does **not** exist on the interaction anchor's JavaScript object. This is important when combined with the following example.
 - Use a call directive to invoke `_toggleYamlMode()` on `ha-automation-sidebar`, resolved by searching the first shadow root of the interaction anchor, `manual-automation-editor`.
+- Use a button directive to place a button before the three dots sidebar menu. The action used in UIX `event` action to which UIX Broker injects the anchor element so `toggle-yaml-mode` bubbles up through `manual-automation-editor` allowing the next example, [Allow toggle YAML mode in automation editor](#allow-toggle-yaml-mode-in-automation-editor) to cover both the stock toggle button in the dropdown as well as the added UIX Broker button.
 
 ```yaml
   - realm: browser
@@ -98,6 +100,14 @@ Method:
       - anchor: $ ha-automation-sidebar
         method: _toggleYamlMode
         type: call
+      - type: button
+        before: $ ha-automation-sidebar $$ ha-automation-sidebar-card $ ha-dialog-header slot:nth-of-type(3) ha-dropdown
+        icon: mdi:code-braces
+        tap_action:
+          action: fire-dom-event
+          uix:
+            action: event
+            name: toggle-yaml-mode
 ```
 
 ### Allow toggle YAML mode in automation editor
@@ -185,6 +195,14 @@ Method:
           - anchor: $ ha-automation-sidebar
             method: _toggleYamlMode
             type: call
+          - type: button
+            before: $ ha-automation-sidebar $$ ha-automation-sidebar-card $ ha-dialog-header slot:nth-of-type(3) ha-dropdown
+            icon: mdi:code-braces
+            tap_action:
+              action: fire-dom-event
+              uix:
+                action: event
+                name: toggle-yaml-mode
       - realm: browser
         listen: toggle-yaml-mode
         anchor: manual-automation-editor <$$ target

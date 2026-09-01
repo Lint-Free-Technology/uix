@@ -894,7 +894,7 @@ export class UixBroker {
       const slot = target.getAttribute("slot");
       if (slot) wrapper.setAttribute("slot", slot);
 
-      button = createHaButton(this.buttonConfig(directive, captured), (event) => {
+      button = createHaButton(this.buttonConfig(directive, captured, target), (event) => {
         dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
       }) as BrokerButtonElement;
       wrapper.appendChild(button);
@@ -903,7 +903,7 @@ export class UixBroker {
     } else {
       button = wrapper.querySelector("ha-button") as BrokerButtonElement;
       if (!button) {
-        button = createHaButton(this.buttonConfig(directive, captured), (event) => {
+        button = createHaButton(this.buttonConfig(directive, captured, target), (event) => {
           dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
         }) as BrokerButtonElement;
         wrapper.appendChild(button);
@@ -911,7 +911,7 @@ export class UixBroker {
     }
 
     this.clearButtonStyle(button);
-    button.uixBrokerButtonConfig = this.buttonConfig(directive, captured);
+    button.uixBrokerButtonConfig = this.buttonConfig(directive, captured, target);
     updateHaButton(button, button.uixBrokerButtonConfig);
     this.applyButtonStyle(button, directive.style, captured);
     this.placeButton(wrapper, target, directive.before !== undefined);
@@ -921,7 +921,7 @@ export class UixBroker {
     if (directive.after !== undefined && directive.before !== undefined) {
       throw new Error("button directive accepts either after or before, not both");
     }
-    const path = directive.before ?? directive.after;
+    const path = directive.after ?? directive.before;
     if (path === undefined) return anchor;
     if (typeof path !== "string" || !path.trim()) {
       throw new Error("button directive after or before must be a non-empty path relative to the directive anchor");
@@ -929,8 +929,12 @@ export class UixBroker {
     return this.waitForSelectTreeAnchor(path, anchor);
   }
 
-  private buttonConfig(directive: UixBrokerDirective, captured: Record<string, any>): UixButtonConfig {
-    return resolveCaptured({
+  private buttonConfig(
+    directive: UixBrokerDirective,
+    captured: Record<string, any>,
+    anchor: Element,
+  ): UixButtonConfig {
+    const config = resolveCaptured({
       entity: directive.entity,
       icon: directive.icon,
       color: directive.color,
@@ -944,6 +948,17 @@ export class UixBroker {
       hold_action: directive.hold_action,
       double_tap_action: directive.double_tap_action,
     }, captured);
+    this.setEventActionAnchor(config, anchor);
+    return config;
+  }
+
+  private setEventActionAnchor(config: UixButtonConfig, anchor: Element) {
+    for (const actionKey of ["tap_action", "hold_action", "double_tap_action"] as const) {
+      const action = config[actionKey];
+      if (action?.action !== "fire-dom-event") continue;
+      const uix = action.uix ?? action.card_mod;
+      if (uix?.action === "event") uix.anchor = anchor;
+    }
   }
 
   private clearButtonStyle(button: BrokerButtonElement) {
