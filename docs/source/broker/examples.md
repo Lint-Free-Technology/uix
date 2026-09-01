@@ -17,13 +17,14 @@ Outcome:
 
 Method:
 
+<!-- markdownlint-configure-file {"MD007": { "indent": 4 }} -->
 - Listen to `show-dialog` in the `browser` realm.
 - The matching rule passes only when the `show-dialog` event's `dialogTag` is `hui-dialog-create-card`.
 - Use an absolute short-form interaction anchor that matches the dialog (`hui-dialog-create-card`).
 - Directives:
-  - Set the dialog's `_currTab` property to `card`. As this property is reactive, there is no need to force an update.
-  - Set the first expander's `expanded` property to `true`, using a relative short-form anchor.
-  - Set the other expanders' `expanded` property to `false`, using relative short-form anchors.
+    - Set the dialog's `_currTab` property to `card`. As this property is reactive, there is no need to force an update.
+    - Set the first expander's `expanded` property to `true`, using a relative short-form anchor.
+    - Set the other expanders' `expanded` property to `false`, using relative short-form anchors.
 
 ```yaml
 uix_broker:
@@ -125,10 +126,10 @@ Method:
 - Listen to `toggle-yaml-mode` in the `browser` realm.
 - The interaction anchor is `manual-automation-editor`, which is found through an outward search across the event's composed path and shadow-root boundaries.
 - Directives:
-  - Block the event because it will be handled directly.
-  - Set `uixBlockAutoYamlMode` to `true` on `manual-automation-editor`.
-  - Use a call directive to invoke `_toggleYamlMode()` on `ha-automation-sidebar`, resolved by searching the first shadow root of the interaction anchor, `manual-automation-editor`. As the previous example checks for the absence of `uixBlockAutoYamlMode`, it does not proceed with its directive to force YAML mode.
-  - Clear `uixBlockAutoYamlMode` so the previous example once again forces YAML mode when the sidebar opens.
+    - Block the event because it will be handled directly.
+    - Set `uixBlockAutoYamlMode` to `true` on `manual-automation-editor`.
+    - Use a call directive to invoke `_toggleYamlMode()` on `ha-automation-sidebar`, resolved by searching the first shadow root of the interaction anchor, `manual-automation-editor`. As the previous example checks for the absence of `uixBlockAutoYamlMode`, it does not proceed with its directive to force YAML mode.
+    - Clear `uixBlockAutoYamlMode` so the previous example once again forces YAML mode when the sidebar opens.
 
 ```yaml
   - realm: browser
@@ -157,9 +158,9 @@ Method:
 - Listen for a keyboard shortcut in the `shortcut` realm (`$mod+Shift+Y` in the code below; change it to suit).
 - Use the absolute interaction anchor `&home-assistant $$ manual-automation-editor` because the keyboard shortcut target can be any DOM element.
 - Directives:
-  - Set `uixBlockAutoYamlMode` to `true` on `manual-automation-editor`.
-  - Use a call directive to invoke `_toggleYamlMode()` on `ha-automation-sidebar`, resolved by searching the first shadow root of the interaction anchor, `manual-automation-editor`. As the automatic YAML-mode example checks for the absence of `uixBlockAutoYamlMode`, it does not proceed with its directive to force YAML mode.
-  - Clear `uixBlockAutoYamlMode` so the automatic YAML-mode example once again forces YAML mode when the sidebar opens.
+    - Set `uixBlockAutoYamlMode` to `true` on `manual-automation-editor`.
+    - Use a call directive to invoke `_toggleYamlMode()` on `ha-automation-sidebar`, resolved by searching the first shadow root of the interaction anchor, `manual-automation-editor`. As the automatic YAML-mode example checks for the absence of `uixBlockAutoYamlMode`, it does not proceed with its directive to force YAML mode.
+    - Clear `uixBlockAutoYamlMode` so the automatic YAML-mode example once again forces YAML mode when the sidebar opens.
 
 ```yaml
   - realm: shortcut
@@ -243,8 +244,8 @@ Method:
 - The matching rule passes only when the `show-dialog` event's `dialogTag` is `add-automation-element-dialog`.
 - Use an absolute short-form interaction anchor that matches the dialog (`add-automation-element-dialog`).
 - Directives:
-  - Set the `_tab` property to `groups`; `groups` is the value for By Type.
-  - Set `_selectedGroup` to `entity` to focus on the generic entity triggers.
+    - Set the `_tab` property to `groups`; `groups` is the value for By Type.
+    - Set `_selectedGroup` to `entity` to focus on the generic entity triggers.
 
 ```yaml
   - realm: browser
@@ -308,8 +309,8 @@ Method:
 - The interaction is set as `reentrant: false` because it fires `show-dialog` itself.
 - The interaction anchor is `&home-assistant`. Since the directives include `block`, an anchor that exists synchronously is required. Alternatively, `anchor: target` could be used as the event-path anchor, with `anchor: "&home-assistant"` set on the event directive.
 - Directives:
-  - A `block` directive stops propagation on the original event.
-  - An `event` directive re-dispatches the event with a modified `dialogParams.sectionConfig`, setting `cards` to a single `entities` card with the entities used for a masonry view. `sectionConfig.type` and `sectionConfig.title` are copied from captured data using the `@captured` form. To avoid copying the rest of the event data object by object, `capture_data: deep` performs a deep merge of `sectionConfig`.
+    - A `block` directive stops propagation on the original event.
+    - An `event` directive re-dispatches the event with a modified `dialogParams.sectionConfig`, setting `cards` to a single `entities` card with the entities used for a masonry view. `sectionConfig.type` and `sectionConfig.title` are copied from captured data using the `@captured` form. To avoid copying the rest of the event data object by object, `capture_data: deep` performs a deep merge of `sectionConfig`.
 
 ```yaml
   - realm: browser
