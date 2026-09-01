@@ -1,3 +1,9 @@
+## [8.2.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.7...v8.2.0-beta.8) (2026-09-01)
+
+### ⭐ New Features
+
+* **broker:** `event` directive now supports `captured_data: deep` to do a deep merge of interaction captured data and `event.data`. ([27c164a](https://github.com/Lint-Free-Technology/uix/commit/27c164acae2beef096b82778445bbb465e3112de))
+
 ## [8.2.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.6...v8.2.0-beta.7) (2026-09-01)
 
 ### ⭐ New Features
