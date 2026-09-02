@@ -47,7 +47,7 @@ Use a browser-realm `listen` list when the same interaction should run for more 
 - realm: browser
   listen:
     - uix-broker-ready
-    - uix_update
+    - uix-update
   anchor: '&home-assistant'
   directives:
     - type: call
