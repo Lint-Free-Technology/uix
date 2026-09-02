@@ -532,7 +532,7 @@ export class UixForge extends LitElement {
 
     if (!this._uixUpdateListener) {
       this._uixUpdateListener = (ev: Event) => this._onUixUpdate(ev);
-      document.addEventListener("uix_update", this._uixUpdateListener);
+      document.addEventListener("uix-update", this._uixUpdateListener);
     }
 
     // Listen for foundry updates from the coordinator
@@ -598,7 +598,7 @@ export class UixForge extends LitElement {
     this._sparkController.disconnectedCallback();
 
     if (this._uixUpdateListener) {
-      document.removeEventListener("uix_update", this._uixUpdateListener);
+      document.removeEventListener("uix-update", this._uixUpdateListener);
       this._uixUpdateListener = undefined;
     }
 

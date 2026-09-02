@@ -34,13 +34,13 @@ All realms support [rules](rules.md) and [directives](directives.md). The select
       value: card
 ```
 
-For example, run one interaction after Broker starts and whenever a panel update emits `uix_update`:
+For example, run one interaction after Broker starts and whenever a panel update emits `uix-update`:
 
 ```yaml
 - realm: browser
   listen:
     - uix-broker-ready
-    - uix_update
+    - uix-update
   anchor: '&home-assistant'
   directives:
     - type: call

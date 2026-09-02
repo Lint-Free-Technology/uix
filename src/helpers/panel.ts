@@ -182,7 +182,7 @@ function _refresh_panel_state(dispatchOnChange = true) {
     if (dispatchOnChange && changed) {
       LastDispatchedPanelState = panelStateKey;
       document.dispatchEvent(
-        new CustomEvent("uix_update", { detail: { variablesChanged: true } })
+        new CustomEvent("uix-update", { detail: { variablesChanged: true } })
       );
     } else if (LastDispatchedPanelState === null) {
       LastDispatchedPanelState = panelStateKey;
