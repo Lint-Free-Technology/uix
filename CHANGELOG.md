@@ -1,3 +1,10 @@
+## [8.2.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.8...v8.2.0-beta.9) (2026-09-02)
+
+### ⭐ New Features
+
+* **broker:** Add typed rules `hash` and `search` to allow for rules based on Browser hash and search string. ([f75e153](https://github.com/Lint-Free-Technology/uix/commit/f75e153906b9db11432ed9fa55beea1761aecad6))
+* **broker:** New rule type `panel`. Allow `event` directive to fire on window or document with new `target` parameter (defaults to anchor). ([b1f3504](https://github.com/Lint-Free-Technology/uix/commit/b1f35043641d7a620453b42c774b0b2a8e70d11a))
+
 ## [8.2.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.7...v8.2.0-beta.8) (2026-09-01)
 
 ### ⭐ New Features
