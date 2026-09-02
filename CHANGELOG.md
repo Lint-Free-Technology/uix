@@ -1,3 +1,9 @@
+## [8.2.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.10...v8.2.0-beta.11) (2026-09-02)
+
+### ⚙️ Miscellaneous
+
+* Migrate snake-case `uix_update` event to kebab-case `uix-update` ([23e1d0a](https://github.com/Lint-Free-Technology/uix/commit/23e1d0a8eb49d6d73e4f0f41fb38a2387272953c))
+
 ## [8.2.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.9...v8.2.0-beta.10) (2026-09-02)
 
 ### ⭐ New Features
