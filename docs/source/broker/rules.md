@@ -61,7 +61,7 @@ rules:
 
 ## Typed rules
 
-Typed rules have a `type` key. The supported types are `browserid`, `captured`, and `panel`.
+Typed rules have a `type` key. The supported types are `browserid`, `hash`, `search`, `captured`, and `panel`.
 
 ### Browser identity
 
@@ -72,6 +72,31 @@ rules:
   - type: browserid
     id: kitchen-tablet
 ```
+
+### Browser URL fragment
+
+Use `type: hash` to match the browser URL fragment. The value is the portion after `#`, so no `path` is required. `match` and `value` use the same matching syntax and operators as [captured-data rules](#captured-data-rules).
+
+```yaml
+rules:
+  - type: hash
+    match: settings
+```
+
+This rule prevents the interaction's directives from running unless the current URL ends with `#settings`.
+
+### Browser search parameters
+
+Use `type: search` to match a named URL search parameter. Set `path` to the parameter name. `match` and `value` use the same matching syntax and operators as [captured-data rules](#captured-data-rules).
+
+```yaml
+rules:
+  - type: search
+    path: entity_id
+    match: "light.kitchen*"
+```
+
+This rule prevents the interaction's directives from running unless the URL has a matching `?entity_id=` parameter. Use `exists: false` to match when the named parameter is absent.
 
 ## Captured-data rules
 

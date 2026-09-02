@@ -113,6 +113,16 @@ function isPanelRule(rule: UixBrokerRule): rule is UixBrokerPanelRule {
   return typeof rule === "object" && rule !== null && "type" in rule && rule.type === "panel";
 }
 
+function browserHashValue(): { exists: boolean; value: string } {
+  const value = window.location.hash.slice(1);
+  return { exists: value.length > 0, value };
+}
+
+function browserSearchValue(path: string): { exists: boolean; value: string | undefined } {
+  const params = new URLSearchParams(window.location.search);
+  return { exists: params.has(path), value: params.get(path) ?? undefined };
+}
+
 /**
  * Captured references use dot-separated properties, with numeric array indexes.
  * Accept bracketed numeric indexes too, so `items.0` and `items[0]` are
@@ -798,6 +808,28 @@ export class UixBroker {
         if (typedRule.type === "browserid") {
           const expected = typedRule.browser_id ?? typedRule.id ?? typedRule.value;
           result = expected === undefined || expected === BrowserID();
+        } else if (typedRule.type === "hash") {
+          const hashValue = browserHashValue();
+          result = matchesCapturedValue(
+            hashValue.value,
+            typedRule.match ?? typedRule.value,
+            false,
+            hashValue.exists,
+          );
+        } else if (typedRule.type === "search") {
+          const path = typedRule.path;
+          if (typeof path !== "string" || !path) {
+            console.warn("UIX Broker: search rule requires path.");
+            result = false;
+          } else {
+            const searchValue = browserSearchValue(path);
+            result = matchesCapturedValue(
+              searchValue.value,
+              typedRule.match ?? typedRule.value,
+              false,
+              searchValue.exists,
+            );
+          }
         } else if (typedRule.type === "panel") {
           const path = typedRule.path ?? typedRule.property;
           if (typeof path !== "string") {

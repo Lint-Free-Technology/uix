@@ -40,7 +40,33 @@ export type UixBrokerPanelRule = {
   value?: any;
 };
 
-export type UixBrokerRule = string | UixBrokerHostElementRule | UixBrokerPanelRule | UixBrokerTypedRule;
+export type UixBrokerHashRule = {
+  /** Matches the browser URL fragment, excluding its leading `#`. */
+  type: "hash";
+  /** Value matcher, with the same operators as captured-data rules. */
+  match?: any;
+  /** Alias for match. */
+  value?: any;
+};
+
+export type UixBrokerSearchRule = {
+  /** Matches a named browser URL search parameter. */
+  type: "search";
+  /** Name of the URL search parameter to read. */
+  path?: string;
+  /** Value matcher, with the same operators as captured-data rules. */
+  match?: any;
+  /** Alias for match. */
+  value?: any;
+};
+
+export type UixBrokerRule =
+  | string
+  | UixBrokerHostElementRule
+  | UixBrokerPanelRule
+  | UixBrokerHashRule
+  | UixBrokerSearchRule
+  | UixBrokerTypedRule;
 
 export type UixBrokerEventTarget = "anchor" | "window" | "document";
 
