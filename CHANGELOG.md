@@ -1,3 +1,9 @@
+## [8.2.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.9...v8.2.0-beta.10) (2026-09-02)
+
+### ⭐ New Features
+
+* **broker:** Allow multiple `listen` events in Browser realm ([e90d033](https://github.com/Lint-Free-Technology/uix/commit/e90d03349925b1b3913ca68026605aa894df4727))
+
 ## [8.2.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.8...v8.2.0-beta.9) (2026-09-02)
 
 ### ⭐ New Features
