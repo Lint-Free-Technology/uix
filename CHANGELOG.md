@@ -1,3 +1,9 @@
+## [8.2.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.11...v8.2.0-beta.12) (2026-09-02)
+
+### ⭐ New Features
+
+* **broker:** Add matching rules to directives so a specific directive can be excluded based on rules matching or not, except for `type: block` ([7c2ed9a](https://github.com/Lint-Free-Technology/uix/commit/7c2ed9a84e36ecbd4770ed7a883f605f38d8715f))
+
 ## [8.2.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.10...v8.2.0-beta.11) (2026-09-02)
 
 ### ⚙️ Miscellaneous
