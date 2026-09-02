@@ -502,6 +502,10 @@ export class UixBroker {
       (interaction) => isEnabled(interaction) && interaction.realm === realm && listensFor(interaction, name),
     );
     for (const interaction of interactions) {
+      if (this.hasBlockDirectiveRules(interaction)) {
+        console.warn("UIX Broker: block directives do not support directive rules.", interaction);
+        continue;
+      }
       if (interaction.reentrant === false && this.activeInteractions.has(interaction)) {
         this.debug(interaction, "interaction skipped", { reason: "already running" });
         continue;
@@ -548,6 +552,10 @@ export class UixBroker {
       (interaction) => isEnabled(interaction) && interaction.realm === "server" && listensFor(interaction, name),
     );
     for (const interaction of interactions) {
+      if (this.hasBlockDirectiveRules(interaction)) {
+        console.warn("UIX Broker: block directives do not support directive rules.", interaction);
+        continue;
+      }
       if (interaction.reentrant === false && this.activeInteractions.has(interaction)) {
         this.debug(interaction, "interaction skipped", { reason: "already running" });
         continue;
@@ -611,6 +619,7 @@ export class UixBroker {
         }
         if (directive.type === "wait") {
           if (directive.wait === undefined) throw new Error("wait directive requires wait");
+          if (!await this.directiveRulesMatch(interaction, directive, anchor, context, index)) continue;
           this.debug(interaction, "directive application", { index, directive });
           await this.waitAfterDirective(interaction, directive, index);
           this.debug(interaction, "directive applied", { index, directive });
@@ -632,6 +641,7 @@ export class UixBroker {
             resolved: directiveAnchor,
           });
         }
+        if (!await this.directiveRulesMatch(interaction, directive, directiveAnchor, context, index)) continue;
         this.debug(interaction, "directive application", { index, directive, anchor: directiveAnchor });
         await this.executeDirective(directive, directiveAnchor, context);
         this.debug(interaction, "directive applied", { index, directive, anchor: directiveAnchor });
@@ -744,6 +754,62 @@ export class UixBroker {
     return (interaction.rules ?? []).some(isPanelRule);
   }
 
+  private hasBlockDirectiveRules(interaction: UixBrokerInteraction): boolean {
+    return (interaction.directives ?? []).some((directive) => directive.type === "block" && directive.rules !== undefined);
+  }
+
+  private async directiveRulesMatch(
+    interaction: UixBrokerInteraction,
+    directive: UixBrokerDirective,
+    anchor: Element,
+    context: BrokerContext,
+    directiveIndex: number,
+  ): Promise<boolean> {
+    const rules = directive.rules ?? [];
+    if (!rules.length) {
+      this.debug(interaction, "directive rule validation", { directiveIndex, result: true, reason: "no rules" });
+      return true;
+    }
+    const immediateRules = rules.filter((rule) => !isHostElementRule(rule) && !isPanelRule(rule));
+    if (!this.rulesMatch(interaction, immediateRules, undefined, context, "directive", directiveIndex)) return false;
+
+    const panelRules = rules.filter(isPanelRule);
+    if (panelRules.length) {
+      if (context.panel === undefined) {
+        try {
+          const panelState = await getPanelState();
+          context.panel = panelState?.panel ?? {};
+        } catch (error) {
+          console.warn("UIX Broker: unable to get panel state for directive rules:", error);
+          return false;
+        }
+      }
+      if (!this.rulesMatch(interaction, panelRules, undefined, context, "directive", directiveIndex)) return false;
+    }
+
+    const hostRules = rules.filter(isHostElementRule);
+    if (!hostRules.length) {
+      this.debug(interaction, "directive rule validation", { directiveIndex, result: true, reason: "no host-element rules" });
+      return true;
+    }
+    for (const [index, rule] of hostRules.entries()) {
+      const ruleAnchor = await this.resolveRuleAnchor(rule, anchor);
+      if (typeof rule !== "string" && rule.anchor !== undefined) {
+        this.debug(interaction, "directive rule anchor resolution", {
+          directiveIndex,
+          index,
+          anchor: rule.anchor,
+          resolved: ruleAnchor,
+        });
+      }
+      const match = typeof rule === "string" ? rule : rule.match;
+      const result = ruleAnchor ? matchesHostElementPath(ruleAnchor, match.replace(/^&/, "")) : false;
+      this.debug(interaction, "directive rule validation", { directiveIndex, index, rule, result });
+      if (!result) return false;
+    }
+    return true;
+  }
+
   private preAnchorRulesMatchSync(interaction: UixBrokerInteraction, context: BrokerContext): boolean {
     return this.rulesMatch(
       interaction,
@@ -811,10 +877,11 @@ export class UixBroker {
     rules: UixBrokerRule[],
     anchor: Element | undefined,
     context: BrokerContext,
-    phase: "pre-anchor" | "anchor",
+    phase: "pre-anchor" | "anchor" | "directive",
+    directiveIndex?: number,
   ): boolean {
     if (!rules.length) {
-      this.debug(interaction, "rule validation", { phase, result: true, reason: "no rules" });
+      this.debug(interaction, "rule validation", { phase, directiveIndex, result: true, reason: "no rules" });
       return true;
     }
     for (const [index, rule] of rules.entries()) {
@@ -893,7 +960,7 @@ export class UixBroker {
           }
         }
       }
-      this.debug(interaction, "rule validation", { phase, index, rule, result });
+      this.debug(interaction, "rule validation", { phase, directiveIndex, index, rule, result });
       if (!result) return false;
     }
     return true;
@@ -1015,7 +1082,7 @@ export class UixBroker {
       return;
     }
 
-    const { wait: _wait, anchor: _anchor, ...actionDirective } = directive;
+    const { wait: _wait, anchor: _anchor, rules: _rules, ...actionDirective } = directive;
     const config = resolveCaptured(actionDirective, context.captured);
     const service = action === "perform-action" ? config.perform_action : action;
     if (typeof service === "string" && service.includes(".")) {

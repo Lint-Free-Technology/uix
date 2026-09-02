@@ -7,7 +7,7 @@ description: Apply declarative UIX Broker operations to a selected element.
 !!! note
     UIX Broker is available in 8.2.0-beta.2
 
-Directives run one at a time after every interaction rule matches. Each directive performs one configured operation, using the interaction anchor by default or an explicitly selected directive anchor where supported.
+Directives run one at a time after every interaction rule matches. Each directive performs one configured operation, using the interaction anchor by default or an explicitly selected directive anchor where supported. Except for `block`, a directive may also have its own `rules`; the directive runs only when all of them match, otherwise Broker skips it and continues with the next directive.
 
 - [Block](#block) — prevent the initiating browser event's default action and propagation.
 - [Property](#property) — set or clear a JavaScript object property.
@@ -16,6 +16,27 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Button](#button) — insert an interactive Home Assistant button.
 - [Action](#action) — run a Home Assistant, frontend, or UIX action.
 - [Wait](#wait) — delay the next directive.
+
+## Directive rules
+
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, and `button`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+
+```yaml
+directives:
+  - type: property
+    set: config.mode
+    value: advanced
+  - type: call
+    method: openAdvancedEditor
+    rules:
+      - type: captured
+        path: allow_advanced
+        match: true
+```
+
+`panel` rules obtain the current panel state when the directive is reached. This lets an earlier directive run regardless of the current panel while a later directive only runs on a matching panel.
+
+`block` does not accept directive rules. Put its condition in the interaction's `rules` so that the event is synchronously blocked only when the complete interaction matches.
 
 ## Block
 
