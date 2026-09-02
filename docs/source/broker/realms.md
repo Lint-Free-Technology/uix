@@ -19,7 +19,7 @@ All realms support [rules](rules.md) and [directives](directives.md). The select
 
 ## Browser
 
-`browser` listens at `window` during the capture phase. Use it for DOM events such as `click`, `change`, `show-dialog`, and Home Assistant's custom browser events.
+`browser` listens at `window` during the capture phase. Use it for DOM events such as `click`, `change`, `show-dialog`, and Home Assistant's custom browser events. `listen` can be one event name or a list when the same interaction should respond to multiple events.
 
 ```yaml
 - realm: browser
@@ -32,6 +32,19 @@ All realms support [rules](rules.md) and [directives](directives.md). The select
     - type: property
       set: _currTab
       value: card
+```
+
+For example, run one interaction after Broker starts and whenever a panel update emits `uix_update`:
+
+```yaml
+- realm: browser
+  listen:
+    - uix-broker-ready
+    - uix_update
+  anchor: '&home-assistant'
+  directives:
+    - type: call
+      method: requestUpdate
 ```
 
 The browser event's `detail` object is the root of captured data. See [Captured-data rules](./rules.md#captured-data-rules) and [Event directive](./directives.md#event) for how captured data is matched and

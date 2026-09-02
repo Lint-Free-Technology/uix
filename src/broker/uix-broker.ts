@@ -59,6 +59,21 @@ function isEnabled(interaction: UixBrokerInteraction): boolean {
   return interaction.enabled !== false;
 }
 
+function browserEventNames(interaction: UixBrokerInteraction): string[] {
+  const listen = interaction.listen;
+  return (Array.isArray(listen) ? listen : [listen]).filter((name): name is string => typeof name === "string");
+}
+
+function singleListen(interaction: UixBrokerInteraction): string | null {
+  return typeof interaction.listen === "string" ? interaction.listen : null;
+}
+
+function listensFor(interaction: UixBrokerInteraction, name: string): boolean {
+  return interaction.realm === "browser"
+    ? browserEventNames(interaction).includes(name)
+    : interaction.listen === name;
+}
+
 function selectTreeAnchorPath(anchor: UixBrokerAnchor): string | null {
   if (typeof anchor === "string" && anchor.startsWith("&")) return anchor.slice(1).trim() || null;
   return typeof anchor === "object" ? anchor.select_tree : null;
@@ -417,9 +432,10 @@ export class UixBroker {
     this.browserListeners.forEach((listener, name) => window.removeEventListener(name, listener, true));
     this.browserListeners.clear();
 
-    const eventNames = new Set(
-      this.interactions.filter((interaction) => isEnabled(interaction) && interaction.realm === "browser").map((interaction) => interaction.listen),
-    );
+    const eventNames = new Set<string>();
+    this.interactions
+      .filter((interaction) => isEnabled(interaction) && interaction.realm === "browser")
+      .forEach((interaction) => browserEventNames(interaction).forEach((name) => eventNames.add(name)));
     eventNames.forEach((name) => {
       const listener: EventListener = (event) => this.handleBrowserEvent(name, event);
       window.addEventListener(name, listener, true);
@@ -433,7 +449,8 @@ export class UixBroker {
     const bindings = [...new Set(
       this.interactions
         .filter((interaction) => isEnabled(interaction) && interaction.realm === "shortcut")
-        .map((interaction) => interaction.listen),
+        .map(singleListen)
+        .filter((binding): binding is string => binding !== null),
     )];
     if (!bindings.length) return;
 
@@ -447,7 +464,10 @@ export class UixBroker {
   private async rebuildServerListeners(version: number) {
     this.serverUnsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
     const eventNames = [...new Set(
-      this.interactions.filter((interaction) => isEnabled(interaction) && interaction.realm === "server").map((interaction) => interaction.listen),
+      this.interactions
+        .filter((interaction) => isEnabled(interaction) && interaction.realm === "server")
+        .map(singleListen)
+        .filter((name): name is string => name !== null),
     )];
     if (!eventNames.length) return;
 
@@ -479,7 +499,7 @@ export class UixBroker {
 
   private handleClientEvent(realm: "browser" | "shortcut", name: string, event: Event) {
     const interactions = this.interactions.filter(
-      (interaction) => isEnabled(interaction) && interaction.realm === realm && interaction.listen === name,
+      (interaction) => isEnabled(interaction) && interaction.realm === realm && listensFor(interaction, name),
     );
     for (const interaction of interactions) {
       if (interaction.reentrant === false && this.activeInteractions.has(interaction)) {
@@ -525,7 +545,7 @@ export class UixBroker {
 
   private async handleServerEvent(name: string, event: Record<string, any>) {
     const interactions = this.interactions.filter(
-      (interaction) => isEnabled(interaction) && interaction.realm === "server" && interaction.listen === name,
+      (interaction) => isEnabled(interaction) && interaction.realm === "server" && listensFor(interaction, name),
     );
     for (const interaction of interactions) {
       if (interaction.reentrant === false && this.activeInteractions.has(interaction)) {
@@ -667,7 +687,7 @@ export class UixBroker {
       {
         anchor,
         realm: interaction.realm,
-        listen: interaction.listen,
+        listen: Array.isArray(interaction.listen) ? interaction.listen.join(", ") : interaction.listen,
         anchorConfig: interaction.anchor,
         resolvedAt: Date.now(),
       },

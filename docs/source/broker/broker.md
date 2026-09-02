@@ -31,7 +31,7 @@ See [Realms](./realms.md), [Interaction Anchors](./interaction-anchors.md), [Rul
 | Key | Description |
 | --- | --- |
 | `realm` | Where UIX listens: `browser`, `shortcut`, or `server`. |
-| `listen` | The DOM event name, [Tinykeys](https://jamiebuilds.github.io/tinykeys/) binding, or Home Assistant event-bus event name for the selected realm. |
+| `listen` | The DOM event name, [Tinykeys](https://jamiebuilds.github.io/tinykeys/) binding, or Home Assistant event-bus event name for the selected realm. In the `browser` realm, this may also be a list of DOM event names. |
 | `anchor` | The element to inspect and use as the default rule and directive target. |
 | `rules` | Optional conditions that must all match before directives run. |
 | `directives` | Ordered operations to apply when the interaction matches. |
@@ -40,6 +40,21 @@ See [Realms](./realms.md), [Interaction Anchors](./interaction-anchors.md), [Rul
 | `debug` | Set to `true` to log the interaction lifecycle in the browser developer console. |
 
 Each interaction is independent. All of its rules must match before directives run, and directives run one at a time in configuration order.
+
+Use a browser-realm `listen` list when the same interaction should run for more than one browser event:
+
+```yaml
+- realm: browser
+  listen:
+    - uix-broker-ready
+    - uix_update
+  anchor: '&home-assistant'
+  directives:
+    - type: call
+      method: requestUpdate
+```
+
+Lists are supported only in the `browser` realm; `shortcut` and `server` interactions each listen for one binding or event name.
 
 `reentrant: false` is useful when an interaction dispatches the same event that started it. The interaction is considered active while anchors are resolving, directives are running, and directive waits are in progress.
 

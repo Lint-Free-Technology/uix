@@ -1,5 +1,8 @@
 export type UixBrokerRealm = "browser" | "shortcut" | "server";
 
+/** A browser event name, or several browser event names for one interaction. */
+export type UixBrokerListen = string | string[];
+
 export type UixBrokerAnchor =
   | "target"
   | "<"
@@ -83,7 +86,7 @@ export type UixBrokerDirective = {
 
 export interface UixBrokerInteraction {
   realm: UixBrokerRealm;
-  listen: string;
+  listen: UixBrokerListen;
   anchor: UixBrokerAnchor;
   /** Defaults to true. Disabled interactions do not register event listeners. */
   enabled?: boolean;
