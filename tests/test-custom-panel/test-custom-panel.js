@@ -8,11 +8,22 @@ import {
 class TestCustomPanel extends LitElement {
   static get properties() {
     return {
-      hass: { type: Object },
+      _hass: { type: Object },
       narrow: { type: Boolean },
       route: { type: Object },
       panel: { type: Object },
     };
+  }
+
+  // Intercept the hass assignment from Home Assistant
+  set hass(val) {
+    const oldVal = this._hass;
+    this._hass = val;
+    this.requestUpdate("_hass", oldVal); // Explicitly force Lit to re-render the template
+  }
+
+  get hass() {
+    return this._hass;
   }
 
   render() {
