@@ -28,12 +28,28 @@ export type UixBrokerTypedRule = {
   [key: string]: any;
 };
 
-export type UixBrokerRule = string | UixBrokerHostElementRule | UixBrokerTypedRule;
+export type UixBrokerPanelRule = {
+  /** Matches a dot-separated property path on the current UIX panel object. */
+  type: "panel";
+  path?: string;
+  /** Alias for path. */
+  property?: string;
+  /** Value matcher, with the same operators as captured-data rules. */
+  match?: any;
+  /** Alias for match. */
+  value?: any;
+};
+
+export type UixBrokerRule = string | UixBrokerHostElementRule | UixBrokerPanelRule | UixBrokerTypedRule;
+
+export type UixBrokerEventTarget = "anchor" | "window" | "document";
 
 export type UixBrokerDirective = {
   type: "block" | "action" | "property" | "event" | "call" | "button" | "wait";
   /** Optional select_tree target for property, event, call, and button directives. */
   anchor?: UixBrokerSelectTreeAnchor;
+  /** Event dispatch target. Applies only to event directives and defaults to anchor. */
+  target?: UixBrokerEventTarget;
   /** Milliseconds to wait before applying the next directive. */
   wait?: number;
   [key: string]: any;

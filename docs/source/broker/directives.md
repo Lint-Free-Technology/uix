@@ -74,7 +74,7 @@ Values can refer to captured data. `@captured` resolves to the complete captured
 
 ## Event
 
-`event` dispatches a `CustomEvent` on the selected anchor, which is either the override anchor or the default interaction anchor. `bubbles` and `composed` default to `false`, matching the DOM API.
+`event` dispatches a `CustomEvent`. Its `target` defaults to `anchor`, meaning the selected directive anchor (or the interaction anchor when no directive anchor is set). Set `target: window` or `target: document` to dispatch globally instead; these targets do not use or resolve an event-specific directive anchor. `bubbles` and `composed` default to `false`, matching the DOM API.
 
 ```yaml
 - type: event
@@ -83,6 +83,17 @@ Values can refer to captured data. `@captured` resolves to the complete captured
   composed: true
   data:
     entity: light.bed_light
+```
+
+```yaml
+- type: event
+  target: window
+  name: broker-window-event
+  data:
+    source: uixBroker
+- type: event
+  target: document
+  name: broker-document-event
 ```
 
 Set `capture_data: true` to copy captured event data into a modified event. The outgoing event's `detail` starts with the initiating interaction's captured data, then shallowly overlays values from this directive's `data` object. The `capture_data` option is only available to the `event` directive.

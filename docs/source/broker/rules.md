@@ -61,7 +61,7 @@ rules:
 
 ## Typed rules
 
-Typed rules have a `type` key. The supported types are `browserid` and `captured`.
+Typed rules have a `type` key. The supported types are `browserid`, `captured`, and `panel`.
 
 ### Browser identity
 
@@ -131,6 +131,27 @@ rules:
 ```
 
 `is_undefined` with `exists: true` distinguishes a present property whose value is `undefined` from a missing path. Use `exists: false` to explicitly match a missing path.
+
+## Panel rules
+
+Use `type: panel` to match the current UIX panel object. UIX Broker obtains this object asynchronously; it contains the same `panel` fields available to [templates](../using/templates.md), such as `fullUrlPath`, `panelUrlPath`, `viewUrlPath`, and `panelComponentName`.
+
+`path` (or its `property` alias) is a dot-separated optional-chaining path relative to that panel object. `match` and `value` use exactly the same matching syntax and operators as [captured-data rules](#captured-data-rules), including wildcards, regular expressions, numeric comparisons, `exists`, and `and`/`or`/`not` composition.
+
+```yaml
+rules:
+  - type: panel
+    path: fullUrlPath
+    match: "lovelace/kitchen*"
+  - type: panel
+    path: panelComponentName
+    match:
+      operator: "="
+      value: lovelace
+```
+
+!!! warning
+    Panel state is asynchronous. An interaction using a panel rule cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning.
 
 ### Compact captured-data form
 

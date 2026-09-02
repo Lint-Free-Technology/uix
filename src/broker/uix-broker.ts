@@ -1,6 +1,7 @@
 import { tinykeys } from "tinykeys";
 import { BrowserID } from "../helpers/browser_id";
 import { hass } from "../helpers/hass";
+import { getPanelState } from "../helpers/panel";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import {
   createHaButton,
@@ -15,6 +16,7 @@ import {
   UixBrokerDirective,
   UixBrokerHostElementRule,
   UixBrokerInteraction,
+  UixBrokerPanelRule,
   UixBrokerRule,
   UixBrokerTypedRule,
 } from "./uix-broker-types";
@@ -22,6 +24,7 @@ import {
 type BrokerContext = {
   source: Event | Record<string, any>;
   captured: Record<string, any>;
+  panel?: Record<string, any>;
   realm: "browser" | "shortcut" | "server";
 };
 
@@ -104,6 +107,10 @@ function isHostElementRule(rule: UixBrokerRule): rule is string | UixBrokerHostE
     && !("type" in rule)
     && typeof rule.match === "string"
   );
+}
+
+function isPanelRule(rule: UixBrokerRule): rule is UixBrokerPanelRule {
+  return typeof rule === "object" && rule !== null && "type" in rule && rule.type === "panel";
 }
 
 /**
@@ -190,6 +197,10 @@ function deepMergeEventData(
  */
 function capturedRulePath(path: string): string {
   return path.replace(/^@captured(?:\.)?/, "");
+}
+
+function panelRulePath(path: string): string {
+  return path.replace(/^@panel(?:\.)?/, "");
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -471,7 +482,11 @@ export class UixBroker {
         captured: this.eventData(event),
         realm,
       };
-      if (!this.preAnchorRulesMatch(interaction, context)) continue;
+      if (!this.preAnchorRulesMatchSync(interaction, context)) continue;
+      if (this.hasPanelRules(interaction) && interaction.directives?.some((directive) => directive.type === "block")) {
+        console.warn("UIX Broker: panel rules cannot be used with block directives.", interaction);
+        continue;
+      }
       if (interaction.reentrant === false) this.activeInteractions.add(interaction);
       // Blocking must be determined in this call stack; later directives may await.
       let blockAnchor: Element | null = null;
@@ -482,7 +497,13 @@ export class UixBroker {
           continue;
         }
       }
-      const run = this.runInteraction(interaction, context, Boolean(blockAnchor), blockAnchor ?? undefined, true);
+      const run = this.runInteraction(
+        interaction,
+        context,
+        Boolean(blockAnchor),
+        blockAnchor ?? undefined,
+        !this.hasPanelRules(interaction),
+      );
       if (interaction.reentrant === false) {
         void run.then(
           () => this.activeInteractions.delete(interaction),
@@ -541,7 +562,7 @@ export class UixBroker {
     preAnchorRulesValidated = false,
   ) {
     try {
-      if (!preAnchorRulesValidated && !this.preAnchorRulesMatch(interaction, context)) return;
+      if (!preAnchorRulesValidated && !await this.preAnchorRulesMatch(interaction, context)) return;
       const anchor = prevalidatedAnchor ?? await this.resolveAnchor(interaction.anchor, context);
       if (anchor) this.rememberAnchor(interaction, anchor);
       if (!prevalidatedAnchor) {
@@ -574,7 +595,7 @@ export class UixBroker {
           });
           continue;
         }
-        if (directive.anchor !== undefined) {
+        if (directive.anchor !== undefined && (directive.type !== "event" || directive.target === undefined || directive.target === "anchor")) {
           this.debug(interaction, "directive anchor resolution", {
             index,
             anchor: directive.anchor,
@@ -651,6 +672,9 @@ export class UixBroker {
     if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button") {
       return interactionAnchor;
     }
+    if (directive.type === "event" && directive.target !== undefined && directive.target !== "anchor") {
+      return interactionAnchor;
+    }
     if (directive.anchor === undefined) return interactionAnchor;
     const { path, absolute } = parseOverrideAnchor(directive.anchor, `${directive.type} directive anchor`);
     return absolute ? this.waitForSelectTreeAnchor(path) : this.waitForSelectTreeAnchor(path, interactionAnchor);
@@ -686,14 +710,32 @@ export class UixBroker {
     return null;
   }
 
-  private preAnchorRulesMatch(interaction: UixBrokerInteraction, context: BrokerContext): boolean {
+  private hasPanelRules(interaction: UixBrokerInteraction): boolean {
+    return (interaction.rules ?? []).some(isPanelRule);
+  }
+
+  private preAnchorRulesMatchSync(interaction: UixBrokerInteraction, context: BrokerContext): boolean {
     return this.rulesMatch(
       interaction,
-      (interaction.rules ?? []).filter((rule) => !isHostElementRule(rule)),
+      (interaction.rules ?? []).filter((rule) => !isHostElementRule(rule) && !isPanelRule(rule)),
       undefined,
       context,
       "pre-anchor",
     );
+  }
+
+  private async preAnchorRulesMatch(interaction: UixBrokerInteraction, context: BrokerContext): Promise<boolean> {
+    if (!this.preAnchorRulesMatchSync(interaction, context)) return false;
+    const rules = (interaction.rules ?? []).filter(isPanelRule);
+    if (!rules.length) return true;
+    try {
+      const panelState = await getPanelState();
+      context.panel = panelState?.panel ?? {};
+    } catch (error) {
+      console.warn("UIX Broker: unable to get panel state for panel rules:", error);
+      return false;
+    }
+    return this.rulesMatch(interaction, rules, undefined, context, "pre-anchor");
   }
 
   private async anchorRulesMatch(interaction: UixBrokerInteraction, anchor: Element, context: BrokerContext): Promise<boolean> {
@@ -756,6 +798,20 @@ export class UixBroker {
         if (typedRule.type === "browserid") {
           const expected = typedRule.browser_id ?? typedRule.id ?? typedRule.value;
           result = expected === undefined || expected === BrowserID();
+        } else if (typedRule.type === "panel") {
+          const path = typedRule.path ?? typedRule.property;
+          if (typeof path !== "string") {
+            console.warn("UIX Broker: panel rule requires path.");
+            result = false;
+          } else {
+            const panelValue = getCapturedPathValue(context.panel, panelRulePath(path));
+            result = matchesCapturedValue(
+              panelValue.value,
+              typedRule.match ?? typedRule.value,
+              false,
+              panelValue.exists,
+            );
+          }
         } else if (typedRule.type === "captured") {
           const path = typedRule.path ?? typedRule.property;
           if (typeof path !== "string") {
@@ -857,7 +913,16 @@ export class UixBroker {
       composed: directive.composed ?? false,
       detail,
     });
-    anchor.dispatchEvent(event);
+    const target = directive.target ?? "anchor";
+    if (target === "anchor") {
+      anchor.dispatchEvent(event);
+    } else if (target === "window") {
+      window.dispatchEvent(event);
+    } else if (target === "document") {
+      document.dispatchEvent(event);
+    } else {
+      throw new Error(`event directive target must be anchor, window, or document: ${target}`);
+    }
   }
 
   private async executeCall(directive: UixBrokerDirective, anchor: Element, captured: Record<string, any>) {
