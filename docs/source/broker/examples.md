@@ -241,7 +241,8 @@ Outcome:
 Method:
 
 - Listen for the `show-dialog` event in the `browser` realm.
-- The matching rule passes only when the `show-dialog` event's `dialogTag` is `add-automation-element-dialog`.
+- First matching rule passes only when the `show-dialog` event's `dialogTag` is `add-automation-element-dialog`.
+- Second matching rules passes only when the type is `trigger` and not other types which can be `action` or `condition`.
 - Use an absolute short-form interaction anchor that matches the dialog (`add-automation-element-dialog`).
 - Directives:
     - Set the `_tab` property to `groups`; `groups` is the value for By Type.
@@ -253,6 +254,7 @@ Method:
     anchor: '&home-assistant $ add-automation-element-dialog'
     rules:
       - '@captured.dialogTag': add-automation-element-dialog
+      - "@captured.dialogParams.type": trigger
     directives:
       - type: property
         set: _tab
