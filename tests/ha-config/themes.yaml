@@ -312,6 +312,10 @@ uix-icon-for-entity-theme:
       :host {
         {{ temp_icon_color_for_all() }}
       }
+    "ha-more-info-info $": |
+      div.container div.content ha-more-info-history {
+        display: none;
+      }
 
 uix-doc-icon-for-entity-theme:
   uix-theme: uix-doc-icon-for-entity-theme
