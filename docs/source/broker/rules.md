@@ -157,6 +157,16 @@ rules:
 
 `is_undefined` with `exists: true` distinguishes a present property whose value is `undefined` from a missing path. Use `exists: false` to explicitly match a missing path.
 
+### Compact captured-data form
+
+For compact configurations, map one or more captured paths directly in an object rule. Every entry must match. The `@captured` prefix is retained only in this compact form.
+
+```yaml
+rules:
+  - "@captured.user.role": admin
+    "@captured.enabled": true
+```
+
 ## Panel rules
 
 Use `type: panel` to match the current UIX panel object. UIX Broker obtains this object asynchronously; it contains the same `panel` fields available to [templates](../using/templates.md), such as `fullUrlPath`, `panelUrlPath`, `viewUrlPath`, and `panelComponentName`.
@@ -177,13 +187,3 @@ rules:
 
 !!! warning
     Panel state is asynchronous. An interaction using a panel rule cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning.
-
-### Compact captured-data form
-
-For compact configurations, map one or more captured paths directly in an object rule. Every entry must match. The `@captured` prefix is retained only in this compact form.
-
-```yaml
-rules:
-  - "@captured.user.role": admin
-    "@captured.enabled": true
-```
