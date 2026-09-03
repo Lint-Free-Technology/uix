@@ -179,6 +179,11 @@ rules:
     path: fullUrlPath
     match: "lovelace/kitchen*"
   - type: panel
+    path: fullUrlPath
+    match:
+      operator: contains
+      value: automation/edit
+  - type: panel
     path: panelComponentName
     match:
       operator: "="
