@@ -1,3 +1,9 @@
+## [8.2.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.12...v8.2.0-beta.13) (2026-09-04)
+
+### ⭐ New Features
+
+* **broker:** Add `template` and `javascript` directives that render a template or calls javascript and provides the result for further directives. ([#580](https://github.com/Lint-Free-Technology/uix/issues/580)) ([e4206c3](https://github.com/Lint-Free-Technology/uix/commit/e4206c37623aaa740c2ab80420c14223a3d2af7b))
+
 ## [8.2.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.11...v8.2.0-beta.12) (2026-09-02)
 
 ### ⭐ New Features
