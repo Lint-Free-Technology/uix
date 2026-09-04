@@ -160,10 +160,9 @@ show all affected locales without mentioning anyone. Do not add another
 person's handle on their behalf.
 
 Maintainers can run the **Notify translation curators** workflow manually in
-preview mode to inspect a report without posting it. Its `test-post` mode
-writes the same report to the testing discussion without curator mentions. Pull
-requests that change translation-relevant documentation also run in preview
-mode, so the report is available before merge.
+preview mode to inspect a report without posting it. Pull requests that change
+translation-relevant documentation also run in preview mode, so the report is
+available before merge.
 
 The translation site must publish `uix-docs.json` at the registered metadata URL. Its contract is:
 

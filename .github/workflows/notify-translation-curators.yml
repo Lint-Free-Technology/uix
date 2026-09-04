@@ -24,13 +24,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Preview the report, post it to testing, or publish it
+        description: Preview the report or publish it
         required: true
         type: choice
         default: preview
         options:
           - preview
-          - test-post
           - publish
       base:
         description: Git revision to compare with the selected workflow ref
@@ -78,9 +77,6 @@ jobs:
             --output "$report"
             --github-output "$GITHUB_OUTPUT"
           )
-          if [[ "$MODE" == 'test-post' ]]; then
-            arguments+=(--test-post)
-          fi
           python docs/scripts/translation_updates.py "${arguments[@]}"
           echo "report=$report" >> "$GITHUB_OUTPUT"
       - name: Skip live notification without subscribers
@@ -94,17 +90,11 @@ jobs:
         id: target
         if: >-
           steps.report.outputs.has_changes == 'true' &&
-          (env.MODE == 'test-post' ||
-          (env.MODE == 'publish' && steps.report.outputs.has_curators == 'true'))
+          env.MODE == 'publish' && steps.report.outputs.has_curators == 'true'
         env:
           LIVE_DISCUSSION_ID: ${{ vars.TRANSLATION_UPDATES_DISCUSSION_ID }}
-          TEST_DISCUSSION_ID: ${{ vars.TRANSLATION_UPDATES_TEST_DISCUSSION_ID }}
         run: |
-          if [[ "$MODE" == 'test-post' ]]; then
-            discussion_id="$TEST_DISCUSSION_ID"
-          else
-            discussion_id="$LIVE_DISCUSSION_ID"
-          fi
+          discussion_id="$LIVE_DISCUSSION_ID"
           if [[ -z "$discussion_id" ]]; then
             echo "Configured Discussion ID is missing." >&2
             exit 1
