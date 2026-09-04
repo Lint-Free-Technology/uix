@@ -124,7 +124,8 @@ Once the translation site is publicly available, submit an upstream PR that adds
       "code": "de",
       "name": "Deutsch",
       "url": "https://docs.example.org/uix/de/",
-      "metadata_url": "https://docs.example.org/uix/de/uix-docs.json"
+      "metadata_url": "https://docs.example.org/uix/de/uix-docs.json",
+      "curators": ["example-translator"]
     }
   ]
 }
@@ -134,8 +135,35 @@ Once the translation site is publicly available, submit an upstream PR that adds
 - `name` is the language name shown to readers, ideally in that language.
 - `url` is the translation's public home page.
 - `metadata_url` is the location of the `uix-docs.json` file described below.
+- `curators` is optional and lists GitHub handles for people who maintain that
+  translation. UIX mentions these handles in the
+  [Translation updates discussion](https://github.com/Lint-Free-Technology/uix/discussions/581)
+  when canonical documentation changes. Use handles without an `@` prefix.
 
 Both URLs must be final public HTTPS URLs; redirects are not followed. This upstream PR must change only `docs/translations.json`; do not add translated Markdown, generated documentation, or build files to the canonical UIX repository. The documentation workflow will report a warning and leave the translation out of the selector until the translation site satisfies the checks.
+
+#### Receiving canonical documentation updates
+
+UIX publishes canonical documentation update notices in the
+[Translation updates discussion](https://github.com/Lint-Free-Technology/uix/discussions/581).
+Whenever English documentation or translation-relevant documentation tooling
+changes on `dev` or `master`, the notice links to the affected paths and
+mentions registered curators for each locale. This is the single notification
+feed for external translations; translation registration changes, translation-
+fork builds, and the daily health check do not notify curators.
+
+Curator notifications are opt-in. After a translation is registered, its
+maintainer may submit a small PR that adds their own `curators` array to that
+locale's entry. Entries without this field remain valid. UIX skips live update
+posts until at least one curator has opted in; preview and test reports still
+show all affected locales without mentioning anyone. Do not add another
+person's handle on their behalf.
+
+Maintainers can run the **Notify translation curators** workflow manually in
+preview mode to inspect a report without posting it. Its `test-post` mode
+writes the same report to the testing discussion without curator mentions. Pull
+requests that change translation-relevant documentation also run in preview
+mode, so the report is available before merge.
 
 The translation site must publish `uix-docs.json` at the registered metadata URL. Its contract is:
 
