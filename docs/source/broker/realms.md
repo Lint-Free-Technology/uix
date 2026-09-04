@@ -99,7 +99,7 @@ The `block` directive is available in the browser and shortcut realms. Its ancho
 
 ## Templates
 
-UIX Broker deliberately does not provide a realm that subscribes directly to Jinja2 templates. Use a script, automation, or template entity with a trigger, then fire a custom event on the Home Assistant event bus and listen for it in the `server` realm.
+UIX Broker deliberately does not provide a realm that subscribes directly to Jinja2 templates. The [`template` directive](./directives.md#template) can render a template once while an interaction is running, but it does not listen for later changes. For reactive behaviour, use a script, automation, or template entity with a trigger, then fire a custom event on the Home Assistant event bus and listen for it in the `server` realm.
 
 !!! tip
     You can use the [`custom_event`](https://github.com/reubn/hass_custom_event) integration to fire custom events on the Home Assistant event bus, then listen for them in the `server` realm.
