@@ -1,0 +1,137 @@
+name: Notify translation curators
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+    paths:
+      - docs/source/**
+      - docs/mkdocs.yml
+      - docs/site.json
+      - docs/scripts/**
+      - .github/workflows/docs.yml
+  pull_request:
+    branches:
+      - dev
+      - master
+    paths:
+      - docs/source/**
+      - docs/mkdocs.yml
+      - docs/site.json
+      - docs/scripts/**
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview the report, post it to testing, or publish it
+        required: true
+        type: choice
+        default: preview
+        options:
+          - preview
+          - test-post
+          - publish
+      base:
+        description: Git revision to compare with the selected workflow ref
+        required: true
+        type: string
+        default: master
+
+permissions:
+  contents: read
+  discussions: write
+
+jobs:
+  notify:
+    if: >-
+      github.repository == 'Lint-Free-Technology/uix' &&
+      (github.event_name == 'push' || inputs.mode != 'publish' ||
+      github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    env:
+      MODE: ${{ github.event_name == 'push' && 'publish' || github.event_name == 'pull_request' && 'preview' || inputs.mode }}
+      BASE: ${{ github.event_name == 'push' && github.event.before || github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.base }}
+      HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      REPORT: ${{ runner.temp }}/translation-update.md
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ env.HEAD }}
+      - name: Render notification
+        id: report
+        run: |
+          if [[ "$BASE" =~ ^0+$ ]]; then
+            BASE="$(git rev-parse "$GITHUB_SHA^")"
+          fi
+          if ! git rev-parse --verify --quiet "$BASE^{commit}"; then
+            BASE="origin/$BASE"
+          fi
+          BASE="$(git rev-parse "$BASE^{commit}")"
+          arguments=(
+            --base "$BASE"
+            --head "$HEAD"
+            --repository "$GITHUB_REPOSITORY"
+            --branch "$BRANCH"
+            --output "$REPORT"
+            --github-output "$GITHUB_OUTPUT"
+          )
+          if [[ "$MODE" == 'test-post' ]]; then
+            arguments+=(--test-post)
+          fi
+          python docs/scripts/translation_updates.py "${arguments[@]}"
+      - name: Skip live notification without subscribers
+        if: >-
+          env.MODE == 'publish' && steps.report.outputs.has_changes == 'true' &&
+          steps.report.outputs.has_curators != 'true'
+        run: >-
+          echo 'No registered translation curators; skipped the live Discussion post.'
+          >> "$GITHUB_STEP_SUMMARY"
+      - name: Select target Discussion
+        id: target
+        if: >-
+          steps.report.outputs.has_changes == 'true' &&
+          (env.MODE == 'test-post' ||
+          (env.MODE == 'publish' && steps.report.outputs.has_curators == 'true'))
+        env:
+          LIVE_DISCUSSION_ID: ${{ vars.TRANSLATION_UPDATES_DISCUSSION_ID }}
+          TEST_DISCUSSION_ID: ${{ vars.TRANSLATION_UPDATES_TEST_DISCUSSION_ID }}
+        run: |
+          if [[ "$MODE" == 'test-post' ]]; then
+            discussion_id="$TEST_DISCUSSION_ID"
+          else
+            discussion_id="$LIVE_DISCUSSION_ID"
+          fi
+          if [[ -z "$discussion_id" ]]; then
+            echo "Configured Discussion ID is missing." >&2
+            exit 1
+          fi
+          echo "discussion_id=$discussion_id" >> "$GITHUB_OUTPUT"
+      - name: Add Discussion comment
+        if: steps.target.outputs.discussion_id != ''
+        uses: actions/github-script@v8
+        env:
+          DISCUSSION_ID: ${{ steps.target.outputs.discussion_id }}
+          REPORT: ${{ env.REPORT }}
+        with:
+          script: |
+            const { readFileSync } = require("node:fs");
+            const body = readFileSync(process.env.REPORT, "utf8");
+            await github.graphql(
+              `mutation ($discussionId: ID!, $body: String!) {
+                addDiscussionComment(
+                  input: {discussionId: $discussionId, body: $body}
+                ) {
+                  comment { url }
+                }
+              }`,
+              {
+                discussionId: process.env.DISCUSSION_ID,
+                body,
+              },
+            );
+      - name: Write preview summary
+        if: env.MODE == 'preview' && steps.report.outputs.has_changes == 'true'
+        run: cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
