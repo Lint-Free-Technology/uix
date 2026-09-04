@@ -54,7 +54,6 @@ jobs:
       BASE: ${{ github.event_name == 'push' && github.event.before || github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.base }}
       HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
-      REPORT: ${{ runner.temp }}/translation-update.md
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,6 +62,7 @@ jobs:
       - name: Render notification
         id: report
         run: |
+          report="$RUNNER_TEMP/translation-update.md"
           if [[ "$BASE" =~ ^0+$ ]]; then
             BASE="$(git rev-parse "$GITHUB_SHA^")"
           fi
@@ -75,13 +75,14 @@ jobs:
             --head "$HEAD"
             --repository "$GITHUB_REPOSITORY"
             --branch "$BRANCH"
-            --output "$REPORT"
+            --output "$report"
             --github-output "$GITHUB_OUTPUT"
           )
           if [[ "$MODE" == 'test-post' ]]; then
             arguments+=(--test-post)
           fi
           python docs/scripts/translation_updates.py "${arguments[@]}"
+          echo "report=$report" >> "$GITHUB_OUTPUT"
       - name: Skip live notification without subscribers
         if: >-
           env.MODE == 'publish' && steps.report.outputs.has_changes == 'true' &&
@@ -114,7 +115,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           DISCUSSION_ID: ${{ steps.target.outputs.discussion_id }}
-          REPORT: ${{ env.REPORT }}
+          REPORT: ${{ steps.report.outputs.report }}
         with:
           script: |
             const { readFileSync } = require("node:fs");
@@ -134,4 +135,4 @@ jobs:
             );
       - name: Write preview summary
         if: env.MODE == 'preview' && steps.report.outputs.has_changes == 'true'
-        run: cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+        run: cat "${{ steps.report.outputs.report }}" >> "$GITHUB_STEP_SUMMARY"
