@@ -154,7 +154,6 @@ def render_report(
     head: str,
     changes: list[tuple[str, tuple[str, ...]]],
     translations: list[dict[str, Any]],
-    test_post: bool,
 ) -> str:
     short_head = head[:12]
     translation_list = ", ".join(
@@ -176,9 +175,7 @@ def render_report(
         f"- Revision: [{short_head}](https://github.com/{repository}/commit/{head})",
         f"- Affected translations: {translation_list}",
     ]
-    if test_post:
-        lines.append("- Test notification: curator mentions suppressed")
-    elif unique_handles:
+    if unique_handles:
         lines.append(f"- Curators: {' '.join(f'@{handle}' for handle in unique_handles)}")
     else:
         lines.append("- Curators: no GitHub handles registered")
@@ -216,7 +213,6 @@ def main() -> int:
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--github-output", type=Path)
-    parser.add_argument("--test-post", action="store_true")
     args = parser.parse_args()
 
     try:
@@ -234,7 +230,6 @@ def main() -> int:
             args.head,
             changes,
             translations,
-            args.test_post,
         )
         args.output.write_text(report, encoding="utf-8")
         write_github_output(
