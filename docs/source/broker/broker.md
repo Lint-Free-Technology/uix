@@ -106,7 +106,7 @@ See [Realms](realms.md), [Interaction Anchors](interaction-anchors.md), and [Rul
 
 ## Debugging
 
-Set `debug: true` on an interaction to log listener activity, anchor resolution, every rule result, and each directive before and after it runs. Debug log messages are labelled with the interaction's realm and listen value.
+Set `debug: true` on an interaction to log listener activity, anchor resolution, every rule result, and each directive before and after it runs. The post-run entry for a `template` or `javascript` directive also includes its saved result. Debug log messages are labelled with the interaction's realm and listen value.
 
 ```yaml
 - realm: browser

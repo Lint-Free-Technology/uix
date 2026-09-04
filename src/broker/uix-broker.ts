@@ -2,6 +2,7 @@ import { tinykeys } from "tinykeys";
 import { BrowserID } from "../helpers/browser_id";
 import { hass } from "../helpers/hass";
 import { getPanelState } from "../helpers/panel";
+import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import {
   createHaButton,
@@ -24,6 +25,7 @@ import {
 type BrokerContext = {
   source: Event | Record<string, any>;
   captured: Record<string, any>;
+  results: Record<string, any>;
   panel?: Record<string, any>;
   realm: "browser" | "shortcut" | "server";
 };
@@ -44,6 +46,12 @@ const BROKER_BUTTON_WRAPPER_ATTR = "data-uix-broker-button";
 type BrokerButtonElement = HTMLElement & {
   uixBrokerButtonConfig?: UixButtonConfig;
   uixBrokerStyleProperties?: string[];
+};
+
+type TemplateCacheEntry = {
+  result?: string;
+  renderedAt?: number;
+  request?: Promise<string>;
 };
 
 function isElement(value: unknown): value is Element {
@@ -172,19 +180,33 @@ function getPathValue(value: unknown, path: string): unknown {
   return getCapturedPathValue(value, path).value;
 }
 
-function resolveCaptured(value: any, captured: Record<string, any>): any {
+function resolveCaptured(value: any, captured: Record<string, any>, results: Record<string, any> = {}): any {
   if (typeof value === "string" && (value === "@captured" || value.startsWith("@captured."))) {
     return value === "@captured" ? captured : getPathValue(captured, value.slice("@captured.".length));
   }
-  if (Array.isArray(value)) return value.map((item) => resolveCaptured(item, captured));
+  if (typeof value === "string") {
+    const match = /^@([A-Za-z_][A-Za-z0-9_-]*)(?:\.(.+))?$/.exec(value);
+    if (match && Object.prototype.hasOwnProperty.call(results, match[1])) {
+      return match[2] ? getPathValue(results[match[1]], match[2]) : results[match[1]];
+    }
+  }
+  if (Array.isArray(value)) return value.map((item) => resolveCaptured(item, captured, results));
   if (value && typeof value === "object") {
     return Object.entries(value).reduce<Record<string, any>>((result, [key, item]) => {
       if (UNSAFE_PROPERTY_KEYS.has(key)) return result;
-      result[key] = resolveCaptured(item, captured);
+      result[key] = resolveCaptured(item, captured, results);
       return result;
     }, {});
   }
   return value;
+}
+
+function templateCacheKey(template: string, directive: Record<string, any>): string {
+  try {
+    return JSON.stringify([template, directive]);
+  } catch {
+    throw new Error("template directive cache key requires JSON-serializable prior directive results");
+  }
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {
@@ -403,9 +425,11 @@ export class UixBroker {
   private activeInteractions = new Set<UixBrokerInteraction>();
   private buttonWrappers = new Set<HTMLElement>();
   private buttonWrappersByDirective = new WeakMap<UixBrokerDirective, HTMLElement>();
+  private templateCache = new Map<string, TemplateCacheEntry>();
 
   configure(config: UixBrokerConfig | UixBrokerInteraction[]) {
     this.removeButtons();
+    this.templateCache = new Map();
     this.interactions = asInteractions(config);
     this.configurationVersion += 1;
     this.interactions.filter(isEnabled).forEach((interaction) => {
@@ -514,6 +538,7 @@ export class UixBroker {
       const context: BrokerContext = {
         source: event,
         captured: this.eventData(event),
+        results: Object.create(null),
         realm,
       };
       if (!this.preAnchorRulesMatchSync(interaction, context)) continue;
@@ -566,6 +591,7 @@ export class UixBroker {
         await this.runInteraction(interaction, {
           source: event,
           captured: { data: { ...(event.data ?? {}) } },
+          results: Object.create(null),
           realm: "server",
         });
       } finally {
@@ -644,7 +670,11 @@ export class UixBroker {
         if (!await this.directiveRulesMatch(interaction, directive, directiveAnchor, context, index)) continue;
         this.debug(interaction, "directive application", { index, directive, anchor: directiveAnchor });
         await this.executeDirective(directive, directiveAnchor, context);
-        this.debug(interaction, "directive applied", { index, directive, anchor: directiveAnchor });
+        const applied = { index, directive, anchor: directiveAnchor } as Record<string, unknown>;
+        if ((directive.type === "template" || directive.type === "javascript") && typeof directive.id === "string") {
+          applied.result = context.results[directive.id];
+        }
+        this.debug(interaction, "directive applied", applied);
         await this.waitAfterDirective(interaction, directive, index);
       }
     } catch (error) {
@@ -982,18 +1012,71 @@ export class UixBroker {
 
   private async executeDirective(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     if (directive.type === "property") {
-      this.executeProperty(directive, anchor, context.captured);
+      this.executeProperty(directive, anchor, context);
     } else if (directive.type === "event") {
       this.executeEvent(directive, anchor, context);
     } else if (directive.type === "call") {
-      await this.executeCall(directive, anchor, context.captured);
+      await this.executeCall(directive, anchor, context);
     } else if (directive.type === "action") {
       await this.executeAction(directive, anchor, context);
     } else if (directive.type === "button") {
-      await this.executeButton(directive, anchor, context.captured);
+      await this.executeButton(directive, anchor, context);
+    } else if (directive.type === "template") {
+      await this.executeTemplate(directive, context);
+    } else if (directive.type === "javascript") {
+      await this.executeJavascript(directive, anchor, context);
     } else {
       console.warn(`UIX Broker: unknown directive type "${directive.type}".`);
     }
+  }
+
+  private directiveResultID(directive: UixBrokerDirective): string {
+    if (typeof directive.id !== "string" || !/^[A-Za-z_][A-Za-z0-9_-]*$/.test(directive.id)) {
+      throw new Error("template and javascript directives require an id starting with a letter or underscore, followed by letters, numbers, underscores, or hyphens");
+    }
+    if (directive.id === "captured") throw new Error("template and javascript directive id 'captured' is reserved");
+    return directive.id;
+  }
+
+  private async executeTemplate(directive: UixBrokerDirective, context: BrokerContext) {
+    const id = this.directiveResultID(directive);
+    const template = resolveCaptured(directive.template, context.captured, context.results);
+    if (typeof template !== "string") throw new Error("template directive requires template");
+    const variables = { directive: context.results };
+    const cacheDuration = directive.cache;
+    if (cacheDuration !== undefined && (!Number.isFinite(cacheDuration) || cacheDuration < 0)) {
+      throw new Error("template directive cache must be a non-negative number of milliseconds");
+    }
+    if (!cacheDuration) {
+      context.results[id] = await render_template(template, variables);
+      return;
+    }
+
+    const cache = this.templateCache;
+    const cacheKey = templateCacheKey(template, context.results);
+    const entry = cache.get(cacheKey);
+    if (entry?.result !== undefined && entry.renderedAt !== undefined && Date.now() - entry.renderedAt < cacheDuration) {
+      context.results[id] = entry.result;
+      return;
+    }
+
+    const request = entry?.request ?? render_template(template, variables);
+    cache.set(cacheKey, { request });
+    try {
+      const result = await request;
+      cache.set(cacheKey, { result, renderedAt: Date.now() });
+      context.results[id] = result;
+    } catch (error) {
+      cache.delete(cacheKey);
+      throw error;
+    }
+  }
+
+  private async executeJavascript(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
+    const id = this.directiveResultID(directive);
+    if (typeof directive.code !== "string") throw new Error("javascript directive requires code");
+    const fn = new Function("hass", "anchor", "event", "captured", "directive", `"use strict";\n${directive.code}`);
+    context.results[id] = fn(await hass(), anchor, context.source, context.captured, context.results);
   }
 
   private async waitAfterDirective(interaction: UixBrokerInteraction, directive: UixBrokerDirective, index: number) {
@@ -1006,7 +1089,7 @@ export class UixBroker {
     await new Promise((resolve) => window.setTimeout(resolve, directive.wait));
   }
 
-  private executeProperty(directive: UixBrokerDirective, anchor: Element, captured: Record<string, any>) {
+  private executeProperty(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     const path = directive.set ?? directive.clear;
     if (typeof path !== "string" || !path) throw new Error("property directive requires set or clear");
     const keys = path.split(".");
@@ -1015,12 +1098,12 @@ export class UixBroker {
     let target: Record<string, any> = anchor as any;
     for (const key of keys) target = target[key] ?? (target[key] = {});
     if (directive.clear) delete target[last];
-    else target[last] = resolveCaptured(directive.value, captured);
+    else target[last] = resolveCaptured(directive.value, context.captured, context.results);
   }
 
   private executeEvent(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     if (typeof directive.name !== "string" || !directive.name) throw new Error("event directive requires name");
-    const data = resolveCaptured(directive.data ?? {}, context.captured);
+    const data = resolveCaptured(directive.data ?? {}, context.captured, context.results);
     const eventData = data && typeof data === "object" && !Array.isArray(data) ? data : {};
     const detail = directive.capture_data
       ? directive.capture_data === "deep"
@@ -1044,7 +1127,7 @@ export class UixBroker {
     }
   }
 
-  private async executeCall(directive: UixBrokerDirective, anchor: Element, captured: Record<string, any>) {
+  private async executeCall(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     if (typeof directive.method !== "string" || !directive.method.trim()) {
       throw new Error("call directive requires method");
     }
@@ -1052,7 +1135,7 @@ export class UixBroker {
     if (keys.some((key) => !key || UNSAFE_PROPERTY_KEYS.has(key))) {
       throw new Error("unsafe call method path");
     }
-    const args = resolveCaptured(directive.args ?? [], captured);
+    const args = resolveCaptured(directive.args ?? [], context.captured, context.results);
     if (!Array.isArray(args)) throw new Error("call directive args must be an array");
     const methodName = keys.pop()!;
     let target: Record<string, any> | null = anchor as any;
@@ -1071,7 +1154,7 @@ export class UixBroker {
       anchor.dispatchEvent(new CustomEvent("ll-custom", {
         bubbles: true,
         composed: true,
-        detail: { uix: resolveCaptured(directive.uix ?? {}, context.captured) },
+        detail: { uix: resolveCaptured(directive.uix ?? {}, context.captured, context.results) },
       }));
       return;
     }
@@ -1083,7 +1166,7 @@ export class UixBroker {
     }
 
     const { wait: _wait, anchor: _anchor, rules: _rules, ...actionDirective } = directive;
-    const config = resolveCaptured(actionDirective, context.captured);
+    const config = resolveCaptured(actionDirective, context.captured, context.results);
     const service = action === "perform-action" ? config.perform_action : action;
     if (typeof service === "string" && service.includes(".")) {
       const [domain, name] = service.split(".", 2);
@@ -1097,7 +1180,7 @@ export class UixBroker {
     }));
   }
 
-  private async executeButton(directive: UixBrokerDirective, anchor: Element, captured: Record<string, any>) {
+  private async executeButton(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     const target = await this.resolveButtonTarget(directive, anchor);
     if (!target) return;
     const parent = target.parentElement || target.parentNode;
@@ -1129,7 +1212,7 @@ export class UixBroker {
       const slot = target.getAttribute("slot");
       if (slot) wrapper.setAttribute("slot", slot);
 
-      button = createHaButton(this.buttonConfig(directive, captured, target), (event) => {
+      button = createHaButton(this.buttonConfig(directive, context, target), (event) => {
         dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
       }) as BrokerButtonElement;
       wrapper.appendChild(button);
@@ -1138,7 +1221,7 @@ export class UixBroker {
     } else {
       button = wrapper.querySelector("ha-button") as BrokerButtonElement;
       if (!button) {
-        button = createHaButton(this.buttonConfig(directive, captured, target), (event) => {
+        button = createHaButton(this.buttonConfig(directive, context, target), (event) => {
           dispatchHaButtonAction(button, button.uixBrokerButtonConfig ?? {}, event);
         }) as BrokerButtonElement;
         wrapper.appendChild(button);
@@ -1146,9 +1229,9 @@ export class UixBroker {
     }
 
     this.clearButtonStyle(button);
-    button.uixBrokerButtonConfig = this.buttonConfig(directive, captured, target);
+    button.uixBrokerButtonConfig = this.buttonConfig(directive, context, target);
     updateHaButton(button, button.uixBrokerButtonConfig);
-    this.applyButtonStyle(button, directive.style, captured);
+    this.applyButtonStyle(button, directive.style, context);
     this.placeButton(wrapper, target, directive.before !== undefined);
   }
 
@@ -1166,7 +1249,7 @@ export class UixBroker {
 
   private buttonConfig(
     directive: UixBrokerDirective,
-    captured: Record<string, any>,
+    context: BrokerContext,
     anchor: Element,
   ): UixButtonConfig {
     const config = resolveCaptured({
@@ -1182,7 +1265,7 @@ export class UixBroker {
       tap_action: directive.tap_action,
       hold_action: directive.hold_action,
       double_tap_action: directive.double_tap_action,
-    }, captured);
+    }, context.captured, context.results);
     this.setEventActionAnchor(config, anchor);
     return config;
   }
@@ -1201,9 +1284,9 @@ export class UixBroker {
     button.uixBrokerStyleProperties = [];
   }
 
-  private applyButtonStyle(button: BrokerButtonElement, style: unknown, captured: Record<string, any>) {
+  private applyButtonStyle(button: BrokerButtonElement, style: unknown, context: BrokerContext) {
     if (style === undefined) return;
-    const resolvedStyle = resolveCaptured(style, captured);
+    const resolvedStyle = resolveCaptured(style, context.captured, context.results);
     if (!resolvedStyle || typeof resolvedStyle !== "object" || Array.isArray(resolvedStyle)) {
       throw new Error("button directive style must be an object of CSS property names and values");
     }

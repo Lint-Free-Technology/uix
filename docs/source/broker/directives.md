@@ -15,6 +15,8 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Call](#call) — invoke an element method.
 - [Button](#button) — insert an interactive Home Assistant button.
 - [Action](#action) — run a Home Assistant, frontend, or UIX action.
+- [Template](#template) — render a Jinja2 template once and save its result.
+- [JavaScript](#javascript) — synchronously evaluate JavaScript and save its return value.
 - [Wait](#wait) — delay the next directive.
 
 ## Directive rules
@@ -85,13 +87,15 @@ See [Finding paths in the browser console](./interaction-anchors.md#finding-path
   clear: config.icon
 ```
 
-Values can refer to captured data. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. Array indexes can use either dot notation (`items.0`) or brackets (`items[0]`). The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
+Values can refer to captured data or a previous `template` or `javascript` result. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. Array indexes can use either dot notation (`items.0`) or brackets (`items[0]`). The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
 
 ```yaml
 - type: property
   set: config.entity
   value: "@captured.entity_id"
 ```
+
+`template` and `javascript` directives save their value under their `id`. A later directive can use `@id` or a property such as `@id.path`; the value keeps its original type, including objects and arrays. References occupy a complete YAML value — Broker does not interpolate them into a longer string.
 
 ## Event
 
@@ -254,6 +258,61 @@ uix-sidebar-yaml: |
   data:
     code: |
       console.log(anchor, event, captured)
+```
+
+Use JavaScript only from trusted UIX configurations.
+
+## Template
+
+`template` renders a Home Assistant Jinja2 template once through the template API; it does not create a template subscription. Its string result is stored under `id` for the remaining directives in that interaction.
+
+Every uncached render is a round trip to the Home Assistant server. Avoid using it on interactions that can run frequently. Set `cache` to a positive number of milliseconds when a slightly stale value is acceptable:
+
+```yaml
+- type: template
+  id: example
+  cache: 5000
+  template: "{{ states('sensor.example') }}"
+```
+
+The cache is held in the browser and shared by template directives using the same template text and prior directive results. A cached value is used only when it is younger than the directive's `cache` duration; `cache: 0` (or omitting `cache`) always renders again. The cache stores only successful results, is cleared when Broker configuration reloads, and does not observe template changes during the cache period. When `cache` is enabled, prior directive results must be JSON-serializable because they form part of the cache key; circular objects cannot be cached.
+
+```yaml
+- type: template
+  id: log_provider_url
+  template: "/config/logs?provider={{ states('input_select.log_provider') }}"
+- type: button
+  after: "&home-assistant $ home-assistant-main $ ha-config-system-navigation $ ha-config-navigation-list $ ha-list-item-button:nth-of-type(4) $ a#item div.content"
+  icon: mdi:open-in-new
+  color: var(--primary-color)
+  tap_action:
+    action: url
+    url_path: "@log_provider_url"
+```
+
+`id` must start with a letter or underscore and can then contain letters, numbers, underscores, and hyphens. The name `captured` is reserved for `@captured` event data and cannot be used as an ID. Use dot or bracket array paths to select a saved object or array value, just as for `@captured`.
+
+Templates receive prior directive results in the top-level `directive` variable. For example, a prior directive with `id: provider` is available as `{{ directive.provider }}`. This namespace contains only results from earlier directives in the same interaction.
+
+## JavaScript
+
+`javascript` evaluates `code` once and saves its synchronous return value under `id`. The code receives `hass`, `anchor`, `event`, `captured`, and `directive`; `directive` contains prior directive results from the same interaction. Return a scalar, object, or array; the following directives can use it as `@id` without conversion.
+
+```yaml
+- type: javascript
+  id: config_path
+  code: |
+    const provider = hass.states['input_select.log_provider'].state;
+    return {
+      path: `/config/logs?provider=${provider}`,
+      label: `Open ${provider.charAt(0).toUpperCase() + provider.slice(1)} logs`,
+    };
+- type: button
+  icon: mdi:open-in-new
+  label: "@config_path.label"
+  tap_action:
+    action: url
+    url_path: "@config_path.path"
 ```
 
 Use JavaScript only from trusted UIX configurations.
