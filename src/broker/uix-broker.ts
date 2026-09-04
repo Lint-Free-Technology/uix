@@ -205,7 +205,7 @@ function templateCacheKey(template: string, directive: Record<string, any>): str
   try {
     return JSON.stringify([template, directive]);
   } catch {
-    throw new Error("template directive results must be JSON-serializable");
+    throw new Error("template directive cache key requires JSON-serializable prior directive results");
   }
 }
 
@@ -1032,8 +1032,9 @@ export class UixBroker {
 
   private directiveResultID(directive: UixBrokerDirective): string {
     if (typeof directive.id !== "string" || !/^[A-Za-z_][A-Za-z0-9_-]*$/.test(directive.id)) {
-      throw new Error("template and javascript directives require an id using letters, numbers, underscores, or hyphens");
+      throw new Error("template and javascript directives require an id starting with a letter or underscore, followed by letters, numbers, underscores, or hyphens");
     }
+    if (directive.id === "captured") throw new Error("template and javascript directive id 'captured' is reserved");
     return directive.id;
   }
 

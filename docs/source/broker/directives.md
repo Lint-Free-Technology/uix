@@ -275,7 +275,7 @@ Every uncached render is a round trip to the Home Assistant server. Avoid using 
   template: "{{ states('sensor.example') }}"
 ```
 
-The cache is held in the browser and shared by template directives using the same template text and prior directive results. A cached value is used only when it is younger than the directive's `cache` duration; `cache: 0` (or omitting `cache`) always renders again. The cache stores only successful results, is cleared when Broker configuration reloads, and does not observe template changes during the cache period.
+The cache is held in the browser and shared by template directives using the same template text and prior directive results. A cached value is used only when it is younger than the directive's `cache` duration; `cache: 0` (or omitting `cache`) always renders again. The cache stores only successful results, is cleared when Broker configuration reloads, and does not observe template changes during the cache period. When `cache` is enabled, prior directive results must be JSON-serializable because they form part of the cache key; circular objects cannot be cached.
 
 ```yaml
 - type: template
@@ -290,7 +290,7 @@ The cache is held in the browser and shared by template directives using the sam
     url_path: "@log_provider_url"
 ```
 
-`id` must start with a letter or underscore and can then contain letters, numbers, underscores, and hyphens. Use dot or bracket array paths to select a saved object or array value, just as for `@captured`.
+`id` must start with a letter or underscore and can then contain letters, numbers, underscores, and hyphens. The name `captured` is reserved for `@captured` event data and cannot be used as an ID. Use dot or bracket array paths to select a saved object or array value, just as for `@captured`.
 
 Templates receive prior directive results in the top-level `directive` variable. For example, a prior directive with `id: provider` is available as `{{ directive.provider }}`. This namespace contains only results from earlier directives in the same interaction.
 
