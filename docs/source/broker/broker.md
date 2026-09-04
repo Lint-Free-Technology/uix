@@ -119,3 +119,38 @@ Set `debug: true` on an interaction to log listener activity, anchor resolution,
     - type: event
       name: another-event
 ```
+
+## Interaction reactivity
+
+UIX Broker [`template` and `javascript` directives](directives.md) run only when their interaction runs; neither subscribes to state changes. If you wish to have an interaction be reactive to entity state updates you create a helper interaction that listens to `state_changed`, with a [rule](./rules.md) to match the entity you wish an interaction to be reactive for and use a `event` directive to fire custom browser event and add that to your listen list for the interaction.
+
+Server realm to Browser realm interaction:
+
+```yaml
+  - realm: server
+    listen: state_changed
+    anchor: "&home-assistant"
+    directives:
+      - type: event
+        name: uix-update-my-interaction
+        rules:
+          - type: captured
+            path: data.entity_id
+            match:
+              or:
+                - switch.bed_light
+                - light.bed_light
+```
+
+Browser realm interaction:
+
+```yaml
+  - realm: browser
+    listen:
+      - uix-broker-ready
+      - uix-update-my-interaction
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    #... rules and directives
+```
+
+See [Light button on Home dashboard menu item on sidebar](./examples.md#light-button-on-home-dashboard-menu-item-on-sidebar) for a full example.

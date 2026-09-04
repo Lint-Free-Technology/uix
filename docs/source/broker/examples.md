@@ -338,3 +338,78 @@ Method:
                 - type: entities
                   entities: "@captured.dialogParams.entities"
 ```
+
+## Light button on Home dashboard menu item on sidebar
+
+Outcome:
+
+- Similar to [Add tools button to sidebar title](#add-tools-button-to-sidebar-title) this example adds a toggle button for a light to the Home sidebar menu item. To reflect the current state of the light, a Server realm to Browser realm helper interaction is used as well to have the main interaction run when the entity state changes.
+
+Method (sidebar interaction):
+
+- Listen for the `uix-broker-ready` and `uix-update-sidebar` events in the `browser` realm. `uix-update-sidebar` is a custom event and any name could be used as long as it matched the helper interaction.
+- Uses compact absolute anchor for `ha-sidebar`
+- Directives:
+    - `javascript` directive to set object parameters to be used in `button` directive. `icon` and `color` are set by entity state.
+    - Uses `button` directive to place button after the Home menu item using simple style object to give a box-shadow and reduced icon size. Action set to toggle light. NOTE: Config and operation of this button is per [UIX Forge Button spark](../forge/sparks/button.md), for which the entity is included for action only.
+
+```yaml
+  - realm: browser
+    listen:
+      - uix-broker-ready
+      - uix-update-sidebar # custom event from Server realm interaction helper
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    directives:
+      - type: javascript
+        id: button_config
+        code: |
+          const entity = 'light.bed_light';
+          const state = hass.states[entity].state;
+          return {
+            entity: entity,
+            icon: state === 'on' ? 'mdi:lightbulb-on' : 'mdi:lightbulb-off',
+            color: state === 'on' ? 'var(--state-active-color)' : 'var(--state-inactive-color)'
+          };
+      - type: button
+        anchor: "$ ha-list-item-button#sidebar-panel-home $ a#item div.content"
+        icon: "@button_config.icon"
+        color: "@button_config.color"
+        entity: "@button_config.entity"
+        size: s
+        tap_action:
+          action: toggle
+        style:
+          "--ha-button-box-shadow": rgba(0, 0, 0, 0.1) 0px 4px 12px
+          "--ha-icon-button-size": 32px
+          "--uix-button-margin": 6px
+```
+
+Method (helper interaction):
+
+Outcome:
+
+- Fire a custom Browser event when the entity state changes. This makes the example interaction above reactive to state changes for `light.bed_light`.
+
+Method:
+
+- Listen for `state_changed` event in server realm.
+- Set anchor to home-assistant element using absolute compact anchor form.
+- `event` directive to fire the custom Browser event `uix-update-sidebar` if the changed state `entity_id` is `light.bed_light`. This example would also fire if the `entity_id` is `light.other_light`. This is included in this example to show use of `or:` in match; you would use such a technique if you add other button directives to the example above.
+
+```yaml
+  - realm: server
+    listen: state_changed
+    anchor: "&home-assistant"
+    directives:
+      - type: event
+        name: uix-update-sidebar
+        rules:
+          - type: captured
+            path: data.entity_id
+            match:
+              or:
+                - light.bed_light
+                - light.other_light
+```
+
+![Button directive light toggle example](../assets/page-assets/broker/broker-button-light-directive.gif)
