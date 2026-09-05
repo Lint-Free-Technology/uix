@@ -87,7 +87,7 @@ See [Finding paths in the browser console](./interaction-anchors.md#finding-path
   clear: config.icon
 ```
 
-Values can refer to captured data or a previous `template` or `javascript` result. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. Array indexes can use either dot notation (`items.0`) or brackets (`items[0]`). The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
+Values can refer to captured data or a previous `template` or `javascript` result. `@captured` resolves to the complete captured-data object, while `@captured.path` resolves to the value at that dot-separated path. Array indexes can use either dot notation (`items.0`) or brackets (`items[0]`); use a quoted bracket key for object properties that contain punctuation, such as `settings['icon-color']`. The reference is substituted before the property is set and must be quoted in YAML as it starts with `@`.
 
 ```yaml
 - type: property
@@ -292,7 +292,7 @@ The cache is held in the browser and shared by template directives using the sam
     url_path: "@log_provider_url"
 ```
 
-`id` must start with a letter or underscore and can then contain letters, numbers, underscores, and hyphens. The name `captured` is reserved for `@captured` event data and cannot be used as an ID. Use dot or bracket array paths to select a saved object or array value, just as for `@captured`.
+`id` must start with a letter or underscore and can then contain letters, numbers, underscores, and hyphens. The name `captured` is reserved for `@captured` event data and cannot be used as an ID. Use dot or bracket array paths to select a saved object or array value, just as for `@captured`. Quoted bracket keys also work, for example `@config_path['icon-color']` or `@config_path["icon-color"]`.
 
 Templates receive prior directive results in the top-level `directive` variable. For example, a prior directive with `id: provider` is available as `{{ directive.provider }}`. This namespace contains only results from earlier directives in the same interaction.
 

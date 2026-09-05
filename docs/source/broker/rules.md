@@ -100,7 +100,7 @@ This rule prevents the interaction's directives from running unless the URL has 
 
 ## Captured-data rules
 
-Use `type: captured` to match data collected from the initiating event. `path` is a dot-separated optional-chaining path relative to captured data; do not start it with `@captured`. Array indexes can use dot notation (`items.0`) or brackets (`items[0]`).
+Use `type: captured` to match data collected from the initiating event. `path` is a dot-separated optional-chaining path relative to captured data; do not start it with `@captured`. Array indexes can use dot notation (`items.0`) or brackets (`items[0]`). Use quoted bracket keys when a property contains punctuation, for example `settings['icon-color']`.
 
 For browser and shortcut interactions, captured data starts at the DOM event's `detail`. For server interactions, Home Assistant event data is under `data`. Array indexes are supported.
 

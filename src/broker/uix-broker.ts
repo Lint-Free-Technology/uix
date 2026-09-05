@@ -147,20 +147,67 @@ function browserSearchValue(path: string): { exists: boolean; value: string | un
 }
 
 /**
- * Captured references use dot-separated properties, with numeric array indexes.
- * Accept bracketed numeric indexes too, so `items.0` and `items[0]` are
- * interchangeable (including the common `items.[0]` spelling).
+ * Captured references use dot-separated properties, with bracketed numeric
+ * indexes and quoted object keys. `items.0`, `items[0]`, and `items.[0]` are
+ * interchangeable; keys that cannot conveniently use dot notation can use
+ * `items['icon-color']` or `items["icon-color"]`.
  */
 function capturedPathSegments(path: string): string[] | null {
   const segments: string[] = [];
-  for (const part of path.split(".")) {
-    if (!part) return null;
-    const match = /^([^\[\]]+)?((?:\[\d+\])*)$/.exec(part);
-    if (!match || (!match[1] && !match[2])) return null;
-    if (match[1]) segments.push(match[1]);
-    for (const index of match[2].match(/\[\d+\]/g) ?? []) segments.push(index.slice(1, -1));
+  let index = 0;
+  let needsSegment = true;
+
+  while (index < path.length) {
+    if (path[index] === ".") {
+      if (needsSegment) return null;
+      needsSegment = true;
+      index += 1;
+      continue;
+    }
+
+    if (path[index] === "[") {
+      index += 1;
+      if (index >= path.length) return null;
+
+      if (/\d/.test(path[index])) {
+        const start = index;
+        while (index < path.length && /\d/.test(path[index])) index += 1;
+        if (path[index] !== "]") return null;
+        segments.push(path.slice(start, index));
+        index += 1;
+      } else if (path[index] === "'" || path[index] === '"') {
+        const quote = path[index];
+        let key = "";
+        index += 1;
+        while (index < path.length && path[index] !== quote) {
+          if (path[index] === "\\") {
+            index += 1;
+            if (index >= path.length) return null;
+          }
+          key += path[index];
+          index += 1;
+        }
+        if (path[index] !== quote || path[index + 1] !== "]") return null;
+        segments.push(key);
+        index += 2;
+      } else {
+        return null;
+      }
+      needsSegment = false;
+      continue;
+    }
+
+    if (!needsSegment) return null;
+    const start = index;
+    while (index < path.length && path[index] !== "." && path[index] !== "[" && path[index] !== "]") {
+      index += 1;
+    }
+    if (start === index) return null;
+    segments.push(path.slice(start, index));
+    needsSegment = false;
   }
-  return segments;
+
+  return needsSegment ? null : segments;
 }
 
 function getCapturedPathValue(value: unknown, path: string): { exists: boolean; value: unknown } {
@@ -181,13 +228,19 @@ function getPathValue(value: unknown, path: string): unknown {
 }
 
 function resolveCaptured(value: any, captured: Record<string, any>, results: Record<string, any> = {}): any {
-  if (typeof value === "string" && (value === "@captured" || value.startsWith("@captured."))) {
-    return value === "@captured" ? captured : getPathValue(captured, value.slice("@captured.".length));
+  if (typeof value === "string" && (value === "@captured" || value.startsWith("@captured.") || value.startsWith("@captured["))) {
+    if (value === "@captured") return captured;
+    const path = value.slice("@captured".length);
+    return getPathValue(captured, path.startsWith(".") ? path.slice(1) : path);
   }
   if (typeof value === "string") {
-    const match = /^@([A-Za-z_][A-Za-z0-9_-]*)(?:\.(.+))?$/.exec(value);
+    const match = /^@([A-Za-z_][A-Za-z0-9_-]*)(.*)$/.exec(value);
     if (match && Object.prototype.hasOwnProperty.call(results, match[1])) {
-      return match[2] ? getPathValue(results[match[1]], match[2]) : results[match[1]];
+      if (!match[2]) return results[match[1]];
+      const path = match[2].startsWith(".") ? match[2].slice(1) : match[2];
+      if (match[2].startsWith(".") || match[2].startsWith("[")) {
+        return getPathValue(results[match[1]], path);
+      }
     }
   }
   if (Array.isArray(value)) return value.map((item) => resolveCaptured(item, captured, results));
