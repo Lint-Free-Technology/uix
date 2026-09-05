@@ -4,15 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
 import subprocess
 import sys
 from typing import Any
-from urllib.parse import quote
-
-
 LANGUAGE_CODE = re.compile(r"^[a-z]{2}$")
 GITHUB_LOGIN = re.compile(
     r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
@@ -116,10 +114,17 @@ def changed_paths(base: str, head: str) -> list[tuple[str, tuple[str, ...]]]:
     return changes
 
 
-def link(repository: str, revision: str, path: str) -> str:
+def display_path(path: str) -> str:
     display = path.replace("`", "\\`").replace("\n", "\\n")
-    target = quote(path, safe="/")
-    return f"[`{display}`](https://github.com/{repository}/blob/{revision}/{target})"
+    return display
+
+
+def diff_link(repository: str, base: str, head: str, path: str) -> str:
+    anchor = hashlib.sha256(path.encode("utf-8")).hexdigest()
+    return (
+        f"[`{display_path(path)}`](https://github.com/{repository}/compare/"
+        f"{base}...{head}#diff-{anchor})"
+    )
 
 
 def render_change(
@@ -139,12 +144,11 @@ def render_change(
     if kind in {"R", "C"}:
         old_path, new_path = paths
         return (
-            f"- {label}: {link(repository, base, old_path)} → "
-            f"{link(repository, head, new_path)}"
+            f"- {label}: `{display_path(old_path)}` → "
+            f"{diff_link(repository, base, head, new_path)}"
         )
     path = paths[0]
-    revision = base if kind == "D" else head
-    return f"- {label}: {link(repository, revision, path)}"
+    return f"- {label}: {diff_link(repository, base, head, path)}"
 
 
 def render_report(
