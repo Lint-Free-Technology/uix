@@ -1,3 +1,9 @@
+## [8.2.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.14...v8.2.0-beta.15) (2026-09-05)
+
+### 🐞 Bug Fixes
+
+* **broker:** Fix `@id` captured rule not accepting quoted bracketed keys ([67253e8](https://github.com/Lint-Free-Technology/uix/commit/67253e8e56e2d7e1bf42149f7b05c7a4163a0c7e))
+
 ## [8.2.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.13...v8.2.0-beta.14) (2026-09-05)
 
 ### ⭐ New Features
