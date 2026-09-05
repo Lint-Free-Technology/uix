@@ -228,7 +228,9 @@ uix-sidebar-yaml: |
 !!! note
     - Set at most one of `after` and `before`.
     - Button clicks are isolated from the reference element's own action handler.
-    - The same `--uix-button-margin` and `--uix-button-label-text-wrap` CSS variables as the Forge button spark apply. The default margin is `-6px` for a labelled button and `0px` for an icon-only button.
+    - Ripples from the reference element are not prevented.
+    - The same `--uix-button-margin` CSS variable as the Forge button spark apply. The default margin is `-6px` for a labelled button and `0px` for an icon-only button.
+    - Other CSS variables applicable to the Forge button spark also apply.
 
 ## Action
 

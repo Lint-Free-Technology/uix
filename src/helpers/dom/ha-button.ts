@@ -4,6 +4,9 @@ export const HA_BUTTON_CSS = `
   ha-button.uix-forge-spark-button {
     margin: var(--uix-button-margin, -6px);
   }
+  ha-button.uix-forge-spark-button::part(base) {
+    border-color: var(--uix-button-border-color, revert-layer);
+  }
   ha-button.uix-forge-spark-icon-button {
     margin: var(--uix-button-margin, 0px);
     display: inline-block;
@@ -24,14 +27,15 @@ export const HA_BUTTON_CSS = `
     inset: 0;
     z-index: -1;
     border-radius: 50%;
-    background-color: currentColor;
-    opacity: 0;
+    background-color: var(--uix-icon-button-background-color, currentColor);
+    opacity: var(--uix-icon-button-background-opacity, 0);
     pointer-events: none;
   }
   ha-button.uix-forge-spark-icon-button::part(base) {
     width: var(--wa-form-control-height);
     aspect-ratio: 1;
     outline-offset: -4px;
+    border-color: var(--uix-button-border-color, revert-layer);
   }
   ha-button.uix-forge-spark-icon-button::part(label) {
     display: flex;
@@ -41,7 +45,7 @@ export const HA_BUTTON_CSS = `
   }
   @media (hover: hover) {
     ha-button.uix-forge-spark-icon-button:hover:not([disabled])::after {
-      opacity: 0.1;
+      opacity: calc(var(--uix-icon-button-background-opacity, 0) + 0.1);
     }
   }
 `;
