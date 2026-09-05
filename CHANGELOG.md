@@ -1,3 +1,9 @@
+## [8.2.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.13...v8.2.0-beta.14) (2026-09-05)
+
+### ⭐ New Features
+
+* **broker+forge:** Add border color and icon background color/opacity to UIX Forge/Broker button. ([1bc51b6](https://github.com/Lint-Free-Technology/uix/commit/1bc51b645880a93f09520e2b3b6ddd48b02d4098))
+
 ## [8.2.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0-beta.12...v8.2.0-beta.13) (2026-09-04)
 
 ### ⭐ New Features
