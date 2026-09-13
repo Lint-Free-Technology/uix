@@ -14,6 +14,12 @@ The interaction `realm` determines where Broker listens and how its `listen` val
 
 All realms support [rules](rules.md) and [directives](directives.md). The selected [interaction anchor](interaction-anchors.md) element is always in the current browser, so an event captured from the `server` realm can still update a browser element or dispatch an event to it.
 
+## Listener registrations
+
+Broker registers one browser listener for each distinct `browser`-realm event name and one Home Assistant event-bus subscription for each distinct `server`-realm event name. Interactions that use the same enabled `listen` value share that registration; Broker evaluates their anchors and rules after the event arrives.
+
+For example, two `browser` interactions that both listen for `uix-applied` use one `window` listener, and two `server` interactions that both listen for `state_changed` use one event-bus subscription. Split interactions by their target, rules, or directives when that makes the configuration clearer—grouping them is not needed to reduce listener registrations.
+
 ## Browser
 
 `browser` listens at `window` during the capture phase. Use it for DOM events such as `click`, `change`, `show-dialog`, and Home Assistant's custom browser events. `listen` can be one event name or a list when the same interaction should respond to multiple events.
@@ -46,6 +52,37 @@ For example, run one interaction after Broker starts and whenever a panel update
 
 The browser event's `detail` object is the root of captured data. See [Captured-data rules](./rules.md#captured-data-rules) and [Event directive](./directives.md#event) for how captured data is matched and
 reused.
+
+### UIX Styling lifecycle events
+
+UIX Styling dispatches the following bubbling, composed browser events from its
+`<uix-node>`:
+
+- `uix-applied` — after UIX is attached to an element.
+- `uix-styles-update` — when that UIX node renders its styles, including
+  template-driven updates.
+
+Both events provide the originating `<uix-node>` as `detail.uix_node`. Use the
+event-path anchor `"<$ target"` to select its nearest shadow host, which is
+normally the element that UIX is applied to.
+
+For example, set a map's `themeMode` when UIX is applied to its containing map
+card:
+
+```yaml
+- realm: browser
+  reentrant: false
+  listen:
+    - uix-applied
+  anchor: "<$ target"
+  rules:
+    - hui-map-card
+  directives:
+    - type: property
+      anchor: "$ ha-map"
+      set: themeMode
+      value: dark
+```
 
 ## Shortcut
 

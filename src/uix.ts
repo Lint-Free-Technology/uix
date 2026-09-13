@@ -382,7 +382,7 @@ export class Uix extends LitElement {
   private _style_rendered(result: string) {
     if (this._rendered_styles !== result) this._rendered_styles = result;
     // This event is listened for by icons
-    this.dispatchEvent(new Event("uix-styles-update"));
+    this.dispatchEvent(new CustomEvent("uix-styles-update", { detail: { uix_node: this }, bubbles: true, composed: true }));
   }
 
   createRenderRoot() {
