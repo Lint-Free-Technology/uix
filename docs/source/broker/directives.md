@@ -13,6 +13,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Button](#button) — insert an interactive Home Assistant button.
 - [Tile icon](#tile-icon) — insert an interactive Home Assistant tile icon.
 - [Tooltip](#tooltip) — attach a styled tooltip to an element.
+- [Lock](#lock) — require an unlock challenge before an element can be used.
 - [Action](#action) — run a Home Assistant, frontend, or UIX action.
 - [Template](#template) — render a Jinja2 template once and save its result.
 - [JavaScript](#javascript) — synchronously evaluate JavaScript and save its return value.
@@ -20,7 +21,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 ## Directive rules
 
-Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `button`, `tile-icon`, and `tooltip`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `button`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
 ```yaml
 directives:
@@ -51,7 +52,7 @@ It is available only in `browser` and `shortcut` realms. The interaction anchor 
 
 ## Directive anchors
 
-`property`, `event`, `call`, `button`, `tile-icon`, and `tooltip` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
+`property`, `event`, `call`, `button`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
 
 ```yaml
 directives:
@@ -370,6 +371,62 @@ Use `style` for a flat mapping of CSS properties. This is particularly useful fo
 | `style` | object | — | Flat map of CSS property names and string or numeric values, set inline on `wa-tooltip`. |
 
 The tooltip is inserted as a sibling of its target. Set the `--uix-tooltip-*` CSS variables on the target's parent or an ancestor to customise it; see the [Forge tooltip spark CSS variables](../forge/sparks/tooltip.md#css-variables-reference).
+
+## Lock
+
+`lock` overlays the directive anchor and prevents it being used until the current user completes the configured PIN, passphrase, or confirmation challenge. It uses the same access matching, retry handling, icons, and `--uix-lock-*` CSS variables as the [Forge lock spark](../forge/sparks/lock.md).
+
+```yaml
+- type: lock
+  action: tap
+  duration: 5s
+  entity: light.living_room
+  unlocked_action:
+    action: toggle
+  locks:
+    - code: 1234
+      admins: true
+```
+
+The directive anchor is the locked element by default. Set `for` to a relative selector to lock a descendant, or use `for: previous` directly after an element-producing directive such as `button` or `tile-icon`.
+
+```yaml
+- type: button
+  icon: mdi:account
+- type: lock
+  for: previous
+  locks:
+    - confirmation: true
+      admins: true
+```
+
+Use `anchor` to change the directive's root for `for` selectors. `locks`, `permissive`, `code_dialog`, `action`, `duration`, `icon_locked`, `icon_unlocked`, `icon_locked_color`, `icon_unlocked_color`, `icon_position`, and `icon_size` have the same meaning as the Forge lock spark.
+
+`unlocked_action` is optional. A normal Home Assistant action runs against `entity`; `element_tap`, `element_hold`, and `element_double_tap` dispatch the corresponding action from the locked element's `config` when it has one.
+
+Use `style` for a flat mapping of CSS property names and values on the generated lock overlay. The `--uix-lock-*` CSS variables are generally preferable because they continue to apply as the lock transitions between locked, unlocked, and blocked states.
+
+```yaml
+- type: lock
+  style:
+    "--uix-lock-background": rgba(0, 0, 0, 0.25)
+    "--uix-lock-icon-size": 20px
+    z-index: 2
+```
+
+Use `uix` for UIX Styling on the generated overlay. Its UIX type is `uix-broker-lock`; the resolved lock settings are available as `config`, and results from earlier `template` or `javascript` directives are available as `directive`.
+
+```yaml
+- type: lock
+  locks:
+    - confirmation: true
+      admins: true
+  uix:
+    style: |
+      :host {
+        --uix-lock-background: {{ 'rgba(0, 0, 0, 0.35)' if config.locks else 'transparent' }};
+      }
+```
 
 ## Action
 

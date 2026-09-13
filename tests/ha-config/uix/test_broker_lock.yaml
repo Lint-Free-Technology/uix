@@ -1,0 +1,40 @@
+uix_broker:
+  - realm: browser
+    listen:
+      - uix-broker-ready
+      - uix-update
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    debug: false
+    directives:
+      - type: tile-icon
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content"
+        image_url: /local/media/daniel_craig_cropped.jpg
+        tap_action:
+          action: perform-action
+          perform_action: light.toggle
+          target:
+            entity_id: light.bed_light
+        style:
+          "z-index": 1
+          "--tile-icon-size": 34px
+        uix:
+          style: |
+            .container {
+              border: 1px solid red;
+            }
+      - type: lock
+        for: previous
+        action: tap
+        duration: 5s
+        icon_unlocked: mdi:lock-open-outline
+        icon_position:
+          top: 0
+          left: 0
+        locks:
+          - code: 1234
+            admins: true
+        style:
+          "--uix-lock-opacity": 1
+          "--uix-lock-icon-color": "white"
+          "--uix-lock-icon-background": "red"
+          "--uix-lock-icon-background-unlocked": "green"

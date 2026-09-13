@@ -5,6 +5,7 @@ import { getPanelState } from "../helpers/panel";
 import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import { apply_uix, ModdedElement, UixConfig } from "../helpers/apply_uix";
+import { LockOverlayConfig, UixLockOverlay } from "../helpers/dom/lock-overlay";
 import {
   createHaButton,
   dispatchHaButtonAction,
@@ -39,6 +40,8 @@ import {
 } from "./uix-broker-types";
 
 type BrokerContext = {
+  /** Broker configuration generation that started this interaction. */
+  configurationVersion: number;
   source: Event | Record<string, any>;
   captured: Record<string, any>;
   results: Record<string, any>;
@@ -88,6 +91,13 @@ type BrokerTooltipTarget = {
   generatedId?: string;
   pointerEventsValue: string;
   pointerEventsPriority: string;
+};
+
+type BrokerLock = {
+  overlay: UixLockOverlay;
+  config?: Record<string, any>;
+  anchor?: Element;
+  styleProperties?: string[];
 };
 
 type TemplateCacheEntry = {
@@ -584,6 +594,7 @@ export class UixBroker {
   private buttonWrappers = new Map<UixBrokerDirective, HTMLElement>();
   private tileIcons = new Map<UixBrokerDirective, HTMLElement>();
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
+  private locks = new Map<UixBrokerDirective, BrokerLock>();
   private tooltipTargets = new Map<Element, BrokerTooltipTarget>();
   private retainedReferenceObservers = new Map<Node, MutationObserver>();
   private templateCache = new Map<string, TemplateCacheEntry>();
@@ -710,6 +721,7 @@ export class UixBroker {
       }
       this.debug(interaction, "listen", { event });
       const context: BrokerContext = {
+        configurationVersion: this.configurationVersion,
         source: event,
         captured: this.eventData(event),
         results: Object.create(null),
@@ -763,6 +775,7 @@ export class UixBroker {
       if (interaction.reentrant === false) this.activeInteractions.add(interaction);
       try {
         await this.runInteraction(interaction, {
+          configurationVersion: this.configurationVersion,
           source: event,
           captured: { data: { ...(event.data ?? {}) } },
           results: Object.create(null),
@@ -800,14 +813,19 @@ export class UixBroker {
     preAnchorRulesValidated = false,
   ) {
     try {
+      if (!this.isCurrentConfiguration(context)) return;
       if (!preAnchorRulesValidated && !await this.preAnchorRulesMatch(interaction, context)) return;
+      if (!this.isCurrentConfiguration(context)) return;
       const anchor = prevalidatedAnchor ?? await this.resolveAnchor(interaction.anchor, context);
+      if (!this.isCurrentConfiguration(context)) return;
       if (anchor) this.rememberAnchor(interaction, anchor);
       if (!prevalidatedAnchor) {
         this.debug(interaction, "anchor resolution", { anchor: interaction.anchor, resolved: anchor });
         if (!anchor || !await this.anchorRulesMatch(interaction, anchor, context)) return;
+        if (!this.isCurrentConfiguration(context)) return;
       }
       for (const [index, directive] of (interaction.directives ?? []).entries()) {
+        if (!this.isCurrentConfiguration(context)) return;
         if (directive.type === "block") {
           if (!blockHandled) {
             this.debug(interaction, "directive application", { index, directive });
@@ -820,12 +838,14 @@ export class UixBroker {
         if (directive.type === "wait") {
           if (directive.wait === undefined) throw new Error("wait directive requires wait");
           if (!await this.directiveRulesMatch(interaction, directive, anchor, context, index)) continue;
+          if (!this.isCurrentConfiguration(context)) return;
           this.debug(interaction, "directive application", { index, directive });
           await this.waitAfterDirective(interaction, directive, index);
           this.debug(interaction, "directive applied", { index, directive });
           continue;
         }
         const directiveAnchor = await this.resolveDirectiveAnchor(directive, anchor);
+        if (!this.isCurrentConfiguration(context)) return;
         if (!directiveAnchor) {
           this.debug(interaction, "directive anchor resolution", {
             index,
@@ -842,8 +862,10 @@ export class UixBroker {
           });
         }
         if (!await this.directiveRulesMatch(interaction, directive, directiveAnchor, context, index)) continue;
+        if (!this.isCurrentConfiguration(context)) return;
         this.debug(interaction, "directive application", { index, directive, anchor: directiveAnchor });
         const createdElement = await this.executeDirective(directive, directiveAnchor, context);
+        if (!this.isCurrentConfiguration(context)) return;
         if (createdElement) context.previousDirectiveElement = createdElement;
         const applied = { index, directive, anchor: directiveAnchor } as Record<string, unknown>;
         if ((directive.type === "template" || directive.type === "javascript") && typeof directive.id === "string") {
@@ -855,6 +877,10 @@ export class UixBroker {
     } catch (error) {
       console.error("UIX Broker: interaction failed:", error, interaction);
     }
+  }
+
+  private isCurrentConfiguration(context: BrokerContext): boolean {
+    return context.configurationVersion === this.configurationVersion;
   }
 
   private resolveAnchorSync(anchorConfig: UixBrokerAnchor, context: BrokerContext): Element | null {
@@ -929,6 +955,12 @@ export class UixBroker {
     for (const [directive, tooltip] of this.tooltips) {
       if (!tooltip.element.isConnected || !tooltip.target.isConnected) this.removeTooltip(directive, tooltip);
     }
+    for (const [directive, lock] of this.locks) {
+      if (!lock.overlay.element?.isConnected || !lock.anchor?.isConnected) {
+        lock.overlay.detach();
+        this.locks.delete(directive);
+      }
+    }
     this.refreshRetainedReferenceObservers();
   }
 
@@ -939,7 +971,7 @@ export class UixBroker {
    */
   private refreshRetainedReferenceObservers() {
     const roots = new Set<Node>();
-    if (this.anchorHistory.length || this.buttonWrappers.size || this.tileIcons.size || this.tooltips.size) {
+    if (this.anchorHistory.length || this.buttonWrappers.size || this.tileIcons.size || this.tooltips.size || this.locks.size) {
       roots.add(document);
       this.anchorHistory.forEach(({ anchor }) => roots.add(anchor.getRootNode()));
       this.buttonWrappers.forEach((wrapper) => roots.add(wrapper.getRootNode()));
@@ -947,6 +979,10 @@ export class UixBroker {
       this.tooltips.forEach(({ element, target }) => {
         roots.add(element.getRootNode());
         roots.add(target.getRootNode());
+      });
+      this.locks.forEach(({ overlay, anchor }) => {
+        if (overlay.element) roots.add(overlay.element.getRootNode());
+        if (anchor) roots.add(anchor.getRootNode());
       });
     }
 
@@ -967,7 +1003,7 @@ export class UixBroker {
     directive: UixBrokerDirective,
     interactionAnchor: Element,
   ): Promise<Element | null> {
-    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button" && directive.type !== "tile-icon" && directive.type !== "tooltip") {
+    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
       return interactionAnchor;
     }
     if (directive.type === "event" && directive.target !== undefined && directive.target !== "anchor") {
@@ -1281,6 +1317,8 @@ export class UixBroker {
       return this.executeTileIcon(directive, anchor, context);
     } else if (directive.type === "tooltip") {
       await this.executeTooltip(directive, anchor, context);
+    } else if (directive.type === "lock") {
+      return await this.executeLock(directive, anchor, context);
     } else if (directive.type === "template") {
       await this.executeTemplate(directive, context);
     } else if (directive.type === "javascript") {
@@ -1440,6 +1478,115 @@ export class UixBroker {
     }));
   }
 
+  private async executeLock(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
+    const target = await this.resolveLockTarget(directive, anchor, context);
+    if (!target) return undefined;
+    let lock = this.locks.get(directive);
+    if (!lock) {
+      lock = {} as BrokerLock;
+      lock.overlay = new UixLockOverlay({
+        id: `uix-broker-lock-${Math.random().toString(36).slice(2, 11)}`,
+        overlayAttribute: "data-uix-broker-lock",
+        getUser: () => this.brokerHass?.user,
+        onUnlocked: (overlay) => this.executeLockUnlockedAction(lock!, overlay),
+      });
+      this.locks.set(directive, lock);
+    }
+    const config = resolveCaptured(directive, context.captured, context.results);
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+      throw new Error("lock directive configuration must be an object");
+    }
+    lock.config = config as Record<string, any>;
+    lock.anchor = target;
+    lock.overlay.configure(lock.config as LockOverlayConfig);
+    const overlay = lock.overlay.attach(target as HTMLElement);
+    this.clearLockStyle(lock, overlay);
+    this.applyLockStyle(lock, overlay, lock.config.style, context);
+    await this.applyLockUix(overlay, lock.config, context);
+    this.refreshRetainedReferenceObservers();
+    return overlay;
+  }
+
+  private clearLockStyle(lock: BrokerLock, overlay: HTMLElement): void {
+    lock.styleProperties?.forEach((property) => overlay.style.removeProperty(property));
+    lock.styleProperties = [];
+  }
+
+  private applyLockStyle(
+    lock: BrokerLock,
+    overlay: HTMLElement,
+    style: unknown,
+    context: BrokerContext,
+  ): void {
+    if (style === undefined) return;
+    const resolvedStyle = resolveCaptured(style, context.captured, context.results);
+    if (!resolvedStyle || typeof resolvedStyle !== "object" || Array.isArray(resolvedStyle)) {
+      throw new Error("lock directive style must be an object of CSS property names and values");
+    }
+    for (const [property, value] of Object.entries(resolvedStyle)) {
+      if (!property.trim() || (typeof value !== "string" && typeof value !== "number")) {
+        throw new Error("lock directive style values must be strings or numbers");
+      }
+      overlay.style.setProperty(property, String(value));
+      lock.styleProperties!.push(property);
+    }
+  }
+
+  private async applyLockUix(
+    overlay: HTMLElement,
+    config: Record<string, any>,
+    context: BrokerContext,
+  ): Promise<void> {
+    const uixConfig = resolveCaptured(config.uix, context.captured, context.results) as UixConfig | undefined;
+    await apply_uix(overlay as ModdedElement, "uix-broker-lock", uixConfig, {
+      config,
+      directive: context.results,
+    });
+  }
+
+  private async resolveLockTarget(
+    directive: UixBrokerDirective,
+    anchor: Element,
+    context: BrokerContext,
+  ): Promise<Element | null> {
+    const target = directive.for;
+    if (target === undefined) return anchor;
+    if (target === "previous") {
+      if (!context.previousDirectiveElement?.isConnected) {
+        throw new Error("lock directive for: previous requires a preceding element directive");
+      }
+      return context.previousDirectiveElement;
+    }
+    if (typeof target !== "string" || !target.trim()) {
+      throw new Error("lock directive for must be previous or a non-empty path relative to the directive anchor");
+    }
+    return this.waitForSelectTreeAnchor(target, anchor);
+  }
+
+  /** Execute the action configured for a Broker lock after it is unlocked. */
+  private executeLockUnlockedAction(lock: BrokerLock, source: HTMLElement): void {
+    const action = lock.config?.unlocked_action;
+    if (!action || typeof action !== "object" || typeof action.action !== "string") return;
+    if (action.action.startsWith("element_")) {
+      source.dispatchEvent(new CustomEvent("hass-action", {
+        bubbles: true,
+        composed: true,
+        detail: {
+          config: (lock.anchor as any)?.config,
+          action: action.action.slice("element_".length),
+        },
+      }));
+      return;
+    }
+    const config: Record<string, any> = { tap_action: { ...action } };
+    if (typeof lock.config?.entity === "string" && lock.config.entity) config.entity = lock.config.entity;
+    source.dispatchEvent(new CustomEvent("hass-action", {
+      bubbles: true,
+      composed: true,
+      detail: { config, action: "tap" },
+    }));
+  }
+
   private async executeButton(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveButtonTarget(directive, anchor);
     if (!target) return undefined;
@@ -1493,6 +1640,11 @@ export class UixBroker {
     updateHaButton(button, button.uixBrokerButtonConfig);
     this.applyButtonStyle(button, directive.style, context);
     await this.applyButtonUix(button, directive, context, button.uixBrokerButtonConfig);
+    if (!this.isCurrentConfiguration(context)) {
+      if (this.buttonWrappers.get(directive) === wrapper) this.buttonWrappers.delete(directive);
+      wrapper.remove();
+      return undefined;
+    }
     this.placeButton(wrapper, target, directive.before !== undefined);
     this.refreshRetainedReferenceObservers();
     return button;
@@ -1532,9 +1684,20 @@ export class UixBroker {
     const brokerTileIcon = tileIcon as BrokerTileIconElement;
     this.clearTileIconStyle(brokerTileIcon);
     brokerTileIcon.uixBrokerTileIconConfig = config;
-    updateHaTileIcon(tileIcon, config, await hass());
+    const currentHass = await hass();
+    if (!this.isCurrentConfiguration(context)) {
+      if (this.tileIcons.get(directive) === tileIcon) this.tileIcons.delete(directive);
+      tileIcon.remove();
+      return undefined;
+    }
+    updateHaTileIcon(tileIcon, config, currentHass);
     this.applyTileIconStyle(brokerTileIcon, directive.style, context);
     await this.applyTileIconUix(brokerTileIcon, directive, context, config);
+    if (!this.isCurrentConfiguration(context)) {
+      if (this.tileIcons.get(directive) === tileIcon) this.tileIcons.delete(directive);
+      tileIcon.remove();
+      return undefined;
+    }
     this.placeTileIcon(tileIcon, target, directive.before !== undefined);
     this.refreshRetainedReferenceObservers();
     return tileIcon;
@@ -1542,6 +1705,7 @@ export class UixBroker {
 
   private async executeTooltip(directive: UixBrokerDirective, anchor: Element, context: BrokerContext) {
     const target = await this.resolveTooltipTarget(directive, anchor, context);
+    if (!this.isCurrentConfiguration(context)) return;
     if (!target) return;
     const parent = target.parentElement || target.parentNode;
     if (!parent) return;
@@ -1890,8 +2054,33 @@ export class UixBroker {
     this.buttonWrappers.clear();
     this.tileIcons.forEach((tileIcon) => tileIcon.remove());
     this.tileIcons.clear();
+    // Sidebar and other Lit-rendered hosts may replace a generated icon while
+    // an interaction is running. In that case the old directive map entry can
+    // no longer be used to find it on a subsequent Broker-file reload. Sweep
+    // every open shadow root as a final cleanup boundary before new directives
+    // are installed.
+    this.removeBrokerTileIconsFromDom();
     [...this.tooltips.entries()].forEach(([directive, tooltip]) => this.removeTooltip(directive, tooltip));
+    this.locks.forEach((lock) => lock.overlay.detach());
+    this.locks.clear();
     this.refreshRetainedReferenceObservers();
+  }
+
+  private removeBrokerTileIconsFromDom(): void {
+    const roots: ParentNode[] = [document];
+    const visited = new Set<Node>();
+    while (roots.length) {
+      const root = roots.pop()!;
+      if (visited.has(root)) continue;
+      visited.add(root);
+      const elements = Array.from(root.querySelectorAll("*"));
+      elements
+        .filter((element) => element.matches(`ha-tile-icon[${BROKER_TILE_ICON_ATTR}]`))
+        .forEach((element) => element.remove());
+      elements.forEach((element) => {
+        if (element.shadowRoot) roots.push(element.shadowRoot);
+      });
+    }
   }
 }
 
