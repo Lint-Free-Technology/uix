@@ -40,8 +40,42 @@ export function getLockTargetAdapter(element: HTMLElement): LockTargetAdapter | 
   switch (element.tagName.toLowerCase()) {
     case "ha-tile-icon":
       return new HaTileIconLockAdapter();
+    case "ha-list-item-button":
+      return new HaListItemButtonLockAdapter();
     default:
       return null;
+  }
+}
+
+/**
+ * `ha-list-item-button` only renders named slots, so a normal light-DOM lock
+ * overlay exists in DevTools but is not painted. Move it into the component's
+ * shadow `.base` element, whose positioning context also covers the full row.
+ */
+class HaListItemButtonLockAdapter implements LockTargetAdapter {
+  lock(element: HTMLElement, overlay: HTMLElement): void {
+    const base = element.shadowRoot?.querySelector(".base");
+    if (base && overlay.parentNode !== base) base.appendChild(overlay);
+  }
+
+  unlock(_element: HTMLElement): void {}
+
+  cleanup(_element: HTMLElement): void {}
+
+  defaultIconSize(): string {
+    return "24px";
+  }
+
+  defaultIconPadding(): string | null {
+    return null;
+  }
+
+  defaultIconBorderRadius(): string | null {
+    return null;
+  }
+
+  defaultIconPosition(): AdapterIconPosition | null {
+    return null;
   }
 }
 
