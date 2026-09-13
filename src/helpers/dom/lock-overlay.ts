@@ -72,6 +72,11 @@ export class UixLockOverlay {
     if (this.overlay) this.update();
   }
 
+  /** Re-evaluate visibility and access when the active user changes. */
+  refreshAccess(): void {
+    this.update();
+  }
+
   attach(target: HTMLElement): HTMLElement {
     if (this.target && this.target !== target) this.detach();
     this.target = target;

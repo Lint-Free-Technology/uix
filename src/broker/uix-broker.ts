@@ -604,8 +604,17 @@ export class UixBroker {
   }
 
   set hass(value: any) {
+    const previousUser = this.brokerHass?.user;
+    const nextUser = value?.user;
     this.brokerHass = value;
     this.refreshTileIcons(value);
+    if (
+      previousUser?.id !== nextUser?.id
+      || previousUser?.name !== nextUser?.name
+      || previousUser?.is_admin !== nextUser?.is_admin
+    ) {
+      this.locks.forEach((lock) => lock.overlay.refreshAccess());
+    }
   }
 
   async provideHass() {
@@ -1480,6 +1489,7 @@ export class UixBroker {
 
   private async executeLock(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveLockTarget(directive, anchor, context);
+    if (!this.isCurrentConfiguration(context)) return undefined;
     if (!target) return undefined;
     let lock = this.locks.get(directive);
     if (!lock) {
@@ -1503,6 +1513,11 @@ export class UixBroker {
     this.clearLockStyle(lock, overlay);
     this.applyLockStyle(lock, overlay, lock.config.style, context);
     await this.applyLockUix(overlay, lock.config, context);
+    if (!this.isCurrentConfiguration(context)) {
+      if (this.locks.get(directive) === lock) this.locks.delete(directive);
+      lock.overlay.detach();
+      return undefined;
+    }
     this.refreshRetainedReferenceObservers();
     return overlay;
   }
@@ -1568,11 +1583,12 @@ export class UixBroker {
     const action = lock.config?.unlocked_action;
     if (!action || typeof action !== "object" || typeof action.action !== "string") return;
     if (action.action.startsWith("element_")) {
+      const target = lock.anchor as (BrokerButtonElement & BrokerTileIconElement & { config?: Record<string, any> }) | undefined;
       source.dispatchEvent(new CustomEvent("hass-action", {
         bubbles: true,
         composed: true,
         detail: {
-          config: (lock.anchor as any)?.config,
+          config: target?.uixBrokerButtonConfig ?? target?.uixBrokerTileIconConfig ?? target?.config,
           action: action.action.slice("element_".length),
         },
       }));
