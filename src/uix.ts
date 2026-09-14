@@ -118,7 +118,7 @@ export class Uix extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("uix-update", this._uixUpdateListener);
-    if (this._processStylesOnConnect) {
+    if (this._processStylesOnConnect || this._pendingThemeUpdate) {
       this._processStylesOnConnect = false;
       this._debug("Processing styles on (Re)connect:", 
         "type:",
