@@ -43,7 +43,9 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._beginUpdate();
     this._transition = this._transition
       .catch(() => {})
-      .then(() => this._restore());
+      .then(async () => {
+        if (await this._restore()) this._notifyThemeUpdate();
+      });
   }
 
   private _scheduleUpdate(): void {
@@ -51,9 +53,11 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._transition = this._transition
       .catch(() => {})
       .then(async () => {
-        await this._restore();
+        const restored = await this._restore();
         if (generation !== this._callGeneration) return;
-        await this._apply(generation);
+        const applied = await this._apply(generation);
+        if (generation !== this._callGeneration) return;
+        if (restored || applied) this._notifyThemeUpdate();
       });
   }
 
@@ -65,28 +69,27 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     );
   }
 
-  private async _restore(): Promise<void> {
+  private async _restore(): Promise<boolean> {
     const targetElement = this._targetElement;
-    if (!targetElement) return;
+    if (!targetElement) return false;
     this._targetElement = null;
-    await applyFrontendThemeOnElement(targetElement, undefined);
-    this._notifyThemeUpdate();
+    return applyFrontendThemeOnElement(targetElement, undefined);
   }
 
-  private async _apply(generation: number) {
-    if (!this._theme) return;
+  private async _apply(generation: number): Promise<boolean> {
+    if (!this._theme) return false;
     const elements = await this.controller.target(this._for, this._cancel);
     const element = elements?.[0];
-    if (!element) return;
-    if (generation !== this._callGeneration) return;
+    if (!element) return false;
+    if (generation !== this._callGeneration) return false;
 
     this._targetElement = element;
-    await applyFrontendThemeOnElement(element, this._theme);
+    const applied = await applyFrontendThemeOnElement(element, this._theme);
     if (generation !== this._callGeneration) {
       await applyFrontendThemeOnElement(element, undefined);
       if (this._targetElement === element) this._targetElement = null;
-      return;
+      return false;
     }
-    this._notifyThemeUpdate();
+    return applied;
   }
 }
