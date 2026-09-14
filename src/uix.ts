@@ -236,8 +236,8 @@ export class Uix extends LitElement {
       this._processStylesOnConnect = true;
       return;
     }
-    // Do not make this fire-and-forget: uix-theme-update is emitted after this
-    // method resolves, and consumers may need the refreshed child/style DOM.
+    // Await the source node's refresh so uix-theme-update follows its own
+    // refresh cycle. It deliberately does not wait for a settled descendant DOM.
     await this.refresh();
   }
 
