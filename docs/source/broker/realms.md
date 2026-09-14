@@ -58,9 +58,14 @@ reused.
 UIX Styling dispatches the following bubbling, composed browser events from its
 `<uix-node>`:
 
-- `uix-applied` — after UIX is attached to an element.
-- `uix-styles-update` — when that UIX node renders its styles, including
-  template-driven updates.
+- `uix-applied` — after UIX is attached or reapplied to an element. It can fire
+  again when the host updates or UIX configuration is reapplied, so consumers
+  should make their directives idempotent.
+- `uix-styles-update` — when that UIX node updates its rendered CSS text,
+  including template-driven updates. The latest text is available as
+  `detail.uix_node._rendered_styles`, but Lit has not yet committed its
+  `<style>` element. To read calculated styles, wait for
+  `detail.uix_node.updateComplete` in a JavaScript directive first.
 - `uix-theme-update` — after that UIX node reprocesses a theme update. This
   event fires even when the resulting UIX CSS is unchanged.
 
