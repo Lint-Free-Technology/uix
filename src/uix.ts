@@ -65,6 +65,8 @@ export class Uix extends LitElement {
       this._processStylesOnConnect = true;
       return;
     }
+    // A style-update event is not guaranteed when the refreshed CSS is unchanged.
+    // Wait for the node refresh so this per-node theme event has a ready target.
     void this._process_styles(this.uix_input).then(() => {
       if (!isThemeUpdate || !this.isConnected) return;
       this.dispatchEvent(new CustomEvent("uix-theme-update", {
@@ -186,8 +188,10 @@ export class Uix extends LitElement {
     return this._theme;
   }
 
-  refresh() {
-    this._connect();
+  // Most callers intentionally refresh in the background. Returning the promise
+  // also lets lifecycle events wait until stale child nodes have been processed.
+  refresh(): Promise<void> {
+    return this._connect();
   }
 
   cancelStyleChild() {
@@ -232,7 +236,9 @@ export class Uix extends LitElement {
       this._processStylesOnConnect = true;
       return;
     }
-    this.refresh();
+    // Do not make this fire-and-forget: uix-theme-update is emitted after this
+    // method resolves, and consumers may need the refreshed child/style DOM.
+    await this.refresh();
   }
 
   private async _style_child(
