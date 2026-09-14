@@ -1,3 +1,10 @@
+## [8.3.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.8...v8.3.0-beta.9) (2026-09-14)
+
+### ⭐ New Features
+
+* Add UIX Styling lifecycle events `uix-applied`, `uix-styles-update` and `uix-theme-update` which are available to UIX Broker to listen to in Browser realm. ([#608](https://github.com/Lint-Free-Technology/uix/issues/608)) ([106c2a2](https://github.com/Lint-Free-Technology/uix/commit/106c2a2290de44a3851c0c860adefb93eb7a65e6))
+* **broker:** Lock directive ([#606](https://github.com/Lint-Free-Technology/uix/issues/606)) ([0641d4c](https://github.com/Lint-Free-Technology/uix/commit/0641d4cfea2b6c055da44831d8718a14662ebce9))
+
 ## [8.3.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.7...v8.3.0-beta.8) (2026-09-13)
 
 ### ⭐ New Features
