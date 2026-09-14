@@ -54,6 +54,7 @@ export class Uix extends LitElement {
   _billet_string: string = "";
   _styles: string = "";
   _processStylesOnConnect: boolean = false;
+  private _pendingThemeUpdate: boolean = false;
   @property() _rendered_styles: string = "";
   _renderer: (_: string) => void;
 
@@ -61,6 +62,7 @@ export class Uix extends LitElement {
     const detail = (ev as CustomEvent<{ reason?: string; variablesChanged?: boolean }>).detail;
     const isThemeUpdate = detail?.reason === "theme";
     this.dynamicVariablesHaveChanged = detail?.variablesChanged || false;
+    if (isThemeUpdate) this._pendingThemeUpdate = true;
     if (!this.isConnected) {
       this._processStylesOnConnect = true;
       return;
@@ -69,6 +71,7 @@ export class Uix extends LitElement {
     // Wait for the node refresh so this per-node theme event has a ready target.
     void this._process_styles(this.uix_input).then(() => {
       if (!isThemeUpdate || !this.isConnected) return;
+      this._pendingThemeUpdate = false;
       this.dispatchEvent(new CustomEvent("uix-theme-update", {
         detail: { uix_node: this },
         bubbles: true,
@@ -123,7 +126,16 @@ export class Uix extends LitElement {
         ? ["#shadow-root of:", (this as any)?.parentNode?.host]
         : [this.parentElement ?? this.parentNode]),
       );
-      this._process_styles(this.uix_input);
+      const isThemeUpdate = this._pendingThemeUpdate;
+      void this._process_styles(this.uix_input).then(() => {
+        if (!isThemeUpdate || !this.isConnected) return;
+        this._pendingThemeUpdate = false;
+        this.dispatchEvent(new CustomEvent("uix-theme-update", {
+          detail: { uix_node: this },
+          bubbles: true,
+          composed: true,
+        }));
+      });
     } else {
       this.refresh();
     }

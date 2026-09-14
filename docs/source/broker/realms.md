@@ -64,9 +64,9 @@ UIX Styling dispatches the following bubbling, composed browser events from its
 - `uix-theme-update` — after that UIX node reprocesses a theme update. This
   event fires even when the resulting UIX CSS is unchanged.
 
-All three events provide the originating `<uix-node>` as `detail.uix_node`. Use the
-event-path anchor `"<$ target"` to select its nearest shadow host, which is
-normally the element that UIX is applied to.
+All three events provide the originating `<uix-node>` as `detail.uix_node`. Use
+the event-path anchor `"< target"` to select its parent element, which is the
+element that UIX is applied to whether the node is in light DOM or a shadow root.
 
 For example, set a map's `themeMode` when UIX is applied to its containing map
 card and when its theme updates:
@@ -76,7 +76,7 @@ card and when its theme updates:
   listen:
     - uix-applied
     - uix-theme-update
-  anchor: "<$ target"
+  anchor: "< target"
   rules:
     - hui-map-card
   directives:

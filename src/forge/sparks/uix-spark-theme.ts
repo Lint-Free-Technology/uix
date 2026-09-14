@@ -14,6 +14,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   private _for: string = "";
   private _theme: string = "";
   private _targetElement: HTMLElement | null = null;
+  private _transition: Promise<void> = Promise.resolve();
 
   constructor(controller: UixForgeSparkController, config: UixForgeSparkThemeConfig) {
     super(controller, config);
@@ -31,20 +32,29 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   }
 
   updated(_changedProperties: PropertyValues): void {
-    const gen = this._beginUpdate();
-    this._restore();
-    this._apply(gen);
+    this._scheduleUpdate();
   }
 
   connectedCallback(): void {
-    const gen = this._beginUpdate();
-    this._restore();
-    this._apply(gen);
+    this._scheduleUpdate();
   }
 
   disconnectedCallback(): void {
-    this._cancelPending();
-    this._restore();
+    this._beginUpdate();
+    this._transition = this._transition
+      .catch(() => {})
+      .then(() => this._restore());
+  }
+
+  private _scheduleUpdate(): void {
+    const generation = this._beginUpdate();
+    this._transition = this._transition
+      .catch(() => {})
+      .then(async () => {
+        await this._restore();
+        if (generation !== this._callGeneration) return;
+        await this._apply(generation);
+      });
   }
 
   private _notifyThemeUpdate() {
@@ -55,10 +65,11 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     );
   }
 
-  private _restore() {
-    if (!this._targetElement) return;
-    void applyFrontendThemeOnElement(this._targetElement, undefined);
+  private async _restore(): Promise<void> {
+    const targetElement = this._targetElement;
+    if (!targetElement) return;
     this._targetElement = null;
+    await applyFrontendThemeOnElement(targetElement, undefined);
     this._notifyThemeUpdate();
   }
 
@@ -72,8 +83,8 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._targetElement = element;
     await applyFrontendThemeOnElement(element, this._theme);
     if (generation !== this._callGeneration) {
-      void applyFrontendThemeOnElement(element, undefined);
-      this._targetElement = null;
+      await applyFrontendThemeOnElement(element, undefined);
+      if (this._targetElement === element) this._targetElement = null;
       return;
     }
     this._notifyThemeUpdate();
