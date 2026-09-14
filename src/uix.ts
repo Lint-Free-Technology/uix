@@ -55,12 +55,14 @@ export class Uix extends LitElement {
   _styles: string = "";
   _processStylesOnConnect: boolean = false;
   private _pendingThemeUpdate: boolean = false;
+  private _themeUpdateGeneration: number = 0;
   @property() _rendered_styles: string = "";
   _renderer: (_: string) => void;
 
   private _uixUpdateListener = (ev: Event) => {
     const detail = (ev as CustomEvent<{ reason?: string; variablesChanged?: boolean }>).detail;
     const isThemeUpdate = detail?.reason === "theme";
+    const themeUpdateGeneration = isThemeUpdate ? ++this._themeUpdateGeneration : 0;
     this.dynamicVariablesHaveChanged = detail?.variablesChanged || false;
     if (isThemeUpdate) this._pendingThemeUpdate = true;
     if (!this.isConnected) {
@@ -70,7 +72,7 @@ export class Uix extends LitElement {
     // A style-update event is not guaranteed when the refreshed CSS is unchanged.
     // Wait for the node refresh so this per-node theme event has a ready target.
     void this._process_styles(this.uix_input).then(() => {
-      if (!isThemeUpdate || !this.isConnected) return;
+      if (!isThemeUpdate || !this.isConnected || themeUpdateGeneration !== this._themeUpdateGeneration) return;
       this._pendingThemeUpdate = false;
       this.dispatchEvent(new CustomEvent("uix-theme-update", {
         detail: { uix_node: this },
@@ -127,8 +129,9 @@ export class Uix extends LitElement {
         : [this.parentElement ?? this.parentNode]),
       );
       const isThemeUpdate = this._pendingThemeUpdate;
+      const themeUpdateGeneration = this._themeUpdateGeneration;
       void this._process_styles(this.uix_input).then(() => {
-        if (!isThemeUpdate || !this.isConnected) return;
+        if (!isThemeUpdate || !this.isConnected || themeUpdateGeneration !== this._themeUpdateGeneration) return;
         this._pendingThemeUpdate = false;
         this.dispatchEvent(new CustomEvent("uix-theme-update", {
           detail: { uix_node: this },
@@ -147,6 +150,7 @@ export class Uix extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._themeUpdateGeneration += 1;
     this._disconnect();
 
     // DOM moves disconnect and reconnect custom elements synchronously. Delay
@@ -201,7 +205,7 @@ export class Uix extends LitElement {
   }
 
   // Most callers intentionally refresh in the background. Returning the promise
-  // also lets lifecycle events wait until stale child nodes have been processed.
+  // lets lifecycle events wait for this source node's own connection pass.
   refresh(): Promise<void> {
     return this._connect();
   }

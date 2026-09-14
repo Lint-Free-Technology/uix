@@ -15,6 +15,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   private _theme: string = "";
   private _targetElement: HTMLElement | null = null;
   private _transition: Promise<void> = Promise.resolve();
+  private _pendingThemeNotification: boolean = false;
 
   constructor(controller: UixForgeSparkController, config: UixForgeSparkThemeConfig) {
     super(controller, config);
@@ -44,7 +45,8 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._transition = this._transition
       .catch(() => {})
       .then(async () => {
-        if (await this._restore()) this._notifyThemeUpdate();
+        this._markThemeChange(await this._restore());
+        this._flushThemeUpdate();
       });
   }
 
@@ -54,11 +56,23 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
       .catch(() => {})
       .then(async () => {
         const restored = await this._restore();
+        this._markThemeChange(restored);
         if (generation !== this._callGeneration) return;
         const applied = await this._apply(generation);
+        this._markThemeChange(applied);
         if (generation !== this._callGeneration) return;
-        if (restored || applied) this._notifyThemeUpdate();
+        this._flushThemeUpdate();
       });
+  }
+
+  private _markThemeChange(changed: boolean): void {
+    if (changed) this._pendingThemeNotification = true;
+  }
+
+  private _flushThemeUpdate(): void {
+    if (!this._pendingThemeNotification) return;
+    this._pendingThemeNotification = false;
+    this._notifyThemeUpdate();
   }
 
   private _notifyThemeUpdate() {
@@ -86,7 +100,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
     this._targetElement = element;
     const applied = await applyFrontendThemeOnElement(element, this._theme);
     if (generation !== this._callGeneration) {
-      await applyFrontendThemeOnElement(element, undefined);
+      this._markThemeChange(await applyFrontendThemeOnElement(element, undefined));
       if (this._targetElement === element) this._targetElement = null;
       return false;
     }
