@@ -50,7 +50,7 @@ export class UixForgeSparkTheme extends UixForgeSparkBase {
   private _notifyThemeUpdate() {
     document.dispatchEvent(
       new CustomEvent("uix-update", {
-        detail: { variablesChanged: false },
+        detail: { reason: "theme", variablesChanged: false },
       })
     );
   }

@@ -58,13 +58,21 @@ export class Uix extends LitElement {
   _renderer: (_: string) => void;
 
   private _uixUpdateListener = (ev: Event) => {
-    this.dynamicVariablesHaveChanged =
-      (ev as CustomEvent).detail?.variablesChanged || false;
+    const detail = (ev as CustomEvent<{ reason?: string; variablesChanged?: boolean }>).detail;
+    const isThemeUpdate = detail?.reason === "theme";
+    this.dynamicVariablesHaveChanged = detail?.variablesChanged || false;
     if (!this.isConnected) {
       this._processStylesOnConnect = true;
       return;
     }
-    this._process_styles(this.uix_input);
+    void this._process_styles(this.uix_input).then(() => {
+      if (!isThemeUpdate || !this.isConnected) return;
+      this.dispatchEvent(new CustomEvent("uix-theme-update", {
+        detail: { uix_node: this },
+        bubbles: true,
+        composed: true,
+      }));
+    });
   };
 
   _cancel_style_child = [];
