@@ -1695,7 +1695,16 @@ export class UixBroker {
 
   private async executeBadge(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveBadgeTarget(directive, anchor, context);
-    if (!target) return undefined;
+    if (!target) {
+      const badge = this.badges.get(directive);
+      if (badge) {
+        detachBadgeTargetAdapter(badge);
+        badge.remove();
+        this.badges.delete(directive);
+        this.refreshRetainedReferenceObservers();
+      }
+      return undefined;
+    }
     const config = this.badgeConfig(directive, context);
     const targetAdapter = getBadgeTargetAdapter(target);
     const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(config.placement);

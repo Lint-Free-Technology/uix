@@ -72,7 +72,11 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
     if (!selector) return;
 
     const target = (await this.controller.target(selector, this._cancel))?.[0];
-    if (!target || generation !== this._callGeneration) return;
+    if (generation !== this._callGeneration) return;
+    if (!target) {
+      this.remove();
+      return;
+    }
     const targetAdapter = getBadgeTargetAdapter(target);
     const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(this.badgeConfig.placement);
     const parent = targetAdapter ? target : target.parentElement || target.parentNode;

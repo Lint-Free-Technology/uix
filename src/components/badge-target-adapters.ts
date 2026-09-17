@@ -270,12 +270,12 @@ function buttonPlacementStyles(
     case "bottom": return { bottom: "0", left: "50%", translate: badgeTranslate("-50%", "calc(50% - 1px)") };
     case "bottom-start": return { bottom: "0", "inset-inline-start": "0", translate: badgeTranslate(start, "calc(50% - 1px)") };
     case "bottom-end": return { bottom: "0", "inset-inline-end": "0", translate: badgeTranslate(end, "calc(50% - 1px)") };
-    case "left": return { "inset-inline-start": "0", top: "50%", translate: badgeTranslate(start, "-50%") };
-    case "left-start": return { "inset-inline-start": "0", top: "0", translate: badgeTranslate(start, "calc(-50% + 1px)") };
-    case "left-end": return { "inset-inline-start": "0", bottom: "0", translate: badgeTranslate(start, "calc(50% - 1px)") };
-    case "right": return { "inset-inline-end": "0", top: "50%", translate: badgeTranslate(end, "-50%") };
-    case "right-start": return { "inset-inline-end": "0", top: "0", translate: badgeTranslate(end, "calc(-50% + 1px)") };
-    case "right-end": return { "inset-inline-end": "0", bottom: "0", translate: badgeTranslate(end, "calc(50% - 1px)") };
+    case "left": return { left: "0", top: "50%", translate: badgeTranslate("calc(-50% + 1px)", "-50%") };
+    case "left-start": return { left: "0", top: "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(-50% + 1px)") };
+    case "left-end": return { left: "0", bottom: "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(50% - 1px)") };
+    case "right": return { right: "0", top: "50%", translate: badgeTranslate("calc(50% - 1px)", "-50%") };
+    case "right-start": return { right: "0", top: "0", translate: badgeTranslate("calc(50% - 1px)", "calc(-50% + 1px)") };
+    case "right-end": return { right: "0", bottom: "0", translate: badgeTranslate("calc(50% - 1px)", "calc(50% - 1px)") };
   }
 }
 
@@ -287,12 +287,12 @@ function tileIconPlacementStyles(placement: UixBadgePlacement | undefined): Reco
     case "bottom": return { bottom: "3px", left: "50%", translate: badgeTranslate("-50%", "0px") };
     case "bottom-start": return { bottom: "3px", "inset-inline-start": "3px", translate: badgeTranslate("0px", "0px") };
     case "bottom-end": return { bottom: "3px", "inset-inline-end": "3px", translate: badgeTranslate("0px", "0px") };
-    case "left": return { "inset-inline-start": "3px", top: "50%", translate: badgeTranslate("0px", "-50%") };
-    case "left-start": return { "inset-inline-start": "3px", top: "3px", translate: badgeTranslate("0px", "0px") };
-    case "left-end": return { "inset-inline-start": "3px", bottom: "3px", translate: badgeTranslate("0px", "0px") };
-    case "right": return { "inset-inline-end": "3px", top: "50%", translate: badgeTranslate("0px", "-50%") };
-    case "right-start": return { "inset-inline-end": "3px", top: "3px", translate: badgeTranslate("0px", "0px") };
-    case "right-end": return { "inset-inline-end": "3px", bottom: "3px", translate: badgeTranslate("0px", "0px") };
+    case "left": return { left: "3px", top: "50%", translate: badgeTranslate("0px", "-50%") };
+    case "left-start": return { left: "3px", top: "3px", translate: badgeTranslate("0px", "0px") };
+    case "left-end": return { left: "3px", bottom: "3px", translate: badgeTranslate("0px", "0px") };
+    case "right": return { right: "3px", top: "50%", translate: badgeTranslate("0px", "-50%") };
+    case "right-start": return { right: "3px", top: "3px", translate: badgeTranslate("0px", "0px") };
+    case "right-end": return { right: "3px", bottom: "3px", translate: badgeTranslate("0px", "0px") };
   }
 }
 
