@@ -1,6 +1,7 @@
 import { tinykeys } from "tinykeys";
 import { BrowserID } from "../helpers/browser_id";
 import { hass, provideHass } from "../helpers/hass";
+import { computeRtl } from "../helpers/rtl";
 import { getPanelState } from "../helpers/panel";
 import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
@@ -13,6 +14,16 @@ import {
   UixButtonConfig,
   updateHaButton,
 } from "../helpers/dom/ha-button";
+import {
+  createUixBadge,
+  UixBadgeConfig,
+  updateUixBadge,
+} from "../components/uix-badge";
+import {
+  detachBadgeTargetAdapter,
+  getBadgeTargetAdapter,
+  getSiblingBadgePlacementAdapter,
+} from "../components/badge-target-adapters";
 import {
   dispatchHaTileIconAction,
   UixTileIconConfig,
@@ -63,11 +74,17 @@ const UNSAFE_PROPERTY_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const BROKER_SELECT_TREE_TIMEOUT_MS = 2_000;
 const BROKER_SELECT_TREE_RETRY_MS = 50;
 const BROKER_BUTTON_WRAPPER_ATTR = "data-uix-broker-button";
+const BROKER_BADGE_ATTR = "data-uix-broker-badge";
 const BROKER_TILE_ICON_ATTR = "data-uix-broker-tile-icon";
 const BROKER_TOOLTIP_ATTR = "data-uix-broker-tooltip";
 
 type BrokerButtonElement = HTMLElement & {
   uixBrokerButtonConfig?: UixButtonConfig;
+  uixBrokerStyleProperties?: string[];
+};
+
+type BrokerBadgeElement = HTMLElement & {
+  uixBrokerBadgeConfig?: UixBadgeConfig;
   uixBrokerStyleProperties?: string[];
 };
 
@@ -592,6 +609,8 @@ export class UixBroker {
   private anchorHistory: UixBrokerAnchorHistoryEntry[] = [];
   private activeInteractions = new Set<UixBrokerInteraction>();
   private buttonWrappers = new Map<UixBrokerDirective, HTMLElement>();
+  private badges = new Map<UixBrokerDirective, BrokerBadgeElement>();
+  private badgeTargets = new Map<UixBrokerDirective, Element>();
   private tileIcons = new Map<UixBrokerDirective, HTMLElement>();
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
   private locks = new Map<UixBrokerDirective, BrokerLock>();
@@ -604,10 +623,17 @@ export class UixBroker {
   }
 
   set hass(value: any) {
+    const previousRtl = computeRtl(
+      this.brokerHass?.language,
+      this.brokerHass?.translationMetadata?.translations,
+    );
     const previousUser = this.brokerHass?.user;
     const nextUser = value?.user;
     this.brokerHass = value;
     this.refreshTileIcons(value);
+    if (previousRtl !== computeRtl(value?.language, value?.translationMetadata?.translations)) {
+      this.refreshBadgePlacements(value);
+    }
     if (
       previousUser?.id !== nextUser?.id
       || previousUser?.name !== nextUser?.name
@@ -958,6 +984,10 @@ export class UixBroker {
     for (const [directive, wrapper] of this.buttonWrappers) {
       if (!wrapper.isConnected) this.buttonWrappers.delete(directive);
     }
+    for (const [directive, badge] of this.badges) {
+      const target = this.badgeTargets.get(directive);
+      if (!badge.isConnected || (target && !target.isConnected)) this.removeBadge(directive, badge);
+    }
     for (const [directive, tileIcon] of this.tileIcons) {
       if (!tileIcon.isConnected) this.tileIcons.delete(directive);
     }
@@ -980,10 +1010,11 @@ export class UixBroker {
    */
   private refreshRetainedReferenceObservers() {
     const roots = new Set<Node>();
-    if (this.anchorHistory.length || this.buttonWrappers.size || this.tileIcons.size || this.tooltips.size || this.locks.size) {
+    if (this.anchorHistory.length || this.buttonWrappers.size || this.badges.size || this.tileIcons.size || this.tooltips.size || this.locks.size) {
       roots.add(document);
       this.anchorHistory.forEach(({ anchor }) => roots.add(anchor.getRootNode()));
       this.buttonWrappers.forEach((wrapper) => roots.add(wrapper.getRootNode()));
+      this.badges.forEach((badge) => roots.add(badge.getRootNode()));
       this.tileIcons.forEach((tileIcon) => roots.add(tileIcon.getRootNode()));
       this.tooltips.forEach(({ element, target }) => {
         roots.add(element.getRootNode());
@@ -1012,7 +1043,7 @@ export class UixBroker {
     directive: UixBrokerDirective,
     interactionAnchor: Element,
   ): Promise<Element | null> {
-    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
+    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button" && directive.type !== "badge" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
       return interactionAnchor;
     }
     if (directive.type === "event" && directive.target !== undefined && directive.target !== "anchor") {
@@ -1322,6 +1353,8 @@ export class UixBroker {
       await this.executeAction(directive, anchor, context);
     } else if (directive.type === "button") {
       return this.executeButton(directive, anchor, context);
+    } else if (directive.type === "badge") {
+      return this.executeBadge(directive, anchor, context);
     } else if (directive.type === "tile-icon") {
       return this.executeTileIcon(directive, anchor, context);
     } else if (directive.type === "tooltip") {
@@ -1666,6 +1699,64 @@ export class UixBroker {
     return button;
   }
 
+  private async executeBadge(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
+    const target = await this.resolveBadgeTarget(directive, anchor, context);
+    if (!target) {
+      if (this.badges.has(directive)) {
+        this.removeBadge(directive);
+        this.refreshRetainedReferenceObservers();
+      }
+      return undefined;
+    }
+    const config = this.badgeConfig(directive, context);
+    const targetAdapter = getBadgeTargetAdapter(target);
+    const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(config.placement);
+    const parent = targetAdapter ? target : target.parentElement || target.parentNode;
+    if (!parent) {
+      this.removeBadge(directive);
+      return undefined;
+    }
+
+    let badge = this.badges.get(directive);
+    if (badge && (!badge.isConnected || (!adapter && badge.parentNode !== parent))) {
+      this.removeBadge(directive, badge);
+      badge = undefined;
+    }
+
+    if (!badge) {
+      badge = createUixBadge(config) as BrokerBadgeElement;
+      badge.setAttribute(BROKER_BADGE_ATTR, "");
+      this.badges.set(directive, badge);
+    }
+    syncBadgeSlot(badge, targetAdapter ? null : target);
+
+    this.clearBadgeStyle(badge);
+    badge.uixBrokerBadgeConfig = config;
+    updateUixBadge(badge, config);
+    this.applyBadgeStyle(badge, directive.style, context);
+    await this.applyBadgeUix(badge, directive, context, config);
+    if (!this.isCurrentConfiguration(context)) {
+      this.removeBadge(directive, badge);
+      return undefined;
+    }
+    const currentHass = this.hass ?? await hass();
+    if (!this.isCurrentConfiguration(context)) {
+      this.removeBadge(directive, badge);
+      return undefined;
+    }
+    this.placeBadge(
+      badge,
+      target,
+      directive.before !== undefined,
+      adapter,
+      config.placement,
+      computeRtl(currentHass?.language, currentHass?.translationMetadata?.translations),
+    );
+    this.badgeTargets.set(directive, target);
+    this.refreshRetainedReferenceObservers();
+    return badge;
+  }
+
   private async executeTileIcon(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveTileIconTarget(directive, anchor);
     if (!target) return undefined;
@@ -1760,8 +1851,10 @@ export class UixBroker {
       tooltip.appendChild(content);
     }
     const resolvedContent = resolveCaptured(directive.content ?? "", context.captured, context.results);
-    if (typeof resolvedContent !== "string") throw new Error("tooltip directive content must be a string");
-    content.innerHTML = resolvedContent;
+    if (typeof resolvedContent !== "string" && typeof resolvedContent !== "number") {
+      throw new Error("tooltip directive content must be a string or number");
+    }
+    content.innerHTML = String(resolvedContent);
 
     let style = Array.from(tooltip.children).find((child) =>
       child instanceof HTMLStyleElement && child.hasAttribute(UIX_TOOLTIP_STYLE_ATTR)
@@ -1800,6 +1893,12 @@ export class UixBroker {
     if (open !== undefined) tooltip.open = open;
 
     if (tooltip.parentNode !== parent) parent.appendChild(tooltip);
+    // Web Awesome normally resolves `for` from its own root. When a Broker
+    // target is inside an open shadow root (such as a sidebar item), preserve
+    // that normal association but fall back to the concrete target if lookup
+    // has not resolved it after the component connects.
+    await (tooltip as any).updateComplete;
+    if ((tooltip as any).anchor !== target) (tooltip as any).anchor = target;
     this.refreshRetainedReferenceObservers();
   }
 
@@ -1911,6 +2010,34 @@ export class UixBroker {
     return this.waitForSelectTreeAnchor(path, anchor);
   }
 
+  private async resolveBadgeTarget(
+    directive: UixBrokerDirective,
+    anchor: Element,
+    context: BrokerContext,
+  ): Promise<Element | null> {
+    if (directive.after !== undefined && directive.before !== undefined) {
+      throw new Error("badge directive accepts either after or before, not both");
+    }
+    if (directive.for !== undefined) {
+      if (directive.after !== undefined || directive.before !== undefined) {
+        throw new Error("badge directive for cannot be combined with after or before");
+      }
+      if (directive.for !== "previous") {
+        throw new Error("badge directive for must be previous");
+      }
+      if (!context.previousDirectiveElement?.isConnected) {
+        throw new Error("badge directive for: previous requires a preceding element directive");
+      }
+      return context.previousDirectiveElement;
+    }
+    const path = directive.after ?? directive.before;
+    if (path === undefined) return anchor;
+    if (typeof path !== "string" || !path.trim()) {
+      throw new Error("badge directive after or before must be a non-empty path relative to the directive anchor");
+    }
+    return this.waitForSelectTreeAnchor(path, anchor);
+  }
+
   private async resolveTileIconTarget(directive: UixBrokerDirective, anchor: Element): Promise<Element | null> {
     if (directive.after !== undefined && directive.before !== undefined) {
       throw new Error("tile-icon directive accepts either after or before, not both");
@@ -1944,6 +2071,19 @@ export class UixBroker {
     }, context.captured, context.results);
     this.setEventActionAnchor(config, anchor);
     return config;
+  }
+
+  private badgeConfig(directive: UixBrokerDirective, context: BrokerContext): UixBadgeConfig {
+    return resolveCaptured({
+      content: directive.content,
+      variant: directive.variant,
+      appearance: directive.appearance,
+      pill: directive.pill,
+      attention: directive.attention,
+      placement: directive.placement,
+      start_icon: directive.start_icon,
+      end_icon: directive.end_icon,
+    }, context.captured, context.results) as UixBadgeConfig;
   }
 
   private tileIconConfig(
@@ -2010,6 +2150,39 @@ export class UixBroker {
     });
   }
 
+  private clearBadgeStyle(badge: BrokerBadgeElement) {
+    badge.uixBrokerStyleProperties?.forEach((property) => badge.style.removeProperty(property));
+    badge.uixBrokerStyleProperties = [];
+  }
+
+  private applyBadgeStyle(badge: BrokerBadgeElement, style: unknown, context: BrokerContext) {
+    if (style === undefined) return;
+    const resolvedStyle = resolveCaptured(style, context.captured, context.results);
+    if (!resolvedStyle || typeof resolvedStyle !== "object" || Array.isArray(resolvedStyle)) {
+      throw new Error("badge directive style must be an object of CSS property names and values");
+    }
+    for (const [property, value] of Object.entries(resolvedStyle)) {
+      if (!property.trim() || (typeof value !== "string" && typeof value !== "number")) {
+        throw new Error("badge directive style values must be strings or numbers");
+      }
+      badge.style.setProperty(property, String(value));
+      badge.uixBrokerStyleProperties.push(property);
+    }
+  }
+
+  private async applyBadgeUix(
+    badge: BrokerBadgeElement,
+    directive: UixBrokerDirective,
+    context: BrokerContext,
+    config: UixBadgeConfig,
+  ) {
+    const uixConfig = resolveCaptured(directive.uix, context.captured, context.results) as UixConfig | undefined;
+    await apply_uix(badge as ModdedElement, "uix-broker-badge", uixConfig, {
+      config,
+      directive: context.results,
+    });
+  }
+
   private clearTileIconStyle(tileIcon: BrokerTileIconElement) {
     tileIcon.uixBrokerStyleProperties?.forEach((property) => tileIcon.style.removeProperty(property));
     tileIcon.uixBrokerStyleProperties = [];
@@ -2054,6 +2227,34 @@ export class UixBroker {
     if (nextSibling !== wrapper) parent.insertBefore(wrapper, nextSibling);
   }
 
+  private placeBadge(
+    badge: HTMLElement,
+    target: Element,
+    before: boolean,
+    adapter: ReturnType<typeof getBadgeTargetAdapter>,
+    placement?: UixBadgeConfig["placement"],
+    rtl = false,
+  ) {
+    if (adapter) {
+      adapter.place(
+        badge,
+        target as HTMLElement,
+        placement,
+        rtl,
+      );
+      return;
+    }
+    detachBadgeTargetAdapter(badge);
+    const parent = target.parentNode;
+    if (!parent) return;
+    if (before) {
+      if (badge.nextSibling !== target) parent.insertBefore(badge, target);
+      return;
+    }
+    const nextSibling = target.nextSibling;
+    if (nextSibling !== badge) parent.insertBefore(badge, nextSibling);
+  }
+
   private placeTileIcon(tileIcon: HTMLElement, target: Element, before: boolean) {
     const parent = target.parentNode;
     if (!parent) return;
@@ -2065,9 +2266,36 @@ export class UixBroker {
     if (nextSibling !== tileIcon) parent.insertBefore(tileIcon, nextSibling);
   }
 
+  private removeBadge(directive: UixBrokerDirective, badge = this.badges.get(directive)): void {
+    if (!badge) return;
+    if (this.badges.get(directive) === badge) {
+      this.badges.delete(directive);
+      this.badgeTargets.delete(directive);
+    }
+    detachBadgeTargetAdapter(badge);
+    badge.remove();
+  }
+
+  private refreshBadgePlacements(currentHass: any): void {
+    const rtl = computeRtl(currentHass?.language, currentHass?.translationMetadata?.translations);
+    for (const [directive, badge] of this.badges) {
+      const target = this.badgeTargets.get(directive);
+      if (!target || !target.isConnected || !badge.isConnected) continue;
+      const targetAdapter = getBadgeTargetAdapter(target);
+      const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(badge.uixBrokerBadgeConfig?.placement);
+      adapter?.place(badge, target as HTMLElement, badge.uixBrokerBadgeConfig?.placement, rtl);
+    }
+  }
+
   private removeInsertedElements() {
     this.buttonWrappers.forEach((wrapper) => wrapper.remove());
     this.buttonWrappers.clear();
+    this.badges.forEach((badge) => {
+      detachBadgeTargetAdapter(badge);
+      badge.remove();
+    });
+    this.badges.clear();
+    this.badgeTargets.clear();
     this.tileIcons.forEach((tileIcon) => tileIcon.remove());
     this.tileIcons.clear();
     // Sidebar and other Lit-rendered hosts may replace a generated icon while
@@ -2075,14 +2303,14 @@ export class UixBroker {
     // no longer be used to find it on a subsequent Broker-file reload. Sweep
     // every open shadow root as a final cleanup boundary before new directives
     // are installed.
-    this.removeBrokerTileIconsFromDom();
+    this.removeBrokerElementsFromDom();
     [...this.tooltips.entries()].forEach(([directive, tooltip]) => this.removeTooltip(directive, tooltip));
     this.locks.forEach((lock) => lock.overlay.detach());
     this.locks.clear();
     this.refreshRetainedReferenceObservers();
   }
 
-  private removeBrokerTileIconsFromDom(): void {
+  private removeBrokerElementsFromDom(): void {
     const roots: ParentNode[] = [document];
     const visited = new Set<Node>();
     while (roots.length) {
@@ -2091,13 +2319,22 @@ export class UixBroker {
       visited.add(root);
       const elements = Array.from(root.querySelectorAll("*"));
       elements
-        .filter((element) => element.matches(`ha-tile-icon[${BROKER_TILE_ICON_ATTR}]`))
-        .forEach((element) => element.remove());
+        .filter((element) => element.matches(`uix-badge[${BROKER_BADGE_ATTR}], ha-tile-icon[${BROKER_TILE_ICON_ATTR}]`))
+        .forEach((element) => {
+          if (element instanceof HTMLElement) detachBadgeTargetAdapter(element);
+          element.remove();
+        });
       elements.forEach((element) => {
         if (element.shadowRoot) roots.push(element.shadowRoot);
       });
     }
   }
+}
+
+function syncBadgeSlot(badge: HTMLElement, target: Element | null): void {
+  const slot = target?.getAttribute("slot");
+  if (slot) badge.setAttribute("slot", slot);
+  else badge.removeAttribute("slot");
 }
 
 window.addEventListener("uix-bootstrap", (event: Event) => {
