@@ -33,7 +33,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@home-assistant/webawesome": "3.7.0-ha.0",
+    "@home-assistant/webawesome": "3.7.0-ha.1",
     "@watchable/unpromise": "^1.0.2",
     "color-name": "^2.1.1",
     "compare-versions": "^6.1.1",
