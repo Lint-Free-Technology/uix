@@ -236,6 +236,9 @@ Use `uix` for UIX styling, including styles inside the button's shadow root. Its
 
 ## Badge
 
+!!! info
+    `badge` directive available in 8.3.0-beta.10
+
 `badge` inserts a `uix-badge` beside the directive anchor. The badge uses Home Assistant's patched Web Awesome base and styles, so its variants follow the active Home Assistant theme. UIX keeps the element namespaced and does not register Web Awesome's global `wa-badge` component.
 
 The badge is inserted after the directive anchor by default. Use `after` or `before` to select a different sibling reference, using the same UIX `select_tree` syntax as `button`. When that reference is an `ha-button` or `ha-tile-icon`, UIX automatically shows the badge on that element instead. For any other target, setting `placement` positions the badge on its parent.
