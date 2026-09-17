@@ -69,7 +69,10 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
 
   private async attach(generation: number): Promise<void> {
     const selector = this.after || this.before;
-    if (!selector) return;
+    if (!selector) {
+      this.remove();
+      return;
+    }
 
     const target = (await this.controller.target(selector, this._cancel))?.[0];
     if (generation !== this._callGeneration) return;
@@ -94,11 +97,8 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
     if (!badge) {
       badge = createUixBadge(this.badgeConfig);
       badge.setAttribute(BADGE_ID_ATTR, this.id);
-      if (!targetAdapter) {
-        const slot = target.getAttribute("slot");
-        if (slot) badge.setAttribute("slot", slot);
-      }
     }
+    syncBadgeSlot(badge, targetAdapter ? null : target);
 
     updateUixBadge(badge, this.badgeConfig);
     this.applyStyle(badge);
@@ -148,4 +148,10 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
       }
     });
   }
+}
+
+function syncBadgeSlot(badge: HTMLElement, target: Element | null): void {
+  const slot = target?.getAttribute("slot");
+  if (slot) badge.setAttribute("slot", slot);
+  else badge.removeAttribute("slot");
 }

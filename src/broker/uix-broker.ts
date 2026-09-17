@@ -610,6 +610,7 @@ export class UixBroker {
   private activeInteractions = new Set<UixBrokerInteraction>();
   private buttonWrappers = new Map<UixBrokerDirective, HTMLElement>();
   private badges = new Map<UixBrokerDirective, BrokerBadgeElement>();
+  private badgeTargets = new Map<UixBrokerDirective, Element>();
   private tileIcons = new Map<UixBrokerDirective, HTMLElement>();
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
   private locks = new Map<UixBrokerDirective, BrokerLock>();
@@ -622,10 +623,17 @@ export class UixBroker {
   }
 
   set hass(value: any) {
+    const previousRtl = computeRtl(
+      this.brokerHass?.language,
+      this.brokerHass?.translationMetadata?.translations,
+    );
     const previousUser = this.brokerHass?.user;
     const nextUser = value?.user;
     this.brokerHass = value;
     this.refreshTileIcons(value);
+    if (previousRtl !== computeRtl(value?.language, value?.translationMetadata?.translations)) {
+      this.refreshBadgePlacements(value);
+    }
     if (
       previousUser?.id !== nextUser?.id
       || previousUser?.name !== nextUser?.name
@@ -977,10 +985,8 @@ export class UixBroker {
       if (!wrapper.isConnected) this.buttonWrappers.delete(directive);
     }
     for (const [directive, badge] of this.badges) {
-      if (!badge.isConnected) {
-        detachBadgeTargetAdapter(badge);
-        this.badges.delete(directive);
-      }
+      const target = this.badgeTargets.get(directive);
+      if (!badge.isConnected || (target && !target.isConnected)) this.removeBadge(directive, badge);
     }
     for (const [directive, tileIcon] of this.tileIcons) {
       if (!tileIcon.isConnected) this.tileIcons.delete(directive);
@@ -1696,11 +1702,8 @@ export class UixBroker {
   private async executeBadge(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveBadgeTarget(directive, anchor, context);
     if (!target) {
-      const badge = this.badges.get(directive);
-      if (badge) {
-        detachBadgeTargetAdapter(badge);
-        badge.remove();
-        this.badges.delete(directive);
+      if (this.badges.has(directive)) {
+        this.removeBadge(directive);
         this.refreshRetainedReferenceObservers();
       }
       return undefined;
@@ -1709,25 +1712,23 @@ export class UixBroker {
     const targetAdapter = getBadgeTargetAdapter(target);
     const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(config.placement);
     const parent = targetAdapter ? target : target.parentElement || target.parentNode;
-    if (!parent) return undefined;
+    if (!parent) {
+      this.removeBadge(directive);
+      return undefined;
+    }
 
     let badge = this.badges.get(directive);
     if (badge && (!badge.isConnected || (!adapter && badge.parentNode !== parent))) {
-      detachBadgeTargetAdapter(badge);
-      badge.remove();
-      this.badges.delete(directive);
+      this.removeBadge(directive, badge);
       badge = undefined;
     }
 
     if (!badge) {
       badge = createUixBadge(config) as BrokerBadgeElement;
       badge.setAttribute(BROKER_BADGE_ATTR, "");
-      if (!targetAdapter) {
-        const slot = target.getAttribute("slot");
-        if (slot) badge.setAttribute("slot", slot);
-      }
       this.badges.set(directive, badge);
     }
+    syncBadgeSlot(badge, targetAdapter ? null : target);
 
     this.clearBadgeStyle(badge);
     badge.uixBrokerBadgeConfig = config;
@@ -1735,12 +1736,23 @@ export class UixBroker {
     this.applyBadgeStyle(badge, directive.style, context);
     await this.applyBadgeUix(badge, directive, context, config);
     if (!this.isCurrentConfiguration(context)) {
-      if (this.badges.get(directive) === badge) this.badges.delete(directive);
-      detachBadgeTargetAdapter(badge);
-      badge.remove();
+      this.removeBadge(directive, badge);
       return undefined;
     }
-    this.placeBadge(badge, target, directive.before !== undefined, adapter, config.placement);
+    const currentHass = this.hass ?? await hass();
+    if (!this.isCurrentConfiguration(context)) {
+      this.removeBadge(directive, badge);
+      return undefined;
+    }
+    this.placeBadge(
+      badge,
+      target,
+      directive.before !== undefined,
+      adapter,
+      config.placement,
+      computeRtl(currentHass?.language, currentHass?.translationMetadata?.translations),
+    );
+    this.badgeTargets.set(directive, target);
     this.refreshRetainedReferenceObservers();
     return badge;
   }
@@ -2221,13 +2233,14 @@ export class UixBroker {
     before: boolean,
     adapter: ReturnType<typeof getBadgeTargetAdapter>,
     placement?: UixBadgeConfig["placement"],
+    rtl = false,
   ) {
     if (adapter) {
       adapter.place(
         badge,
         target as HTMLElement,
         placement,
-        computeRtl(this.hass?.language, this.hass?.translationMetadata?.translations),
+        rtl,
       );
       return;
     }
@@ -2253,6 +2266,27 @@ export class UixBroker {
     if (nextSibling !== tileIcon) parent.insertBefore(tileIcon, nextSibling);
   }
 
+  private removeBadge(directive: UixBrokerDirective, badge = this.badges.get(directive)): void {
+    if (!badge) return;
+    if (this.badges.get(directive) === badge) {
+      this.badges.delete(directive);
+      this.badgeTargets.delete(directive);
+    }
+    detachBadgeTargetAdapter(badge);
+    badge.remove();
+  }
+
+  private refreshBadgePlacements(currentHass: any): void {
+    const rtl = computeRtl(currentHass?.language, currentHass?.translationMetadata?.translations);
+    for (const [directive, badge] of this.badges) {
+      const target = this.badgeTargets.get(directive);
+      if (!target || !target.isConnected || !badge.isConnected) continue;
+      const targetAdapter = getBadgeTargetAdapter(target);
+      const adapter = targetAdapter ?? getSiblingBadgePlacementAdapter(badge.uixBrokerBadgeConfig?.placement);
+      adapter?.place(badge, target as HTMLElement, badge.uixBrokerBadgeConfig?.placement, rtl);
+    }
+  }
+
   private removeInsertedElements() {
     this.buttonWrappers.forEach((wrapper) => wrapper.remove());
     this.buttonWrappers.clear();
@@ -2261,6 +2295,7 @@ export class UixBroker {
       badge.remove();
     });
     this.badges.clear();
+    this.badgeTargets.clear();
     this.tileIcons.forEach((tileIcon) => tileIcon.remove());
     this.tileIcons.clear();
     // Sidebar and other Lit-rendered hosts may replace a generated icon while
@@ -2294,6 +2329,12 @@ export class UixBroker {
       });
     }
   }
+}
+
+function syncBadgeSlot(badge: HTMLElement, target: Element | null): void {
+  const slot = target?.getAttribute("slot");
+  if (slot) badge.setAttribute("slot", slot);
+  else badge.removeAttribute("slot");
 }
 
 window.addEventListener("uix-bootstrap", (event: Event) => {
