@@ -30,6 +30,8 @@ const uixBadgeStyles = css`
       max(var(--wa-font-size-3xs, var(--ha-font-size-xs)), 0.75em)
     );
     padding: var(--uix-badge-padding, 0.375em 0.625em);
+    max-width: var(--uix-badge-max-width, none);
+    overflow: var(--uix-badge-overflow, visible);
     color: var(--uix-badge-content-color, var(--uix-badge-resolved-content-color));
     background-color: var(--uix-badge-color, var(--uix-badge-resolved-color));
     border: var(
