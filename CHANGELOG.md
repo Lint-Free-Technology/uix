@@ -1,3 +1,9 @@
+## [8.3.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.10...v8.3.0-beta.11) (2026-09-17)
+
+### ⭐ New Features
+
+* Add max-width and overflow CSS vars to new Spark / Broker badge ([6e55a90](https://github.com/Lint-Free-Technology/uix/commit/6e55a90f4028f771007024e07882bde6048cc3c2))
+
 ## [8.3.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.9...v8.3.0-beta.10) (2026-09-17)
 
 ### ⭐ New Features
