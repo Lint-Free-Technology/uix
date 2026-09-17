@@ -1,0 +1,38 @@
+id: doc_spark_badge_generic_button
+description: "Doc image: Forge Badge spark with generic button (badge.md)"
+view_path: doc-spark-badge-generic-button
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: badge
+        after: hui-button-card
+        content: 3
+        variant: danger
+        pill: true
+        placement: top-end
+        style:
+          "--uix-badge-offset-x": -6px
+          "--uix-badge-offset-y": 6px
+          "--uix-badge-font-size": 24px
+  element:
+    type: button
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/badge-generic-button.png
+  root: hui-button-card
+  padding: 24

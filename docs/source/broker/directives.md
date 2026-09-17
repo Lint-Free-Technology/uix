@@ -11,6 +11,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Event](#event) — dispatch a `CustomEvent`.
 - [Call](#call) — invoke an element method.
 - [Button](#button) — insert an interactive Home Assistant button.
+- [Badge](#badge) — insert a Web Awesome-styled status badge.
 - [Tile icon](#tile-icon) — insert an interactive Home Assistant tile icon.
 - [Tooltip](#tooltip) — attach a styled tooltip to an element.
 - [Lock](#lock) — require an unlock challenge before an element can be used.
@@ -21,7 +22,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 ## Directive rules
 
-Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `button`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
 ```yaml
 directives:
@@ -52,7 +53,7 @@ It is available only in `browser` and `shortcut` realms. The interaction anchor 
 
 ## Directive anchors
 
-`property`, `event`, `call`, `button`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
+`property`, `event`, `call`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
 
 ```yaml
 directives:
@@ -233,6 +234,98 @@ Use `uix` for UIX styling, including styles inside the button's shadow root. Its
     - The same `--uix-button-margin` CSS variable as the Forge button spark apply. The default margin is `-6px` for a labelled button and `0px` for an icon-only button.
     - Other CSS variables applicable to the Forge button spark also apply.
 
+## Badge
+
+`badge` inserts a `uix-badge` beside the directive anchor. The badge uses Home Assistant's patched Web Awesome base and styles, so its variants follow the active Home Assistant theme. UIX keeps the element namespaced and does not register Web Awesome's global `wa-badge` component.
+
+The badge is inserted after the directive anchor by default. Use `after` or `before` to select a different sibling reference, using the same UIX `select_tree` syntax as `button`. When that reference is an `ha-button` or `ha-tile-icon`, UIX automatically shows the badge on that element instead. For any other target, setting `placement` positions the badge on its parent.
+
+```yaml
+- type: badge
+  content: 3
+  variant: danger
+  appearance: filled
+  pill: true
+```
+
+Use `style` for a flat mapping of CSS property names and values, or `uix` for UIX styling. Its UIX type is `uix-broker-badge`; the resolved badge settings are available as `config`, and prior `template` or `javascript` directive results are available as `directive` in UIX templates.
+
+```yaml
+- type: badge
+  anchor: "$ div.title"
+  before: ".label"
+  content: Experimental
+  variant: warning
+  appearance: outlined
+  start_icon: mdi:flask-outline
+  style:
+    margin-inline-start: 8px
+```
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `after` | string | directive anchor | Relative selector for the reference element. Normally, the badge is inserted after it. For an `ha-button` or `ha-tile-icon`, the badge is shown on that element instead. With `placement` set for any other element type, the badge is positioned on its parent. |
+| `before` | string | — | Relative selector for the reference element. Normally, the badge is inserted before it. For an `ha-button` or `ha-tile-icon`, the badge is shown on that element instead. With `placement` set for any other element type, the badge is positioned on its parent. |
+| `for` | `previous` | — | Use immediately after an element-producing directive to target the element it created. Cannot be combined with `after` or `before`. |
+| `content` | string or number | `""` | Text displayed in the badge. |
+| `variant` | string | `brand` | `brand`, `neutral`, `success`, `warning`, or `danger`. |
+| `appearance` | string | `accent` | `accent`, `filled`, `outlined`, or `filled-outlined`. |
+| `pill` | boolean | `false` | Use the fully rounded pill shape. |
+| `attention` | string | `none` | `none`, `pulse`, or `bounce`. |
+| `placement` | string | — | For `ha-button` and `ha-tile-icon`, chooses where on the element the badge appears. For any other target, positions the badge on its parent instead of inserting it as a sibling. All placement options use compact `var(--ha-font-size-xs)` text with `0.25em 0.5em` padding. `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right`, `right-start`, or `right-end`. |
+| `start_icon` / `end_icon` | string | — | MDI icon before or after the content. |
+| `style` | object | — | Flat map of CSS property names and string or numeric values, set inline on `uix-badge`. |
+| `uix` | object | — | UIX configuration applied to the generated badge as type `uix-broker-badge`. |
+
+### Automatic placement
+
+Automatic placement applies only when the resolved directive anchor or `after` / `before` reference is one of these elements. A UIX-generated button spark is treated as its contained `ha-button`.
+
+| Target | Placement | Implementation |
+| --- | --- | --- |
+| `ha-button` | Top-end corner | UIX adds the badge inside the button, matching Web Awesome's button-badge pattern. Its diameter aligns with the button's rendered top and end edge. A UIX-generated button spark is also recognised. |
+| `ha-tile-icon` | Top-right of the tile icon | UIX uses the tile icon's documented default slot, Home Assistant's own tile-badge corner offsets, and compact tile-badge sizing. |
+
+For these targets, `after` and `before` identify the element that receives the badge; they do not control sibling insertion.
+
+Without `placement`, other target types use normal sibling insertion. Setting `placement` opts into parent-relative placement: UIX keeps the badge outside the target and positions it at the parent’s edge. It does not measure or alter the selected target, so this works best when the target fills its parent.
+
+All placement modes use Home Assistant's compact `--ha-font-size-xs` font size and tight `0.25em 0.5em` padding by default, keeping badge size consistent.
+
+Set `placement` using the same values as `wa-tooltip`: `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right`, `right-start`, and `right-end`. `ha-button` and `ha-tile-icon` default to `top-end`. For every other target, providing `placement` positions the badge on the parent; omitting it keeps the badge as a normal sibling.
+
+Set the [Forge badge CSS variables](../forge/sparks/badge.md#css-variables) through `style` for a single Broker badge, or through `uix` styling for reusable rules. `--uix-badge-offset-x` and `--uix-badge-offset-y` adjust any placed badge after its placement is resolved; positive values move right and down respectively.
+
+```yaml
+- type: badge
+  after: "$ ha-button"
+  content: 3
+  variant: danger
+  pill: true
+  placement: bottom-end
+```
+
+Use `for: previous` directly after a `button` directive to show a badge on the button it created. The previous element is the generated `ha-button`, so it is placed automatically.
+
+```yaml
+- type: button
+  label: Living Room
+  end_icon: mdi:lightbulb-fluorescent-tube-outline
+  tap_action:
+    action: toggle
+- type: badge
+  for: previous
+  content: 3
+  variant: danger
+  pill: true
+```
+
+!!! note
+    - Set at most one of `after` and `before`.
+    - `for: previous` cannot be combined with `after` or `before`.
+    - `ha-button` and `ha-tile-icon` targets receive the badge directly rather than as a sibling.
+    - `content` is inserted as text, not HTML.
+
 ## Tile icon
 
 !!! info
@@ -314,7 +407,7 @@ Use `uix` for UIX styling, including styles inside the tile icon's shadow root. 
   placement: bottom
 ```
 
-Use `for: previous` directly after a UI directive to attach the tooltip to the element it created. It currently works with `button` and `tile-icon`, and will work with later element-producing directives without needing an element selector.
+Use `for: previous` directly after a UI directive to attach the tooltip to the element it created. It works with `button`, `badge`, and `tile-icon`, and will work with later element-producing directives without needing an element selector.
 
 ```yaml
 - type: button
@@ -359,7 +452,7 @@ Use `style` for a flat mapping of CSS properties. This is particularly useful fo
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `for` | string | directive anchor | Target selector, or `previous` for the preceding element-producing directive. |
-| `content` | string | `""` | HTML content of the tooltip body. |
+| `content` | string or number | `""` | HTML content of the tooltip body. Numbers are rendered as text. |
 | `placement` | string | `"top"` | `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right`, `right-start`, or `right-end`. |
 | `distance` | number | `8` | Gap in pixels between tooltip and target. |
 | `skidding` | number | `0` | Offset in pixels along the target axis. |
@@ -388,7 +481,7 @@ The tooltip is inserted as a sibling of its target. Set the `--uix-tooltip-*` CS
       admins: true
 ```
 
-The directive anchor is the locked element by default. Set `for` to a relative selector to lock a descendant, or use `for: previous` directly after an element-producing directive such as `button` or `tile-icon`.
+The directive anchor is the locked element by default. Set `for` to a relative selector to lock a descendant, or use `for: previous` directly after an element-producing directive such as `button`, `badge`, or `tile-icon`.
 
 ```yaml
 - type: button
