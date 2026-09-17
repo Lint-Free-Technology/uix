@@ -223,9 +223,9 @@ export function createUixBadge(config: UixBadgeConfig): HTMLElement {
 
 export function updateUixBadge(badge: HTMLElement, config: UixBadgeConfig): void {
   updateBadgeContent(badge, config.content === undefined ? "" : String(config.content));
-  setOptionalAttribute(badge, "variant", validValue(BADGE_VARIANTS, config.variant));
-  setOptionalAttribute(badge, "appearance", validValue(BADGE_APPEARANCES, config.appearance));
-  setOptionalAttribute(badge, "attention", validValue(BADGE_ATTENTIONS, config.attention));
+  setAttributeValue(badge, "variant", validValue(BADGE_VARIANTS, config.variant) ?? "brand");
+  setAttributeValue(badge, "appearance", validValue(BADGE_APPEARANCES, config.appearance) ?? "accent");
+  setAttributeValue(badge, "attention", validValue(BADGE_ATTENTIONS, config.attention) ?? "none");
   if (badge.hasAttribute("pill") !== (config.pill === true)) {
     badge.toggleAttribute("pill", config.pill === true);
   }
@@ -246,12 +246,8 @@ function validValue<T extends readonly string[]>(values: T, value: unknown): T[n
   return values.includes(value as T[number]) ? value as T[number] : undefined;
 }
 
-function setOptionalAttribute(element: Element, name: string, value: string | undefined): void {
-  if (value) {
-    if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-  } else if (element.hasAttribute(name)) {
-    element.removeAttribute(name);
-  }
+function setAttributeValue(element: Element, name: string, value: string): void {
+  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
 }
 
 function updateSlottedIcon(badge: HTMLElement, slot: "start" | "end", icon: string | undefined): void {

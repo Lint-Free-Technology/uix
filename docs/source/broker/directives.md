@@ -284,7 +284,7 @@ Automatic placement applies only when the resolved directive anchor or `after` /
 | Target | Placement | Implementation |
 | --- | --- | --- |
 | `ha-button` | Top-end corner | UIX adds the badge inside the button, matching Web Awesome's button-badge pattern. Its diameter aligns with the button's rendered top and end edge. A UIX-generated button spark is also recognised. |
-| `ha-tile-icon` | Top-right of the tile icon | UIX uses the tile icon's documented default slot, Home Assistant's own tile-badge corner offsets, and compact tile-badge sizing. |
+| `ha-tile-icon` | Top-end corner | UIX uses the tile icon's documented default slot, Home Assistant's own tile-badge corner offsets, and compact tile-badge sizing. |
 
 For these targets, `after` and `before` identify the element that receives the badge; they do not control sibling insertion.
 

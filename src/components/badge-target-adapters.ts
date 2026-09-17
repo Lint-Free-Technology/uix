@@ -13,7 +13,7 @@ import {
  * shadow root.
  */
 export interface BadgeTargetAdapter {
-  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement): void;
+  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement, rtl?: boolean): void;
   detach(badge: HTMLElement): void;
 }
 
@@ -61,10 +61,10 @@ export function detachBadgeTargetAdapter(badge: HTMLElement): void {
 }
 
 class HaButtonBadgeAdapter implements BadgeTargetAdapter {
-  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement): void {
+  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement, rtl = false): void {
     const button = getUixButton(target);
     if (!button) return;
-    placeOnPositionedTarget(this, badge, button, "button", placement);
+    placeOnPositionedTarget(this, badge, button, "button", placement, rtl);
   }
 
   detach(badge: HTMLElement): void {
@@ -73,7 +73,7 @@ class HaButtonBadgeAdapter implements BadgeTargetAdapter {
 }
 
 class SiblingBadgePlacementAdapter implements BadgeTargetAdapter {
-  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement): void {
+  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement, rtl = false): void {
     const root = target.parentNode;
     if (!root) return;
     const anchor = root instanceof ShadowRoot ? root.host : root;
@@ -104,7 +104,7 @@ class SiblingBadgePlacementAdapter implements BadgeTargetAdapter {
     applyBadgeStyles(badge, {
       position: "absolute",
       "pointer-events": "var(--uix-badge-pointer-events, auto)",
-      ...buttonPlacementStyles(placement),
+      ...buttonPlacementStyles(placement, rtl),
     });
     if (badge.parentNode !== root) root.appendChild(badge);
   }
@@ -120,6 +120,7 @@ function placeOnPositionedTarget(
   target: HTMLElement,
   adapterName: string,
   placement: UixBadgePlacement | undefined,
+  rtl: boolean,
 ): void {
   const previousAdapter = badgeAdapters.get(badge);
   if (previousAdapter && previousAdapter !== adapter) previousAdapter.detach(badge);
@@ -146,7 +147,7 @@ function placeOnPositionedTarget(
   applyBadgeStyles(badge, {
     position: "absolute",
     "pointer-events": "var(--uix-badge-pointer-events, auto)",
-    ...buttonPlacementStyles(placement),
+    ...buttonPlacementStyles(placement, rtl),
   });
   // Moving an existing child causes a remove/add cycle. Only append when the
   // badge has actually changed target, avoiding visible flashes on updates.
@@ -175,7 +176,7 @@ function detachFromPositionedTarget(adapter: BadgeTargetAdapter, badge: HTMLElem
 }
 
 class HaTileIconBadgeAdapter implements BadgeTargetAdapter {
-  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement): void {
+  place(badge: HTMLElement, target: HTMLElement, placement?: UixBadgePlacement, _rtl = false): void {
     const previousAdapter = badgeAdapters.get(badge);
     if (previousAdapter && previousAdapter !== this) previousAdapter.detach(badge);
     const previousTarget = badgeTargets.get(badge);
@@ -223,7 +224,13 @@ function applyBadgeStyles(badge: HTMLElement, styles: Record<string, string>): v
   Object.entries(styles).forEach(([property, value]) => {
     const previous = badgeStyleState!.get(property);
     if (previous) {
-      if (badge.style.getPropertyValue(property) === previous.applied && previous.applied !== value) {
+      const current = badge.style.getPropertyValue(property);
+      if (current === previous.applied && previous.applied !== value) {
+        badge.style.setProperty(property, value);
+        previous.applied = value;
+      } else if (current === "") {
+        // A Forge/Broker style override can replace an adapter property for one
+        // update. Once that override is removed, restore the adapter value.
         badge.style.setProperty(property, value);
         previous.applied = value;
       }
@@ -251,20 +258,24 @@ function restoreBadgeStyles(badge: HTMLElement): void {
   badgeStyles.delete(badge);
 }
 
-function buttonPlacementStyles(placement: UixBadgePlacement | undefined): Record<string, string> {
+function buttonPlacementStyles(
+  placement: UixBadgePlacement | undefined,
+  rtl: boolean,
+): Record<string, string> {
+  const [start, end] = horizontalPlacementTranslations(rtl);
   switch (normalizeUixBadgePlacement(placement)) {
     case "top": return { top: "0", left: "50%", translate: badgeTranslate("-50%", "calc(-50% + 1px)") };
-    case "top-start": return { top: "0", "inset-inline-start": "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(-50% + 1px)") };
-    case "top-end": return { top: "0", "inset-inline-end": "0", translate: badgeTranslate("calc(50% - 1px)", "calc(-50% + 1px)") };
+    case "top-start": return { top: "0", "inset-inline-start": "0", translate: badgeTranslate(start, "calc(-50% + 1px)") };
+    case "top-end": return { top: "0", "inset-inline-end": "0", translate: badgeTranslate(end, "calc(-50% + 1px)") };
     case "bottom": return { bottom: "0", left: "50%", translate: badgeTranslate("-50%", "calc(50% - 1px)") };
-    case "bottom-start": return { bottom: "0", "inset-inline-start": "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(50% - 1px)") };
-    case "bottom-end": return { bottom: "0", "inset-inline-end": "0", translate: badgeTranslate("calc(50% - 1px)", "calc(50% - 1px)") };
-    case "left": return { "inset-inline-start": "0", top: "50%", translate: badgeTranslate("calc(-50% + 1px)", "-50%") };
-    case "left-start": return { "inset-inline-start": "0", top: "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(-50% + 1px)") };
-    case "left-end": return { "inset-inline-start": "0", bottom: "0", translate: badgeTranslate("calc(-50% + 1px)", "calc(50% - 1px)") };
-    case "right": return { "inset-inline-end": "0", top: "50%", translate: badgeTranslate("calc(50% - 1px)", "-50%") };
-    case "right-start": return { "inset-inline-end": "0", top: "0", translate: badgeTranslate("calc(50% - 1px)", "calc(-50% + 1px)") };
-    case "right-end": return { "inset-inline-end": "0", bottom: "0", translate: badgeTranslate("calc(50% - 1px)", "calc(50% - 1px)") };
+    case "bottom-start": return { bottom: "0", "inset-inline-start": "0", translate: badgeTranslate(start, "calc(50% - 1px)") };
+    case "bottom-end": return { bottom: "0", "inset-inline-end": "0", translate: badgeTranslate(end, "calc(50% - 1px)") };
+    case "left": return { "inset-inline-start": "0", top: "50%", translate: badgeTranslate(start, "-50%") };
+    case "left-start": return { "inset-inline-start": "0", top: "0", translate: badgeTranslate(start, "calc(-50% + 1px)") };
+    case "left-end": return { "inset-inline-start": "0", bottom: "0", translate: badgeTranslate(start, "calc(50% - 1px)") };
+    case "right": return { "inset-inline-end": "0", top: "50%", translate: badgeTranslate(end, "-50%") };
+    case "right-start": return { "inset-inline-end": "0", top: "0", translate: badgeTranslate(end, "calc(-50% + 1px)") };
+    case "right-end": return { "inset-inline-end": "0", bottom: "0", translate: badgeTranslate(end, "calc(50% - 1px)") };
   }
 }
 
@@ -272,7 +283,7 @@ function tileIconPlacementStyles(placement: UixBadgePlacement | undefined): Reco
   switch (normalizeUixBadgePlacement(placement)) {
     case "top": return { top: "3px", left: "50%", translate: badgeTranslate("-50%", "0px") };
     case "top-start": return { top: "3px", "inset-inline-start": "3px", translate: badgeTranslate("0px", "0px") };
-    case "top-end": return { top: "3px", right: "3px", "inset-inline-end": "3px", translate: badgeTranslate("0px", "0px") };
+    case "top-end": return { top: "3px", "inset-inline-end": "3px", translate: badgeTranslate("0px", "0px") };
     case "bottom": return { bottom: "3px", left: "50%", translate: badgeTranslate("-50%", "0px") };
     case "bottom-start": return { bottom: "3px", "inset-inline-start": "3px", translate: badgeTranslate("0px", "0px") };
     case "bottom-end": return { bottom: "3px", "inset-inline-end": "3px", translate: badgeTranslate("0px", "0px") };
@@ -283,6 +294,12 @@ function tileIconPlacementStyles(placement: UixBadgePlacement | undefined): Reco
     case "right-start": return { "inset-inline-end": "3px", top: "3px", translate: badgeTranslate("0px", "0px") };
     case "right-end": return { "inset-inline-end": "3px", bottom: "3px", translate: badgeTranslate("0px", "0px") };
   }
+}
+
+function horizontalPlacementTranslations(rtl: boolean): [start: string, end: string] {
+  return rtl
+    ? ["calc(50% - 1px)", "calc(-50% + 1px)"]
+    : ["calc(-50% + 1px)", "calc(50% - 1px)"];
 }
 
 function badgeTranslate(x: string, y: string): string {
@@ -299,4 +316,3 @@ function getUixButton(element: Element): HTMLElement | null {
 haButtonBadgeAdapter = new HaButtonBadgeAdapter();
 haTileIconBadgeAdapter = new HaTileIconBadgeAdapter();
 siblingBadgePlacementAdapter = new SiblingBadgePlacementAdapter();
-import type { UixBadgePlacement } from "./uix-badge";

@@ -1,4 +1,5 @@
 import { PropertyValues } from "lit";
+import { computeRtl } from "../../helpers/rtl";
 import { createUixBadge, UixBadgeConfig, updateUixBadge } from "../../components/uix-badge";
 import {
   detachBadgeTargetAdapter,
@@ -32,7 +33,7 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
   }
 
   private applyConfig(config: Record<string, any>): void {
-    this.after = config.after || config.for || this.defaultTarget("");
+    this.after = config.after || config.for || (config.before === undefined ? this.defaultTarget("") : "");
     this.before = config.before || "";
     this.badgeConfig = {
       content: config.content,
@@ -98,7 +99,13 @@ export class UixForgeSparkBadge extends UixForgeSparkBase {
     updateUixBadge(badge, this.badgeConfig);
     this.applyStyle(badge);
     if (adapter) {
-      adapter.place(badge, target as HTMLElement, this.badgeConfig.placement);
+      const hass = this.controller.forge.hass;
+      adapter.place(
+        badge,
+        target as HTMLElement,
+        this.badgeConfig.placement,
+        computeRtl(hass?.language, hass?.translationMetadata?.translations),
+      );
     } else {
       detachBadgeTargetAdapter(badge);
       if (this.before) {

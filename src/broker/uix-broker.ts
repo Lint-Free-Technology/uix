@@ -1,6 +1,7 @@
 import { tinykeys } from "tinykeys";
 import { BrowserID } from "../helpers/browser_id";
 import { hass, provideHass } from "../helpers/hass";
+import { computeRtl } from "../helpers/rtl";
 import { getPanelState } from "../helpers/panel";
 import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
@@ -976,7 +977,10 @@ export class UixBroker {
       if (!wrapper.isConnected) this.buttonWrappers.delete(directive);
     }
     for (const [directive, badge] of this.badges) {
-      if (!badge.isConnected) this.badges.delete(directive);
+      if (!badge.isConnected) {
+        detachBadgeTargetAdapter(badge);
+        this.badges.delete(directive);
+      }
     }
     for (const [directive, tileIcon] of this.tileIcons) {
       if (!tileIcon.isConnected) this.tileIcons.delete(directive);
@@ -2210,7 +2214,12 @@ export class UixBroker {
     placement?: UixBadgeConfig["placement"],
   ) {
     if (adapter) {
-      adapter.place(badge, target as HTMLElement, placement);
+      adapter.place(
+        badge,
+        target as HTMLElement,
+        placement,
+        computeRtl(this.hass?.language, this.hass?.translationMetadata?.translations),
+      );
       return;
     }
     detachBadgeTargetAdapter(badge);
