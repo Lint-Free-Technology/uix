@@ -1,3 +1,13 @@
+## [8.3.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.9...v8.3.0-beta.10) (2026-09-17)
+
+### ⭐ New Features
+
+* UIX Forge badge spark and UIX Broker badge directive ([#613](https://github.com/Lint-Free-Technology/uix/issues/613)) ([ba53a56](https://github.com/Lint-Free-Technology/uix/commit/ba53a565ce99b791be8ccf4b1893a7005ea917a8))
+
+### 🐞 Bug Fixes
+
+* **forge:** Fix possible console error on first load of forged element when mold is row. ([6bdc711](https://github.com/Lint-Free-Technology/uix/commit/6bdc7114272b79f0ad3b30629dd604eded3b3543))
+
 ## [8.3.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.8...v8.3.0-beta.9) (2026-09-14)
 
 ### ⭐ New Features
