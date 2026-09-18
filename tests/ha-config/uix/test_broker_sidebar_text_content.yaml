@@ -1,0 +1,22 @@
+uix_broker:
+  - realm: browser
+    enabled: true
+    listen:
+      - uix-broker-ready
+      - uix-update-sidebar
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    directives:
+      - type: text-content
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content div.headline slot"
+        content: Secured
+        style:
+          display: block
+          font-size: var(--ha-font-size-s)
+          font-weight: var(--ha-font-weight-medium)
+          line-height: 1
+          color: var(--success-color)
+          width: min-content
+      - type: tooltip
+        for: previous
+        content: All house alarm zones are secured
+        placement: top
