@@ -1,3 +1,10 @@
+## [8.3.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.11...v8.3.0-beta.12) (2026-09-18)
+
+### ⭐ New Features
+
+* UIX Broker action-handler directive ([#616](https://github.com/Lint-Free-Technology/uix/issues/616)) ([5d71754](https://github.com/Lint-Free-Technology/uix/commit/5d71754cf9657ed59be43ba17e181ebe3374cb13))
+* UIX Broker text-content directive ([#617](https://github.com/Lint-Free-Technology/uix/issues/617)) ([b2b0c36](https://github.com/Lint-Free-Technology/uix/commit/b2b0c36aa3f97c351350d5711c670c1dca2c9ecf))
+
 ## [8.3.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.10...v8.3.0-beta.11) (2026-09-17)
 
 ### ⭐ New Features
