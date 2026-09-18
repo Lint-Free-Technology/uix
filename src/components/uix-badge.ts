@@ -123,6 +123,25 @@ const uixBadgeStyles = css`
     border-color: var(--uix-badge-border-color-hover);
   }
 
+  /* An outlined badge may use a transparent custom fill. Use its visible
+   * border for the pulse ring instead of making the animation transparent. */
+  :host([appearance="outlined"]) {
+    --pulse-color: var(
+      --uix-badge-attention-color,
+      var(--uix-badge-border-color, var(--uix-badge-resolved-attention-color))
+    );
+  }
+
+  :host([appearance="outlined"]:hover) {
+    --pulse-color: var(
+      --uix-badge-attention-color-hover,
+      var(
+        --uix-badge-attention-color,
+        var(--uix-badge-border-color, var(--uix-badge-resolved-attention-color))
+      )
+    );
+  }
+
   :host([data-uix-badge-adapter]) {
     z-index: var(--uix-badge-z-index, 1);
   }

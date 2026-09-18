@@ -100,7 +100,7 @@ Set these variables on `uix-badge` or an ancestor. For a single Forge or Broker 
 | `--uix-badge-border` | Web Awesome border | Complete CSS `border` value, for example `1px solid rgb(255 255 255 / 50%)`. It supplies the border width, style, and color. |
 | `--uix-badge-border-color` | Web Awesome border color | Badge border color. Falls back to `--uix-badge-color` when it is set. |
 | `--uix-badge-box-shadow` | `none` | CSS `box-shadow` applied to the badge. |
-| `--uix-badge-attention-color` | Web Awesome appearance fill or border | Pulse-ring color for `attention: pulse`. Falls back to `--uix-badge-color` when it is set. |
+| `--uix-badge-attention-color` | Web Awesome appearance fill or border | Pulse-ring color for `attention: pulse`. Filled and accent badges fall back to `--uix-badge-color`; outlined badges fall back to their border color. |
 | `--uix-badge-color-hover` | Non-hover background color | Badge background color while hovered. |
 | `--uix-badge-content-color-hover` | Non-hover content color | Badge text and icon color while hovered. |
 | `--uix-badge-border-color-hover` | Non-hover border color | Badge border color while hovered. |
