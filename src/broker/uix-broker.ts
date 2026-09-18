@@ -115,7 +115,11 @@ type BrokerActionHandlerConfig = {
 type BrokerActionHandler = {
   anchor: Element;
   config: BrokerActionHandlerConfig;
+};
+
+type BrokerActionHandlerTarget = {
   handleAction: EventListener;
+  stopGesturePropagation: EventListener;
 };
 
 type BrokerActionHandlerCursor = {
@@ -636,6 +640,7 @@ export class UixBroker {
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
   private locks = new Map<UixBrokerDirective, BrokerLock>();
   private actionHandlers = new Map<UixBrokerDirective, BrokerActionHandler>();
+  private actionHandlerTargets = new Map<Element, BrokerActionHandlerTarget>();
   private actionHandlerCursors = new Map<Element, BrokerActionHandlerCursor>();
   private actionHandlerCursorOrder = 0;
   private tooltipTargets = new Map<Element, BrokerTooltipTarget>();
@@ -1691,15 +1696,9 @@ export class UixBroker {
       actionHandler = undefined;
     }
     if (!actionHandler) {
-      const handleAction: EventListener = (event) => {
-        if (event.target !== anchor) return;
-        const current = this.actionHandlers.get(directive);
-        if (!current || current.anchor !== anchor) return;
-        this.dispatchActionHandlerAction(anchor, current.config, event as CustomEvent);
-      };
-      actionHandler = { anchor, config, handleAction };
-      anchor.addEventListener("action", handleAction);
+      actionHandler = { anchor, config };
       this.actionHandlers.set(directive, actionHandler);
+      this.addActionHandlerTarget(anchor);
     } else {
       actionHandler.config = config;
     }
@@ -1728,10 +1727,54 @@ export class UixBroker {
   private removeActionHandler(directive: UixBrokerDirective, actionHandler?: BrokerActionHandler): void {
     const current = actionHandler ?? this.actionHandlers.get(directive);
     if (!current) return;
-    current.anchor.removeEventListener("action", current.handleAction);
     this.removeActionHandlerCursor(directive, current.anchor);
     if (this.actionHandlers.get(directive) === current) this.actionHandlers.delete(directive);
     actionHandlerUnregister(current.anchor as HTMLElement, directive);
+    if (![...this.actionHandlers.values()].some((handler) => handler.anchor === current.anchor)) {
+      this.removeActionHandlerTarget(current.anchor);
+    }
+  }
+
+  /** Keep gestures inside the anchor and replace configured actions before parent action listeners see them. */
+  private addActionHandlerTarget(anchor: Element): void {
+    if (this.actionHandlerTargets.has(anchor)) return;
+    // Keep the gesture within the anchor so an action-handler bound higher in
+    // the DOM cannot turn the same click/touch into a second action. Do not
+    // use stopImmediatePropagation: the anchor's own Home Assistant handler
+    // must still receive the gesture and resolve it exactly once.
+    const stopGesturePropagation: EventListener = (event) => event.stopPropagation();
+    const handleAction: EventListener = (event) => {
+      const action = (event as CustomEvent).detail?.action as string | undefined;
+      if (!action || !event.composedPath().includes(anchor)) return;
+      const actionKey = `${action}_action` as keyof BrokerActionHandlerConfig;
+      const handlers = [...this.actionHandlers.values()].filter(
+        (handler) => handler.anchor === anchor && handler.config[actionKey],
+      );
+      if (!handlers.length) return;
+      event.stopImmediatePropagation();
+      handlers.forEach((handler) => this.dispatchActionHandlerAction(anchor, handler.config, event as CustomEvent));
+    };
+    anchor.addEventListener("touchstart", stopGesturePropagation);
+    anchor.addEventListener("touchend", stopGesturePropagation);
+    anchor.addEventListener("touchcancel", stopGesturePropagation);
+    anchor.addEventListener("mousedown", stopGesturePropagation);
+    anchor.addEventListener("click", stopGesturePropagation);
+    anchor.addEventListener("keydown", stopGesturePropagation);
+    anchor.addEventListener("action", handleAction, true);
+    this.actionHandlerTargets.set(anchor, { handleAction, stopGesturePropagation });
+  }
+
+  private removeActionHandlerTarget(anchor: Element): void {
+    const target = this.actionHandlerTargets.get(anchor);
+    if (!target) return;
+    anchor.removeEventListener("touchstart", target.stopGesturePropagation);
+    anchor.removeEventListener("touchend", target.stopGesturePropagation);
+    anchor.removeEventListener("touchcancel", target.stopGesturePropagation);
+    anchor.removeEventListener("mousedown", target.stopGesturePropagation);
+    anchor.removeEventListener("click", target.stopGesturePropagation);
+    anchor.removeEventListener("keydown", target.stopGesturePropagation);
+    anchor.removeEventListener("action", target.handleAction, true);
+    this.actionHandlerTargets.delete(anchor);
   }
 
   private applyActionHandlerCursor(directive: UixBrokerDirective, anchor: Element, cursor: string): void {
