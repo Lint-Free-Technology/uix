@@ -333,6 +333,9 @@ Use `for: previous` directly after a `button` directive to show a badge on the b
 
 ## Text content
 
+!!! info
+    `text-content` directive available in 8.3.0-beta.12
+
 `text-content` inserts a `<span>` containing text immediately after its directive anchor. It is useful when CSS pseudo-content would otherwise be used only to add a small label or secondary line. The generated span has the `data-uix-broker-text-content` attribute and is reused whenever the same directive runs again.
 
 ```yaml
@@ -558,6 +561,9 @@ Use `uix` for UIX Styling on the generated overlay. Its UIX type is `uix-broker-
 ```
 
 ## Action handler
+
+!!! info
+    `action-handler` directive available in 8.3.0-beta.12
 
 `action-handler` binds Home Assistant's action handler to the directive anchor. Configure one or more standard Home Assistant actions; `tap_action`, `hold_action`, and `double_tap_action` are all supported. The matching action is dispatched from the anchor as a normal `hass-action` event.
 
