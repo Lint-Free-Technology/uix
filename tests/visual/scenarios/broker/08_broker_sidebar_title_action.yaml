@@ -25,12 +25,17 @@ assertions:
   - type: object_property_text_equals
     root: ha-sidebar
     selector: div.title
-    property: textContent
+    property: innerText
     expected: Home
   - type: object_property_present
     root: ha-sidebar
     selector: div.title
     property: actionHandler
+  - type: object_property_text_equals
+    root: hui-root
+    selector: div.main-title
+    property: innerText
+    expected: Overview
   - type: snapshot
     name: "65_broker_sidebar_title_action"
     threshold: 0.01

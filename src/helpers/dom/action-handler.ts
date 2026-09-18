@@ -36,3 +36,8 @@ export const actionHandlerBind = (
   if (!actionhandler) return;
   actionhandler.bind(element, options);
 };
+
+/** Remove action-handler pointer and keyboard listeners from an element. */
+export const actionHandlerUnbind = (element: ActionHandlerElement) => {
+  actionHandlerBind(element, { disabled: true });
+};

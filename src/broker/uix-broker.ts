@@ -7,7 +7,7 @@ import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import { apply_uix, ModdedElement, UixConfig } from "../helpers/apply_uix";
 import { LockOverlayConfig, UixLockOverlay } from "../helpers/dom/lock-overlay";
-import { actionHandlerBind } from "../helpers/dom/action-handler";
+import { actionHandlerBind, actionHandlerUnbind } from "../helpers/dom/action-handler";
 import {
   createHaButton,
   dispatchHaButtonAction,
@@ -1705,7 +1705,7 @@ export class UixBroker {
     }
     this.applyActionHandlerCursor(directive, anchor, cursor);
     this.setEventActionAnchor(config, anchor);
-    actionHandlerBind(anchor as HTMLElement, { hasTap, hasHold, hasDoubleClick });
+    this.refreshActionHandlerBinding(anchor);
     this.refreshRetainedReferenceObservers();
   }
 
@@ -1731,6 +1731,21 @@ export class UixBroker {
     current.anchor.removeEventListener("action", current.handleAction);
     this.removeActionHandlerCursor(directive, current.anchor);
     if (this.actionHandlers.get(directive) === current) this.actionHandlers.delete(directive);
+    this.refreshActionHandlerBinding(current.anchor);
+  }
+
+  /** Bind one Home Assistant action-handler with the gestures from every Broker directive on this anchor. */
+  private refreshActionHandlerBinding(anchor: Element): void {
+    const handlers = [...this.actionHandlers.values()].filter((actionHandler) => actionHandler.anchor === anchor);
+    if (!handlers.length) {
+      actionHandlerUnbind(anchor as HTMLElement);
+      return;
+    }
+    actionHandlerBind(anchor as HTMLElement, {
+      hasTap: handlers.some(({ config }) => hasConfiguredAction(config.tap_action)),
+      hasHold: handlers.some(({ config }) => hasConfiguredAction(config.hold_action)),
+      hasDoubleClick: handlers.some(({ config }) => hasConfiguredAction(config.double_tap_action)),
+    });
   }
 
   private applyActionHandlerCursor(directive: UixBrokerDirective, anchor: Element, cursor: string): void {
