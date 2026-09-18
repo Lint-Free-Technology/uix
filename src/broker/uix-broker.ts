@@ -76,6 +76,7 @@ const BROKER_SELECT_TREE_TIMEOUT_MS = 2_000;
 const BROKER_SELECT_TREE_RETRY_MS = 50;
 const BROKER_BUTTON_WRAPPER_ATTR = "data-uix-broker-button";
 const BROKER_BADGE_ATTR = "data-uix-broker-badge";
+const BROKER_TEXT_CONTENT_ATTR = "data-uix-broker-text-content";
 const BROKER_TILE_ICON_ATTR = "data-uix-broker-tile-icon";
 const BROKER_TOOLTIP_ATTR = "data-uix-broker-tooltip";
 
@@ -86,6 +87,10 @@ type BrokerButtonElement = HTMLElement & {
 
 type BrokerBadgeElement = HTMLElement & {
   uixBrokerBadgeConfig?: UixBadgeConfig;
+  uixBrokerStyleProperties?: string[];
+};
+
+type BrokerTextContentElement = HTMLElement & {
   uixBrokerStyleProperties?: string[];
 };
 
@@ -636,6 +641,7 @@ export class UixBroker {
   private buttonWrappers = new Map<UixBrokerDirective, HTMLElement>();
   private badges = new Map<UixBrokerDirective, BrokerBadgeElement>();
   private badgeTargets = new Map<UixBrokerDirective, Element>();
+  private textContents = new Map<UixBrokerDirective, BrokerTextContentElement>();
   private tileIcons = new Map<UixBrokerDirective, HTMLElement>();
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
   private locks = new Map<UixBrokerDirective, BrokerLock>();
@@ -1017,6 +1023,9 @@ export class UixBroker {
       const target = this.badgeTargets.get(directive);
       if (!badge.isConnected || (target && !target.isConnected)) this.removeBadge(directive, badge);
     }
+    for (const [directive, textContent] of this.textContents) {
+      if (!textContent.isConnected) this.textContents.delete(directive);
+    }
     for (const [directive, tileIcon] of this.tileIcons) {
       if (!tileIcon.isConnected) this.tileIcons.delete(directive);
     }
@@ -1042,11 +1051,12 @@ export class UixBroker {
    */
   private refreshRetainedReferenceObservers() {
     const roots = new Set<Node>();
-    if (this.anchorHistory.length || this.buttonWrappers.size || this.badges.size || this.tileIcons.size || this.tooltips.size || this.locks.size || this.actionHandlers.size) {
+    if (this.anchorHistory.length || this.buttonWrappers.size || this.badges.size || this.textContents.size || this.tileIcons.size || this.tooltips.size || this.locks.size || this.actionHandlers.size) {
       roots.add(document);
       this.anchorHistory.forEach(({ anchor }) => roots.add(anchor.getRootNode()));
       this.buttonWrappers.forEach((wrapper) => roots.add(wrapper.getRootNode()));
       this.badges.forEach((badge) => roots.add(badge.getRootNode()));
+      this.textContents.forEach((textContent) => roots.add(textContent.getRootNode()));
       this.tileIcons.forEach((tileIcon) => roots.add(tileIcon.getRootNode()));
       this.tooltips.forEach(({ element, target }) => {
         roots.add(element.getRootNode());
@@ -1076,7 +1086,7 @@ export class UixBroker {
     directive: UixBrokerDirective,
     interactionAnchor: Element,
   ): Promise<Element | null> {
-    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "action-handler" && directive.type !== "button" && directive.type !== "badge" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
+    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "action-handler" && directive.type !== "button" && directive.type !== "badge" && directive.type !== "text-content" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
       return interactionAnchor;
     }
     if (directive.type === "event" && directive.target !== undefined && directive.target !== "anchor") {
@@ -1388,6 +1398,8 @@ export class UixBroker {
       return this.executeButton(directive, anchor, context);
     } else if (directive.type === "badge") {
       return this.executeBadge(directive, anchor, context);
+    } else if (directive.type === "text-content") {
+      return this.executeTextContent(directive, anchor, context);
     } else if (directive.type === "tile-icon") {
       return this.executeTileIcon(directive, anchor, context);
     } else if (directive.type === "tooltip") {
@@ -1926,6 +1938,38 @@ export class UixBroker {
     return badge;
   }
 
+  private executeTextContent(
+    directive: UixBrokerDirective,
+    anchor: Element,
+    context: BrokerContext,
+  ): Element | undefined {
+    const parent = anchor.parentNode;
+    if (!parent) return undefined;
+
+    let textContent = this.textContents.get(directive);
+    if (textContent && (!textContent.isConnected || textContent.parentNode !== parent)) {
+      textContent.remove();
+      this.textContents.delete(directive);
+      textContent = undefined;
+    }
+    if (!textContent) {
+      textContent = document.createElement("span") as BrokerTextContentElement;
+      textContent.setAttribute(BROKER_TEXT_CONTENT_ATTR, "");
+      this.textContents.set(directive, textContent);
+    }
+
+    const content = resolveCaptured(directive.content ?? "", context.captured, context.results);
+    if (typeof content !== "string" && typeof content !== "number") {
+      throw new Error("text-content directive content must be a string or number");
+    }
+    textContent.textContent = String(content);
+    this.clearTextContentStyle(textContent);
+    this.applyTextContentStyle(textContent, directive.style, context);
+    this.placeTextContent(textContent, anchor);
+    this.refreshRetainedReferenceObservers();
+    return textContent;
+  }
+
   private async executeTileIcon(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
     const target = await this.resolveTileIconTarget(directive, anchor);
     if (!target) return undefined;
@@ -2357,6 +2401,26 @@ export class UixBroker {
     tileIcon.uixBrokerStyleProperties = [];
   }
 
+  private clearTextContentStyle(textContent: BrokerTextContentElement) {
+    textContent.uixBrokerStyleProperties?.forEach((property) => textContent.style.removeProperty(property));
+    textContent.uixBrokerStyleProperties = [];
+  }
+
+  private applyTextContentStyle(textContent: BrokerTextContentElement, style: unknown, context: BrokerContext) {
+    if (style === undefined) return;
+    const resolvedStyle = resolveCaptured(style, context.captured, context.results);
+    if (!resolvedStyle || typeof resolvedStyle !== "object" || Array.isArray(resolvedStyle)) {
+      throw new Error("text-content directive style must be an object of CSS property names and values");
+    }
+    for (const [property, value] of Object.entries(resolvedStyle)) {
+      if (!property.trim() || (typeof value !== "string" && typeof value !== "number")) {
+        throw new Error("text-content directive style values must be strings or numbers");
+      }
+      textContent.style.setProperty(property, String(value));
+      textContent.uixBrokerStyleProperties.push(property);
+    }
+  }
+
   private applyTileIconStyle(tileIcon: BrokerTileIconElement, style: unknown, context: BrokerContext) {
     if (style === undefined) return;
     const resolvedStyle = resolveCaptured(style, context.captured, context.results);
@@ -2435,6 +2499,13 @@ export class UixBroker {
     if (nextSibling !== tileIcon) parent.insertBefore(tileIcon, nextSibling);
   }
 
+  private placeTextContent(textContent: HTMLElement, anchor: Element) {
+    const parent = anchor.parentNode;
+    if (!parent) return;
+    const nextSibling = anchor.nextSibling;
+    if (nextSibling !== textContent) parent.insertBefore(textContent, nextSibling);
+  }
+
   private removeBadge(directive: UixBrokerDirective, badge = this.badges.get(directive)): void {
     if (!badge) return;
     if (this.badges.get(directive) === badge) {
@@ -2465,6 +2536,8 @@ export class UixBroker {
     });
     this.badges.clear();
     this.badgeTargets.clear();
+    this.textContents.forEach((textContent) => textContent.remove());
+    this.textContents.clear();
     this.tileIcons.forEach((tileIcon) => tileIcon.remove());
     this.tileIcons.clear();
     // Sidebar and other Lit-rendered hosts may replace a generated icon while
@@ -2489,7 +2562,7 @@ export class UixBroker {
       visited.add(root);
       const elements = Array.from(root.querySelectorAll("*"));
       elements
-        .filter((element) => element.matches(`uix-badge[${BROKER_BADGE_ATTR}], ha-tile-icon[${BROKER_TILE_ICON_ATTR}]`))
+        .filter((element) => element.matches(`uix-badge[${BROKER_BADGE_ATTR}], span[${BROKER_TEXT_CONTENT_ATTR}], ha-tile-icon[${BROKER_TILE_ICON_ATTR}]`))
         .forEach((element) => {
           if (element instanceof HTMLElement) detachBadgeTargetAdapter(element);
           element.remove();

@@ -12,6 +12,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Call](#call) — invoke an element method.
 - [Button](#button) — insert an interactive Home Assistant button.
 - [Badge](#badge) — insert a Web Awesome-styled status badge.
+- [Text content](#text-content) — insert styled text beside an element.
 - [Tile icon](#tile-icon) — insert an interactive Home Assistant tile icon.
 - [Tooltip](#tooltip) — attach a styled tooltip to an element.
 - [Lock](#lock) — require an unlock challenge before an element can be used.
@@ -23,7 +24,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 ## Directive rules
 
-Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `text-content`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
 ```yaml
 directives:
@@ -54,7 +55,7 @@ It is available only in `browser` and `shortcut` realms. The interaction anchor 
 
 ## Directive anchors
 
-`property`, `event`, `call`, `action-handler`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
+`property`, `event`, `call`, `action-handler`, `button`, `badge`, `text-content`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
 
 ```yaml
 directives:
@@ -329,6 +330,38 @@ Use `for: previous` directly after a `button` directive to show a badge on the b
     - `for: previous` cannot be combined with `after` or `before`.
     - `ha-button` and `ha-tile-icon` targets receive the badge directly rather than as a sibling.
     - `content` is inserted as text, not HTML.
+
+## Text content
+
+`text-content` inserts a `<span>` containing text immediately after its directive anchor. It is useful when CSS pseudo-content would otherwise be used only to add a small label or secondary line. The generated span has the `data-uix-broker-text-content` attribute and is reused whenever the same directive runs again.
+
+```yaml
+- type: text-content
+  anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content div.headline slot"
+  content: Secured
+  style:
+    display: block
+    font-size: var(--ha-font-size-s)
+    font-weight: var(--ha-font-weight-medium)
+    line-height: 1
+    color: var(--success-color)
+    width: min-content
+- type: tooltip
+  for: previous
+  content: All house alarm zones are secured
+  placement: top
+```
+
+`content` is always inserted as text, never HTML. It accepts a string or number and supports captured data and prior `template` or `javascript` directive results.
+
+Use `style` for a flat mapping of CSS property names and string or numeric values. The properties are set inline on the generated span.
+
+When the destination is a named slot, make the actual `<slot>` element the anchor, as in the example. `text-content` does not have a `slot` option; this keeps Broker placement consistent with other directives and avoids adding light-DOM content to the wrong slot.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `content` | string or number | `""` | Text inserted into the generated span. |
+| `style` | object | — | Flat map of CSS property names and string or numeric values, set inline on the generated span. |
 
 ## Tile icon
 
