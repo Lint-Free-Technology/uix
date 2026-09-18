@@ -356,7 +356,7 @@ Use `for: previous` directly after a `button` directive to show a badge on the b
 
 Use `style` for a flat mapping of CSS property names and string or numeric values. The properties are set inline on the generated span.
 
-When the destination is a named slot, make the actual `<slot>` element the anchor, as in the example. `text-content` does not have a `slot` option; this keeps Broker placement consistent with other directives and avoids adding light-DOM content to the wrong slot.
+When the destination is a named slot, either make the actual `<slot>` element the anchor, as in the example, or anchor a light-DOM element already assigned to that slot. In the latter case, UIX copies the anchor's `slot` attribute to the generated span so it projects into the same slot. `text-content` does not have a `slot` option; it follows the resolved anchor instead.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -367,7 +367,6 @@ When the destination is a named slot, make the actual `<slot>` element the ancho
 
 !!! info
     `tile-icon` directive available in 8.3.0-beta.3
-
 
 `tile-icon` inserts a Home Assistant `ha-tile-icon` beside the directive anchor. It uses the same icon rendering and action handling as the [Forge tile-icon spark](../forge/sparks/tile-icon.md). The tile icon is inserted after the directive anchor by default.
 

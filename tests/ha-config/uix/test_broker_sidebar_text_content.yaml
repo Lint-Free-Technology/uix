@@ -7,7 +7,7 @@ uix_broker:
     anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
     directives:
       - type: text-content
-        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content div.headline slot"
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home span.item-text"
         content: Secured
         style:
           display: block

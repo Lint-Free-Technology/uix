@@ -1957,6 +1957,9 @@ export class UixBroker {
       textContent.setAttribute(BROKER_TEXT_CONTENT_ATTR, "");
       this.textContents.set(directive, textContent);
     }
+    const slot = anchor.getAttribute("slot");
+    if (slot) textContent.setAttribute("slot", slot);
+    else textContent.removeAttribute("slot");
 
     const content = resolveCaptured(directive.content ?? "", context.captured, context.results);
     if (typeof content !== "string" && typeof content !== "number") {

@@ -12,41 +12,46 @@ card:
 
 interactions:
   - type: hover
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     settle_ms: 500
 
 assertions:
   - type: element_present
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
   - type: object_property_text_equals
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: innerText
     expected: Secured
+  - type: object_property_text_equals
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: slot
+    expected: headline
   - type: css_property
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: color
     expected: rgb(67, 160, 71)
   - type: css_property
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: display
     expected: block
   - type: css_property
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: fontSize
     expected: 12px
   - type: css_property
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: fontWeight
     expected: "500"
   - type: css_property
-    root: "ha-list-item-button#sidebar-panel-home"
+    root: "ha-sidebar"
     selector: "span[data-uix-broker-text-content]"
     property: lineHeight
     expected: "12px"
