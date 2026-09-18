@@ -8,7 +8,7 @@ setup:
 
 card:
   type: heading
-  heading: "Broker Sidebar Title Test"
+  heading: "Broker Sidebar Text Content Test"
 
 interactions:
   - type: hover
