@@ -529,6 +529,8 @@ Use `uix` for UIX Styling on the generated overlay. Its UIX type is `uix-broker-
 
 `action-handler` binds Home Assistant's action handler to the directive anchor. Configure one or more standard Home Assistant actions; `tap_action`, `hold_action`, and `double_tap_action` are all supported. The matching action is dispatched from the anchor as a normal `hass-action` event.
 
+Each configured action type is owned by UIX Broker: its `action` event does not reach other listeners on the anchor or its ancestors. Use the directive to replace existing behavior for that action type, not to combine actions. Omit an action type, or set its action to `none`, to leave it untouched.
+
 Set `entity` to pass an entity ID through to entity-based actions such as `toggle` and `more-info`.
 `cursor` sets the cursor on only this directive's anchor and defaults to `pointer`; use any CSS cursor value, such as `default` or `auto`, to override it.
 
