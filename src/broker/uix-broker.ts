@@ -7,6 +7,7 @@ import { render_template } from "../helpers/templates";
 import { matchesHostElementPath, selectTree } from "../helpers/selecttree";
 import { apply_uix, ModdedElement, UixConfig } from "../helpers/apply_uix";
 import { LockOverlayConfig, UixLockOverlay } from "../helpers/dom/lock-overlay";
+import { actionHandlerBind } from "../helpers/dom/action-handler";
 import {
   createHaButton,
   dispatchHaButtonAction,
@@ -101,6 +102,26 @@ type BrokerTooltip = {
   cleanupActivation?: () => void;
   element: BrokerTooltipElement;
   target: Element;
+};
+
+type BrokerActionHandlerConfig = {
+  entity?: string;
+  cursor?: string;
+  tap_action?: Record<string, any>;
+  hold_action?: Record<string, any>;
+  double_tap_action?: Record<string, any>;
+};
+
+type BrokerActionHandler = {
+  anchor: Element;
+  config: BrokerActionHandlerConfig;
+  handleAction: EventListener;
+};
+
+type BrokerActionHandlerCursor = {
+  originalValue: string;
+  originalPriority: string;
+  directives: Map<UixBrokerDirective, { cursor: string; order: number }>;
 };
 
 type BrokerTooltipTarget = {
@@ -614,6 +635,9 @@ export class UixBroker {
   private tileIcons = new Map<UixBrokerDirective, HTMLElement>();
   private tooltips = new Map<UixBrokerDirective, BrokerTooltip>();
   private locks = new Map<UixBrokerDirective, BrokerLock>();
+  private actionHandlers = new Map<UixBrokerDirective, BrokerActionHandler>();
+  private actionHandlerCursors = new Map<Element, BrokerActionHandlerCursor>();
+  private actionHandlerCursorOrder = 0;
   private tooltipTargets = new Map<Element, BrokerTooltipTarget>();
   private retainedReferenceObservers = new Map<Node, MutationObserver>();
   private templateCache = new Map<string, TemplateCacheEntry>();
@@ -1000,6 +1024,9 @@ export class UixBroker {
         this.locks.delete(directive);
       }
     }
+    for (const [directive, actionHandler] of this.actionHandlers) {
+      if (!actionHandler.anchor.isConnected) this.removeActionHandler(directive, actionHandler);
+    }
     this.refreshRetainedReferenceObservers();
   }
 
@@ -1010,7 +1037,7 @@ export class UixBroker {
    */
   private refreshRetainedReferenceObservers() {
     const roots = new Set<Node>();
-    if (this.anchorHistory.length || this.buttonWrappers.size || this.badges.size || this.tileIcons.size || this.tooltips.size || this.locks.size) {
+    if (this.anchorHistory.length || this.buttonWrappers.size || this.badges.size || this.tileIcons.size || this.tooltips.size || this.locks.size || this.actionHandlers.size) {
       roots.add(document);
       this.anchorHistory.forEach(({ anchor }) => roots.add(anchor.getRootNode()));
       this.buttonWrappers.forEach((wrapper) => roots.add(wrapper.getRootNode()));
@@ -1024,6 +1051,7 @@ export class UixBroker {
         if (overlay.element) roots.add(overlay.element.getRootNode());
         if (anchor) roots.add(anchor.getRootNode());
       });
+      this.actionHandlers.forEach(({ anchor }) => roots.add(anchor.getRootNode()));
     }
 
     this.retainedReferenceObservers.forEach((observer, root) => {
@@ -1043,7 +1071,7 @@ export class UixBroker {
     directive: UixBrokerDirective,
     interactionAnchor: Element,
   ): Promise<Element | null> {
-    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "button" && directive.type !== "badge" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
+    if (directive.type !== "property" && directive.type !== "event" && directive.type !== "call" && directive.type !== "action-handler" && directive.type !== "button" && directive.type !== "badge" && directive.type !== "tile-icon" && directive.type !== "tooltip" && directive.type !== "lock") {
       return interactionAnchor;
     }
     if (directive.type === "event" && directive.target !== undefined && directive.target !== "anchor") {
@@ -1361,6 +1389,8 @@ export class UixBroker {
       await this.executeTooltip(directive, anchor, context);
     } else if (directive.type === "lock") {
       return await this.executeLock(directive, anchor, context);
+    } else if (directive.type === "action-handler") {
+      this.executeActionHandler(directive, anchor, context);
     } else if (directive.type === "template") {
       await this.executeTemplate(directive, context);
     } else if (directive.type === "javascript") {
@@ -1634,6 +1664,101 @@ export class UixBroker {
       composed: true,
       detail: { config, action: "tap" },
     }));
+  }
+
+  /** Bind Home Assistant actions directly to an existing Broker anchor. */
+  private executeActionHandler(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): void {
+    const config = resolveCaptured({
+      entity: directive.entity,
+      cursor: directive.cursor,
+      tap_action: directive.tap_action,
+      hold_action: directive.hold_action,
+      double_tap_action: directive.double_tap_action,
+    }, context.captured, context.results) as BrokerActionHandlerConfig;
+    const hasTap = hasConfiguredAction(config.tap_action);
+    const hasHold = hasConfiguredAction(config.hold_action);
+    const hasDoubleClick = hasConfiguredAction(config.double_tap_action);
+    const cursor = config.cursor === undefined ? "pointer" : config.cursor;
+    if (typeof cursor !== "string") throw new Error("action-handler directive cursor must be a CSS cursor string");
+
+    let actionHandler = this.actionHandlers.get(directive);
+    if (!hasTap && !hasHold && !hasDoubleClick) {
+      if (actionHandler) this.removeActionHandler(directive, actionHandler);
+      return;
+    }
+    if (actionHandler && actionHandler.anchor !== anchor) {
+      this.removeActionHandler(directive, actionHandler);
+      actionHandler = undefined;
+    }
+    if (!actionHandler) {
+      const handleAction: EventListener = (event) => {
+        if (event.target !== anchor) return;
+        const current = this.actionHandlers.get(directive);
+        if (!current || current.anchor !== anchor) return;
+        this.dispatchActionHandlerAction(anchor, current.config, event as CustomEvent);
+      };
+      actionHandler = { anchor, config, handleAction };
+      anchor.addEventListener("action", handleAction);
+      this.actionHandlers.set(directive, actionHandler);
+    } else {
+      actionHandler.config = config;
+    }
+    this.applyActionHandlerCursor(directive, anchor, cursor);
+    this.setEventActionAnchor(config, anchor);
+    actionHandlerBind(anchor as HTMLElement, { hasTap, hasHold, hasDoubleClick });
+    this.refreshRetainedReferenceObservers();
+  }
+
+  private dispatchActionHandlerAction(
+    anchor: Element,
+    config: BrokerActionHandlerConfig,
+    event: CustomEvent,
+  ): void {
+    const action = event.detail?.action as string | undefined;
+    if (!action) return;
+    const actionKey = `${action}_action` as keyof BrokerActionHandlerConfig;
+    if (!config[actionKey]) return;
+    anchor.dispatchEvent(new CustomEvent("hass-action", {
+      bubbles: true,
+      composed: true,
+      detail: { config, action },
+    }));
+  }
+
+  private removeActionHandler(directive: UixBrokerDirective, actionHandler?: BrokerActionHandler): void {
+    const current = actionHandler ?? this.actionHandlers.get(directive);
+    if (!current) return;
+    current.anchor.removeEventListener("action", current.handleAction);
+    this.removeActionHandlerCursor(directive, current.anchor);
+    if (this.actionHandlers.get(directive) === current) this.actionHandlers.delete(directive);
+  }
+
+  private applyActionHandlerCursor(directive: UixBrokerDirective, anchor: Element, cursor: string): void {
+    let state = this.actionHandlerCursors.get(anchor);
+    if (!state) {
+      state = {
+        originalValue: (anchor as HTMLElement).style.getPropertyValue("cursor"),
+        originalPriority: (anchor as HTMLElement).style.getPropertyPriority("cursor"),
+        directives: new Map(),
+      };
+      this.actionHandlerCursors.set(anchor, state);
+    }
+    state.directives.set(directive, { cursor, order: ++this.actionHandlerCursorOrder });
+    (anchor as HTMLElement).style.setProperty("cursor", cursor);
+  }
+
+  private removeActionHandlerCursor(directive: UixBrokerDirective, anchor: Element): void {
+    const state = this.actionHandlerCursors.get(anchor);
+    if (!state) return;
+    state.directives.delete(directive);
+    const previous = [...state.directives.values()].sort((left, right) => right.order - left.order)[0];
+    if (previous) {
+      (anchor as HTMLElement).style.setProperty("cursor", previous.cursor);
+      return;
+    }
+    if (state.originalValue) (anchor as HTMLElement).style.setProperty("cursor", state.originalValue, state.originalPriority);
+    else (anchor as HTMLElement).style.removeProperty("cursor");
+    this.actionHandlerCursors.delete(anchor);
   }
 
   private async executeButton(directive: UixBrokerDirective, anchor: Element, context: BrokerContext): Promise<Element | undefined> {
@@ -2307,6 +2432,7 @@ export class UixBroker {
     [...this.tooltips.entries()].forEach(([directive, tooltip]) => this.removeTooltip(directive, tooltip));
     this.locks.forEach((lock) => lock.overlay.detach());
     this.locks.clear();
+    this.actionHandlers.forEach((actionHandler, directive) => this.removeActionHandler(directive, actionHandler));
     this.refreshRetainedReferenceObservers();
   }
 
@@ -2335,6 +2461,13 @@ function syncBadgeSlot(badge: HTMLElement, target: Element | null): void {
   const slot = target?.getAttribute("slot");
   if (slot) badge.setAttribute("slot", slot);
   else badge.removeAttribute("slot");
+}
+
+function hasConfiguredAction(action: unknown): action is Record<string, any> {
+  return !!action
+    && typeof action === "object"
+    && !Array.isArray(action)
+    && (action as Record<string, any>).action !== "none";
 }
 
 window.addEventListener("uix-bootstrap", (event: Event) => {

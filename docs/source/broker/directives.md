@@ -15,6 +15,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 - [Tile icon](#tile-icon) — insert an interactive Home Assistant tile icon.
 - [Tooltip](#tooltip) — attach a styled tooltip to an element.
 - [Lock](#lock) — require an unlock challenge before an element can be used.
+- [Action handler](#action-handler) — bind Home Assistant actions to an existing element.
 - [Action](#action) — run a Home Assistant, frontend, or UIX action.
 - [Template](#template) — render a Jinja2 template once and save its result.
 - [JavaScript](#javascript) — synchronously evaluate JavaScript and save its return value.
@@ -22,7 +23,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 ## Directive rules
 
-Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
 ```yaml
 directives:
@@ -53,7 +54,7 @@ It is available only in `browser` and `shortcut` realms. The interaction anchor 
 
 ## Directive anchors
 
-`property`, `event`, `call`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
+`property`, `event`, `call`, `action-handler`, `button`, `badge`, `tile-icon`, `tooltip`, and `lock` directives use the interaction anchor by default. Each can override that default with its own `anchor` configuration. A bare string is relative to the interaction anchor, a string beginning with `&` is a compact absolute document-root `select_tree` path, and `{ select_tree: ... }` is the equivalent long absolute form.
 
 ```yaml
 directives:
@@ -523,6 +524,43 @@ Use `uix` for UIX Styling on the generated overlay. Its UIX type is `uix-broker-
         --uix-lock-background: {{ 'rgba(0, 0, 0, 0.35)' if config.locks else 'transparent' }};
       }
 ```
+
+## Action handler
+
+`action-handler` binds Home Assistant's action handler to the directive anchor. Configure one or more standard Home Assistant actions; `tap_action`, `hold_action`, and `double_tap_action` are all supported. The matching action is dispatched from the anchor as a normal `hass-action` event.
+
+Set `entity` to pass an entity ID through to entity-based actions such as `toggle` and `more-info`.
+`cursor` sets the cursor on only this directive's anchor and defaults to `pointer`; use any CSS cursor value, such as `default` or `auto`, to override it.
+
+```yaml
+- type: action-handler
+  anchor: "$ div.menu div.title"
+  tap_action:
+    action: navigate
+    navigation_path: /home
+```
+
+```yaml
+- type: action-handler
+  anchor: "$ div.menu div.title"
+  cursor: default
+  entity: light.living_room
+  tap_action:
+    action: toggle
+  hold_action:
+    action: more-info
+  double_tap_action:
+    action: navigate
+    navigation_path: /dashboard-lights
+```
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `entity` | string | Entity ID passed to entity-based actions. |
+| `cursor` | string | CSS cursor for the anchor. Defaults to `pointer`. |
+| `tap_action` | action | Action to perform on tap. |
+| `hold_action` | action | Action to perform on hold. |
+| `double_tap_action` | action | Action to perform on double tap. |
 
 ## Action
 
