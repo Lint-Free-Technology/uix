@@ -1,3 +1,9 @@
+## [8.3.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.12...v8.3.0-beta.13) (2026-09-18)
+
+### 🐞 Bug Fixes
+
+* **beta:** Correct outlined Broker / Spark badge having transparent pulse. Introduce `--uix-badge-attention-color` ([0f70be8](https://github.com/Lint-Free-Technology/uix/commit/0f70be81d1ae0964eed774d171818c6d0c474b67))
+
 ## [8.3.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.11...v8.3.0-beta.12) (2026-09-18)
 
 ### ⭐ New Features
