@@ -1748,7 +1748,7 @@ export class UixBroker {
       if (!action || !event.composedPath().includes(anchor)) return;
       const actionKey = `${action}_action` as keyof BrokerActionHandlerConfig;
       const handlers = [...this.actionHandlers.values()].filter(
-        (handler) => handler.anchor === anchor && handler.config[actionKey],
+        (handler) => handler.anchor === anchor && hasConfiguredAction(handler.config[actionKey]),
       );
       if (!handlers.length) return;
       event.stopImmediatePropagation();

@@ -17,6 +17,7 @@ interface ActionHandlerElement extends HTMLElement {
 }
 
 type RegisteredActionHandler = {
+  hasBaseBinding: boolean;
   baseOptions?: ActionHandlerOptions;
   registrations: Map<object, ActionHandlerOptions>;
 };
@@ -53,6 +54,7 @@ export const actionHandlerBind = (
     bindActionHandler(element, options);
     return;
   }
+  registered.hasBaseBinding = true;
   registered.baseOptions = options;
   bindActionHandler(element, mergedActionHandlerOptions(registered));
 };
@@ -69,6 +71,7 @@ export const actionHandlerRegister = (
   let registered = registeredActionHandlers.get(element);
   if (!registered) {
     registered = {
+      hasBaseBinding: !!element.actionHandler,
       baseOptions: element.actionHandler?.options,
       registrations: new Map(),
     };
@@ -88,12 +91,12 @@ export const actionHandlerUnregister = (element: ActionHandlerElement, owner: ob
     return;
   }
   registeredActionHandlers.delete(element);
-  bindActionHandler(element, registered.baseOptions ?? { disabled: true });
+  bindActionHandler(element, registered.hasBaseBinding ? registered.baseOptions : { disabled: true });
 };
 
 function mergedActionHandlerOptions(registered: RegisteredActionHandler): ActionHandlerOptions {
   const options = [
-    ...(registered.baseOptions?.disabled ? [] : registered.baseOptions ? [registered.baseOptions] : []),
+    ...(registered.hasBaseBinding && !registered.baseOptions?.disabled ? [registered.baseOptions ?? {}] : []),
     ...registered.registrations.values(),
   ];
   return {
