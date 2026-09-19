@@ -45,6 +45,8 @@ My theme:
     }
 ```
 
+![App panel styling example](../assets/page-assets/using/app-panel-example.png){ width="450px" }
+
 ## Scope
 
 `uix-app` styles the Home Assistant panel chrome and can overlay its iframe.
