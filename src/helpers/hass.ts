@@ -20,6 +20,16 @@ export function getCustomPanelName() {
 }
 
 export async function panel_base_el() {
+  const frameOptions = window.uixFrameOptions;
+  if (frameOptions?.roots?.length) {
+    let root = frameOptions.roots.map((name) => document.querySelector(name)).find(Boolean) as any;
+    while (!root) {
+      await new Promise((r) => window.setTimeout(r, 100));
+      root = frameOptions.roots.map((name) => document.querySelector(name)).find(Boolean) as any;
+    }
+    if (!root.hass && frameOptions.hass) root.hass = frameOptions.hass;
+    return root;
+  }
   if (isEmbeddedPanel()) {
     const customPanelName = getCustomPanelName();
     if (customPanelName) {

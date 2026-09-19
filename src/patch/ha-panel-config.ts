@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import pjson from "../../package.json";
+import { setupFrameRuntime } from "../frame/frame-api";
 
 /*
 Patch ha-panel-config for theme styling
@@ -44,25 +44,9 @@ class HaPanelCustomPatch extends ModdedElement {
       hasRun = true;
       cleanup();
 
-      const injectLoader = (iframe: HTMLIFrameElement) => {
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (!doc) return;
-          if (doc.getElementById("uix-custom-panel-loader")) return;
-          const script = doc.createElement("script");
-          script.id = "uix-custom-panel-loader";
-          script.src = `/uix/uixCustomPanel.js?v=${pjson.version}`;
-          doc.head?.appendChild(script) || doc.body?.appendChild(script) || doc.documentElement.appendChild(script);
-        } catch (e) {
-          console.warn("UIX: failed to inject custom panel javascript into iframe", e);
-        }
-      };
-
       const setupIframe = (iframe: HTMLIFrameElement) => {
-        iframe.addEventListener("load", () => {
-          injectLoader(iframe);
-        });
-        injectLoader(iframe);
+        const name = this.panel?.config?._panel_custom?.name;
+        if (name) setupFrameRuntime(iframe, { roots: [name], themeTypes: [name], hass: this.hass });
       };
 
       const findAndSetup = () => {

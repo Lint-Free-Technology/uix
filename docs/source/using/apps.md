@@ -52,7 +52,14 @@ My theme:
 
 ## Scope
 
-`uix-app` styles the Home Assistant panel chrome and can overlay its iframe.
-It does not style the document inside that iframe. Ingress applications do not
-share a defined root element or rendering lifecycle, so iframe-content styling
-is a separate capability.
+`uix-app` continues to style the Home Assistant panel chrome and can overlay its
+iframe. UIX also installs its internal frame runtime in same-origin app frames.
+For frame content, use `uix-<add-on-slug>` (or the `-yaml` form). UIX first
+checks the complete Home Assistant add-on slug and then a repository-independent
+slug with `core_`, `local_`, or an eight-character repository hash removed.
+For example, `uix-a0d7b954_nodered` takes precedence over `uix-nodered`.
+
+The frame runtime is an internal API shared with iframe custom panels. This does
+not merge the user-facing concepts: `uix-app` always means the `<ha-panel-app>`
+container, while `uix-panel-custom` always means the `<ha-panel-custom>`
+container.
