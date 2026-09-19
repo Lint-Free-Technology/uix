@@ -1,3 +1,13 @@
+## [8.3.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.13...v8.3.0-beta.14) (2026-09-19)
+
+### 🐞 Bug Fixes
+
+* **beta:** retain styled box-shadow on Broker / Spark badges when using `attention: pulse`. `attention:pulse` to take pulse color from border color when using `appearance: filled-outlined`. ([6af38f8](https://github.com/Lint-Free-Technology/uix/commit/6af38f867038ba7f9a5db2c097340843dc5f27fd))
+
+### ⚙️ Miscellaneous
+
+* **beta:** Add `--uix-badge-font-weight` styling var to Broker / Spark badges. ([9a31462](https://github.com/Lint-Free-Technology/uix/commit/9a31462ca772ca8bc8df9835d0c109eb720ba017))
+
 ## [8.3.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.12...v8.3.0-beta.13) (2026-09-18)
 
 ### 🐞 Bug Fixes
