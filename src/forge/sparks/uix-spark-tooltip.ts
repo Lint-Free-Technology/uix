@@ -1,4 +1,14 @@
 import { PropertyValues } from "lit";
+import {
+  configureTooltipActivation,
+  normalizeTooltipTrigger,
+  stopTooltipHidePropagation,
+  UIX_TOOLTIP_DEFAULT_TRIGGER,
+  UIX_TOOLTIP_CONTENT_ATTR,
+  UIX_TOOLTIP_CSS,
+  UIX_TOOLTIP_STYLE_ATTR,
+  UixTooltipElement,
+} from "../../helpers/dom/ha-tooltip";
 import { UixForgeSparkBase } from "./uix-spark-base";
 
 export class UixForgeSparkTooltip extends UixForgeSparkBase {
@@ -12,7 +22,12 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   private withoutArrow: boolean = false;
   private showDelay: number = 150;
   private hideDelay: number = 150;
+  private trigger: string = UIX_TOOLTIP_DEFAULT_TRIGGER;
+  private open: boolean | undefined;
   private _tooltipElement: Element | null = null;
+  private _cleanupActivation?: () => void;
+  private _openWasConfigured = false;
+  private _appliedOpen: boolean | undefined;
 
   constructor(controller: any, config: Record<string, any>) {
     super(controller, config);
@@ -28,11 +43,19 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     this.for = config.for || this.defaultTarget();
     this.content = config.content || "";
     this.placement = config.placement || "top";
-    this.skidding = config.skidding || 0;
-    this.distance = config.distance || 8;
-    this.showDelay = config.show_delay || 150;
-    this.hideDelay = config.hide_delay || 150;
-    this.withoutArrow = config.without_arrow || false;
+    this.skidding = config.skidding ?? 0;
+    this.distance = config.distance ?? 8;
+    this.showDelay = config.show_delay ?? 150;
+    this.hideDelay = config.hide_delay ?? 150;
+    this.withoutArrow = config.without_arrow ?? false;
+    this.trigger = normalizeTooltipTrigger(
+      config.trigger ?? UIX_TOOLTIP_DEFAULT_TRIGGER,
+      "tooltip spark trigger",
+    );
+    if (config.open !== undefined && typeof config.open !== "boolean") {
+      throw new Error("tooltip spark open must be a boolean");
+    }
+    this.open = config.open;
   }
 
   updated(_changedProperties: PropertyValues): void {
@@ -51,10 +74,14 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
   }
 
   private _remove() {
+    this._cleanupActivation?.();
+    this._cleanupActivation = undefined;
     if (this._tooltipElement) {
       this._tooltipElement.remove();
       this._tooltipElement = null;
     }
+    this._openWasConfigured = false;
+    this._appliedOpen = undefined;
   }
 
   private async _attach(generation: number) {
@@ -72,16 +99,16 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     // If our tracked tooltip is no longer in this parent, remove it and start fresh
     const existingInParent = ((parent as Element).querySelector?.("wa-tooltip") as any)?.for == element.id;
     if (this._tooltipElement && !existingInParent) {
-      this._tooltipElement.remove();
-      this._tooltipElement = null;
+      this._remove();
     }
 
     const isNew = !this._tooltipElement;
-    let tooltip = this._tooltipElement as any;
+    let tooltip = this._tooltipElement as UixTooltipElement | null;
     if (!tooltip) {
-      tooltip = document.createElement("wa-tooltip");
+      tooltip = document.createElement("wa-tooltip") as UixTooltipElement;
       tooltip.for = element.id;
       tooltip.style.setProperty("display", "contents");
+      stopTooltipHidePropagation(tooltip);
       if (element.getAttribute("slot")) {
         tooltip.setAttribute("slot", element.getAttribute("slot")!);
       }
@@ -89,20 +116,26 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     }
 
     // Update content in-place
-    let content = tooltip.querySelector("div");
+    let content = Array.from(tooltip.children as HTMLCollectionOf<Element>).find((child) =>
+      child.hasAttribute(UIX_TOOLTIP_CONTENT_ATTR)
+    ) as HTMLDivElement | undefined;
     if (!content) {
       content = document.createElement("div");
+      content.setAttribute(UIX_TOOLTIP_CONTENT_ATTR, "");
       tooltip.appendChild(content);
     }
     content.innerHTML = this.content;
 
     // Update styles in-place
-    let style = tooltip.querySelector("style");
+    let style = Array.from(tooltip.children as HTMLCollectionOf<Element>).find((child) =>
+      child instanceof HTMLStyleElement && child.hasAttribute(UIX_TOOLTIP_STYLE_ATTR)
+    ) as HTMLStyleElement | undefined;
     if (!style) {
       style = document.createElement("style");
+      style.setAttribute(UIX_TOOLTIP_STYLE_ATTR, "");
       tooltip.appendChild(style);
     }
-    style.textContent = this.styles();
+    style.textContent = UIX_TOOLTIP_CSS;
 
     // Update properties in-place
     tooltip.placement = this.placement;
@@ -115,6 +148,18 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     } else {
       tooltip.removeAttribute("without-arrow");
     }
+    this._cleanupActivation?.();
+    this._cleanupActivation = configureTooltipActivation(tooltip, element, this.trigger);
+
+    const openConfigured = this.open !== undefined;
+    if (
+      (openConfigured && (!this._openWasConfigured || this._appliedOpen !== this.open)) ||
+      (!openConfigured && this._openWasConfigured)
+    ) {
+      tooltip.open = this.open ?? false;
+    }
+    this._openWasConfigured = openConfigured;
+    this._appliedOpen = this.open;
 
     // Only insert into the DOM when newly created
     if (isNew) {
@@ -122,51 +167,5 @@ export class UixForgeSparkTooltip extends UixForgeSparkBase {
     }
 
     this._tooltipElement = tooltip;
-  }
-
-  private styles() {
-    return `
-    wa-tooltip {
-      --wa-tooltip-background-color: var(--uix-tooltip-background-color, var(--secondary-background-color));
-      --wa-tooltip-content-color: var(--uix-tooltip-content-color, var(--primary-text-color));
-      --wa-tooltip-font-family: var(
-        --uix-tooltip-font-family,
-        var(--ha-tooltip-font-family, var(--ha-font-family-body))
-      );
-      --wa-tooltip-font-size: var(--uix-tooltip-font-size, var(--ha-tooltip-font-size, var(--ha-font-size-s)));
-      --wa-tooltip-font-weight: var(
-        --uix-tooltip-font-weight,
-        var(--ha-tooltip-font-weight, var(--ha-font-weight-normal))
-      );
-      --wa-tooltip-line-height: var(
-        --uix-tooltip-line-height,
-        var(--ha-tooltip-line-height, var(--ha-line-height-condensed))
-      );
-      --wa-tooltip-padding: var(--uix-tooltip-padding, 8px);
-      --wa-tooltip-border-radius: var(
-        --uix-tooltip-border-radius,
-        var(--ha-tooltip-border-radius, var(--ha-border-radius-sm))
-      );
-      --wa-tooltip-arrow-size: var(--uix-tooltip-arrow-size, var(--ha-tooltip-arrow-size, 8px));
-      --wa-tooltip-border-width: var(--uix-tooltip-border-width, 0px);
-      --wa-tooltip-border-color: var(--uix-tooltip-border-color);
-      --wa-tooltip-border-style: var(--uix-tooltip-border-style);
-      --max-width: var(--uix-tooltip-max-width, 30ch);
-    }
-    wa-tooltip::part(base__popup) {
-      --show-duration: var(--uix-tooltip-show-duration, 100ms);
-      --hide-duration: var(--uix-tooltip-hide-duration, 100ms);
-      opacity: var(--uix-tooltip-opacity, 1);
-    }
-    wa-tooltip::part(body) {
-      padding: var(--uix-tooltip-padding, 0.25em 0.5em);
-      box-shadow: var(--uix-tooltip-box-shadow, var(--ha-card-box-shadow, none));
-      font-weight: var(--uix-tooltip-font-weight, var(--ha-tooltip-font-weight, normal));
-      font-family: var(--uix-tooltip-font-family, var(--ha-tooltip-font-family, inherit));
-      text-align: var(--uix-tooltip-text-align, center);
-      text-decoration: var(--uix-tooltip-text-decoration, none);
-      text-transform: var(--uix-tooltip-text-transform, none);
-      overflow-wrap: var(--uix-tooltip-overflow-wrap, normal);
-    }`
   }
 }

@@ -22,6 +22,7 @@ Available sparks:
 
 - :speech_balloon: [Tooltip](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.
 - :material-button-cursor: [Button](./sparks/button.md) - attach a styled button (`ha-button`) with actions as a sibling before or after any element within the forged element.
+- :material-badge-account-horizontal-outline: [Badge](./sparks/badge.md) - insert a Web Awesome-styled `uix-badge` as a sibling before or after any element within the forged element.
 - :label: [Attribute](./sparks/attribute.md) — add, replace or remove an attribute of any element within the forged element.
 - :zap: [Event](./sparks/event.md) — receive DOM events from `fire-dom-event` actions and expose their data as template variables.
 - :star: [Tile Icon](./sparks/tile-icon.md) — insert a `ha-tile-icon` element as a sibling before or after any element within the forged element.

@@ -1,0 +1,32 @@
+id: doc_spark_badge_attention
+description: "Doc image: Forge Badge spark with attention (badge.md)"
+view_path: doc-spark-badge-attention
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: badge
+        after: hui-tile-card $ ha-tile-icon
+        content: |
+          {{ '!' if is_state('cover.hall_window', 'open') else '⎷' }}
+        variant: |
+          {{ 'danger' if is_state('cover.hall_window', 'open') else 'success' }}
+        pill: true
+        attention: |
+          {{ 'pulse' if is_state('cover.hall_window', 'open') else 'none' }}
+  element:
+    type: tile
+    entity: cover.hall_window
+
+assertions: []
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/badge-attention.gif
+  root: hui-tile-card
+  padding: 16
+  interval_ms: 66
+  threshold: 0.02
+  segments:
+    - frames: 70   # ~5 s

@@ -1,0 +1,64 @@
+id: broker_sidebar_text_content
+description: "UIX Broker interaction for sidebar text content"
+view_path: broker-sidebar-text-content
+
+setup:
+  - type: add_broker_file
+    file_path: uix/test_broker_sidebar_text_content.yaml
+
+card:
+  type: heading
+  heading: "Broker Sidebar Text Content Test"
+
+interactions:
+  - type: hover
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    settle_ms: 500
+
+assertions:
+  - type: element_present
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+  - type: object_property_text_equals
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: innerText
+    expected: Secured
+  - type: object_property_text_equals
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: slot
+    expected: headline
+  - type: css_property
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: color
+    expected: rgb(67, 160, 71)
+  - type: css_property
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: display
+    expected: block
+  - type: css_property
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: fontSize
+    expected: 12px
+  - type: css_property
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: fontWeight
+    expected: "500"
+  - type: css_property
+    root: "ha-sidebar"
+    selector: "span[data-uix-broker-text-content]"
+    property: lineHeight
+    expected: "12px"
+  - type: snapshot
+    name: "66_broker_sidebar_text_content"
+    threshold: 0.01
+
+teardown:
+  - type: remove_broker_file
+    file_path: uix/test_broker_sidebar_text_content.yaml

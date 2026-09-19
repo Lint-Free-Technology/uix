@@ -11,6 +11,7 @@ import { UixForgeSparkStateBadge } from "./uix-spark-state-badge";
 import { UixForgeSparkGrid } from "./uix-spark-grid";
 import { UixForgeSparkSearch } from "./uix-spark-search";
 import { UixForgeSparkButton } from "./uix-spark-button";
+import { UixForgeSparkBadge } from "./uix-spark-badge";
 import { UixForgeSparkMap } from "./uix-spark-map";
 import { UixForgeSparkLock } from "./uix-spark-lock";
 import { UixForgeSparkBackground } from "./uix-spark-background";
@@ -28,6 +29,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "grid": UixForgeSparkGrid,
     "search": UixForgeSparkSearch,
     "button": UixForgeSparkButton,
+    "badge": UixForgeSparkBadge,
     "map": UixForgeSparkMap,
     "lock": UixForgeSparkLock,
     "overlay-icon": UixForgeSparkOverlayIcon,

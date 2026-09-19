@@ -63,21 +63,50 @@ export type UixBrokerSearchRule = {
   value?: any;
 };
 
+type UixBrokerRequiredValueMatcher =
+  | {
+    /** Value matcher, with the same operators as captured-data rules. */
+    match: any;
+    /** Alias for match. */
+    value?: any;
+  }
+  | {
+    /** Alias for match. */
+    value: any;
+    match?: never;
+  };
+
+export type UixBrokerUserRule = {
+  /** Matches the current Home Assistant user's name or id. */
+  type: "user";
+} & UixBrokerRequiredValueMatcher;
+
+export type UixBrokerUserIsAdminRule = {
+  /** Matches whether the current Home Assistant user is an administrator. */
+  type: "user_is_admin";
+  /** Value matcher, with the same operators as captured-data rules. Defaults to true. */
+  match?: any;
+  /** Alias for match. */
+  value?: any;
+};
+
 export type UixBrokerRule =
   | string
   | UixBrokerHostElementRule
   | UixBrokerPanelRule
   | UixBrokerHashRule
   | UixBrokerSearchRule
+  | UixBrokerUserRule
+  | UixBrokerUserIsAdminRule
   | UixBrokerTypedRule;
 
 export type UixBrokerEventTarget = "anchor" | "window" | "document";
 
 export type UixBrokerDirective = {
-  type: "block" | "action" | "property" | "event" | "call" | "button" | "template" | "javascript" | "wait";
+  type: "block" | "action" | "action-handler" | "property" | "event" | "call" | "button" | "badge" | "text-content" | "tile-icon" | "tooltip" | "lock" | "template" | "javascript" | "wait";
   /** Optional conditions that must all match before this directive runs. Not supported by block. */
   rules?: UixBrokerRule[];
-  /** Optional select_tree target for property, event, call, and button directives. */
+  /** Optional select_tree target for property, event, call, action-handler, button, badge, text-content, tile-icon, tooltip, and lock directives. */
   anchor?: UixBrokerSelectTreeAnchor;
   /** Event dispatch target. Applies only to event directives and defaults to anchor. */
   target?: UixBrokerEventTarget;

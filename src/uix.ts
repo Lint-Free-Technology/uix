@@ -54,17 +54,32 @@ export class Uix extends LitElement {
   _billet_string: string = "";
   _styles: string = "";
   _processStylesOnConnect: boolean = false;
+  private _pendingThemeUpdate: boolean = false;
+  private _themeUpdateGeneration: number = 0;
   @property() _rendered_styles: string = "";
   _renderer: (_: string) => void;
 
   private _uixUpdateListener = (ev: Event) => {
-    this.dynamicVariablesHaveChanged =
-      (ev as CustomEvent).detail?.variablesChanged || false;
+    const detail = (ev as CustomEvent<{ reason?: string; variablesChanged?: boolean }>).detail;
+    const isThemeUpdate = detail?.reason === "theme";
+    const themeUpdateGeneration = isThemeUpdate ? ++this._themeUpdateGeneration : 0;
+    this.dynamicVariablesHaveChanged = detail?.variablesChanged || false;
+    if (isThemeUpdate) this._pendingThemeUpdate = true;
     if (!this.isConnected) {
       this._processStylesOnConnect = true;
       return;
     }
-    this._process_styles(this.uix_input);
+    // A style-update event is not guaranteed when the refreshed CSS is unchanged.
+    // Wait for the node refresh so this per-node theme event has a ready target.
+    void this._process_styles(this.uix_input).then(() => {
+      if (!isThemeUpdate || !this.isConnected || themeUpdateGeneration !== this._themeUpdateGeneration) return;
+      this._pendingThemeUpdate = false;
+      this.dispatchEvent(new CustomEvent("uix-theme-update", {
+        detail: { uix_node: this },
+        bubbles: true,
+        composed: true,
+      }));
+    });
   };
 
   _cancel_style_child = [];
@@ -103,7 +118,7 @@ export class Uix extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("uix-update", this._uixUpdateListener);
-    if (this._processStylesOnConnect) {
+    if (this._processStylesOnConnect || this._pendingThemeUpdate) {
       this._processStylesOnConnect = false;
       this._debug("Processing styles on (Re)connect:", 
         "type:",
@@ -113,7 +128,17 @@ export class Uix extends LitElement {
         ? ["#shadow-root of:", (this as any)?.parentNode?.host]
         : [this.parentElement ?? this.parentNode]),
       );
-      this._process_styles(this.uix_input);
+      const isThemeUpdate = this._pendingThemeUpdate;
+      const themeUpdateGeneration = this._themeUpdateGeneration;
+      void this._process_styles(this.uix_input).then(() => {
+        if (!isThemeUpdate || !this.isConnected || themeUpdateGeneration !== this._themeUpdateGeneration) return;
+        this._pendingThemeUpdate = false;
+        this.dispatchEvent(new CustomEvent("uix-theme-update", {
+          detail: { uix_node: this },
+          bubbles: true,
+          composed: true,
+        }));
+      });
     } else {
       this.refresh();
     }
@@ -125,6 +150,7 @@ export class Uix extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._themeUpdateGeneration += 1;
     this._disconnect();
 
     // DOM moves disconnect and reconnect custom elements synchronously. Delay
@@ -178,8 +204,10 @@ export class Uix extends LitElement {
     return this._theme;
   }
 
-  refresh() {
-    this._connect();
+  // Most callers intentionally refresh in the background. Returning the promise
+  // lets lifecycle events wait for this source node's own connection pass.
+  refresh(): Promise<void> {
+    return this._connect();
   }
 
   cancelStyleChild() {
@@ -224,7 +252,9 @@ export class Uix extends LitElement {
       this._processStylesOnConnect = true;
       return;
     }
-    this.refresh();
+    // Await the source node's refresh so uix-theme-update follows its own
+    // refresh cycle. It deliberately does not wait for a settled descendant DOM.
+    await this.refresh();
   }
 
   private async _style_child(
@@ -382,7 +412,7 @@ export class Uix extends LitElement {
   private _style_rendered(result: string) {
     if (this._rendered_styles !== result) this._rendered_styles = result;
     // This event is listened for by icons
-    this.dispatchEvent(new Event("uix-styles-update"));
+    this.dispatchEvent(new CustomEvent("uix-styles-update", { detail: { uix_node: this }, bubbles: true, composed: true }));
   }
 
   createRenderRoot() {

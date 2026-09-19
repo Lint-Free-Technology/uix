@@ -461,6 +461,7 @@ export async function apply_uix(
     uix.billets = uix_config?.billets ?? {};
     uix.theme = uix_config?.theme;
     uix.styles = uix_config?.style ?? "";
+    uix.dispatchEvent(new CustomEvent("uix-applied", { detail: { uix_node: uix }, bubbles: true, composed: true }));
   }, 1);
 
   uix.classes =

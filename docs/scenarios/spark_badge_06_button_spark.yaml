@@ -1,0 +1,39 @@
+id: doc_spark_badge_button_spark
+description: "Doc image: Forge Badge spark with button spark (badge.md)"
+view_path: doc-spark-badge-button-spark
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: button
+        after: hui-tile-card $ ha-tile-icon
+        label: Living Room
+      - type: badge
+        after: "hui-tile-card $ div[data-uix-forge-button-id]"
+        content: 3
+        variant: warning
+        pill: true
+        style:
+          "--uix-badge-offset-x": -2px
+          "--uix-badge-offset-y": 2px
+  element:
+    type: tile
+    entity: light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/badge-button-spark.png
+  root: hui-tile-card
+  padding: 16

@@ -827,9 +827,11 @@ export class UixForge extends LitElement {
         const newElement = helpers.createRowElement(this.forgedElementConfig);
         newElement.hass = this.hass;
         newElement.preview = this._mold.isPreview();
-        this.forgedElement.replaceWith(newElement);
-        this.forgedElement = newElement;
-        this.refreshForge(["hidden"]);
+        this.forgedElement.updateComplete.then(() => {
+          this.forgedElement.replaceWith(newElement);
+          this.forgedElement = newElement;
+          this.refreshForge(["hidden"]);
+        });
       });
 
     }

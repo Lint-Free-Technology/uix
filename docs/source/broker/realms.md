@@ -14,6 +14,12 @@ The interaction `realm` determines where Broker listens and how its `listen` val
 
 All realms support [rules](rules.md) and [directives](directives.md). The selected [interaction anchor](interaction-anchors.md) element is always in the current browser, so an event captured from the `server` realm can still update a browser element or dispatch an event to it.
 
+## Listener registrations
+
+Broker registers one browser listener for each distinct `browser`-realm event name and one Home Assistant event-bus subscription for each distinct `server`-realm event name. Interactions that use the same enabled `listen` value share that registration; Broker evaluates their anchors and rules after the event arrives.
+
+For example, two `browser` interactions that both listen for `uix-applied` use one `window` listener, and two `server` interactions that both listen for `state_changed` use one event-bus subscription. Split interactions by their target, rules, or directives when that makes the configuration clearer—grouping them is not needed to reduce listener registrations.
+
 ## Browser
 
 `browser` listens at `window` during the capture phase. Use it for DOM events such as `click`, `change`, `show-dialog`, and Home Assistant's custom browser events. `listen` can be one event name or a list when the same interaction should respond to multiple events.
@@ -46,6 +52,47 @@ For example, run one interaction after Broker starts and whenever a panel update
 
 The browser event's `detail` object is the root of captured data. See [Captured-data rules](./rules.md#captured-data-rules) and [Event directive](./directives.md#event) for how captured data is matched and
 reused.
+
+### UIX Styling lifecycle events
+
+!!! info
+    UIX Styling lifecycle events available in 8.3.0-beta.9
+
+UIX Styling dispatches the following bubbling, composed browser events from its
+`<uix-node>`:
+
+- `uix-applied` — after UIX is attached or reapplied to an element. It can fire
+  again when the host updates or UIX configuration is reapplied, so consumers
+  should make their directives idempotent.
+- `uix-styles-update` — when that UIX node updates its rendered CSS text,
+  including template-driven updates. The latest text is available as
+  `detail.uix_node._rendered_styles`, but Lit has not yet committed its
+  `<style>` element. To read calculated styles, wait for
+  `detail.uix_node.updateComplete` in a JavaScript directive first.
+- `uix-theme-update` — after that UIX node reprocesses a theme update. This
+  event fires even when the resulting UIX CSS is unchanged.
+
+All three events provide the originating `<uix-node>` as `detail.uix_node`. Use
+the event-path anchor `"< target"` to select its parent element, which is the
+element that UIX is applied to whether the node is in light DOM or a shadow root.
+
+For example, set a map's `themeMode` when UIX is applied to its containing map
+card and when its theme updates:
+
+```yaml
+- realm: browser
+  listen:
+    - uix-applied
+    - uix-theme-update
+  anchor: "< target"
+  rules:
+    - hui-map-card
+  directives:
+    - type: property
+      anchor: "$ ha-map"
+      set: themeMode
+      value: dark
+```
 
 ## Shortcut
 

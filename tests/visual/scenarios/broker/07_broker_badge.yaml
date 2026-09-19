@@ -1,0 +1,46 @@
+id: broker_badge
+description: "UIX Broker interaction for badge"
+view_path: broker-badge
+
+setup:
+  - type: add_broker_file
+    file_path: uix/test_broker_badge.yaml
+
+card:
+  type: heading
+  heading: "Broker Badge Test"
+
+interactions:
+  - type: hover
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: uix-badge
+
+assertions:
+  - type: element_present
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: uix-badge
+  - type: css_property
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: uix-badge
+    property: backgroundColor
+    expected: "rgb(255, 0, 0)"
+  - type: css_property
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: uix-badge
+    property: borderColor
+    expected: "rgb(0, 128, 0)"
+  - type: element_present
+    root: "ha-list-item-button#sidebar-panel-energy"
+    selector: uix-badge
+  - type: css_property
+    root: "ha-list-item-button#sidebar-panel-energy"
+    selector: uix-badge
+    property: backgroundColor
+    expected: "rgb(0, 154, 199)"
+  - type: snapshot
+    name: "64_broker_badge"
+    threshold: 0.01
+
+teardown:
+  - type: remove_broker_file
+    file_path: uix/test_broker_badge.yaml

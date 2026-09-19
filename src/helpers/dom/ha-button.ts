@@ -15,7 +15,9 @@ export const HA_BUTTON_CSS = `
     height: var(--ha-button-height);
     position: relative;
     isolation: isolate;
-    --wa-form-control-padding-inline: var(--ha-icon-button-padding-inline, var(--ha-space-2));
+    /* The base has an explicit square width, so padding must not consume the
+       icon's available width when --ha-icon-button-size is very small. */
+    --wa-form-control-padding-inline: 0px;
     --wa-color-on-normal: currentColor;
     --wa-color-fill-quiet: transparent;
     --ha-button-label-overflow: visible;
@@ -34,6 +36,8 @@ export const HA_BUTTON_CSS = `
   ha-button.uix-forge-spark-icon-button::part(base) {
     width: var(--wa-form-control-height);
     aspect-ratio: 1;
+    --wa-form-control-padding-inline: 0px !important;
+    padding-inline: 0 !important;
     outline-offset: -4px;
     border-color: var(--uix-button-border-color, revert-layer);
   }
