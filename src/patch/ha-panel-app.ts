@@ -22,6 +22,7 @@ class HaPanelAppPatch extends ModdedElement {
     _orig?.(...args);
     apply_uix(this, "app", { prepend: true });
 
+    if (!(window as any).uixCoordinator?.styleFramePanels) return;
     const iframe = this.shadowRoot?.querySelector("iframe") as HTMLIFrameElement | null;
     const slug = this.panel?.config?.addon || this.panel?.config?.slug ||
       this.route?.path?.split("/").filter(Boolean).pop();

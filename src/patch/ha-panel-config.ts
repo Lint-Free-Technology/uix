@@ -70,7 +70,7 @@ class HaPanelCustomPatch extends ModdedElement {
     };
 
     const checkAndRun = () => {
-      if (coordinator?.styleCustomPanels) {
+      if (coordinator?.styleFramePanels) {
         run();
       }
     };
@@ -80,7 +80,7 @@ class HaPanelCustomPatch extends ModdedElement {
       coordinator?.removeEventListener?.("uix-config-update", checkAndRun);
     };
 
-    if (coordinator?.styleCustomPanels) {
+    if (coordinator?.styleFramePanels) {
       run();
     } else {
       coordinator?.addEventListener?.("uix-config-update", checkAndRun);

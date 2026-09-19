@@ -292,11 +292,16 @@ export const ConnectionMixin = (SuperClass) => {
       return this._data?.always_patch_ha_card ?? false;
     }
 
-    get styleCustomPanels(): boolean {
+    get styleFramePanels(): boolean {
       if (this._styleCustomPanelsOverride !== null) {
         return this._styleCustomPanelsOverride;
       }
-      return this._data?.style_custom_panels ?? false;
+      return this._data?.style_frame_panels ?? this._data?.style_custom_panels ?? false;
+    }
+
+    /** @deprecated Use styleFramePanels. */
+    get styleCustomPanels(): boolean {
+      return this.styleFramePanels;
     }
 
     /**
@@ -405,19 +410,23 @@ export const ConnectionMixin = (SuperClass) => {
     }
 
     /**
-     * Set a client-side override for styling custom panels.
+     * Set a client-side override for styling frame panels.
      *
-     * This allows integrations to style custom panels for the current
+     * This allows integrations to style frame panels for the current
      * browser session without changing backend settings.
      *
      * Call with `null` (or no argument) to clear the override and revert to
      * the server-configured value.
      * 
-     * A page refresh will be required to cover any currently loaded custom panel, 
-     * as this setting is only checked when a custom panel is first patched or updated
+     * A page refresh may be required to cover a currently loaded frame panel.
      */
-    public setStyleCustomPanelsOverride(value: boolean | null = null): void {
+    public setStyleFramePanelsOverride(value: boolean | null = null): void {
       this._styleCustomPanelsOverride = value;
+    }
+
+    /** @deprecated Use setStyleFramePanelsOverride. */
+    public setStyleCustomPanelsOverride(value: boolean | null = null): void {
+      this.setStyleFramePanelsOverride(value);
     }
   }
 

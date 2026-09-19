@@ -54,6 +54,9 @@ My theme:
 
 `uix-app` continues to style the Home Assistant panel chrome and can overlay its
 iframe. UIX also installs its internal frame runtime in same-origin app frames.
+Frame-content styling requires the experimental
+[Style frame panels](../extras/style-custom-panels.md) option; host styling does
+not.
 For frame content, use `uix-<add-on-slug>` (or the `-yaml` form). UIX first
 checks the complete Home Assistant add-on slug and then a repository-independent
 slug with `core_`, `local_`, or an eight-character repository hash removed.
