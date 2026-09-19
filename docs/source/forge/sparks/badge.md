@@ -46,7 +46,7 @@ element:
 | `variant` | string | | `brand` | `brand`, `neutral`, `success`, `warning`, or `danger`. |
 | `appearance` | string | | `accent` | `accent`, `filled`, `outlined`, or `filled-outlined`. |
 | `pill` | boolean | | `false` | Use the fully rounded pill shape. |
-| `attention` | string | | `none` | `none`, `pulse`, or `bounce`. |
+| `attention` | string | | `none` | `none`, `pulse`, or `bounce`. When `pulse`, `accent` and `filled` use their fill color; `outlined` and `filled-outlined` use their border color. Set the pulse color directly with `--uix-badge-attention-color`. |
 | `placement` | string | | — | For `ha-button` and `ha-tile-icon`, chooses where on the element the badge appears. For any other target, positions the badge on its parent instead of inserting it as a sibling. All placement options use compact `var(--ha-font-size-xs)` text with `0.25em 0.5em` padding. `top`, `top-start`, `top-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`, `right`, `right-start`, or `right-end`. |
 | `start_icon` / `end_icon` | string | | — | MDI icon before or after the badge content. |
 | `style` | object | | — | Flat map of CSS property names and string or numeric values, set inline on this `uix-badge`. |
@@ -100,7 +100,7 @@ Set these variables on `uix-badge` or an ancestor. For a single Forge or Broker 
 | `--uix-badge-border` | Web Awesome border | Complete CSS `border` value, for example `1px solid rgb(255 255 255 / 50%)`. It supplies the border width, style, and color. |
 | `--uix-badge-border-color` | Web Awesome border color | Badge border color. Falls back to `--uix-badge-color` when it is set. |
 | `--uix-badge-box-shadow` | `none` | CSS `box-shadow` applied to the badge. |
-| `--uix-badge-attention-color` | Web Awesome appearance fill or border | Pulse-ring color for `attention: pulse`. Filled and accent badges fall back to `--uix-badge-color`; outlined badges fall back to their border color. |
+| `--uix-badge-attention-color` | Web Awesome appearance fill or border | Pulse-ring color for `attention: pulse`. By default, `accent` and `filled` use their fill color; `outlined` and `filled-outlined` use their border color. |
 | `--uix-badge-color-hover` | Non-hover background color | Badge background color while hovered. |
 | `--uix-badge-content-color-hover` | Non-hover content color | Badge text and icon color while hovered. |
 | `--uix-badge-border-color-hover` | Non-hover border color | Badge border color while hovered. |
@@ -111,6 +111,8 @@ Set these variables on `uix-badge` or an ancestor. For a single Forge or Broker 
 | `--uix-badge-offset-y` | `0px` | Vertical adjustment applied after resolving placement. Positive moves down. |
 
 The color variables, including their `-hover` forms, are passed directly to CSS. They accept any CSS color value, including translucent `rgba()` or modern space-separated `rgb()` values with an alpha channel.
+
+With `attention: pulse`, `--uix-badge-box-shadow` remains as static shadow layers and UIX appends the expanding pulse ring.
 
 Placed badges accept pointer input, so their hover colors apply only while the pointer is over the badge itself.
 

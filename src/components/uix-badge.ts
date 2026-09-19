@@ -123,16 +123,17 @@ const uixBadgeStyles = css`
     border-color: var(--uix-badge-border-color-hover);
   }
 
-  /* An outlined badge may use a transparent custom fill. Use its visible
-   * border for the pulse ring instead of making the animation transparent. */
-  :host([appearance="outlined"]) {
+  /* Outlined appearances use their visible border for the pulse ring. */
+  :host([appearance="outlined"]),
+  :host([appearance="filled-outlined"]) {
     --pulse-color: var(
       --uix-badge-attention-color,
       var(--uix-badge-border-color, var(--uix-badge-resolved-attention-color))
     );
   }
 
-  :host([appearance="outlined"]:hover) {
+  :host([appearance="outlined"]:hover),
+  :host([appearance="filled-outlined"]:hover) {
     --pulse-color: var(
       --uix-badge-attention-color-hover,
       var(
@@ -140,6 +141,32 @@ const uixBadgeStyles = css`
         var(--uix-badge-border-color, var(--uix-badge-resolved-attention-color))
       )
     );
+  }
+
+  /* Web Awesome's pulse replaces the host's box-shadow. Add the expanding
+   * ring as a final shadow layer so configured shadows persist throughout the
+   * animation. The transparent fallback keeps the native pulse when no custom
+   * shadow is configured. */
+  :host([attention="pulse"]) {
+    animation: uix-badge-pulse 1.5s infinite;
+  }
+
+  @keyframes uix-badge-pulse {
+    0% {
+      box-shadow:
+        var(--uix-badge-box-shadow, 0 0 0 0 transparent),
+        0 0 0 0 var(--pulse-color);
+    }
+    70% {
+      box-shadow:
+        var(--uix-badge-box-shadow, 0 0 0 0 transparent),
+        0 0 0 0.5rem transparent;
+    }
+    100% {
+      box-shadow:
+        var(--uix-badge-box-shadow, 0 0 0 0 transparent),
+        0 0 0 0 transparent;
+    }
   }
 
   :host([data-uix-badge-adapter]) {
