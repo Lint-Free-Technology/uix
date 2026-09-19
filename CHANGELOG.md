@@ -1,3 +1,9 @@
+## [8.3.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.14...v8.3.0-beta.15) (2026-09-19)
+
+### ⭐ New Features
+
+* Allowing styling of app container in Frontend. UIX styling is not injected to app itself, only the Frontend wrapping ha-panel-app allowing for styling header and an overlay. ([#619](https://github.com/Lint-Free-Technology/uix/issues/619)) ([8c4f022](https://github.com/Lint-Free-Technology/uix/commit/8c4f022a1e196ab3a3a2e362d752569957603e29))
+
 ## [8.3.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.13...v8.3.0-beta.14) (2026-09-19)
 
 ### 🐞 Bug Fixes
