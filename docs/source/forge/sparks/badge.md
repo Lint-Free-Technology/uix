@@ -91,6 +91,7 @@ Set these variables on `uix-badge` or an ancestor. For a single Forge or Broker 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `--uix-badge-font-size` | `max(var(--wa-font-size-3xs, var(--ha-font-size-xs)), 0.75em)`; `var(--ha-font-size-xs)` when placement is active | Badge text size. The normal default is Web Awesome's smallest font token or 75% of the inherited font size, whichever is larger. |
+| `--uix-badge-font-weight` | `var(--wa-font-weight-semibold)` | Badge text and icon weight. |
 | `--uix-badge-padding` | `0.375em 0.625em`; `0.25em 0.5em` when placement is active | Padding inside the badge. |
 | `--uix-badge-min-width` | `calc(1.5em + 2px)` when placement is active | Minimum badge width. It includes the default 1px border on each side, keeping a placed one-character badge, such as `!`, from appearing too narrow. |
 | `--uix-badge-max-width` | `none` | Maximum rendered badge width. |
