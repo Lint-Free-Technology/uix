@@ -30,3 +30,4 @@ docs/source/assets/page-assets/using/custom-panel-hacs.png
 # Broker
 
 docs/source/assets/page-assets/broker/broker-button-directive.png
+docs/source/assets/page-assets/broker/broker-button-light-directive.gif
