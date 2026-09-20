@@ -55,9 +55,6 @@ reused.
 
 ### UIX Styling lifecycle events
 
-!!! info
-    UIX Styling lifecycle events available in 8.3.0-beta.9
-
 UIX Styling dispatches the following bubbling, composed browser events from its
 `<uix-node>`:
 

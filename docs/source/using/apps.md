@@ -3,9 +3,6 @@ description: Learn how to style Home Assistant app and ingress panels.
 ---
 # Styling app and ingress panels
 
-!!! info
-    app and ingress panel styling added in 8.3.0-beta.15
-
 Home Assistant displays an individual app or ingress page in a
 `<ha-panel-app>` element. Use the `uix-app` or `uix-app-yaml` theme key to
 style that panel's open shadow root.
