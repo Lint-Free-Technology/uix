@@ -2,7 +2,9 @@ import { getCustomPanelName, hass, isEmbeddedPanel } from "./helpers/hass";
 import { Unpromise } from "@watchable/unpromise";
 
 function refresh_theme() {
-  document.dispatchEvent(new Event("uix-update"));
+  document.dispatchEvent(
+    new CustomEvent("uix-update", { detail: { reason: "theme" } })
+  );
 }
 
 const bases = [

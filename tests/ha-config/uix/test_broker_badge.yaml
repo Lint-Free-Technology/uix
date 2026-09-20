@@ -1,0 +1,29 @@
+uix_broker:
+  - realm: browser
+    listen:
+      - uix-broker-ready
+      - uix-update-sidebar
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    directives:
+      - type: badge
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content"
+        content: 3
+        pill: true
+        placement: left
+        style:
+          --uix-badge-font-size: var(--ha-font-size-m)
+          --uix-badge-offset-x: calc(var(--app-drawer-width, 248px) - 22px)
+          --uix-badge-box-shadow: var(--ha-box-shadow-m)
+          --uix-badge-color: purple
+          --uix-badge-color-hover: rgb(255 0 0)
+          --uix-badge-border: 2px dotted rgb(0 128 0)
+      - type: badge
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-energy $ a#item div.content"
+        content: 444
+        pill: true
+        variant: brand
+        placement: left
+        style:
+          --uix-badge-font-size: var(--ha-font-size-m)
+          --uix-badge-offset-x: calc(var(--app-drawer-width, 248px) - 22px)
+          --uix-badge-box-shadow: var(--ha-box-shadow-m)

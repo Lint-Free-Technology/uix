@@ -1,0 +1,45 @@
+id: broker_sidebar_title_action
+description: "UIX Broker interaction for sidebar title"
+view_path: broker-sidebar-title
+
+setup:
+  - type: add_broker_file
+    file_path: uix/test_broker_sidebar_title_action.yaml
+
+card:
+  type: heading
+  heading: "Broker Sidebar Title Test"
+
+interactions:
+  - type: click
+    root: ha-sidebar
+    selector: div.title
+    settle_ms: 500
+
+assertions:
+  - type: css_property
+    property: cursor
+    expected: pointer
+    root: ha-sidebar
+    selector: div.title
+  - type: object_property_text_equals
+    root: ha-sidebar
+    selector: div.title
+    property: innerText
+    expected: Home
+  - type: object_property_present
+    root: ha-sidebar
+    selector: div.title
+    property: actionHandler
+  - type: object_property_text_equals
+    root: hui-root
+    selector: div.main-title
+    property: innerText
+    expected: Overview
+  - type: snapshot
+    name: "65_broker_sidebar_title_action"
+    threshold: 0.01
+
+teardown:
+  - type: remove_broker_file
+    file_path: uix/test_broker_sidebar_title_action.yaml

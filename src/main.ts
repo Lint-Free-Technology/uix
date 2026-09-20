@@ -34,6 +34,7 @@ import "./patch/hui-picture-element-element-editor";
 import "./patch/hui-dialog-edit-card";
 import "./patch/hui-dialog-edit-badge";
 import "./patch/ha-panel-config";
+import "./patch/ha-panel-app";
 import "./patch/ha-panel-profile";
 import "./patch/tools-yaml-config";
 import "./patch/ha-panel-calendar";

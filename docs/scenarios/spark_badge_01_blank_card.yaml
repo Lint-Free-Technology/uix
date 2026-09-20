@@ -1,0 +1,35 @@
+id: doc_spark_badge_blank_card
+description: "Doc image: Forge Badge spark on UIX blank card (badge.md)"
+view_path: doc-spark-badge-blank-card
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    grid_options:
+      columns: 3
+    sparks:
+      - type: badge
+        after: uix-forge-blank-card $ div.content
+        content: Badge Spark
+        variant: brand
+        start_icon: mdi:badge-account-horizontal-outline
+    uix:
+      style:
+        .: |
+          :host {
+            --ha-card-border-width: 0px;
+            --ha-card-background: none;
+          }
+        uix-forge-blank-card $: |
+          ha-card {
+            display: flex;
+            justify-content: center;
+          }
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/badge-blank-card.png
+  root: uix-forge-blank-card
+  padding: 16

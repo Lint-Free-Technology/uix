@@ -1,0 +1,25 @@
+id: broker_lock
+description: "UIX Broker interaction for lock"
+view_path: broker-lock
+
+setup:
+  - type: add_broker_file
+    file_path: uix/test_broker_lock.yaml
+  - type: wait
+    ms: 500
+
+card:
+  type: heading
+  heading: "Broker Lock Test"
+
+assertions:
+  - type: element_present
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: div[data-uix-broker-lock]
+  - type: snapshot
+    name: "62_broker_lock"
+    threshold: 0.01
+
+teardown:
+  - type: remove_broker_file
+    file_path: uix/test_broker_lock.yaml

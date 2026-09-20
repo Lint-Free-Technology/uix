@@ -1,0 +1,24 @@
+uix_broker:
+  - realm: browser
+    enabled: true
+    listen:
+      - uix-broker-ready
+      - uix-update-sidebar
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    directives:
+      - type: call
+        method: "setAttribute"
+        args:
+          - "sidebar-title"
+          - "Home"
+      - type: call
+        rules:
+          - "{.requestUpdate}"
+        method: "requestUpdate"
+        args:
+          - "narrow"
+      - type: action-handler
+        anchor: "$ div.menu div.title"
+        tap_action:
+          action: navigate
+          navigation_path: /home

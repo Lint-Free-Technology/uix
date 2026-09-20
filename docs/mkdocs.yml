@@ -76,6 +76,7 @@ nav:
           - using/section-backgrounds.md
           - using/view-backgrounds.md
           - using/custom-panels.md
+          - using/apps.md
           - using/templates.md
           - using/themes.md
           - using/other.md
@@ -100,6 +101,7 @@ nav:
           - forge/sparks/index.md
           - forge/sparks/tooltip.md
           - forge/sparks/button.md
+          - forge/sparks/badge.md
           - forge/sparks/attribute.md
           - forge/sparks/event.md
           - forge/sparks/tile-icon.md

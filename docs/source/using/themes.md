@@ -285,6 +285,7 @@ red-theme:
 - `uix-more-info`
 - `uix-sidebar`
 - `uix-config`
+- `uix-app`
 - `uix-panel-custom`
 - `uix-top-app-bar-fixed`
 - `uix-dialog`

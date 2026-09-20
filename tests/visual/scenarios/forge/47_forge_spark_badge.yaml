@@ -1,0 +1,119 @@
+id: forge_spark_badge
+description: "UIX badge spark"
+view_path: forge-spark-badge
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 255
+      color_temp_kelvin: 2631
+
+cards:
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: badge
+          after: hui-tile-card $ ha-tile-icon
+          content: 3
+          variant: danger
+          pill: true
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: badge
+          after: hui-tile-card $ ha-tile-icon
+          content: 3
+          variant: danger
+          pill: true
+          style:
+            "--uix-badge-offset-x": -2px
+            "--uix-badge-offset-y": -2px
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: badge
+          after: hui-tile-card $ ha-tile-info
+          content: Experimental
+          variant: warning
+          appearance: outlined
+          start_icon: mdi:flask-outline
+    element:
+      type: tile
+      entity: light.bed_light
+      uix:
+        style: |
+          ha-tile-info {
+            flex: 1;
+          }
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: badge
+          after: hui-button-card
+          content: 3
+          variant: danger
+          pill: true
+          placement: top-end
+          style:
+            "--uix-badge-offset-x": -6px
+            "--uix-badge-offset-y": 6px
+            "--uix-badge-font-size": 24px
+    element:
+      type: button
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      sparks:
+        - type: button
+          after: hui-tile-card $ ha-tile-icon
+          label: Living Room
+        - type: badge
+          after: "hui-tile-card $ div[data-uix-forge-button-id]"
+          content: 3
+          variant: danger
+          pill: true
+    element:
+      type: tile
+      entity: light.bed_light
+  - type: custom:uix-forge
+    forge:
+      mold: card
+      grid_options:
+        columns: 3
+      sparks:
+        - type: badge
+          after: uix-forge-blank-card $ div.content
+          content: Badge Spark
+          variant: brand
+          start_icon: mdi:badge-account-horizontal-outline
+      uix:
+        style:
+          .: |
+            :host {
+              --ha-card-border-width: 0px;
+              --ha-card-background: none;
+            }
+          uix-forge-blank-card $: |
+            ha-card {
+              display: flex;
+              justify-content: center;
+            }
+
+assertions:
+  - type: snapshot
+    name: "63_forge_spark_badge"
+    threshold: 0.02
