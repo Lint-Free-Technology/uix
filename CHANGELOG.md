@@ -1,3 +1,9 @@
+## [8.3.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.15...v8.3.0-beta.16) (2026-09-20)
+
+### 🐞 Bug Fixes
+
+* **beta:** Broker / Spark attention not dynamically updating from pulse to none on Safari. ([5248fb1](https://github.com/Lint-Free-Technology/uix/commit/5248fb1fa62a0667516daa05d416b73f2b6db23f))
+
 ## [8.3.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.14...v8.3.0-beta.15) (2026-09-19)
 
 ### ⭐ New Features

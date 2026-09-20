@@ -152,6 +152,16 @@ const uixBadgeStyles = css`
     animation: uix-badge-pulse 1.5s infinite;
   }
 
+  /*
+   * Keep the animation property matched for every supported attention state.
+   * Safari can retain an animation declared by a :host attribute selector
+   * after that attribute changes from "pulse" to "none". Updating this
+   * internal custom property instead forces it to recompute the animation.
+   */
+  :host([attention]) {
+    animation: var(--_uix-badge-attention-animation, none);
+  }
+
   @keyframes uix-badge-pulse {
     0% {
       box-shadow:
@@ -271,10 +281,12 @@ export function createUixBadge(config: UixBadgeConfig): HTMLElement {
 }
 
 export function updateUixBadge(badge: HTMLElement, config: UixBadgeConfig): void {
+  const attention = validValue(BADGE_ATTENTIONS, config.attention) ?? "none";
   updateBadgeContent(badge, config.content === undefined ? "" : String(config.content));
   setAttributeValue(badge, "variant", validValue(BADGE_VARIANTS, config.variant) ?? "brand");
   setAttributeValue(badge, "appearance", validValue(BADGE_APPEARANCES, config.appearance) ?? "accent");
-  setAttributeValue(badge, "attention", validValue(BADGE_ATTENTIONS, config.attention) ?? "none");
+  setAttributeValue(badge, "attention", attention);
+  badge.style.setProperty("--_uix-badge-attention-animation", attentionAnimation(attention));
   if (badge.hasAttribute("pill") !== (config.pill === true)) {
     badge.toggleAttribute("pill", config.pill === true);
   }
@@ -293,6 +305,17 @@ function updateBadgeContent(badge: HTMLElement, content: string): void {
 
 function validValue<T extends readonly string[]>(values: T, value: unknown): T[number] | undefined {
   return values.includes(value as T[number]) ? value as T[number] : undefined;
+}
+
+function attentionAnimation(attention: UixBadgeAttention): string {
+  switch (attention) {
+    case "pulse":
+      return "uix-badge-pulse 1.5s infinite";
+    case "bounce":
+      return "bounce 1s cubic-bezier(0.28, 0.84, 0.42, 1) infinite";
+    default:
+      return "none";
+  }
 }
 
 function setAttributeValue(element: Element, name: string, value: string): void {
