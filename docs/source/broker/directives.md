@@ -199,9 +199,6 @@ Use `style` for a flat mapping of CSS property names and values. The properties 
 
 Use `uix` for UIX styling, including styles inside the button's shadow root. Its UIX type is `uix-broker-button`; the resolved button settings are available as `config`, and prior `template` or `javascript` directive results are available as `directive` in UIX templates.
 
-!!! info
-    `button` UIX styling available in 8.3.0-beta.3
-
 ```yaml
 - type: button
   entity: light.living_room
@@ -237,9 +234,6 @@ Use `uix` for UIX styling, including styles inside the button's shadow root. Its
     - Other CSS variables applicable to the Forge button spark also apply.
 
 ## Badge
-
-!!! info
-    `badge` directive available in 8.3.0-beta.10
 
 `badge` inserts a `uix-badge` beside the directive anchor. The badge uses Home Assistant's patched Web Awesome base and styles, so its variants follow the active Home Assistant theme. UIX keeps the element namespaced and does not register Web Awesome's global `wa-badge` component.
 
@@ -333,9 +327,6 @@ Use `for: previous` directly after a `button` directive to show a badge on the b
 
 ## Text content
 
-!!! info
-    `text-content` directive available in 8.3.0-beta.12
-
 `text-content` inserts a `<span>` containing text immediately after its directive anchor. It is useful when CSS pseudo-content would otherwise be used only to add a small label or secondary line. The generated span has the `data-uix-broker-text-content` attribute and is reused whenever the same directive runs again.
 
 ```yaml
@@ -367,9 +358,6 @@ When the destination is a named slot, either make the actual `<slot>` element th
 | `style` | object | — | Flat map of CSS property names and string or numeric values, set inline on the generated span. |
 
 ## Tile icon
-
-!!! info
-    `tile-icon` directive available in 8.3.0-beta.3
 
 `tile-icon` inserts a Home Assistant `ha-tile-icon` beside the directive anchor. It uses the same icon rendering and action handling as the [Forge tile-icon spark](../forge/sparks/tile-icon.md). The tile icon is inserted after the directive anchor by default.
 
@@ -561,9 +549,6 @@ Use `uix` for UIX Styling on the generated overlay. Its UIX type is `uix-broker-
 ```
 
 ## Action handler
-
-!!! info
-    `action-handler` directive available in 8.3.0-beta.12
 
 `action-handler` binds Home Assistant's action handler to the directive anchor. Configure one or more standard Home Assistant actions; `tap_action`, `hold_action`, and `double_tap_action` are all supported. The matching action is dispatched from the anchor as a normal `hass-action` event.
 
