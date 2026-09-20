@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONNECTION_TS_PATH = REPO_ROOT / "src" / "coordinator" / "connection.ts"
 
 
-def test_style_custom_panels_setting_and_override() -> None:
+def test_style_frame_panels_setting_and_legacy_override() -> None:
     output = subprocess.check_output(
         [
             "node",

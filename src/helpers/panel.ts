@@ -145,6 +145,12 @@ async function _current_panel_state() {
   return panelState;
 }
 
+function _panelPathMatchesBrowser(browserPath: string, panelState: any): boolean {
+  const panelPath = panelState.panel.fullUrlPath.toLowerCase();
+  const panelRootPath = panelState.panel.panelUrlPath.toLowerCase();
+  return browserPath === panelPath || browserPath === panelRootPath;
+}
+
 function _panel_state_update() {
   const update = async () => {
     var panelState = await _current_panel_state();
@@ -154,13 +160,13 @@ function _panel_state_update() {
     var browserPath = window.location.pathname.slice(1).toLowerCase();
     var panelPath = panelState.panel.fullUrlPath.toLowerCase();
     let retry = 0;
-    while (browserPath !== panelPath && retry++ < 200) {
+    while (!_panelPathMatchesBrowser(browserPath, panelState) && retry++ < 200) {
       await new Promise((resolve) => setTimeout(resolve, 10));
       panelState = await _current_panel_state();
       browserPath = window.location.pathname.slice(1).toLowerCase();
       panelPath = panelState.panel.fullUrlPath.toLowerCase();
     }
-    if (browserPath !== panelPath) {
+    if (!_panelPathMatchesBrowser(browserPath, panelState)) {
       console.groupCollapsed(
         "UIX: cannot resolve Panel information after 2s."
       );
