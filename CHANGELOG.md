@@ -1,7 +1,5 @@
 ## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
 
-## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
-
 ### ⭐ New Features
 
 * Add UIX Styling lifecycle events `uix-applied`, `uix-styles-update` and `uix-theme-update` which are available to UIX Broker to listen to in Browser realm. ([#608](https://github.com/Lint-Free-Technology/uix/issues/608)) ([106c2a2](https://github.com/Lint-Free-Technology/uix/commit/106c2a2290de44a3851c0c860adefb93eb7a65e6))
