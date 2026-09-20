@@ -1,8 +1,9 @@
 ## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
 
+## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
+
 ### ⭐ New Features
 
-* Add max-width and overflow CSS vars to new Spark / Broker badge ([6e55a90](https://github.com/Lint-Free-Technology/uix/commit/6e55a90f4028f771007024e07882bde6048cc3c2))
 * Add UIX Styling lifecycle events `uix-applied`, `uix-styles-update` and `uix-theme-update` which are available to UIX Broker to listen to in Browser realm. ([#608](https://github.com/Lint-Free-Technology/uix/issues/608)) ([106c2a2](https://github.com/Lint-Free-Technology/uix/commit/106c2a2290de44a3851c0c860adefb93eb7a65e6))
 * Allowing styling of app container in Frontend. UIX styling is not injected to app itself, only the Frontend wrapping ha-panel-app allowing for styling header and an overlay. ([#619](https://github.com/Lint-Free-Technology/uix/issues/619)) ([8c4f022](https://github.com/Lint-Free-Technology/uix/commit/8c4f022a1e196ab3a3a2e362d752569957603e29))
 * **broker:** Add `tile-icon` directive to add a tile-icon before/after an interaction anchor ([#601](https://github.com/Lint-Free-Technology/uix/issues/601)) ([7b3e83c](https://github.com/Lint-Free-Technology/uix/commit/7b3e83cf918164e5d20c952f7d4e6cc73cec0b85))
@@ -13,129 +14,18 @@
 * **broker:** Tooltip directive allowing to add tooltip to UI element including `for: previous` to add to a proceeding UI element directive ([#603](https://github.com/Lint-Free-Technology/uix/issues/603)) ([fb5a40c](https://github.com/Lint-Free-Technology/uix/commit/fb5a40ce051a74142e1c7e5a357f576c9f486065))
 * **tooltip:** add trigger options and preserve content hover ([1dc4f74](https://github.com/Lint-Free-Technology/uix/commit/1dc4f74c5fb1e43d14e4702f94f4bfe244db99cc))
 * UIX action `locked_action`. Uses same `locks` and `code_dialog` config of Forge lock spark. ([#600](https://github.com/Lint-Free-Technology/uix/issues/600)) ([8cd595d](https://github.com/Lint-Free-Technology/uix/commit/8cd595d616546730ff61f1f0e760f348a4a96704))
-* UIX Broker action-handler directive ([#616](https://github.com/Lint-Free-Technology/uix/issues/616)) ([5d71754](https://github.com/Lint-Free-Technology/uix/commit/5d71754cf9657ed59be43ba17e181ebe3374cb13))
-* UIX Broker text-content directive ([#617](https://github.com/Lint-Free-Technology/uix/issues/617)) ([b2b0c36](https://github.com/Lint-Free-Technology/uix/commit/b2b0c36aa3f97c351350d5711c670c1dca2c9ecf))
-* UIX Forge badge spark and UIX Broker badge directive ([#613](https://github.com/Lint-Free-Technology/uix/issues/613)) ([ba53a56](https://github.com/Lint-Free-Technology/uix/commit/ba53a565ce99b791be8ccf4b1893a7005ea917a8))
-
-### 🐞 Bug Fixes
-
-* **beta:** Broker / Spark attention not dynamically updating from pulse to none on Safari. ([5248fb1](https://github.com/Lint-Free-Technology/uix/commit/5248fb1fa62a0667516daa05d416b73f2b6db23f))
-* **beta:** Correct outlined Broker / Spark badge having transparent pulse. Introduce `--uix-badge-attention-color` ([0f70be8](https://github.com/Lint-Free-Technology/uix/commit/0f70be81d1ae0964eed774d171818c6d0c474b67))
-* **beta:** retain styled box-shadow on Broker / Spark badges when using `attention: pulse`. `attention:pulse` to take pulse color from border color when using `appearance: filled-outlined`. ([6af38f8](https://github.com/Lint-Free-Technology/uix/commit/6af38f867038ba7f9a5db2c097340843dc5f27fd))
-* **forge:** Fix possible console error on first load of forged element when mold is row. ([6bdc711](https://github.com/Lint-Free-Technology/uix/commit/6bdc7114272b79f0ad3b30629dd604eded3b3543))
-
-### ⚙️ Miscellaneous
-
-* **beta:** Add `--uix-badge-font-weight` styling var to Broker / Spark badges. ([9a31462](https://github.com/Lint-Free-Technology/uix/commit/9a31462ca772ca8bc8df9835d0c109eb720ba017))
-* **tooltip:** Add `--ha-tooltip-text-color` to `--uix-tooltip-content-color` default chain. ([28b432a](https://github.com/Lint-Free-Technology/uix/commit/28b432a45ca229e04cbc4e44f05d2d3f75a1014a))
-* **tooltip:** Change Spark and Broker tooltip defaults to align with Home Assistant defaults, except arrow size is kept at 8px. See docs for updated defaults and vars to use to change. ([21bb260](https://github.com/Lint-Free-Technology/uix/commit/21bb2600786ff3f282162b16cbed624754d386b4))
-
-## [8.3.0-beta.16](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.15...v8.3.0-beta.16) (2026-09-20)
-
-### 🐞 Bug Fixes
-
-* **beta:** Broker / Spark attention not dynamically updating from pulse to none on Safari. ([5248fb1](https://github.com/Lint-Free-Technology/uix/commit/5248fb1fa62a0667516daa05d416b73f2b6db23f))
-
-## [8.3.0-beta.15](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.14...v8.3.0-beta.15) (2026-09-19)
-
-### ⭐ New Features
-
-* Allowing styling of app container in Frontend. UIX styling is not injected to app itself, only the Frontend wrapping ha-panel-app allowing for styling header and an overlay. ([#619](https://github.com/Lint-Free-Technology/uix/issues/619)) ([8c4f022](https://github.com/Lint-Free-Technology/uix/commit/8c4f022a1e196ab3a3a2e362d752569957603e29))
-
-## [8.3.0-beta.14](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.13...v8.3.0-beta.14) (2026-09-19)
-
-### 🐞 Bug Fixes
-
-* **beta:** retain styled box-shadow on Broker / Spark badges when using `attention: pulse`. `attention:pulse` to take pulse color from border color when using `appearance: filled-outlined`. ([6af38f8](https://github.com/Lint-Free-Technology/uix/commit/6af38f867038ba7f9a5db2c097340843dc5f27fd))
-
-### ⚙️ Miscellaneous
-
-* **beta:** Add `--uix-badge-font-weight` styling var to Broker / Spark badges. ([9a31462](https://github.com/Lint-Free-Technology/uix/commit/9a31462ca772ca8bc8df9835d0c109eb720ba017))
-
-## [8.3.0-beta.13](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.12...v8.3.0-beta.13) (2026-09-18)
-
-### 🐞 Bug Fixes
-
-* **beta:** Correct outlined Broker / Spark badge having transparent pulse. Introduce `--uix-badge-attention-color` ([0f70be8](https://github.com/Lint-Free-Technology/uix/commit/0f70be81d1ae0964eed774d171818c6d0c474b67))
-
-## [8.3.0-beta.12](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.11...v8.3.0-beta.12) (2026-09-18)
-
-### ⭐ New Features
-
-* UIX Broker action-handler directive ([#616](https://github.com/Lint-Free-Technology/uix/issues/616)) ([5d71754](https://github.com/Lint-Free-Technology/uix/commit/5d71754cf9657ed59be43ba17e181ebe3374cb13))
-* UIX Broker text-content directive ([#617](https://github.com/Lint-Free-Technology/uix/issues/617)) ([b2b0c36](https://github.com/Lint-Free-Technology/uix/commit/b2b0c36aa3f97c351350d5711c670c1dca2c9ecf))
-
-## [8.3.0-beta.11](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.10...v8.3.0-beta.11) (2026-09-17)
-
-### ⭐ New Features
-
-* Add max-width and overflow CSS vars to new Spark / Broker badge ([6e55a90](https://github.com/Lint-Free-Technology/uix/commit/6e55a90f4028f771007024e07882bde6048cc3c2))
-
-## [8.3.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.9...v8.3.0-beta.10) (2026-09-17)
-
-### ⭐ New Features
-
-* UIX Forge badge spark and UIX Broker badge directive ([#613](https://github.com/Lint-Free-Technology/uix/issues/613)) ([ba53a56](https://github.com/Lint-Free-Technology/uix/commit/ba53a565ce99b791be8ccf4b1893a7005ea917a8))
+* **broker:** action-handler directive ([#616](https://github.com/Lint-Free-Technology/uix/issues/616)) ([5d71754](https://github.com/Lint-Free-Technology/uix/commit/5d71754cf9657ed59be43ba17e181ebe3374cb13))
+* **broker:** text-content directive ([#617](https://github.com/Lint-Free-Technology/uix/issues/617)) ([b2b0c36](https://github.com/Lint-Free-Technology/uix/commit/b2b0c36aa3f97c351350d5711c670c1dca2c9ecf))
+* **forge:** badge spark and **broker:** badge directive ([#613](https://github.com/Lint-Free-Technology/uix/issues/613)) ([ba53a56](https://github.com/Lint-Free-Technology/uix/commit/ba53a565ce99b791be8ccf4b1893a7005ea917a8))
 
 ### 🐞 Bug Fixes
 
 * **forge:** Fix possible console error on first load of forged element when mold is row. ([6bdc711](https://github.com/Lint-Free-Technology/uix/commit/6bdc7114272b79f0ad3b30629dd604eded3b3543))
 
-## [8.3.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.8...v8.3.0-beta.9) (2026-09-14)
-
-### ⭐ New Features
-
-* Add UIX Styling lifecycle events `uix-applied`, `uix-styles-update` and `uix-theme-update` which are available to UIX Broker to listen to in Browser realm. ([#608](https://github.com/Lint-Free-Technology/uix/issues/608)) ([106c2a2](https://github.com/Lint-Free-Technology/uix/commit/106c2a2290de44a3851c0c860adefb93eb7a65e6))
-* **broker:** Lock directive ([#606](https://github.com/Lint-Free-Technology/uix/issues/606)) ([0641d4c](https://github.com/Lint-Free-Technology/uix/commit/0641d4cfea2b6c055da44831d8718a14662ebce9))
-
-## [8.3.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.7...v8.3.0-beta.8) (2026-09-13)
-
-### ⭐ New Features
-
-* **tooltip:** add trigger options and preserve content hover ([1dc4f74](https://github.com/Lint-Free-Technology/uix/commit/1dc4f74c5fb1e43d14e4702f94f4bfe244db99cc))
-
-## [8.3.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.6...v8.3.0-beta.7) (2026-09-11)
-
 ### ⚙️ Miscellaneous
 
 * **tooltip:** Add `--ha-tooltip-text-color` to `--uix-tooltip-content-color` default chain. ([28b432a](https://github.com/Lint-Free-Technology/uix/commit/28b432a45ca229e04cbc4e44f05d2d3f75a1014a))
-
-## [8.3.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.5...v8.3.0-beta.6) (2026-09-11)
-
-### ⚙️ Miscellaneous
-
 * **tooltip:** Change Spark and Broker tooltip defaults to align with Home Assistant defaults, except arrow size is kept at 8px. See docs for updated defaults and vars to use to change. ([21bb260](https://github.com/Lint-Free-Technology/uix/commit/21bb2600786ff3f282162b16cbed624754d386b4))
-
-## [8.3.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.4...v8.3.0-beta.5) (2026-09-11)
-
-### ⭐ New Features
-
-* **broker:** Tooltip directive allowing to add tooltip to UI element including `for: previous` to add to a proceeding UI element directive ([#603](https://github.com/Lint-Free-Technology/uix/issues/603)) ([fb5a40c](https://github.com/Lint-Free-Technology/uix/commit/fb5a40ce051a74142e1c7e5a357f576c9f486065))
-
-## [8.3.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.3...v8.3.0-beta.4) (2026-09-10)
-
-### ⭐ New Features
-
-* **broker:** Pass prior directive results via `directive` to UIX styling to use in templates ad `directive.id...` ([1ee158d](https://github.com/Lint-Free-Technology/uix/commit/1ee158d9fbbb23ddfe37b3b169fe995561d6aada))
-
-## [8.3.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.2...v8.3.0-beta.3) (2026-09-10)
-
-### ⭐ New Features
-
-* **broker:** Add `tile-icon` directive to add a tile-icon before/after an interaction anchor ([#601](https://github.com/Lint-Free-Technology/uix/issues/601)) ([7b3e83c](https://github.com/Lint-Free-Technology/uix/commit/7b3e83cf918164e5d20c952f7d4e6cc73cec0b85))
-* **broker:** Add uix styling to `button` directive. Fix underlying element ripply firing. ([286d272](https://github.com/Lint-Free-Technology/uix/commit/286d2726028b5402394c5f4f572459d8f21104e5))
-
-## [8.3.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0-beta.1...v8.3.0-beta.2) (2026-09-10)
-
-### ⭐ New Features
-
-* UIX action `locked_action`. Uses same `locks` and `code_dialog` config of Forge lock spark. ([#600](https://github.com/Lint-Free-Technology/uix/issues/600)) ([8cd595d](https://github.com/Lint-Free-Technology/uix/commit/8cd595d616546730ff61f1f0e760f348a4a96704))
-
-## [8.3.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0-beta.1) (2026-09-09)
-
-### ⭐ New Features
-
-* **broker:** Add typed rules user and user_is_admin ([#599](https://github.com/Lint-Free-Technology/uix/issues/599)) ([e4ff93f](https://github.com/Lint-Free-Technology/uix/commit/e4ff93f04380c25193bfff45cb1409de3fa32758))
 
 [## [8.2.0](https://github.com/Lint-Free-Technology/uix/compare/v8.1.0...v8.2.0) (2026-09-09)
 
