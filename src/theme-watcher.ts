@@ -1,4 +1,4 @@
-import { getCustomPanelName, hass, isEmbeddedPanel } from "./helpers/hass";
+import { hass, isFramePanel } from "./helpers/hass";
 import { Unpromise } from "@watchable/unpromise";
 
 function refresh_theme() {
@@ -11,13 +11,7 @@ const bases = [
   customElements.whenDefined("home-assistant"),
   customElements.whenDefined("hc-main"),
 ];
-if (isEmbeddedPanel()) {
-  const customPanelName = getCustomPanelName();
-  if (customPanelName) {
-    bases.push(customElements.whenDefined(customPanelName));
-  }
-}
-Unpromise.race(bases).then(() => {
+const watchThemes = () => {
   window.setTimeout(async () => {
     const hs = await hass();
     while (!hs) {
@@ -34,16 +28,14 @@ Unpromise.race(bases).then(() => {
       .querySelector("hc-main")
       ?.addEventListener("settheme", refresh_theme);
 
-    if (isEmbeddedPanel()) {
-      const customPanelName = getCustomPanelName();
-      if (customPanelName) {
-        document
-          .querySelector(customPanelName)
-          ?.addEventListener("settheme", refresh_theme);
-      }
-    }
   }, 1000);
-});
+};
+
+if (isFramePanel()) {
+  watchThemes();
+} else {
+  Unpromise.race(bases).then(watchThemes);
+}
 
 export function themesReady(): Promise<void> {
   function _themesReady(hass): boolean {

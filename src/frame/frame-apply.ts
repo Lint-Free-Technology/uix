@@ -1,12 +1,21 @@
 import { apply_uix } from "../helpers/apply_uix";
 import { hass } from "../helpers/hass";
 import { themesReady } from "../theme-watcher";
+import { applyFrameStyles } from "./frame-style-renderer";
 
-async function resolveThemeType(types: string[]): Promise<string | undefined> {
+function isLitRoot(root: any): boolean {
+  return (
+    typeof root?.render === "function" &&
+    typeof root?.requestUpdate === "function" &&
+    typeof root?.updateComplete?.then === "function"
+  );
+}
+
+async function resolveThemeType(types: string[], frameHass?: any): Promise<string | undefined> {
   if (!types.length) return undefined;
 
-  await themesReady().catch(() => {});
-  const hs: any = await hass();
+  if (!frameHass) await themesReady().catch(() => {});
+  const hs: any = frameHass || await hass();
   const selected = hs?.themes?.theme === "default" ? hs?.themes?.default_theme : hs?.themes?.theme;
   const selectedTheme = hs?.themes?.themes?.[selected] ?? {};
   const uixThemeName = selectedTheme["uix-theme"] || selectedTheme["card-mod-theme"] || selected;
@@ -17,7 +26,7 @@ async function resolveThemeType(types: string[]): Promise<string | undefined> {
     theme[`card-mod-${type}-yaml`] !== undefined ||
     theme[`uix-${type}`] !== undefined ||
     theme[`card-mod-${type}`] !== undefined
-  ) ?? types[0];
+  );
 }
 
 window.addEventListener("uix-bootstrap", async (event: Event) => {
@@ -33,17 +42,27 @@ window.addEventListener("uix-bootstrap", async (event: Event) => {
   }
 
   if (root.localName?.includes("-")) await customElements.whenDefined(root.localName);
-  if (!root.hass && options.hass) root.hass = options.hass;
-  while (!root.hass) await new Promise((resolve) => window.setTimeout(resolve, 100));
+  const frameHass = options.hass;
+  if (frameHass && !root.hass) root.hass = frameHass;
+  if (!frameHass) {
+    while (!root.hass) await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+  const hs = frameHass || root.hass;
   if (root.updateComplete) await root.updateComplete;
 
   const primaryBackground = window.getComputedStyle(root).getPropertyValue("--primary-background-color");
   let theme: string | undefined;
   if (!primaryBackground) {
-    theme = root.hass?.themes?.theme;
-    theme = theme === "default" ? root.hass?.themes?.default_theme : theme;
+    theme = hs?.themes?.theme;
+    theme = theme === "default" ? hs?.themes?.default_theme : theme;
   }
 
-  const type = await resolveThemeType(options.themeTypes);
-  if (type) apply_uix(root, type, theme === undefined ? undefined : { theme });
+  const type = await resolveThemeType(options.themeTypes, hs);
+  if (type) {
+    if (isLitRoot(root)) {
+      apply_uix(root, type, theme === undefined ? undefined : { theme });
+    } else {
+      applyFrameStyles(root, type, theme);
+    }
+  }
 });

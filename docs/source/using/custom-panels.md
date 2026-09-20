@@ -3,7 +3,7 @@ description: Learn how to style custom panels
 ---
 # Styling custom panels
 
-UIX styles custom panels not loaded by iframe directly. UIX can also style custom panels loaded as iframe. Currently this is an experimental feature which you need to enable. See [Extras - Styling custom panels](../extras/style-custom-panels.md).
+UIX styles custom panels not loaded by iframe directly. UIX can also style custom panels loaded as iframe. Currently this is an experimental feature which you need to enable. See [Extras - Styling frame panels](../extras/style-frame-panels.md).
 
 !!! info "Custom panel loaded by iframe - How it works"
     1. Custom panels loaded as iframe are styled by the internal UIX frame runtime injected by the `ha-panel-custom` patch. The runtime is shared with app frames and is agnostic about which panel type invoked it.

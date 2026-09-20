@@ -19,6 +19,21 @@ export function getCustomPanelName() {
   return getEmbeddedCustomPanelConfig()?.name || null;
 }
 
+/** True when UIX is running in an internally managed app or custom-panel frame. */
+export function isFramePanel() {
+  return !!window.uixFrameOptions || isEmbeddedPanel();
+}
+
+/**
+ * The primary UIX theme target for the current frame.
+ *
+ * `uixFrameOptions` covers both app and custom-panel frames. The legacy
+ * parent-window lookup remains for standalone embedded custom panels.
+ */
+export function getFramePanelName() {
+  return window.uixFrameOptions?.themeTypes?.[0] || getCustomPanelName();
+}
+
 export async function panel_base_el() {
   const frameOptions = window.uixFrameOptions;
   if (frameOptions?.roots?.length) {
@@ -61,6 +76,9 @@ export async function hass_base_el() {
 }
 
 export async function hass() {
+  const frameHass = window.uixFrameOptions?.hass;
+  if (frameHass) return frameHass;
+
   const base: any = await panel_base_el();
   while (!base.hass) await new Promise((r) => window.setTimeout(r, 100));
   return base.hass;

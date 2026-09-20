@@ -42,9 +42,13 @@ export function installFrameRuntime(iframe: HTMLIFrameElement, options: UixFrame
   }
 }
 
-/** Attach the runtime now and again after every frame navigation. */
+/** Attach the runtime after every frame navigation and to an already-loaded frame. */
 export function setupFrameRuntime(iframe: HTMLIFrameElement, options: UixFrameOptions) {
   const install = () => installFrameRuntime(iframe, options);
   iframe.addEventListener("load", install);
-  install();
+
+  // A newly-created iframe exposes an initial about:blank document before its
+  // app URL has loaded. Installing into that transient document races the app
+  // navigation and can leave Lit rendering against the wrong document.
+  if (iframe.contentDocument?.readyState === "complete") install();
 }
