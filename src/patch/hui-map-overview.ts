@@ -79,12 +79,19 @@ const findParentUix = async (node: any, step = 0): Promise<Set<Uix>> => {
 const unbindStyleUpdates = (el: any): void => {
   el._uixMapOverviewStyleController?.abort();
   el._uixMapOverviewStyleController = undefined;
+  el._uixMapOverviewBindingController = undefined;
+  el._uixMapOverviewStyleUpdatePending = false;
   el._uixMapOverviewBoundUix?.clear();
   el._uixMapOverviewBoundUix = undefined;
   el._uixMapOverviewBindRetries = 0;
 };
 
-const requestStyleUpdate = async (el: any, uix: Uix): Promise<void> => {
+const requestStyleUpdate = async (
+  el: any,
+  uix: Uix,
+  controller: AbortController
+): Promise<void> => {
+  if (el._uixMapOverviewStyleController !== controller || controller.signal.aborted) return;
   if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
   if (el._uixMapOverviewStyleUpdatePending) return;
   el._uixMapOverviewStyleUpdatePending = true;
@@ -94,6 +101,8 @@ const requestStyleUpdate = async (el: any, uix: Uix): Promise<void> => {
     await nextAnimationFrame();
     if (
       el.isConnected &&
+      el._uixMapOverviewStyleController === controller &&
+      !controller.signal.aborted &&
       !(window as any).uixCoordinator?.disableEntityPictureImageOverride
     ) {
       el.requestUpdate();
@@ -105,33 +114,49 @@ const requestStyleUpdate = async (el: any, uix: Uix): Promise<void> => {
 
 const bindStyleUpdates = async (el: any): Promise<void> => {
   if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
-  if (el._uixMapOverviewBindPending) return;
-  el._uixMapOverviewBindPending = true;
+  const controller = el._uixMapOverviewStyleController ??= new AbortController();
+  if (el._uixMapOverviewBindingController === controller) return;
+  el._uixMapOverviewBindingController = controller;
 
   try {
-    const signal = (el._uixMapOverviewStyleController ??= new AbortController()).signal;
+    const uixNodes = await findParentUix(el);
+    if (
+      !el.isConnected ||
+      controller.signal.aborted ||
+      el._uixMapOverviewStyleController !== controller ||
+      (window as any).uixCoordinator?.disableEntityPictureImageOverride
+    ) {
+      return;
+    }
 
     const boundUix: Set<Uix> = el._uixMapOverviewBoundUix ??= new Set();
-    for (const uix of await findParentUix(el)) {
+    for (const uix of uixNodes) {
       if (boundUix.has(uix)) continue;
 
       uix.addEventListener(
         "uix-styles-update",
-        () => void requestStyleUpdate(el, uix),
-        { signal }
+        () => void requestStyleUpdate(el, uix, controller),
+        { signal: controller.signal }
       );
       boundUix.add(uix);
       // A node may have rendered before this listener was attached. Refresh
       // once after binding so the overview reads its current CSS variables.
-      void requestStyleUpdate(el, uix);
+      void requestStyleUpdate(el, uix, controller);
     }
   } finally {
-    el._uixMapOverviewBindPending = false;
+    if (el._uixMapOverviewBindingController === controller) {
+      el._uixMapOverviewBindingController = undefined;
+    }
   }
 
   // UIX nodes are appended asynchronously and template styles may not be
   // populated during the first lookup. Retry briefly to catch those nodes.
-  if (el._uixMapOverviewBindRetries < 5 && el.isConnected) {
+  if (
+    el._uixMapOverviewStyleController === controller &&
+    !controller.signal.aborted &&
+    el._uixMapOverviewBindRetries < 5 &&
+    el.isConnected
+  ) {
     el._uixMapOverviewBindRetries++;
     window.setTimeout(
       () => void bindStyleUpdates(el),
