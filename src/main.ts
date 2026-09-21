@@ -5,6 +5,7 @@ import "./coordinator/coordinator";
 import "./broker/uix-broker";
 import "./patch/ha-icon";
 import "./patch/ha-entity-picture";
+import "./patch/hui-map-overview";
 import "./forge/uix-forge";
 import "./uix";
 

@@ -11,6 +11,7 @@ UIX can substitute the background entity image displayed by the following elemen
 - `ha-user-badge` (user badges)
 - `ha-person-badge` (person badges)
 - `hui-entity-badge` (entity badge)
+- `hui-map-overview` (map dashboard overview people and devices)
 
 Styling can be via [specifying for an entity override](#specifying-for-an-entity-override) or a [generic override](#specifying-generic-override).
 
@@ -36,6 +37,7 @@ uix:
 !!! tip
     - The variable can be set at any ancestor level in the DOM. UIX will detect it on the element via computed styles. If the variable is not set, or the element's entity does not match, the original image is left unchanged.
     - To style an override across Home Assistant Frontend add `--uix-image-for-<entity_id>` to theme variables `uix-root(-yaml)`, `uix-config(-yaml)` and `uix-more-info(-yaml)`.
+    - Map dashboard overview images support entity-specific overrides only; `--uix-image` does not apply there.
 
 ## Specifying generic override
 
