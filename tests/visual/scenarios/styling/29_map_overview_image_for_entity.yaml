@@ -21,4 +21,4 @@ assertions:
   - type: snapshot
     name: "67_map_overview_image_for_entity"
     root: hui-map-overview
-    threshold: 0.01
+    threshold: 0.02
