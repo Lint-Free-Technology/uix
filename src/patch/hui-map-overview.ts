@@ -109,6 +109,16 @@ const bindStyleUpdates = async (el: any): Promise<void> => {
   } finally {
     el._uixMapOverviewBindPending = false;
   }
+
+  // UIX nodes are appended asynchronously and template styles may not be
+  // populated during the first lookup. Retry briefly to catch those nodes.
+  if (el._uixMapOverviewBindRetries < 5 && el.isConnected) {
+    el._uixMapOverviewBindRetries++;
+    window.setTimeout(
+      () => void bindStyleUpdates(el),
+      250 * el._uixMapOverviewBindRetries
+    );
+  }
 };
 
 @patch_element("hui-map-overview")
@@ -117,6 +127,7 @@ class HuiMapOverviewPatch extends HTMLElement {
   _uixMapOverviewRenderedImageVars: Set<string> | undefined;
   _uixMapOverviewStyleController: AbortController | undefined;
   _uixMapOverviewBoundUix: Set<Uix> | undefined;
+  _uixMapOverviewBindRetries = 0;
 
   connectedCallback(_orig, ...args) {
     _orig?.(...args);
@@ -124,6 +135,7 @@ class HuiMapOverviewPatch extends HTMLElement {
     this._uixMapOverviewBoundUix?.clear();
     this._uixMapOverviewStyleController = new AbortController();
     this._uixMapOverviewBoundUix = undefined;
+    this._uixMapOverviewBindRetries = 0;
     void bindStyleUpdates(this);
   }
 
