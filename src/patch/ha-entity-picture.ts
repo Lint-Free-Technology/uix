@@ -145,9 +145,12 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       break;
     case "ha-entity-marker":
       if (imageUrl) {
+        // Reading entityPicture can populate _uixOriginalEntityPicture when a
+        // cluster-bubble marker is served from the map-level override cache.
+        const entityPicture = el.entityPicture;
         el._uix_replaced_image = el._uix_replaced_image
           ?? el._uixOriginalEntityPicture
-          ?? el.entityPicture
+          ?? entityPicture
           ?? false;
         el.entityPicture = imageUrl;
       } else if (el._uix_replaced_image !== undefined) {
