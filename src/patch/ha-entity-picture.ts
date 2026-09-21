@@ -54,7 +54,7 @@ const getParentMap = (el: any): any | null => {
 };
 
 const isClusterBubbleMarker = (el: any): boolean =>
-  el.closest?.(".cluster-bubble") !== null;
+  Boolean(el.closest?.(".cluster-bubble"));
 
 const getMapImageOverride = (el: any): string | undefined => {
   const entityId = getEntityId(el);
