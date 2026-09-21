@@ -151,13 +151,14 @@ const bindStyleUpdates = async (el: any): Promise<void> => {
 
   // UIX nodes are appended asynchronously and template styles may not be
   // populated during the first lookup. Retry briefly to catch those nodes.
+  const retries = el._uixMapOverviewBindRetries ?? 0;
   if (
     el._uixMapOverviewStyleController === controller &&
     !controller.signal.aborted &&
-    el._uixMapOverviewBindRetries < 5 &&
+    retries < 5 &&
     el.isConnected
   ) {
-    el._uixMapOverviewBindRetries++;
+    el._uixMapOverviewBindRetries = retries + 1;
     window.setTimeout(
       () => void bindStyleUpdates(el),
       250 * el._uixMapOverviewBindRetries
@@ -171,7 +172,7 @@ class HuiMapOverviewPatch extends HTMLElement {
   _uixMapOverviewRenderedImageVars: Set<string> | undefined;
   _uixMapOverviewStyleController: AbortController | undefined;
   _uixMapOverviewBoundUix: Set<Uix> | undefined;
-  _uixMapOverviewBindRetries = 0;
+  _uixMapOverviewBindRetries: number | undefined;
 
   connectedCallback(_orig, ...args) {
     _orig?.(...args);
