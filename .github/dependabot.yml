@@ -5,6 +5,20 @@ updates:
     schedule:
       interval: "daily"
     target-branch: "dev"
+    groups:
+      babel:
+        patterns:
+          - "@babel/core"
+          - "@babel/preset-env"
+    # These Babel updates are the suspected cause of the older-browser loading
+    # regression (https://github.com/Lint-Free-Technology/uix/issues/629). Keep
+    # checking for the next release so its grouped update PR can verify the fix
+    # without repeatedly proposing the affected releases.
+    ignore:
+      - dependency-name: "@babel/core"
+        versions: [">= 8.0.2, <= 8.0.5"]
+      - dependency-name: "@babel/preset-env"
+        versions: [">= 8.0.3, <= 8.0.5"]
     commit-message:
       prefix: "chore(deps)"
   - package-ecosystem: 'github-actions'
