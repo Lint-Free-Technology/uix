@@ -1,0 +1,24 @@
+id: map_overview_image_for_entity
+description: "UIX styles image for entity on map overview"
+view_path: map_overview_for_entity
+
+theme: uix-image-for-entity-theme
+
+card:
+  type: shortcut
+  tap_action:
+    action: navigate
+    navigation_path: /map
+  vertical: false
+
+interactions:
+  - type: click
+    root: hui-shortcut-card
+    selector: ha-card
+    settle_ms: 500
+
+assertions:
+  - type: snapshot
+    name: "67_map_overview_image_for_entity"
+    root: hui-map-overview
+    threshold: 0.01
