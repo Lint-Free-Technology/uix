@@ -1,7 +1,7 @@
 // Web Awesome 3.7.0-ha.1 installs a replaceSync wrapper even when the API is
 // absent. On iOS 15 that creates a non-writable, non-configurable property, so
 // the second copy (Home Assistant or UIX) throws during module evaluation.
-// Keep StateSet and the modern-browser patch, but leave legacy CSSOM alone.
+// Keep StateSet, but remove this duplicate bundle's global CSSOM patch.
 // https://github.com/Lint-Free-Technology/uix/issues/629
 const stateSetModule = "/@home-assistant/webawesome/dist/utilities/polyfills/stateset.js";
 const upstreamPatch = String.raw`const replaceSync = CSSStyleSheet.prototype.replaceSync;
@@ -11,22 +11,6 @@ Object.defineProperty(CSSStyleSheet.prototype, "replaceSync", {
     replaceSync.call(this, text);
   }
 });`;
-const compatibilityPatch = String.raw`const replaceSync = CSSStyleSheet.prototype.replaceSync;
-const replaceSyncDescriptor = Object.getOwnPropertyDescriptor(CSSStyleSheet.prototype, "replaceSync");
-if (replaceSyncDescriptor?.configurable !== false) {
-  Object.defineProperty(CSSStyleSheet.prototype, "replaceSync", {
-    configurable: true,
-    writable: true,
-    value: function(text) {
-      text = text.replace(/:state\(([^)]+)\)/g, (match, state, offset, source) =>
-        source.slice(Math.max(0, offset - 7), offset) === ":where(" ? match :
-          ":where(:state(" + state + "), :--" + state + ", [state-" + state + "])"
-      );
-      replaceSync.call(this, text);
-    }
-  });
-}`;
-
 export default function webAwesomeCompatibility() {
   return {
     name: "uix-webawesome-compatibility",
@@ -40,17 +24,12 @@ export default function webAwesomeCompatibility() {
       }
 
       return {
-        code: code.replace(upstreamPatch, `
-// Check replace as well: HA may already have installed its broken replaceSync
-// wrapper on a browser without constructible stylesheets. Preserve a locked
-// wrapper installed by HA first; a UIX-installed wrapper remains replaceable
-// so HA's later copy can safely install itself.
-if (typeof CSSStyleSheet !== "undefined" &&
-    typeof CSSStyleSheet.prototype.replace === "function" &&
-    typeof CSSStyleSheet.prototype.replaceSync === "function") {
-${compatibilityPatch}
-}
-`),
+        // Home Assistant already bundles and executes this patch. Leaving it
+        // in UIX creates a second wrapper with no safe load order: on iOS 15
+        // the first copy locks a newly created property; on newer browsers
+        // both copies transform :state() and corrupt the selector. UIX only
+        // uses StateSet's exported fallback, which remains in this module.
+        code: code.replace(upstreamPatch, ""),
         map: null,
       };
     },
