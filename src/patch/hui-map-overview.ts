@@ -14,11 +14,11 @@ const imageVarForEntity = (entityId: string): string =>
   `--uix-image-for-${entityId.replace(/\./g, "_")}`;
 
 const subscribeImageVar = (el: any, imageVar: string): void => {
-  const subscribed: Set<string> = el._uixMapOverviewImageVars ??= new Set();
-  if (subscribed.has(imageVar)) return;
-
   const coordinator = (window as any).uixCoordinator;
   if (!coordinator?._registerImageForEntityCallback) return;
+
+  const subscribed: Set<string> = el._uixMapOverviewImageVars ??= new Set();
+  if (subscribed.has(imageVar)) return;
 
   subscribed.add(imageVar);
   coordinator._registerImageForEntityCallback(el, imageVar, () => {
