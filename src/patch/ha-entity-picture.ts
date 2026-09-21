@@ -153,9 +153,12 @@ const applyImage = (el: any, imageUrl: string | null): void => {
           ?? entityPicture
           ?? false;
         el.entityPicture = imageUrl;
-      } else if (el._uix_replaced_image !== undefined) {
-        el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
-        delete el._uix_replaced_image;
+      } else {
+        if (el._uix_replaced_image !== undefined) {
+          el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+          delete el._uix_replaced_image;
+        }
+        delete el._uixOriginalEntityPicture;
       }
       break;
     case "ha-user-badge":
@@ -296,6 +299,7 @@ const bindUix = async (el: any) => {
         this._uixOriginalEntityPicture = originalPicture ?? false;
         return imageOverride;
       }
+      delete this._uixOriginalEntityPicture;
       return originalPicture;
     }
   );
