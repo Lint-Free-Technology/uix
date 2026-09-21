@@ -109,18 +109,31 @@ for (const patched of [uix, panel]) {
   sheet.replaceSync(":state(active) { color: red; }");
   assert.equal(sheet.received,
     ":where(:state(active), :--active, [state-active]) { color: red; }");
+  const patchedDescriptor = Object.getOwnPropertyDescriptor(
+    modern.CSSStyleSheet.prototype, "replaceSync"
+  );
+  assert.equal(patchedDescriptor.configurable, true);
+  assert.equal(patchedDescriptor.writable, true);
 
   for (const order of [[patched, ha], [ha, patched]]) {
     const context = browser(true);
+    const nativeReplaceSync = context.CSSStyleSheet.prototype.replaceSync;
     for (const code of order) load(context, code);
     const sheet = new context.CSSStyleSheet();
-    sheet.replaceSync("body { color: red; }");
-    assert.equal(sheet.received, "body { color: red; }");
+    sheet.replaceSync(":state(active) { color: red; }");
+    assert.equal(sheet.received,
+      ":where(:state(active), :--active, [state-active]) { color: red; }");
     const descriptor = Object.getOwnPropertyDescriptor(
       context.CSSStyleSheet.prototype, "replaceSync"
     );
-    assert.equal(descriptor.configurable, true);
-    assert.equal(descriptor.writable, true);
+    if (order[0] === patched) {
+      assert.equal(descriptor.configurable, true);
+      assert.equal(descriptor.writable, true);
+    } else {
+      assert.equal(descriptor.configurable, false);
+      assert.equal(descriptor.writable, false);
+      assert.notEqual(context.CSSStyleSheet.prototype.replaceSync, nativeReplaceSync);
+    }
   }
 
   // Importing the module without CSSOM must also retain StateSet.

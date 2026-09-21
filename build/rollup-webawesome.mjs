@@ -11,6 +11,21 @@ Object.defineProperty(CSSStyleSheet.prototype, "replaceSync", {
     replaceSync.call(this, text);
   }
 });`;
+const compatibilityPatch = String.raw`const replaceSync = CSSStyleSheet.prototype.replaceSync;
+const replaceSyncDescriptor = Object.getOwnPropertyDescriptor(CSSStyleSheet.prototype, "replaceSync");
+if (replaceSyncDescriptor?.configurable !== false) {
+  Object.defineProperty(CSSStyleSheet.prototype, "replaceSync", {
+    configurable: true,
+    writable: true,
+    value: function(text) {
+      text = text.replace(/:state\(([^)]+)\)/g, (match, state, offset, source) =>
+        source.slice(Math.max(0, offset - 7), offset) === ":where(" ? match :
+          ":where(:state(" + state + "), :--" + state + ", [state-" + state + "])"
+      );
+      replaceSync.call(this, text);
+    }
+  });
+}`;
 
 export default function webAwesomeCompatibility() {
   return {
@@ -27,11 +42,13 @@ export default function webAwesomeCompatibility() {
       return {
         code: code.replace(upstreamPatch, `
 // Check replace as well: HA may already have installed its broken replaceSync
-// wrapper on a browser without constructible stylesheets.
+// wrapper on a browser without constructible stylesheets. Preserve a locked
+// wrapper installed by HA first; a UIX-installed wrapper remains replaceable
+// so HA's later copy can safely install itself.
 if (typeof CSSStyleSheet !== "undefined" &&
     typeof CSSStyleSheet.prototype.replace === "function" &&
     typeof CSSStyleSheet.prototype.replaceSync === "function") {
-${upstreamPatch}
+${compatibilityPatch}
 }
 `),
         map: null,
