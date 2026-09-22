@@ -1,3 +1,9 @@
+## [8.3.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1-beta.1...v8.3.1-beta.2) (2026-09-22)
+
+### 🐞 Bug Fixes
+
+* **forge:** Restore Map spark operation after breaking due to Home Assistant 2026.9.0 map upgrades ([#633](https://github.com/Lint-Free-Technology/uix/issues/633)) ([32ce9ab](https://github.com/Lint-Free-Technology/uix/commit/32ce9ab13df98f4beb3106ad94de0a46aba3af91)), references [#632](https://github.com/Lint-Free-Technology/uix/issues/632)
+
 ## [8.3.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0...v8.3.1-beta.1) (2026-09-22)
 
 ### 🐞 Bug Fixes
