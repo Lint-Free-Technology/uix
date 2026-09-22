@@ -1,3 +1,10 @@
+## [8.3.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0...v8.3.1) (2026-09-22)
+
+### 🐞 Bug Fixes
+
+* **forge:** Restore Map spark operation after breaking due to Home Assistant 2026.9.0 map upgrades ([#633](https://github.com/Lint-Free-Technology/uix/issues/633)) ([32ce9ab](https://github.com/Lint-Free-Technology/uix/commit/32ce9ab13df98f4beb3106ad94de0a46aba3af91)), references [#632](https://github.com/Lint-Free-Technology/uix/issues/632)
+* Workaround the loading of webawesome-ha causing Frontend not to load on older devices including iOS 15. ([#631](https://github.com/Lint-Free-Technology/uix/issues/631)) ([d97c350](https://github.com/Lint-Free-Technology/uix/commit/d97c350075818376a9fac85cd6f3f867340c8e67)), closes [#629](https://github.com/Lint-Free-Technology/uix/issues/629)
+
 ## [8.3.1-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1-beta.1...v8.3.1-beta.2) (2026-09-22)
 
 ### 🐞 Bug Fixes
