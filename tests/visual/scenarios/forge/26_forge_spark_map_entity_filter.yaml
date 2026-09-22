@@ -3,6 +3,7 @@ description: "Map spark in entity_filter mode renders an interactive dropdown ch
 view_path: forge-spark-map-entity-filter
 
 setup:
+  - type: clear_demo_geo_locations
   - type: webhook
     webhook_id: uix_device_tracker_uix_tracker_one
     payload:
