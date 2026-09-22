@@ -10,11 +10,12 @@
 # Quick reference
 # ---------------
 #   make ha_up           Start a persistent HA container for fast iterative work
+#   make smoke               Run smoke tests without Lovelace scenarios
 #   make doc_images_gen      Generate any missing documentation images (first-run bootstrap)
 #   make doc_images_update   Regenerate ALL documentation images (use after HA/UIX visual changes)
 #   make doc_audit           Check that all doc images are scenario-generated or explicitly excluded
 
-.PHONY: ha_up ha-tests-up doc_images_gen doc_images_update doc_audit
+.PHONY: ha_up ha-tests-up smoke doc_images_gen doc_images_update doc_audit
 
 # Start a persistent Home Assistant container and leave it running.
 # The script prints HA_URL and HA_TOKEN and writes them to .ha_env.
@@ -22,6 +23,11 @@
 # Press Ctrl-C here to stop HA.
 ha_up ha-tests-up:
 	HA_VERSION="$$(awk 'NF && $$1 !~ /^#/ { print; exit }' tests/HA_VERSION 2>/dev/null || true)"; HA_VERSION="$${HA_VERSION:-stable}" HA_CONFIG_PATH=tests/ha-config HA_CUSTOM_COMPONENTS_PATH=custom_components HA_SETUP_INTEGRATION=uix HA_PLUGINS_YAML=tests/plugins.yaml python -m ha_testcontainer.ha_server
+
+# Shared selection used by VS Code and direct pytest invocations.
+# Source .ha_env first to reuse a persistent Home Assistant instance.
+smoke:
+	pytest @tests/smoke.txt
 
 # Run the doc-image test suite.  Missing images are created automatically;
 # existing images are verified against the current rendered output.
