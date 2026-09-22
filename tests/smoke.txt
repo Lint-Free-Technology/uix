@@ -5,4 +5,5 @@ tests/test_connection_disable_icon_styling.py
 tests/test_connection_style_custom_panels.py
 tests/test_console_debug_dom_helpers.py
 tests/test_forge_config_builder.py
+tests/test_forge_spark_map_positions.py
 tests/test_webawesome_compatibility.py
