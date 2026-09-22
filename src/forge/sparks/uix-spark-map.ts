@@ -722,8 +722,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   private _applyTourButtonPosition(el: HTMLElement): void {
-    const pos = this._tourIconPosition ?? { bottom: "10px", right: "10px" };
-    const isDefault = pos.bottom === "10px" && pos.right === "10px";
+    const pos = this._tourIconPosition ?? { bottom: "40px", right: "10px" };
+    const isDefault = pos.bottom === "40px" && pos.right === "10px";
     if (isDefault) {
       return;
     }
@@ -1183,7 +1183,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _applySliderPosition(el: HTMLElement): void {
     const sliderPos = this._hoursToShowConfig?.position;
-    const isDefault = !sliderPos || (sliderPos.bottom === "10px" && sliderPos.right === "10px");
+    const isDefault = !sliderPos || (sliderPos.bottom === "40px" && sliderPos.right === "10px");
     if (isDefault) {
       return;
     }
@@ -1328,7 +1328,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const mapContainer = this._getMapContainer(haMap);
     if (!mapContainer) return;
 
-    const isDefault = !positionConfig || (positionConfig.bottom === "10px" && positionConfig.right === "10px");
+    const isDefault = !positionConfig || (positionConfig.bottom === "40px" && positionConfig.right === "10px");
 
     if (isDefault) {
       const controls = this._getOrCreateBottomRightControls(haMap);
@@ -1913,7 +1913,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _applyEntityFilterPosition(el: HTMLElement): void {
     const filterPos = this._entityFilterConfig?.position;
-    const isDefault = !filterPos || (filterPos.bottom === "10px" && filterPos.right === "10px");
+    const isDefault = !filterPos || (filterPos.bottom === "40px" && filterPos.right === "10px");
     if (isDefault) {
       return;
     }

@@ -69,6 +69,8 @@ Each `poi` list entry may contain:
 | `position` | object | `{bottom: 40px, right: 10px}` | CSS position of the slider capsule. Accepts `top`, `bottom`, `left`, and `right` keys (numbers are treated as pixels). |
 | `tooltip_distance` | number | `20` | Distance in pixels of slider tooltip away from thumb. |
 
+Controls with no position configured, or an explicit `{bottom: 40px, right: 10px}`, share a horizontal row above the map attribution. Other positions, including `{bottom: 10px, right: 10px}`, use the configured offsets independently.
+
 ### Entity Filter sub-keys
 
 | Key | Type | Default | Description |
