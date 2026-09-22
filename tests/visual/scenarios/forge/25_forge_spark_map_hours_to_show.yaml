@@ -3,18 +3,25 @@ description: "Map spark in hours_to_show mode renders an interactive slider cont
 view_path: forge-spark-map-hours-to-show
 
 setup:
+  - type: clear_demo_geo_locations
   - type: mock_history
     entity_id: device_tracker.uix_test_person_slider
     points:
-      - lat: 51.5200
-        lng: -0.1300
+      - lat: 51.5202
+        lng: -0.16963
+        age_hours: 14
+      - lat: 51.5310
+        lng: -0.12350
         age_hours: 12
-      - lat: 51.5210
-        lng: -0.1290
-        age_hours: 6
+      - lat: 51.5262
+        lng: -0.08785
+        age_hours: 3
+      - lat: 51.5187
+        lng: -0.11174
+        age_hours: 2
       - lat: 51.5220
         lng: -0.1280
-        age_hours: 2
+        age_hours: 1
   - type: webhook
     webhook_id: uix_device_tracker_uix_test_person_slider
     payload:
@@ -37,6 +44,7 @@ card:
   element:
     type: map
     hours_to_show: 3
+    default_zoom: 13
     entities:
       - entity: device_tracker.uix_test_person_slider
 
@@ -64,4 +72,4 @@ assertions:
 
   - type: snapshot
     name: "28_forge_spark_map_hours_to_show"
-    threshold: 0.05
+    threshold: 0.01
