@@ -1,3 +1,9 @@
+## [8.3.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0...v8.3.1-beta.1) (2026-09-22)
+
+### 🐞 Bug Fixes
+
+* Workaround the loading of webawesome-ha causing Frontend not to load on older devices including iOS 15. ([#631](https://github.com/Lint-Free-Technology/uix/issues/631)) ([d97c350](https://github.com/Lint-Free-Technology/uix/commit/d97c350075818376a9fac85cd6f3f867340c8e67)), closes [#629](https://github.com/Lint-Free-Technology/uix/issues/629)
+
 ## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
 
 ### ⭐ New Features
