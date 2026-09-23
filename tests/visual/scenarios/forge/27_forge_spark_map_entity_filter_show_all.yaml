@@ -3,6 +3,7 @@ description: "Map spark in entity_filter mode works with show_all: true"
 view_path: forge-spark-map-entity-filter-show-all
 
 setup:
+  - type: clear_demo_geo_locations
   - type: webhook
     webhook_id: uix_device_tracker_uix_test_person
     payload:
