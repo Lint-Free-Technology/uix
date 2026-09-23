@@ -35,15 +35,22 @@ pytest tests/
 ### Smoke tests only (no Lovelace scenarios)
 
 ```bash
-pytest \
-  tests/visual/test_uix_styling.py \
-  tests/test_connection_disable_entity_picture_image_override.py \
-  tests/test_connection_disable_hash_template_variable.py \
-  tests/test_connection_disable_icon_styling.py \
-  tests/test_connection_style_frame_panels.py \
-  tests/test_console_debug_dom_helpers.py \
-  tests/test_forge_config_builder.py
+pytest @tests/smoke.txt
+# or:
+make smoke
 ```
+
+The shared selection is maintained in [`smoke.txt`](smoke.txt), with one test
+path per line relative to the repository root. Add new smoke test files there;
+the VS Code **pytest: Smoke tests (no scenarios)** task and `make smoke` use
+the same list. It includes the Web Awesome compatibility regression test.
+
+This uses pytest's [argument-file support](https://docs.pytest.org/en/stable/how-to/usage.html#read-arguments-from-file)
+(pytest 8.2+, included in the test dependencies). Additional filters work as
+usual, for example `pytest @tests/smoke.txt -k webawesome`.
+
+The suite includes browser/HA checks. Source `.ha_env` first to reuse a
+persistent Home Assistant instance, as described below.
 
 ### Run all visual scenarios
 
@@ -128,6 +135,7 @@ end of the session — it keeps running until you press Ctrl-C in Terminal 1.
 ```
 tests/
 ├── conftest.py                       # Session-scoped HA container + Lovelace dashboard fixtures
+├── smoke.txt                         # Shared smoke-suite selection for pytest, Make, and VS Code
 ├── test_doc_audit.py                 # Doc-image audit — checks all PNG/GIF refs are tracked
 ├── doc-image-audit-exclusions.txt    # Paths excluded from the audit (hand-crafted images)
 ├── ha-config/
