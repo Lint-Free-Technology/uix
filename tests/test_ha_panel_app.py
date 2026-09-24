@@ -1,0 +1,172 @@
+from __future__ import annotations
+
+import json
+import subprocess
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PANEL_APP_TS_PATH = REPO_ROOT / "src" / "patch" / "ha-panel-app.ts"
+
+
+def test_active_app_panel_is_configured_when_frame_styling_becomes_available() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "const iframe = {};"
+                "const panel = {"
+                "  localName: 'ha-panel-app',"
+                "  shadowRoot: { querySelector: () => iframe },"
+                "  panel: { config: { addon: 'core_zigbee2mqtt' } },"
+                "  hass: { themes: {} }"
+                "};"
+                "const applied = [];"
+                "const setups = [];"
+                "const configListeners = {};"
+                "global.window = {"
+                "  uixCoordinator: {"
+                "    styleFramePanels: false,"
+                "    addEventListener: (name, listener) => { configListeners[name] = listener; },"
+                "    removeEventListener: (name) => { delete configListeners[name]; }"
+                "  },"
+                "  setTimeout"
+                "};"
+                "global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return {"
+                "    patch_element: (_name, after) => (target) => { after?.(); return target; }"
+                "  };"
+                "  if (name === '../helpers/apply_uix') return {"
+                "    ModdedElement: class {}, apply_uix: (_panel, type) => { applied.push(type); }"
+                "  };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: (...args) => setups.push(args) };"
+                "  if (name === '../helpers/selecttree') return { selectTree: async () => panel };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "setTimeout(() => {"
+                "  window.uixCoordinator.styleFramePanels = true;"
+                "  configListeners['uix-config-update']();"
+                "  process.stdout.write(JSON.stringify({ applied, setups: setups.length, types: setups[0]?.[1]?.themeTypes }));"
+                "}, 0);"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {
+        "applied": ["app", "app"],
+        "setups": 1,
+        "types": ["core_zigbee2mqtt", "zigbee2mqtt"],
+    }
+
+
+def test_app_panel_configures_an_iframe_added_after_its_update() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "let iframe = null;"
+                "const observers = [];"
+                "global.MutationObserver = class {"
+                "  constructor(callback) { this.callback = callback; observers.push(this); }"
+                "  observe() {} disconnect() {}"
+                "};"
+                "const panel = {"
+                "  localName: 'ha-panel-app',"
+                "  shadowRoot: { querySelector: () => iframe },"
+                "  panel: { config: { addon: 'core_zigbee2mqtt' } },"
+                "  hass: { themes: {} }"
+                "};"
+                "const setups = [];"
+                "global.window = { uixCoordinator: { styleFramePanels: true }, setTimeout: () => undefined };"
+                "global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return {"
+                "    patch_element: (_name, after) => (target) => { after?.(); return target; }"
+                "  };"
+                "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: (...args) => setups.push(args) };"
+                "  if (name === '../helpers/selecttree') return { selectTree: async () => panel };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "setTimeout(() => {"
+                "  iframe = {};"
+                "  observers[0].callback();"
+                "  process.stdout.write(JSON.stringify({ observers: observers.length, setups: setups.length }));"
+                "}, 0);"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"observers": 1, "setups": 1}
+
+
+def test_app_panel_updates_an_existing_frame_for_the_current_route_and_hass() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "const iframe = {}; const setups = []; let AppPanel;"
+                "global.window = { uixCoordinator: { styleFramePanels: true }, setTimeout: () => undefined };"
+                "global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return {"
+                "    patch_element: (name) => (target) => { if (name === 'ha-panel-app') AppPanel = target; return target; }"
+                "  };"
+                "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: (...args) => setups.push(args) };"
+                "  if (name === '../helpers/selecttree') return { selectTree: async () => null };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const firstHass = { themes: { theme: 'One' } };"
+                "const secondHass = { themes: { theme: 'Two' } };"
+                "const panel = new AppPanel();"
+                "panel.shadowRoot = { querySelector: () => iframe };"
+                "panel.panel = { config: { addon: 'core_zigbee2mqtt' } };"
+                "panel.hass = firstHass; panel.updated(() => {}, new Map());"
+                "panel.hass = secondHass;"
+                "panel.panel = { config: { addon: 'core_matter-server' } };"
+                "panel.updated(() => {}, new Map());"
+                "process.stdout.write(JSON.stringify({"
+                "  setups: setups.length, current: setups[0]?.[1]?.hass === secondHass,"
+                "  types: setups[0]?.[1]?.themeTypes"
+                "}));"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {
+        "setups": 1,
+        "current": True,
+        "types": ["core_matter-server", "matter-server"],
+    }

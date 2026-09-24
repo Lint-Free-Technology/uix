@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONNECTION_TS_PATH = REPO_ROOT / "src" / "coordinator" / "connection.ts"
 
 
-def test_style_custom_panels_setting_and_override() -> None:
+def test_style_frame_panels_setting_and_legacy_override() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -33,13 +33,15 @@ def test_style_custom_panels_setting_and_override() -> None:
                 "const { ConnectionMixin } = moduleObj.exports;"
                 "const Mixed = ConnectionMixin(class {});"
                 "const inst = new Mixed();"
+                "inst._data = { style_frame_panels: true, style_custom_panels: false };"
+                "const fromFrameConfig = inst.styleFramePanels;"
                 "inst._data = { style_custom_panels: true };"
                 "const fromConfig = inst.styleCustomPanels;"
-                "inst.setStyleCustomPanelsOverride(false);"
-                "const fromOverride = inst.styleCustomPanels;"
+                "inst.setStyleFramePanelsOverride(false);"
+                "const fromOverride = inst.styleFramePanels;"
                 "inst.setStyleCustomPanelsOverride(null);"
-                "const afterClear = inst.styleCustomPanels;"
-                "process.stdout.write(JSON.stringify({ fromConfig, fromOverride, afterClear }));"
+                "const afterClear = inst.styleFramePanels;"
+                "process.stdout.write(JSON.stringify({ fromFrameConfig, fromConfig, fromOverride, afterClear }));"
             ),
             str(CONNECTION_TS_PATH),
         ],
@@ -49,6 +51,7 @@ def test_style_custom_panels_setting_and_override() -> None:
 
     result = json.loads(output)
     assert result == {
+        "fromFrameConfig": True,
         "fromConfig": True,
         "fromOverride": False,
         "afterClear": True,

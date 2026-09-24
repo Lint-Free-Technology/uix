@@ -12,8 +12,12 @@ which belongs to the configuration panel and uses `uix-config`.
 
 ## Example
 
-This example styles the panel header and places a non-interactive CRT overlay
-above the ingress iframe:
+This example styles the Home Assistant panel header and places a
+non-interactive CRT overlay above the ingress iframe. It also styles the
+Zigbee2MQTT document inside that iframe.
+
+Enable the experimental [Style frame panels](../extras/style-frame-panels.md)
+option before using the `uix-zigbee2mqtt` block.
 
 ```yaml
 My theme:
@@ -43,13 +47,31 @@ My theme:
         transparent 3px
       );
     }
+
+  # This is inside the Zigbee2MQTT iframe, not ha-panel-app.
+  uix-zigbee2mqtt: |
+    :root {
+      --color-base-100: #041b0b;
+      --color-base-content: #7cff88;
+      --bg-color: #041b0b;
+    }
 ```
 
 ![App panel styling example](../assets/page-assets/using/app-panel-example.png){ width="450px" }
 
 ## Scope
 
-`uix-app` styles the Home Assistant panel chrome and can overlay its iframe.
-It does not style the document inside that iframe. Ingress applications do not
-share a defined root element or rendering lifecycle, so iframe-content styling
-is a separate capability.
+`uix-app` continues to style the Home Assistant panel chrome and can overlay its
+iframe. UIX also installs its internal frame runtime in same-origin app frames.
+Frame-content styling requires the experimental
+[Style frame panels](../extras/style-frame-panels.md) option; host styling does
+not.
+For frame content, use `uix-<add-on-slug>` (or the `-yaml` form). UIX first
+checks the complete Home Assistant add-on slug and then a repository-independent
+slug with `core_`, `local_`, or an eight-character repository hash removed.
+For example, `uix-a0d7b954_nodered` takes precedence over `uix-nodered`.
+
+The frame runtime is an internal API shared with iframe custom panels. This does
+not merge the user-facing concepts: `uix-app` always means the `<ha-panel-app>`
+container, while `uix-panel-custom` always means the `<ha-panel-custom>`
+container.

@@ -8,8 +8,7 @@
             "old_frontend_script_resource": "Conflicting Frontend script resource {resource} is registered as a Dashboard resource. Please remove it before adding UIX.",
             "old_frontend_script_extra_module": "Conflicting Frontend script resource {resource} is registered as an extra module. Please remove it before adding UIX."
         },
-        "step": {
-        }
+        "step": {}
     },
     "options": {
         "step": {
@@ -68,11 +67,11 @@
                 "description": "Configure experimental features for UIX.",
                 "data": {
                     "always_patch_ha_card": "Always patch ha-card",
-                    "style_custom_panels": "Style custom panels loaded as iframe"
+                    "style_frame_panels": "Style frame panels loaded as iframe"
                 },
                 "data_description": {
                     "always_patch_ha_card": "When enabled, always patch ha-card, even when there is no card config. This allows patching when ha-card is used in settings dashboards or custom panels.",
-                    "style_custom_panels": "When enabled, apply UIX theme styling to custom panels loaded as iframe."
+                    "style_frame_panels": "When enabled, apply UIX theme styling inside supported app and custom-panel frames."
                 }
             },
             "broker_settings": {

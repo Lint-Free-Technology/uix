@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import pjson from "../../package.json";
+import { setupFrameRuntime, type UixFrameOptions } from "../frame/frame-api";
 
 /*
 Patch ha-panel-config for theme styling
@@ -26,11 +26,21 @@ Patch ha-panel-custom
 
 @patch_element("ha-panel-custom")
 class HaPanelCustomPatch extends ModdedElement {
+  public panel: any;
+  public hass: any;
+
   updated(_orig, ...args) {
     _orig?.(...args);
+    this.refreshFrameHass();
     if (args[0].has("route") || args[0].has("panel")) {
       apply_uix(this, "panel-custom", { prepend: true });
     }
+  }
+
+  private refreshFrameHass() {
+    const iframe = this.shadowRoot?.querySelector("iframe") || this.querySelector("iframe");
+    const frameOptions = (iframe as any)?._uixFrameOptions as UixFrameOptions | undefined;
+    if (frameOptions) frameOptions.hass = this.hass;
   }
   _createPanel(_orig, ...args) {
     _orig?.(...args);
@@ -44,25 +54,17 @@ class HaPanelCustomPatch extends ModdedElement {
       hasRun = true;
       cleanup();
 
-      const injectLoader = (iframe: HTMLIFrameElement) => {
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (!doc) return;
-          if (doc.getElementById("uix-custom-panel-loader")) return;
-          const script = doc.createElement("script");
-          script.id = "uix-custom-panel-loader";
-          script.src = `/uix/uixCustomPanel.js?v=${pjson.version}`;
-          doc.head?.appendChild(script) || doc.body?.appendChild(script) || doc.documentElement.appendChild(script);
-        } catch (e) {
-          console.warn("UIX: failed to inject custom panel javascript into iframe", e);
-        }
-      };
-
       const setupIframe = (iframe: HTMLIFrameElement) => {
-        iframe.addEventListener("load", () => {
-          injectLoader(iframe);
-        });
-        injectLoader(iframe);
+        const name = this.panel?.config?._panel_custom?.name;
+        if (!name) return;
+        const frameOptions: UixFrameOptions = (iframe as any)._uixFrameOptions || {
+          roots: [name],
+          themeTypes: [name],
+          hass: this.hass,
+        };
+        frameOptions.hass = this.hass;
+        (iframe as any)._uixFrameOptions = frameOptions;
+        setupFrameRuntime(iframe, frameOptions);
       };
 
       const findAndSetup = () => {
@@ -86,7 +88,7 @@ class HaPanelCustomPatch extends ModdedElement {
     };
 
     const checkAndRun = () => {
-      if (coordinator?.styleCustomPanels) {
+      if (coordinator?.styleFramePanels) {
         run();
       }
     };
@@ -96,7 +98,7 @@ class HaPanelCustomPatch extends ModdedElement {
       coordinator?.removeEventListener?.("uix-config-update", checkAndRun);
     };
 
-    if (coordinator?.styleCustomPanels) {
+    if (coordinator?.styleFramePanels) {
       run();
     } else {
       coordinator?.addEventListener?.("uix-config-update", checkAndRun);

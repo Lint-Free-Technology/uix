@@ -37,9 +37,9 @@ export default [
     ],
   },
   {
-    input: "src/custom-panel/main-custom-panel.ts",
+    input: "src/frame/main-frame.ts",
     output: {
-      file: "custom_components/uix/uixCustomPanel.js",
+      file: "custom_components/uix/uixFrame.js",
       format: "es",
     },
     plugins: [
