@@ -7,6 +7,7 @@ tests/test_console_debug_dom_helpers.py
 tests/test_frame_api.py
 tests/test_frame_apply.py
 tests/test_frame_panel_identity.py
+tests/test_frame_style_renderer.py
 tests/test_forge_config_builder.py
 tests/test_forge_spark_map_positions.py
 tests/test_ha_panel_app.py

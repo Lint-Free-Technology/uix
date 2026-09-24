@@ -1,4 +1,5 @@
-// Bootstrap listeners must be imported before UIX dispatches uix-bootstrap.
+// This listener has no UIX dependencies, so it is evaluated before uix.ts.
+import "./frame-bootstrap";
 import "./frame-apply";
 import "../console_debug";
 import "../coordinator/coordinator";

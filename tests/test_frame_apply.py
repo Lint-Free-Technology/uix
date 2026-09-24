@@ -94,3 +94,45 @@ def test_non_lit_frame_uses_the_stylesheet_renderer() -> None:
         "stylesheetCalls": 1,
         "type": "test-app",
     }
+
+
+def test_frame_applies_styles_when_uix_bootstrapped_during_module_loading() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const root = { localName: 'body' };"
+                "const frameHass = { themes: { theme: 'UIX Test', themes: { 'UIX Test': { 'uix-test-app': 'body { color: red; }' } } } };"
+                "const listeners = {};"
+                "const stylesheetCalls = [];"
+                "global.window = {"
+                "  uixFrameBootstrapRequested: true,"
+                "  uixFrameOptions: { roots: ['body'], themeTypes: ['test-app'], hass: frameHass },"
+                "  addEventListener: (name, listener) => { listeners[name] = listener; },"
+                "  getComputedStyle: () => ({ getPropertyValue: () => '' }), setTimeout"
+                "};"
+                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null };"
+                "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: async () => {} };"
+                "  if (name === '../helpers/hass') return { hass: async () => frameHass };"
+                "  if (name === '../theme-watcher') return { themesReady: async () => {} };"
+                "  if (name === './frame-style-renderer') return { applyFrameStyles: (...args) => stylesheetCalls.push(args) };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "setTimeout(() => process.stdout.write(JSON.stringify({ stylesheetCalls: stylesheetCalls.length })), 0);"
+            ),
+            str(FRAME_APPLY_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"stylesheetCalls": 1}

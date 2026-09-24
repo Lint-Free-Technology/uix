@@ -31,7 +31,10 @@ async function resolveThemeType(types: string[], frameHass?: any): Promise<strin
 
 window.addEventListener("uix-bootstrap", async (event: Event) => {
   event.stopPropagation();
+  await applyFrameStylesForBootstrap();
+});
 
+async function applyFrameStylesForBootstrap() {
   const options = window.uixFrameOptions;
   if (!options?.roots?.length || !options.themeTypes?.length) return;
 
@@ -65,4 +68,10 @@ window.addEventListener("uix-bootstrap", async (event: Event) => {
       applyFrameStyles(root, type, theme);
     }
   }
-});
+}
+
+// uix.ts can dispatch before this module is evaluated because apply_uix
+// imports it. frame-bootstrap records that early event for us.
+if ((window as any).uixFrameBootstrapRequested) {
+  void applyFrameStylesForBootstrap();
+}

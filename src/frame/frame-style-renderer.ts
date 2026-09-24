@@ -49,7 +49,7 @@ class FrameStyleRenderer {
 
   async refresh() {
     const styles = await get_theme(this.context as any);
-    if (!styles) return this.updateStyles("");
+    if (!styles) return this.clearStyles();
 
     if (typeof styles !== "string") {
       const selectorPaths = Object.keys(styles).filter((path) => path !== ".");
@@ -63,7 +63,7 @@ class FrameStyleRenderer {
     }
 
     const style = typeof styles === "string" ? styles : styles["."];
-    if (typeof style !== "string") return this.updateStyles("");
+    if (typeof style !== "string") return this.clearStyles();
 
     const macros = await get_theme_macros(this.context as any);
     const source = `${buildMacros(macros, style)}${style}`;
@@ -100,6 +100,12 @@ class FrameStyleRenderer {
       root.adoptedStyleSheets.push(this.sheet);
     }
     this.sheet.replaceSync(styles);
+  }
+
+  private async clearStyles() {
+    await this.unbindTemplate();
+    this.templateSource = undefined;
+    this.updateStyles("");
   }
 
   private async bindTemplate(template: string) {
