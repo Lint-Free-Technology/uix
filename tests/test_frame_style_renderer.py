@@ -19,12 +19,15 @@ def test_clearing_a_frame_style_unsubscribes_its_template() -> None:
                 "const esbuild = require('esbuild');"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
                 "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
-                "const listeners = {}; let unsubscribed = 0; let themeIndex = 0;"
+                "const listeners = {}; let unsubscribed = 0; let removedListeners = 0; let themeIndex = 0;"
                 "const ownerDocument = { adoptedStyleSheets: [] };"
                 "const target = { getRootNode: () => ownerDocument, ownerDocument, parentNode: ownerDocument };"
                 "global.ShadowRoot = class {};"
                 "global.CSSStyleSheet = class { replaceSync(styles) { this.styles = styles; } };"
-                "global.document = { addEventListener: (name, listener) => { listeners[name] = listener; } };"
+                "global.document = {"
+                "  addEventListener: (name, listener) => { listeners[name] = listener; },"
+                "  removeEventListener: (name, listener) => { if (listeners[name] === listener) delete listeners[name]; removedListeners++; }"
+                "};"
                 "const frameHass = { user: { name: 'Test' }, connection: {"
                 "  subscribeMessage: async () => async () => { unsubscribed++; }"
                 "} };"
@@ -44,9 +47,9 @@ def test_clearing_a_frame_style_unsubscribes_its_template() -> None:
                 "(async () => {"
                 "  moduleObj.exports.applyFrameStyles(target, 'test-app');"
                 "  await new Promise((resolve) => setTimeout(resolve, 0));"
-                "  listeners['uix-update']({});"
+                "  moduleObj.exports.clearFrameStyles(target);"
                 "  await new Promise((resolve) => setTimeout(resolve, 0));"
-                "  process.stdout.write(JSON.stringify({ unsubscribed, styles: ownerDocument.adoptedStyleSheets[0].styles }));"
+                "  process.stdout.write(JSON.stringify({ unsubscribed, removedListeners, styles: ownerDocument.adoptedStyleSheets[0].styles }));"
                 "})();"
             ),
             str(FRAME_STYLE_RENDERER_TS_PATH),
@@ -55,7 +58,7 @@ def test_clearing_a_frame_style_unsubscribes_its_template() -> None:
         text=True,
     )
 
-    assert json.loads(output) == {"unsubscribed": 1, "styles": ""}
+    assert json.loads(output) == {"unsubscribed": 1, "removedListeners": 1, "styles": ""}
 
 
 def test_frame_renderer_uses_the_latest_theme_context() -> None:

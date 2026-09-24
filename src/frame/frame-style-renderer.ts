@@ -28,6 +28,7 @@ type TemplateResult = {
 class FrameStyleRenderer {
   private sheet?: CSSStyleSheet;
   private unsubscribe?: () => Promise<void>;
+  private updateListener?: (event: Event) => void;
   private templateSource?: string;
   private warnedSelectorPaths = false;
   private readonly context: ThemeContext;
@@ -84,6 +85,22 @@ class FrameStyleRenderer {
 
   clear() {
     return this.clearStyles();
+  }
+
+  listenForUpdates() {
+    this.updateListener = (event: Event) => {
+      const detail = (event as CustomEvent<{ reason?: string }>).detail;
+      if (detail?.reason !== "theme") void this.refresh();
+    };
+    document.addEventListener("uix-update", this.updateListener);
+  }
+
+  async destroy() {
+    if (this.updateListener) {
+      document.removeEventListener("uix-update", this.updateListener);
+      this.updateListener = undefined;
+    }
+    await this.clearStyles();
   }
 
   private stylesheetRoot(): Document | ShadowRoot | undefined {
@@ -154,10 +171,7 @@ export function applyFrameStyles(target: HTMLElement, type: string, theme?: stri
   if (!renderer) {
     renderer = new FrameStyleRenderer(target, type, theme);
     targetRenderers.set(type, renderer);
-    document.addEventListener("uix-update", (event: Event) => {
-      const detail = (event as CustomEvent<{ reason?: string }>).detail;
-      if (detail?.reason !== "theme") void renderer!.refresh();
-    });
+    renderer.listenForUpdates();
   }
 
   // Frame theme fallback is supplied by frame-apply rather than CSS. Update
@@ -167,5 +181,7 @@ export function applyFrameStyles(target: HTMLElement, type: string, theme?: stri
 }
 
 export function clearFrameStyles(target: HTMLElement) {
-  renderers.get(target)?.forEach((renderer) => void renderer.clear());
+  const targetRenderers = renderers.get(target);
+  renderers.delete(target);
+  targetRenderers?.forEach((renderer) => void renderer.destroy());
 }

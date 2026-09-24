@@ -78,6 +78,8 @@ async function applyFrameStylesForBootstrap() {
 
   if (previousType && previousType !== type && litRoot) {
     await apply_uix(root, previousType, { style: "" });
+  } else if (previousType && previousType !== type) {
+    clearFrameStyles(root);
   }
   if (litRoot) {
     apply_uix(root, type, theme === undefined ? undefined : { theme });

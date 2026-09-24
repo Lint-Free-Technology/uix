@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import { setupFrameRuntime } from "../frame/frame-api";
+import { setupFrameRuntime, type UixFrameOptions } from "../frame/frame-api";
 
 /*
 Patch ha-panel-config for theme styling
@@ -31,9 +31,16 @@ class HaPanelCustomPatch extends ModdedElement {
 
   updated(_orig, ...args) {
     _orig?.(...args);
+    this.refreshFrameHass();
     if (args[0].has("route") || args[0].has("panel")) {
       apply_uix(this, "panel-custom", { prepend: true });
     }
+  }
+
+  private refreshFrameHass() {
+    const iframe = this.shadowRoot?.querySelector("iframe") || this.querySelector("iframe");
+    const frameOptions = (iframe as any)?._uixFrameOptions as UixFrameOptions | undefined;
+    if (frameOptions) frameOptions.hass = this.hass;
   }
   _createPanel(_orig, ...args) {
     _orig?.(...args);
@@ -49,7 +56,15 @@ class HaPanelCustomPatch extends ModdedElement {
 
       const setupIframe = (iframe: HTMLIFrameElement) => {
         const name = this.panel?.config?._panel_custom?.name;
-        if (name) setupFrameRuntime(iframe, { roots: [name], themeTypes: [name], hass: this.hass });
+        if (!name) return;
+        const frameOptions: UixFrameOptions = (iframe as any)._uixFrameOptions || {
+          roots: [name],
+          themeTypes: [name],
+          hass: this.hass,
+        };
+        frameOptions.hass = this.hass;
+        (iframe as any)._uixFrameOptions = frameOptions;
+        setupFrameRuntime(iframe, frameOptions);
       };
 
       const findAndSetup = () => {

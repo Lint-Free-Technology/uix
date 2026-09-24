@@ -11,6 +11,7 @@ tests/test_frame_style_renderer.py
 tests/test_forge_config_builder.py
 tests/test_forge_spark_map_positions.py
 tests/test_ha_panel_app.py
+tests/test_ha_panel_config.py
 tests/test_hass_frame.py
 tests/test_panel_state.py
 tests/test_webawesome_compatibility.py
