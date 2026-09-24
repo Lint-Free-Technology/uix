@@ -1,3 +1,9 @@
+## [8.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0-beta.1) (2026-09-24)
+
+### ⭐ New Features
+
+* Add internal frame runtime (uixFrame) and replace custom-panel loader. Allows styling inside iFrame of loaded by ha-panel-custom and ha-panel-app ([#623](https://github.com/Lint-Free-Technology/uix/issues/623)) ([a43f3e2](https://github.com/Lint-Free-Technology/uix/commit/a43f3e2bf03edb808c0ea8d83af426d06626181e))
+
 ## [8.3.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0...v8.3.1) (2026-09-22)
 
 ### 🐞 Bug Fixes
