@@ -121,7 +121,7 @@ def test_app_panel_configures_an_iframe_added_after_its_update() -> None:
     assert json.loads(output) == {"observers": 1, "setups": 1}
 
 
-def test_app_panel_updates_the_hass_reference_used_by_an_existing_frame() -> None:
+def test_app_panel_updates_an_existing_frame_for_the_current_route_and_hass() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -151,8 +151,13 @@ def test_app_panel_updates_the_hass_reference_used_by_an_existing_frame() -> Non
                 "panel.shadowRoot = { querySelector: () => iframe };"
                 "panel.panel = { config: { addon: 'core_zigbee2mqtt' } };"
                 "panel.hass = firstHass; panel.updated(() => {}, new Map());"
-                "panel.hass = secondHass; panel.updated(() => {}, new Map());"
-                "process.stdout.write(JSON.stringify({ setups: setups.length, current: setups[0]?.[1]?.hass === secondHass }));"
+                "panel.hass = secondHass;"
+                "panel.panel = { config: { addon: 'core_matter-server' } };"
+                "panel.updated(() => {}, new Map());"
+                "process.stdout.write(JSON.stringify({"
+                "  setups: setups.length, current: setups[0]?.[1]?.hass === secondHass,"
+                "  types: setups[0]?.[1]?.themeTypes"
+                "}));"
             ),
             str(PANEL_APP_TS_PATH),
         ],
@@ -160,4 +165,8 @@ def test_app_panel_updates_the_hass_reference_used_by_an_existing_frame() -> Non
         text=True,
     )
 
-    assert json.loads(output) == {"setups": 1, "current": True}
+    assert json.loads(output) == {
+        "setups": 1,
+        "current": True,
+        "types": ["core_matter-server", "matter-server"],
+    }

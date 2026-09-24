@@ -82,6 +82,10 @@ class FrameStyleRenderer {
     this.context.theme = theme;
   }
 
+  clear() {
+    return this.clearStyles();
+  }
+
   private stylesheetRoot(): Document | ShadowRoot | undefined {
     const root = this.target.getRootNode();
     if (root instanceof ShadowRoot) return root;
@@ -160,4 +164,8 @@ export function applyFrameStyles(target: HTMLElement, type: string, theme?: stri
   // every cached target before a theme refresh so old target types clear too.
   targetRenderers.forEach((cachedRenderer) => cachedRenderer.setTheme(theme));
   targetRenderers.forEach((cachedRenderer) => void cachedRenderer.refresh());
+}
+
+export function clearFrameStyles(target: HTMLElement) {
+  renderers.get(target)?.forEach((renderer) => void renderer.clear());
 }

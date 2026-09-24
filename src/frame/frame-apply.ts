@@ -1,7 +1,9 @@
 import { apply_uix } from "../helpers/apply_uix";
 import { hass } from "../helpers/hass";
 import { themesReady } from "../theme-watcher";
-import { applyFrameStyles } from "./frame-style-renderer";
+import { applyFrameStyles, clearFrameStyles } from "./frame-style-renderer";
+
+const appliedFrameTypes = new WeakMap<HTMLElement, string>();
 
 function isLitRoot(root: any): boolean {
   return (
@@ -61,13 +63,28 @@ async function applyFrameStylesForBootstrap() {
   }
 
   const type = await resolveThemeType(options.themeTypes, hs);
-  if (type) {
-    if (isLitRoot(root)) {
-      apply_uix(root, type, theme === undefined ? undefined : { theme });
+  const previousType = appliedFrameTypes.get(root);
+  const litRoot = isLitRoot(root);
+  if (!type) {
+    if (!previousType) return;
+    if (litRoot) {
+      await apply_uix(root, previousType, { style: "" });
     } else {
-      applyFrameStyles(root, type, theme);
+      clearFrameStyles(root);
     }
+    appliedFrameTypes.delete(root);
+    return;
   }
+
+  if (previousType && previousType !== type && litRoot) {
+    await apply_uix(root, previousType, { style: "" });
+  }
+  if (litRoot) {
+    apply_uix(root, type, theme === undefined ? undefined : { theme });
+  } else {
+    applyFrameStyles(root, type, theme);
+  }
+  appliedFrameTypes.set(root, type);
 }
 
 document.addEventListener("uix-update", (event: Event) => {

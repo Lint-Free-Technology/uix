@@ -45,6 +45,7 @@ function applyAppPanelUix(panel: any) {
       hass: panel.hass,
     };
     frameOptions.hass = panel.hass;
+    frameOptions.themeTypes = appThemeTypes(slug);
     (iframe as any)._uixFrameOptions = frameOptions;
 
     if ((iframe as any)._uixFrameSetup) return;

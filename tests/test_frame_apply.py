@@ -188,3 +188,56 @@ def test_frame_reapplies_the_selected_theme_after_a_theme_update() -> None:
     )
 
     assert json.loads(output) == {"themes": ["One", "Two"]}
+
+
+def test_frame_clears_previously_applied_styles_when_the_theme_removes_its_target() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const root = { localName: 'body' };"
+                "const frameHass = { themes: { theme: 'One', themes: {"
+                "  One: { 'uix-test-app': 'body { color: red; }' }, Two: {}"
+                "} } };"
+                "const windowListeners = {}; const documentListeners = {}; let applied = 0; let clears = 0;"
+                "global.window = {"
+                "  uixFrameOptions: { roots: ['body'], themeTypes: ['test-app'], hass: frameHass },"
+                "  addEventListener: (name, listener) => { windowListeners[name] = listener; },"
+                "  getComputedStyle: () => ({ getPropertyValue: () => '' }), setTimeout"
+                "};"
+                "global.document = {"
+                "  querySelector: (name) => name === 'body' ? root : null,"
+                "  addEventListener: (name, listener) => { documentListeners[name] = listener; }"
+                "};"
+                "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: async () => {} };"
+                "  if (name === '../helpers/hass') return { hass: async () => frameHass };"
+                "  if (name === '../theme-watcher') return { themesReady: async () => {} };"
+                "  if (name === './frame-style-renderer') return {"
+                "    applyFrameStyles: () => { applied++; }, clearFrameStyles: () => { clears++; }"
+                "  };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "(async () => {"
+                "  await windowListeners['uix-bootstrap']({ stopPropagation: () => {} });"
+                "  frameHass.themes.theme = 'Two';"
+                "  documentListeners['uix-update']({ detail: { reason: 'theme' } });"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
+                "  process.stdout.write(JSON.stringify({ applied, clears }));"
+                "})();"
+            ),
+            str(FRAME_APPLY_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"applied": 1, "clears": 1}
