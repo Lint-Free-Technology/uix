@@ -70,6 +70,11 @@ async function applyFrameStylesForBootstrap() {
   }
 }
 
+document.addEventListener("uix-update", (event: Event) => {
+  const detail = (event as CustomEvent<{ reason?: string }>).detail;
+  if (detail?.reason === "theme") void applyFrameStylesForBootstrap();
+});
+
 // uix.ts can dispatch before this module is evaluated because apply_uix
 // imports it. frame-bootstrap records that early event for us.
 if ((window as any).uixFrameBootstrapRequested) {

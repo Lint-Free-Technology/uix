@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import { setupFrameRuntime } from "../frame/frame-api";
+import { setupFrameRuntime, type UixFrameOptions } from "../frame/frame-api";
 import { selectTree } from "../helpers/selecttree";
 
 export function appThemeTypes(slug: string): string[] {
@@ -38,13 +38,18 @@ function applyAppPanelUix(panel: any) {
     panel.route?.path?.split("/").filter(Boolean).pop();
 
   const setupIframe = (iframe: HTMLIFrameElement) => {
-    if (!slug || (iframe as any)._uixFrameSetup) return;
-    (iframe as any)._uixFrameSetup = true;
-    setupFrameRuntime(iframe, {
+    if (!slug) return;
+    const frameOptions: UixFrameOptions = (iframe as any)._uixFrameOptions || {
       roots: ["home-assistant", "hc-main", "body"],
       themeTypes: appThemeTypes(slug),
       hass: panel.hass,
-    });
+    };
+    frameOptions.hass = panel.hass;
+    (iframe as any)._uixFrameOptions = frameOptions;
+
+    if ((iframe as any)._uixFrameSetup) return;
+    (iframe as any)._uixFrameSetup = true;
+    setupFrameRuntime(iframe, frameOptions);
   };
 
   const iframe = panel.shadowRoot?.querySelector("iframe") as HTMLIFrameElement | null;

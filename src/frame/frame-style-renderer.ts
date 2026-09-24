@@ -35,7 +35,7 @@ class FrameStyleRenderer {
   constructor(
     private readonly target: HTMLElement,
     private readonly type: string,
-    private readonly theme?: string,
+    theme?: string,
   ) {
     this.context = {
       type,
@@ -76,6 +76,10 @@ class FrameStyleRenderer {
     } else {
       this.updateStyles(source);
     }
+  }
+
+  setTheme(theme?: string) {
+    this.context.theme = theme;
   }
 
   private stylesheetRoot(): Document | ShadowRoot | undefined {
@@ -146,7 +150,14 @@ export function applyFrameStyles(target: HTMLElement, type: string, theme?: stri
   if (!renderer) {
     renderer = new FrameStyleRenderer(target, type, theme);
     targetRenderers.set(type, renderer);
-    document.addEventListener("uix-update", () => void renderer.refresh());
+    document.addEventListener("uix-update", (event: Event) => {
+      const detail = (event as CustomEvent<{ reason?: string }>).detail;
+      if (detail?.reason !== "theme") void renderer!.refresh();
+    });
   }
-  void renderer.refresh();
+
+  // Frame theme fallback is supplied by frame-apply rather than CSS. Update
+  // every cached target before a theme refresh so old target types clear too.
+  targetRenderers.forEach((cachedRenderer) => cachedRenderer.setTheme(theme));
+  targetRenderers.forEach((cachedRenderer) => void cachedRenderer.refresh());
 }

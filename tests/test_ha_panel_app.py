@@ -18,7 +18,7 @@ def test_active_app_panel_is_configured_when_frame_styling_becomes_available() -
                 "const fs = require('fs');"
                 "const esbuild = require('esbuild');"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
-                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
                 "const iframe = {};"
                 "const panel = {"
                 "  localName: 'ha-panel-app',"
@@ -79,7 +79,7 @@ def test_app_panel_configures_an_iframe_added_after_its_update() -> None:
                 "const fs = require('fs');"
                 "const esbuild = require('esbuild');"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
-                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
                 "let iframe = null;"
                 "const observers = [];"
                 "global.MutationObserver = class {"
@@ -119,3 +119,45 @@ def test_app_panel_configures_an_iframe_added_after_its_update() -> None:
     )
 
     assert json.loads(output) == {"observers": 1, "setups": 1}
+
+
+def test_app_panel_updates_the_hass_reference_used_by_an_existing_frame() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "const iframe = {}; const setups = []; let AppPanel;"
+                "global.window = { uixCoordinator: { styleFramePanels: true }, setTimeout: () => undefined };"
+                "global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return {"
+                "    patch_element: (name) => (target) => { if (name === 'ha-panel-app') AppPanel = target; return target; }"
+                "  };"
+                "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: (...args) => setups.push(args) };"
+                "  if (name === '../helpers/selecttree') return { selectTree: async () => null };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const firstHass = { themes: { theme: 'One' } };"
+                "const secondHass = { themes: { theme: 'Two' } };"
+                "const panel = new AppPanel();"
+                "panel.shadowRoot = { querySelector: () => iframe };"
+                "panel.panel = { config: { addon: 'core_zigbee2mqtt' } };"
+                "panel.hass = firstHass; panel.updated(() => {}, new Map());"
+                "panel.hass = secondHass; panel.updated(() => {}, new Map());"
+                "process.stdout.write(JSON.stringify({ setups: setups.length, current: setups[0]?.[1]?.hass === secondHass }));"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"setups": 1, "current": True}

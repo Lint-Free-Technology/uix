@@ -28,7 +28,7 @@ def test_frame_without_a_matching_theme_target_is_left_untouched() -> None:
                 "  addEventListener: (name, listener) => { listeners[name] = listener; },"
                 "  getComputedStyle: () => ({ getPropertyValue: () => '' }),"
                 "};"
-                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null };"
+                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null, addEventListener: () => {} };"
                 "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
                 "const moduleObj = { exports: {} };"
                 "const customRequire = (name) => {"
@@ -70,7 +70,7 @@ def test_non_lit_frame_uses_the_stylesheet_renderer() -> None:
                 "  addEventListener: (name, listener) => { listeners[name] = listener; },"
                 "  getComputedStyle: () => ({ getPropertyValue: () => '' }),"
                 "};"
-                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null };"
+                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null, addEventListener: () => {} };"
                 "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
                 "const moduleObj = { exports: {} };"
                 "const customRequire = (name) => {"
@@ -116,7 +116,7 @@ def test_frame_applies_styles_when_uix_bootstrapped_during_module_loading() -> N
                 "  addEventListener: (name, listener) => { listeners[name] = listener; },"
                 "  getComputedStyle: () => ({ getPropertyValue: () => '' }), setTimeout"
                 "};"
-                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null };"
+                "global.document = { body: root, head: {}, querySelector: (name) => name === 'body' ? root : null, addEventListener: () => {} };"
                 "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
                 "const moduleObj = { exports: {} };"
                 "const customRequire = (name) => {"
@@ -136,3 +136,55 @@ def test_frame_applies_styles_when_uix_bootstrapped_during_module_loading() -> N
     )
 
     assert json.loads(output) == {"stylesheetCalls": 1}
+
+
+def test_frame_reapplies_the_selected_theme_after_a_theme_update() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const root = { localName: 'body' };"
+                "const frameHass = { themes: { theme: 'One', themes: {"
+                "  One: { 'uix-test-app': 'body { color: red; }' },"
+                "  Two: { 'uix-test-app': 'body { color: blue; }' }"
+                "} } };"
+                "const windowListeners = {}; const documentListeners = {}; const stylesheetCalls = [];"
+                "global.window = {"
+                "  uixFrameOptions: { roots: ['body'], themeTypes: ['test-app'], hass: frameHass },"
+                "  addEventListener: (name, listener) => { windowListeners[name] = listener; },"
+                "  getComputedStyle: () => ({ getPropertyValue: () => '' }), setTimeout"
+                "};"
+                "global.document = {"
+                "  querySelector: (name) => name === 'body' ? root : null,"
+                "  addEventListener: (name, listener) => { documentListeners[name] = listener; }"
+                "};"
+                "global.customElements = { whenDefined: async () => {}, get: () => undefined };"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: async () => {} };"
+                "  if (name === '../helpers/hass') return { hass: async () => frameHass };"
+                "  if (name === '../theme-watcher') return { themesReady: async () => {} };"
+                "  if (name === './frame-style-renderer') return { applyFrameStyles: (...args) => stylesheetCalls.push(args) };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "(async () => {"
+                "  await windowListeners['uix-bootstrap']({ stopPropagation: () => {} });"
+                "  frameHass.themes.theme = 'Two';"
+                "  documentListeners['uix-update']({ detail: { reason: 'theme' } });"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
+                "  process.stdout.write(JSON.stringify({ themes: stylesheetCalls.map((args) => args[2]) }));"
+                "})();"
+            ),
+            str(FRAME_APPLY_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"themes": ["One", "Two"]}

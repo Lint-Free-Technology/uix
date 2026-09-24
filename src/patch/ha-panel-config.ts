@@ -26,6 +26,9 @@ Patch ha-panel-custom
 
 @patch_element("ha-panel-custom")
 class HaPanelCustomPatch extends ModdedElement {
+  public panel: any;
+  public hass: any;
+
   updated(_orig, ...args) {
     _orig?.(...args);
     if (args[0].has("route") || args[0].has("panel")) {

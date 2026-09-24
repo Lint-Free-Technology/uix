@@ -24,7 +24,7 @@ import {
 } from "./helpers/apply_uix";
 import { compare_deep, merge_deep } from "./helpers/dict_functions";
 import { applyFrontendThemeOnElement } from "./helpers/frontend_themes";
-import { getFramePanelName, isFramePanel } from "./helpers/hass";
+import { getCustomPanelName, getFramePanelName, isFramePanel } from "./helpers/hass";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -445,9 +445,23 @@ if (!customElements.get("uix-node")) {
   // may get overwritten by the polyfill if uix-node is loaded as a module
   let baseElementName: string | undefined = undefined;
   if (isFramePanel()) {
-    const framePanelName = getFramePanelName();
-    // App slugs are theme targets, not necessarily custom-element names.
-    baseElementName = framePanelName?.includes("-") ? framePanelName : undefined;
+    const frameRoots = window.uixFrameOptions?.roots || [];
+    while (!baseElementName) {
+      const roots = frameRoots
+        .map((selector) => document.querySelector(selector))
+        .filter(Boolean) as Element[];
+      const root = roots.find((element) => element.localName.includes("-"));
+      if (root) {
+        baseElementName = root.localName;
+        break;
+      }
+
+      // A configured non-custom root (for example body) has no scoped
+      // registry to protect. Do not infer an element name from the theme slug.
+      if (roots.length || window.uixFrameOptions) return;
+
+      baseElementName = getCustomPanelName() || undefined;
+    }
   } else {
     baseElementName = "home-assistant";
   }
