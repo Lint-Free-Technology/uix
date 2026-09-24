@@ -29,6 +29,11 @@ export function installFrameRuntime(iframe: HTMLIFrameElement, options: UixFrame
     const doc = iframe.contentDocument || frameWindow?.document;
     if (!doc || !frameWindow) return;
 
+    // A newly created iframe exposes a complete about:blank document while
+    // its actual URL is still navigating. Scripts added there are cancelled
+    // when the ingress document replaces it.
+    if (doc.location?.href.startsWith("about:blank")) return;
+
     frameWindow.uixFrameOptions = options;
     if (doc.getElementById(LOADER_ID)) return;
 
@@ -47,8 +52,7 @@ export function setupFrameRuntime(iframe: HTMLIFrameElement, options: UixFrameOp
   const install = () => installFrameRuntime(iframe, options);
   iframe.addEventListener("load", install);
 
-  // A newly-created iframe exposes an initial about:blank document before its
-  // app URL has loaded. Installing into that transient document races the app
-  // navigation and can leave Lit rendering against the wrong document.
+  // `readyState` is also complete for the initial about:blank document, so
+  // `installFrameRuntime` verifies that it is not the transient document.
   if (iframe.contentDocument?.readyState === "complete") install();
 }

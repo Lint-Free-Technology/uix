@@ -80,8 +80,12 @@ class FrameStyleRenderer {
 
   private stylesheetRoot(): Document | ShadowRoot | undefined {
     const root = this.target.getRootNode();
-    if (root instanceof Document || root instanceof ShadowRoot) return root;
-    return undefined;
+    if (root instanceof ShadowRoot) return root;
+
+    // Constructable stylesheets can only be adopted by Documents and shadow
+    // roots. A light-DOM frame target such as body must use its iframe
+    // document, rather than the element itself.
+    return this.target.ownerDocument;
   }
 
   private updateStyles(styles: string) {
@@ -93,7 +97,7 @@ class FrameStyleRenderer {
 
     if (!this.sheet) {
       this.sheet = new CSSStyleSheet();
-      root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.sheet];
+      root.adoptedStyleSheets.push(this.sheet);
     }
     this.sheet.replaceSync(styles);
   }

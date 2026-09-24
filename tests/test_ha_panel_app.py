@@ -68,3 +68,54 @@ def test_active_app_panel_is_configured_when_frame_styling_becomes_available() -
         "setups": 1,
         "types": ["core_zigbee2mqtt", "zigbee2mqtt"],
     }
+
+
+def test_app_panel_configures_an_iframe_added_after_its_update() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "let iframe = null;"
+                "const observers = [];"
+                "global.MutationObserver = class {"
+                "  constructor(callback) { this.callback = callback; observers.push(this); }"
+                "  observe() {} disconnect() {}"
+                "};"
+                "const panel = {"
+                "  localName: 'ha-panel-app',"
+                "  shadowRoot: { querySelector: () => iframe },"
+                "  panel: { config: { addon: 'core_zigbee2mqtt' } },"
+                "  hass: { themes: {} }"
+                "};"
+                "const setups = [];"
+                "global.window = { uixCoordinator: { styleFramePanels: true }, setTimeout: () => undefined };"
+                "global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return {"
+                "    patch_element: (_name, after) => (target) => { after?.(); return target; }"
+                "  };"
+                "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: (...args) => setups.push(args) };"
+                "  if (name === '../helpers/selecttree') return { selectTree: async () => panel };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "setTimeout(() => {"
+                "  iframe = {};"
+                "  observers[0].callback();"
+                "  process.stdout.write(JSON.stringify({ observers: observers.length, setups: setups.length }));"
+                "}, 0);"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"observers": 1, "setups": 1}

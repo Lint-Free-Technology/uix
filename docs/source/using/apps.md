@@ -12,8 +12,12 @@ which belongs to the configuration panel and uses `uix-config`.
 
 ## Example
 
-This example styles the panel header and places a non-interactive CRT overlay
-above the ingress iframe:
+This example styles the Home Assistant panel header and places a
+non-interactive CRT overlay above the ingress iframe. It also styles the
+Zigbee2MQTT document inside that iframe.
+
+Enable the experimental [Style frame panels](../extras/style-frame-panels.md)
+option before using the `uix-zigbee2mqtt` block.
 
 ```yaml
 My theme:
@@ -42,6 +46,14 @@ My theme:
         transparent 1px,
         transparent 3px
       );
+    }
+
+  # This is inside the Zigbee2MQTT iframe, not ha-panel-app.
+  uix-zigbee2mqtt: |
+    :root {
+      --color-base-100: #041b0b;
+      --color-base-content: #7cff88;
+      --bg-color: #041b0b;
     }
 ```
 

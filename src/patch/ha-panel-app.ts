@@ -34,16 +34,43 @@ function applyAppPanelUix(panel: any) {
     }
     return;
   }
-  const iframe = panel.shadowRoot?.querySelector("iframe") as HTMLIFrameElement | null;
   const slug = panel.panel?.config?.addon || panel.panel?.config?.slug ||
     panel.route?.path?.split("/").filter(Boolean).pop();
-  if (iframe && slug && !(iframe as any)._uixFrameSetup) {
+
+  const setupIframe = (iframe: HTMLIFrameElement) => {
+    if (!slug || (iframe as any)._uixFrameSetup) return;
     (iframe as any)._uixFrameSetup = true;
     setupFrameRuntime(iframe, {
       roots: ["home-assistant", "hc-main", "body"],
       themeTypes: appThemeTypes(slug),
       hass: panel.hass,
     });
+  };
+
+  const iframe = panel.shadowRoot?.querySelector("iframe") as HTMLIFrameElement | null;
+  if (iframe) {
+    setupIframe(iframe);
+    return;
+  }
+
+  // App panels can update before their iframe is attached. Keep watching the
+  // panel briefly so the frame still receives its loader and navigation hook.
+  if (!(panel as any)._uixFrameObserver && panel.shadowRoot) {
+    const observer = new MutationObserver(() => {
+      const iframe = panel.shadowRoot?.querySelector("iframe") as HTMLIFrameElement | null;
+      if (!iframe) return;
+      observer.disconnect();
+      delete (panel as any)._uixFrameObserver;
+      setupIframe(iframe);
+    });
+    (panel as any)._uixFrameObserver = observer;
+    observer.observe(panel.shadowRoot, { childList: true, subtree: true });
+    window.setTimeout(() => {
+      observer.disconnect();
+      if ((panel as any)._uixFrameObserver === observer) {
+        delete (panel as any)._uixFrameObserver;
+      }
+    }, 10000);
   }
 }
 
