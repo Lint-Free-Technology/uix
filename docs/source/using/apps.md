@@ -61,6 +61,9 @@ My theme:
 
 ## Scope
 
+!!! info
+    Same-origin app frame styling available in 3.4.0-beta.1
+
 `uix-app` continues to style the Home Assistant panel chrome and can overlay its
 iframe. UIX also installs its internal frame runtime in same-origin app frames.
 Frame-content styling requires the experimental
