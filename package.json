@@ -40,7 +40,7 @@
     "js-yaml": "^5.4.2",
     "lit": "^3.3.3",
     "memoize-one": "^6.0.0",
-    "parse-duration": "^2.1.8",
+    "parse-duration": "^2.1.9",
     "tinykeys": "^4.0.0"
   },
   "overrides": {
