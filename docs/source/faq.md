@@ -46,20 +46,23 @@ Yes, see the table below.
 | Correctly loads `...-yaml` theme variables | ❌<br>Since 2026.8.0 | Yes |
 | Correctly handles `...-more-info(-yaml)` theme variable | ❌<br>Since 2026.3.0 | Yes |
 | Correctly patches adaptive dialogs for `...-dialog(-yaml)` theme variable | ❌<br>Since 2026.3.0 | Yes |
-| [DOM inspection helpers](https://uix.lf.technology/concepts/dom/#dom-inspection-helpers) | No | Yes |
-| [Host/element path selection](https://uix.lf.technology/concepts/dom/#hostelement-path-selection) | No | Yes |
-| [Express search selector](https://uix.lf.technology/concepts/dom/#express-search-selector) | No | Yes |
-| [Forge](https://uix.lf.technology/forge/) (custom lovelace element) | No | Yes |
-| [Foundries](https://uix.lf.technology/forge/foundries/) (reusable forges) | No | Yes |
-| [Macros](https://uix.lf.technology/using/templates/#macros) (reusable jinja templates) | No | Yes |
-| [Sparks](https://uix.lf.technology/forge/sparks/) (self-contained behaviours that augment forged elements) | No | Yes |
-| [Frontend state throttling](https://uix.lf.technology/extras/frontend-states-throttling/) (optional) | No | Yes |
-| [Dialog Styling delay](https://uix.lf.technology/extras/dialog-styling-delay/) (optional) | No | Yes |
-| [Dashboard view backgrounds](https://uix.lf.technology/using/view-backgrounds/) | No | Yes |
-| [Section backgrounds](https://uix.lf.technology/using/section-backgrounds/) | No | Yes |
-| [View backgrounds](https://uix.lf.technology/using/view-backgrounds/) | No | Yes |
-| [Icon styling - entity override](https://uix.lf.technology/using/icons/#specifying-for-an-entity-override) | No | Yes |
-| [Styling entity images](https://uix.lf.technology/using/images/) | No | Yes |
+| [DOM inspection helpers](/concepts/dom/#dom-inspection-helpers) | No | Yes |
+| [Host/element path selection](/concepts/dom/#hostelement-path-selection) | No | Yes |
+| [Express search selector](/concepts/dom/#express-search-selector) | No | Yes |
+| [Forge](/forge/) (custom lovelace element) | No | Yes |
+| [Forge - Foundries](/forge/foundries/) (reusable forges) | No | Yes |
+| [Forge - Macros](/using/templates/#macros) (reusable jinja templates) | No | Yes |
+| [Forge - Sparks](/forge/sparks/) (self-contained behaviours that augment forged elements) | No | Yes |
+| [Broker](/broker/) (create declarative frontend event interactions) | No | Yes |
+| [Frontend state throttling](/extras/frontend-states-throttling/) (optional) | No | Yes |
+| [Dialog Styling delay](/extras/dialog-styling-delay/) (optional) | No | Yes |
+| [Dashboard view backgrounds](/using/view-backgrounds/) | No | Yes |
+| [Section backgrounds](/using/section-backgrounds/) | No | Yes |
+| [View backgrounds](/using/view-backgrounds/) | No | Yes |
+| [Icon styling - entity override](/using/icons/#specifying-for-an-entity-override) | No | Yes |
+| [Styling entity images](/using/images/) | No | Yes |
+| [Styling custom panels](/using/custom-panels/) (including those loaded as iFrames) | No | Yes |
+| [Styling app and ingress panels](/using/apps/) (including those loaded as iFrames) | No | Yes |
 | Reload/Clear cache popup | No | Yes |
 | Expansive documentation including visual examples | Limited | Yes |
 | Mod-Card | Yes | Yes |
