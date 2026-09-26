@@ -1,5 +1,5 @@
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
-import { patch_element } from "../helpers/patch_function";
+import { patch_element, patch_getter } from "../helpers/patch_function";
 import { nextAnimationFrame, UIX_PATCH_DEBOUNCE_MS } from "../helpers/raf";
 import { Uix } from "../uix";
 
@@ -40,6 +40,55 @@ const getEntityId = (el: any): string | null => {
     case "hui-entity-badge":
       return (el.config ?? el._config)?.entity || null;
   }
+};
+
+type EntityPictureOverrides = Map<string, string>;
+type EntityPictureElement = HTMLElement & {
+  _uixOriginalEntityPicture?: string | false;
+};
+
+const getParentMap = (el: any): any | null => {
+  const map = el.closest?.("#map");
+  const haMap = (map?.parentNode as any)?.host;
+  return haMap?.tagName?.toLowerCase() === "ha-map" ? haMap : null;
+};
+
+const isClusterBubbleMarker = (el: any): boolean =>
+  Boolean(el.closest?.(".cluster-bubble"));
+
+const getMapImageOverride = (el: any): string | undefined => {
+  const entityId = getEntityId(el);
+  if (!entityId) return undefined;
+  const overrides = getParentMap(el)?._uixEntityPictureOverrides as EntityPictureOverrides | undefined;
+  return overrides?.get(entityId);
+};
+
+const refreshClusterBubbleMarkers = (haMap: any, entityId: string): void => {
+  const markers = haMap.shadowRoot?.querySelectorAll?.(".cluster-bubble ha-entity-marker") ?? [];
+  for (const marker of markers) {
+    if (marker.entityId === entityId) marker.requestUpdate?.();
+  }
+};
+
+const cacheMapImageOverride = (el: any, imageUrl: string | null): void => {
+  if (el.tagName.toLowerCase() !== "ha-entity-marker") return;
+
+  const entityId = getEntityId(el);
+  const haMap = getParentMap(el);
+  if (!entityId || !haMap) return;
+
+  const overrides: EntityPictureOverrides | undefined = haMap._uixEntityPictureOverrides;
+  if (imageUrl) {
+    if (overrides?.get(entityId) === imageUrl) return;
+    const imageOverrides = overrides ?? (haMap._uixEntityPictureOverrides = new Map());
+    imageOverrides.set(entityId, imageUrl);
+  } else if (overrides?.has(entityId)) {
+    overrides.delete(entityId);
+  } else {
+    return;
+  }
+
+  refreshClusterBubbleMarkers(haMap, entityId);
 };
 
 const subscribeImageVars = (el, imageVars: { imageVar: string }) => {
@@ -96,11 +145,20 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       break;
     case "ha-entity-marker":
       if (imageUrl) {
-        el._uix_replaced_image = el._uix_replaced_image ?? el.entityPicture ?? false;
+        // Reading entityPicture can populate _uixOriginalEntityPicture when a
+        // cluster-bubble marker is served from the map-level override cache.
+        const entityPicture = el.entityPicture;
+        el._uix_replaced_image = el._uix_replaced_image
+          ?? el._uixOriginalEntityPicture
+          ?? entityPicture
+          ?? false;
         el.entityPicture = imageUrl;
-      } else if (el._uix_replaced_image !== undefined) {
-        el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
-        delete el._uix_replaced_image;
+      } else {
+        if (el._uix_replaced_image !== undefined) {
+          el.entityPicture = el._uix_replaced_image ? el._uix_replaced_image : undefined;
+          delete el._uix_replaced_image;
+        }
+        delete el._uixOriginalEntityPicture;
       }
       break;
     case "ha-user-badge":
@@ -182,6 +240,7 @@ const updateImage = (el: any): void => {
   }
   const imageUrl = imagePath ? (document.querySelector("home-assistant") as any)?.hass?.hassUrl(imagePath) : null;
   applyImage(el, imageUrl);
+  cacheMapImageOverride(el, imageUrl);
 };
 
 const bindUix = async (el: any) => {
@@ -224,7 +283,27 @@ const bindUix = async (el: any) => {
   }
 };
 
-@patch_element("ha-entity-marker")
+@patch_element("ha-entity-marker", (cls) => {
+  patch_getter(
+    cls.prototype,
+    "entityPicture",
+    function (this: EntityPictureElement, original: () => string | undefined) {
+      const originalPicture = original?.();
+      if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) {
+        return originalPicture;
+      }
+      const imageOverride = isClusterBubbleMarker(this)
+        ? getMapImageOverride(this)
+        : undefined;
+      if (imageOverride) {
+        this._uixOriginalEntityPicture = originalPicture ?? false;
+        return imageOverride;
+      }
+      delete this._uixOriginalEntityPicture;
+      return originalPicture;
+    }
+  );
+})
 class HaEntityMarkerPatch extends ModdedElement {
   entityId;
   entityColor;
