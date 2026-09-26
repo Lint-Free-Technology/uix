@@ -24,7 +24,7 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 ## Directive rules
 
-Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `text-content`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action` and `wait`, they inspect the interaction anchor. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
+Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `text-content`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action`, `template`, `javascript`, and `wait`, they inspect the interaction anchor. An `event` directive targeting `window` or `document` also uses the interaction anchor for these rules. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
 ```yaml
 directives:
@@ -39,7 +39,7 @@ directives:
         match: true
 ```
 
-`panel` rules obtain the current panel state when the directive is reached. This lets an earlier directive run regardless of the current panel while a later directive only runs on a matching panel.
+`panel` rules obtain the current panel state when it is first needed, then reuse it for the rest of that interaction. If the interaction itself has a panel rule, directive rules reuse that state. A directive-level panel rule lets an earlier directive run regardless of the current panel while a later directive only runs on a matching panel.
 
 `block` does not accept directive rules. Put its condition in the interaction's `rules` so that the event is synchronously blocked only when the complete interaction matches.
 
@@ -434,7 +434,7 @@ Use `uix` for UIX styling, including styles inside the tile icon's shadow root. 
   placement: bottom
 ```
 
-Use `for: previous` directly after a UI directive to attach the tooltip to the element it created. It works with `button`, `badge`, and `tile-icon`, and will work with later element-producing directives without needing an element selector.
+Use `for: previous` to attach the tooltip to the most recent element produced by an earlier directive in the same interaction. It works with `button`, `badge`, `text-content`, `tile-icon`, and `lock` (which produces the lock overlay). Directives that do not produce an element leave that reference unchanged.
 
 ```yaml
 - type: button
@@ -653,7 +653,7 @@ Templates receive prior directive results in the top-level `directive` variable.
 
 ## JavaScript
 
-`javascript` evaluates `code` once and saves its synchronous return value under `id`. The code receives `hass`, `anchor`, `event`, `captured`, and `directive`; `directive` contains prior directive results from the same interaction. Return a scalar, object, or array; the following directives can use it as `@id` without conversion.
+`javascript` evaluates `code` once and saves its synchronous return value under `id`. The code receives `hass`, `anchor`, `event`, `captured`, and `directive`; `directive` contains prior directive results from the same interaction. Return a scalar, object, or array; the following directives can use it as `@id` without conversion. The same [ID requirements](#template) as the `template` directive apply. A returned Promise is not awaited; use an [`action: javascript`](#javascript-action) directive that returns a Promise when later directives must wait for asynchronous work.
 
 ```yaml
 - type: javascript
