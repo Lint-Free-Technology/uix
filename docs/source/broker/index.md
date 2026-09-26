@@ -38,13 +38,3 @@ uix_broker:
 
 !!! note
     For browser-identity matching, [Browser Mod](https://github.com/thomasloven/hass-browser_mod) is required.
-
-## Future features
-
-UIX Broker is in active development. All features and examples so far have come from user ideas shared in the Community forum. If you have an idea for how UIX Broker can be extended, please start a [GitHub discussion](https://github.com/Lint-Free-Technology/uix/discussions). Features that get 10 upvotes can be moved to a Feature Request in the UIX GitHub issue tracker.
-
-Planned future UIX Broker features include:
-
-- **JavaScript rule**: runs JavaScript with current interaction state provided as variables. Returns an object with `{result: <truthy>, [optional] namedObject: <object data>}`, with the optional `namedObject` then available for further rules and all directives.
-- **Expanded JavaScript action directive**: supports return from the current JavaScript action directive. Return format: `{continue: <truthy>, [optional] namedObject: <object data>}`. If `continue` is false, no further directives are run. The optional `namedObject` is then available for the rest of the directive operations.
-- **Jinja2 template rule**: renders a one-off Jinja2 template which returns a truthy result and can optionally return object data.
