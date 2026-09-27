@@ -162,7 +162,7 @@ assert.equal(warnings.length, 0);
 """)
 
 
-def test_theme_aliases_modes_reload_and_explicit_default_selection() -> None:
+def test_theme_aliases_modes_reload_and_default_theme_selection() -> None:
     run_font_case(r"""
 const config = {
   theme: 'Selected', darkMode: false, default_theme: 'Selected',
@@ -194,7 +194,7 @@ loader.update(config);
 assert.equal(document.fonts.size, 1);
 config.theme = 'default';
 loader.update(config);
-assert.equal(document.fonts.size, 0);
+assert.deepEqual([...document.fonts].map(face => face.family), ['Light']);
 """)
 
 

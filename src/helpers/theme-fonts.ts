@@ -51,7 +51,9 @@ export class ThemeFonts {
 
   update(themes: any, retry = false): void {
     const mode = themes?.darkMode ? "dark" : "light";
-    const selected = themes?.theme;
+    const selected = themes?.theme === "default"
+      ? themes?.default_theme
+      : themes?.theme;
     const definition = (name: string) => {
       const theme = themes?.themes?.[name];
       return { ...theme, ...theme?.modes?.[mode] };
