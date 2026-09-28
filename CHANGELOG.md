@@ -1,3 +1,9 @@
+## [8.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.1...v8.4.0-beta.2) (2026-09-28)
+
+### ⭐ New Features
+
+* Load document fonts via `uix-fonts` theme variable. ([#643](https://github.com/Lint-Free-Technology/uix/issues/643)) ([ccd1865](https://github.com/Lint-Free-Technology/uix/commit/ccd1865ce11e6575a805f894edc4e87912b219b9))
+
 ## [8.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0-beta.1) (2026-09-24)
 
 ### ⭐ New Features
