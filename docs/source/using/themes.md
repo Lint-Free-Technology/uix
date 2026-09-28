@@ -32,7 +32,7 @@ red-theme:
 
 !!! info "Theme variable"
     The theme MUST define a `uix-theme` variable whose value selects the theme
-    definition UIX uses for UIX styles and macros. `uix-theme` normally matches the Home
+    definition UIX uses for UIX styles, macros, and [fonts](#fonts). `uix-theme` normally matches the Home
     Assistant theme name, but may point to another theme when you want to reuse
     its UIX configuration.
 
@@ -300,6 +300,55 @@ red-theme:
 - `uix-persistent-notification-item`
 
 Also `<any variable>-yaml`.
+
+## Fonts
+
+Use `uix-fonts` to load web fonts when a global theme is selected. UIX creates [`FontFace`](https://developer.mozilla.org/en-US/docs/Web/API/FontFace/FontFace) objects and registers them in `document.fonts`, making the fonts available to Home Assistant components, including those inside shadow roots. This setting only loads fonts; use theme variables or UIX styles to choose where they are used.
+
+Home Assistant theme values must be strings, so put the font mapping inside a `|` block:
+
+```yaml
+retro-theme:
+  uix-theme: retro-theme
+  uix-fonts: |
+    ChicagoFLF:
+      source: url("https://cdn.jsdelivr.net/npm/@sakun/system.css@0.1.11/fonts/ChicagoFLF.woff2") format("woff2")
+    dashboard-regular:
+      family: My Dashboard Font
+      source: url("/local/fonts/dashboard-regular.woff2") format("woff2")
+      descriptors:
+        weight: "400"
+        style: normal
+        display: swap
+    dashboard-bold:
+      family: My Dashboard Font
+      source: url("/local/fonts/dashboard-bold.woff2") format("woff2")
+      descriptors:
+        weight: "700"
+
+  ha-font-family-body: '"ChicagoFLF", sans-serif'
+  ha-font-family-heading: '"ChicagoFLF", sans-serif'
+  uix-card: |
+    ha-card {
+      font-family: "ChicagoFLF", sans-serif;
+    }
+```
+
+| Key | Required | Description |
+| --- | --- | --- |
+| `family` | No | Font family name to use in CSS. Defaults to the mapping key. Set it when multiple named entries share a family. |
+| `source` | Yes | A CSS font source, such as `url("/local/fonts/example.woff2") format("woff2")`. Supports comma-separated fallbacks and `local("Font Name")`. Use font files, not a provider's CSS stylesheet URL. |
+| `descriptors` | No | Mapping of `FontFace` descriptors using JavaScript names: `weight`, `style`, `stretch`, `display`, `unicodeRange`, `featureSettings`, `variationSettings`, `ascentOverride`, `descentOverride`, and `lineGapOverride`. Values are strings; `weight` also accepts a number. |
+
+Use separate entries for each weight or style. A variable font can specify a range such as `weight: "100 900"`. Local files in `/config/www/fonts/` are served as `/local/fonts/`. Remote font servers must allow cross-origin font requests.
+
+The descriptor names map directly to the browser `FontFace` API. Support for `variationSettings`, `ascentOverride`, `descentOverride`, and `lineGapOverride` varies by browser; Safari may ignore some of them.
+
+Fonts follow the **global Home Assistant theme**, including the selected `modes.light` or `modes.dark` overrides. A mode's `uix-fonts` replaces the base mapping; use `uix-fonts: "{}"` for a mode with no custom fonts. If `uix-theme` points to another theme, UIX reads the font mapping from that theme, just as it does for UIX styles. Legacy `card-mod-theme` references are also supported. Selecting a theme only on a view, card, or through `uix.theme` does not load its fonts.
+
+UIX starts loading fonts without waiting to apply styles. Identical entries are registered once. Switching themes or reloading themes removes UIX font registrations that are no longer needed, including fonts still loading. Fonts registered by Home Assistant or other integrations are left alone. Invalid entries and failed downloads produce browser-console warnings without blocking other fonts or theme styles; reload themes to retry a failed download.
+
+`uix-fonts` accepts a static YAML mapping without templates. It does not insert CSS or `<style>` elements into the document head.
 
 ## Dialogs
 

@@ -14,4 +14,5 @@ tests/test_ha_panel_app.py
 tests/test_ha_panel_config.py
 tests/test_hass_frame.py
 tests/test_panel_state.py
+tests/test_theme_fonts.py
 tests/test_webawesome_compatibility.py

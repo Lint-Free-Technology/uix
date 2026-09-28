@@ -1,7 +1,11 @@
-import { hass, isFramePanel } from "./helpers/hass";
+import { hass, isFramePanel, provideHass } from "./helpers/hass";
 import { Unpromise } from "@watchable/unpromise";
+import { ThemeFonts } from "./helpers/theme-fonts";
+
+const themeFonts = new ThemeFonts();
 
 function refresh_theme() {
+  void hass().then((hs) => themeFonts.update(hs?.themes, true));
   document.dispatchEvent(
     new CustomEvent("uix-update", { detail: { reason: "theme" } })
   );
@@ -17,6 +21,17 @@ const watchThemes = () => {
     while (!hs) {
       await new Promise((resolve) => window.setTimeout(resolve, 500));
     }
+    themeFonts.update(hs.themes);
+    // Also follow automatic light/dark changes and backend-selected themes,
+    // which do not necessarily emit the frontend settheme event.
+    let previousThemes = hs.themes;
+    void provideHass({
+      set hass(value) {
+        if (value?.themes === previousThemes) return;
+        previousThemes = value?.themes;
+        themeFonts.update(previousThemes);
+      },
+    });
     hs.connection.subscribeEvents(() => {
       window.setTimeout(refresh_theme, 500);
     }, "themes_updated");
@@ -27,6 +42,8 @@ const watchThemes = () => {
     document
       .querySelector("hc-main")
       ?.addEventListener("settheme", refresh_theme);
+
+    window.addEventListener("uix-frame-hass-update", refresh_theme);
 
   }, 1000);
 };

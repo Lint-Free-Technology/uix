@@ -47,6 +47,24 @@ export function installFrameRuntime(iframe: HTMLIFrameElement, options: UixFrame
   }
 }
 
+/** Update frame state and notify its runtime when the active theme may have changed. */
+export function updateFrameRuntimeHass(
+  iframe: HTMLIFrameElement,
+  options: UixFrameOptions,
+  hass: any,
+) {
+  const themesChanged = options.hass?.themes !== hass?.themes;
+  options.hass = hass;
+
+  try {
+    const frameWindow = iframe.contentWindow;
+    if (!themesChanged || frameWindow?.uixFrameOptions !== options) return;
+    frameWindow.dispatchEvent(new Event("uix-frame-hass-update"));
+  } catch (error) {
+    console.warn("UIX: failed to update frame runtime state", error);
+  }
+}
+
 /** Attach the runtime after every frame navigation and to an already-loaded frame. */
 export function setupFrameRuntime(iframe: HTMLIFrameElement, options: UixFrameOptions) {
   const install = () => installFrameRuntime(iframe, options);

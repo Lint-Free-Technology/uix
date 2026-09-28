@@ -35,6 +35,7 @@ class TestCustomPanel extends LitElement {
         <pre>${JSON.stringify(this.panel.config, undefined, 2)}</pre>
         Current route
         <pre>${JSON.stringify(this.route, undefined, 2)}</pre>
+        <p class="test-font">This is a test font paragraph. Loreum ipsum dolor sit amet.</p>
       </wired-card>
     `;
   }
@@ -53,6 +54,9 @@ class TestCustomPanel extends LitElement {
         font-size: 18px;
         max-width: 600px;
         margin: 0 auto;
+      }
+      .test-font {
+        font-family: "ChicagoFLF", sans-serif;
       }
     `;
   }
