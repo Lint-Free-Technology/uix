@@ -303,6 +303,9 @@ Also `<any variable>-yaml`.
 
 ## Fonts
 
+!!! info
+    Font loading via `uix-fonts` available in 8.4.0-beta.2
+
 Use `uix-fonts` to load web fonts when a global theme is selected. UIX creates [`FontFace`](https://developer.mozilla.org/en-US/docs/Web/API/FontFace/FontFace) objects and registers them in `document.fonts`, making the fonts available to Home Assistant components, including those inside shadow roots. This setting only loads fonts; use theme variables or UIX styles to choose where they are used.
 
 Home Assistant theme values must be strings, so put the font mapping inside a `|` block:
