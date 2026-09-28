@@ -27,6 +27,7 @@ new Function('require', 'module', 'exports', outputFiles[0].text)(
 const { ThemeFonts } = moduleObj.exports;
 const created = [];
 const warnings = [];
+const windowListeners = {};
 console.warn = (...args) => warnings.push(args);
 global.document = { fonts: new Set() };
 global.FontFace = class {
@@ -212,7 +213,10 @@ let hs = {
     reload = callback;
   } },
 };
-global.window = { setTimeout: callback => timers.push(callback) };
+global.window = {
+  setTimeout: callback => timers.push(callback),
+  addEventListener: (event, callback) => { windowListeners[event] = callback; },
+};
 global.customElements = { whenDefined: () => Promise.resolve() };
 document.querySelector = () => ({
   addEventListener: (event, callback) => { listeners[event] = callback; },
@@ -246,11 +250,15 @@ hs = { ...hs, themes: theme([font('Selected')]) };
 listeners.settheme();
 await flush();
 assert.deepEqual([...document.fonts].map(face => face.family), ['Selected']);
+hs = { ...hs, themes: theme([font('Frame update')]) };
+windowListeners['uix-frame-hass-update']();
+await flush();
+assert.deepEqual([...document.fonts].map(face => face.family), ['Frame update']);
 created.at(-1).reject(new Error('Temporary failure'));
 await flush();
 assert.equal(document.fonts.size, 0);
 reload();
 await timers.shift()();
 await flush();
-assert.deepEqual([...document.fonts].map(face => face.family), ['Selected']);
+assert.deepEqual([...document.fonts].map(face => face.family), ['Frame update']);
 """)

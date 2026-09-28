@@ -43,6 +43,8 @@ const watchThemes = () => {
       .querySelector("hc-main")
       ?.addEventListener("settheme", refresh_theme);
 
+    window.addEventListener("uix-frame-hass-update", refresh_theme);
+
   }, 1000);
 };
 

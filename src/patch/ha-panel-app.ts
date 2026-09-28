@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import { setupFrameRuntime, type UixFrameOptions } from "../frame/frame-api";
+import { setupFrameRuntime, type UixFrameOptions, updateFrameRuntimeHass } from "../frame/frame-api";
 import { selectTree } from "../helpers/selecttree";
 
 export function appThemeTypes(slug: string): string[] {
@@ -42,11 +42,10 @@ function applyAppPanelUix(panel: any) {
     const frameOptions: UixFrameOptions = (iframe as any)._uixFrameOptions || {
       roots: ["home-assistant", "hc-main", "body"],
       themeTypes: appThemeTypes(slug),
-      hass: panel.hass,
     };
-    frameOptions.hass = panel.hass;
     frameOptions.themeTypes = appThemeTypes(slug);
     (iframe as any)._uixFrameOptions = frameOptions;
+    updateFrameRuntimeHass(iframe, frameOptions, panel.hass);
 
     if ((iframe as any)._uixFrameSetup) return;
     (iframe as any)._uixFrameSetup = true;

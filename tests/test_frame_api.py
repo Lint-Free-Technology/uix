@@ -93,3 +93,40 @@ def test_frame_runtime_skips_the_transient_about_blank_document() -> None:
     )
 
     assert json.loads(output) == {"beforeNavigation": 0, "afterLoad": 1}
+
+
+def test_frame_runtime_notifies_a_loaded_frame_when_its_theme_changes() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
+                "const events = [];"
+                "const frameWindow = {"
+                "  uixFrameOptions: undefined,"
+                "  dispatchEvent: (event) => events.push(event.type)"
+                "};"
+                "const iframe = { contentWindow: frameWindow };"
+                "const options = { roots: ['body'], themeTypes: ['app'], hass: { themes: { theme: 'One' } } };"
+                "frameWindow.uixFrameOptions = options;"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../../package.json') return { version: 'test' };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "moduleObj.exports.updateFrameRuntimeHass(iframe, options, { themes: options.hass.themes, states: {} });"
+                "moduleObj.exports.updateFrameRuntimeHass(iframe, options, { themes: { theme: 'Two' } });"
+                "process.stdout.write(JSON.stringify({ events, theme: options.hass.themes.theme }));"
+            ),
+            str(FRAME_API_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"events": ["uix-frame-hass-update"], "theme": "Two"}

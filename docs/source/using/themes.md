@@ -342,6 +342,8 @@ retro-theme:
 
 Use separate entries for each weight or style. A variable font can specify a range such as `weight: "100 900"`. Local files in `/config/www/fonts/` are served as `/local/fonts/`. Remote font servers must allow cross-origin font requests.
 
+The descriptor names map directly to the browser `FontFace` API. Support for `variationSettings`, `ascentOverride`, `descentOverride`, and `lineGapOverride` varies by browser; Safari may ignore some of them.
+
 Fonts follow the **global Home Assistant theme**, including the selected `modes.light` or `modes.dark` overrides. A mode's `uix-fonts` replaces the base mapping; use `uix-fonts: "{}"` for a mode with no custom fonts. If `uix-theme` points to another theme, UIX reads the font mapping from that theme, just as it does for UIX styles. Legacy `card-mod-theme` references are also supported. Selecting a theme only on a view, card, or through `uix.theme` does not load its fonts.
 
 UIX starts loading fonts without waiting to apply styles. Identical entries are registered once. Switching themes or reloading themes removes UIX font registrations that are no longer needed, including fonts still loading. Fonts registered by Home Assistant or other integrations are left alone. Invalid entries and failed downloads produce browser-console warnings without blocking other fonts or theme styles; reload themes to retry a failed download.

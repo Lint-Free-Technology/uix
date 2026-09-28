@@ -1,6 +1,6 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
-import { setupFrameRuntime, type UixFrameOptions } from "../frame/frame-api";
+import { setupFrameRuntime, type UixFrameOptions, updateFrameRuntimeHass } from "../frame/frame-api";
 
 /*
 Patch ha-panel-config for theme styling
@@ -40,7 +40,7 @@ class HaPanelCustomPatch extends ModdedElement {
   private refreshFrameHass() {
     const iframe = this.shadowRoot?.querySelector("iframe") || this.querySelector("iframe");
     const frameOptions = (iframe as any)?._uixFrameOptions as UixFrameOptions | undefined;
-    if (frameOptions) frameOptions.hass = this.hass;
+    if (iframe && frameOptions) updateFrameRuntimeHass(iframe as HTMLIFrameElement, frameOptions, this.hass);
   }
   _createPanel(_orig, ...args) {
     _orig?.(...args);
@@ -60,10 +60,9 @@ class HaPanelCustomPatch extends ModdedElement {
         const frameOptions: UixFrameOptions = (iframe as any)._uixFrameOptions || {
           roots: [name],
           themeTypes: [name],
-          hass: this.hass,
         };
-        frameOptions.hass = this.hass;
         (iframe as any)._uixFrameOptions = frameOptions;
+        updateFrameRuntimeHass(iframe, frameOptions, this.hass);
         setupFrameRuntime(iframe, frameOptions);
       };
 

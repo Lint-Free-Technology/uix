@@ -27,7 +27,7 @@ def test_custom_panel_updates_the_hass_reference_used_by_an_existing_frame() -> 
                 "    patch_element: (name) => (target) => { if (name === 'ha-panel-custom') CustomPanel = target; return target; }"
                 "  };"
                 "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
-                "  if (name === '../frame/frame-api') return { setupFrameRuntime: () => {} };"
+                "  if (name === '../frame/frame-api') return { setupFrameRuntime: () => {}, updateFrameRuntimeHass: (_iframe, options, hass) => { options.hass = hass; } };"
                 "  throw new Error(`Unexpected module import: ${name}`);"
                 "};"
                 "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
