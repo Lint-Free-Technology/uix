@@ -195,6 +195,39 @@ The elements in a picture-elements conditional element can be styled directly. I
 
 ## Styling entity markers on a map
 
+Since Home Assistant 2026.10.0, entity markers and pictures (if set for marker) can be styled by entity marker/picture CSS parts exported to `ha-map`. Parts `marker` and `picture` style all markers on the map. Entity parts `marker-<css-safe-entity_id>`. The CSS safe entity_id is the entity with the `.` changed to `-`.
+
+Style all markers on a map card:
+
+```yaml
+  type: map
+  show_all: true
+  auto_fit: true
+  uix:
+    style: |
+      ha-map::part(marker) {
+        border: red solid 4px !important;
+      }
+```
+
+Style marker only for entity `person.dev`
+
+```yaml
+element:
+  type: map
+  show_all: true
+  auto_fit: true
+  uix:
+    style: |
+      ha-map::part(marker-person-dev) {
+        border: red solid 4px !important;
+      }
+```
+
+## Styling entity markers on a map (Legacy)
+
+The legacy method used prior to Home Assistant 2026.10.0 still works.
+
 Entity markers on a map can be styled individually by card config or by theme. In both examples the picture image is also styled.
 
 Styling by config.
