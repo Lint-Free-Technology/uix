@@ -9,6 +9,37 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PANEL_APP_TS_PATH = REPO_ROOT / "src" / "patch" / "ha-panel-app.ts"
 
 
+def test_generic_app_panel_uses_its_slug_for_deep_routes() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "global.window = {}; global.document = {};"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === '../helpers/patch_function') return { patch_element: () => (target) => target };"
+                "  if (name === '../helpers/apply_uix') return { ModdedElement: class {}, apply_uix: () => {} };"
+                "  if (name === '../frame/frame-api') return {};"
+                "  if (name === '../helpers/selecttree') return {};"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "process.stdout.write(moduleObj.exports.appPanelSlug({ route: { path: '/app/core_music_assistant/albums' } }));"
+            ),
+            str(PANEL_APP_TS_PATH),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert output == "core_music_assistant"
+
+
 def test_active_app_panel_is_configured_when_frame_styling_becomes_available() -> None:
     output = subprocess.check_output(
         [

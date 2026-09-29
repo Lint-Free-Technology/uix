@@ -9,6 +9,14 @@ export function appThemeTypes(slug: string): string[] {
   return independent === slug ? [slug] : [slug, independent];
 }
 
+export function appPanelSlug(panel: any): string | undefined {
+  const configuredSlug = panel.panel?.config?.addon || panel.panel?.config?.slug;
+  if (configuredSlug) return configuredSlug;
+
+  const [panelType, slug] = panel.route?.path?.split("/").filter(Boolean) || [];
+  return panelType === "app" ? slug : undefined;
+}
+
 /*
 Patch ha-panel-app for theme styling.
 
@@ -34,8 +42,7 @@ function applyAppPanelUix(panel: any) {
     }
     return;
   }
-  const slug = panel.panel?.config?.addon || panel.panel?.config?.slug ||
-    panel.route?.path?.split("/").filter(Boolean).pop();
+  const slug = appPanelSlug(panel);
 
   const setupIframe = (iframe: HTMLIFrameElement) => {
     if (!slug) return;
