@@ -5,6 +5,7 @@ import "../console_debug";
 import "../coordinator/coordinator";
 import "../patch/ha-icon";
 import "../patch/ha-entity-picture";
+import "../patch/hui-map-overview";
 import "../uix";
 
 import "../patch/hui-card";
