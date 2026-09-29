@@ -64,8 +64,10 @@ UIX Styling dispatches the following bubbling, composed browser events from its
 - `uix-styles-update` — when that UIX node updates its rendered CSS text,
   including template-driven updates. The latest text is available as
   `detail.uix_node._rendered_styles`, but Lit has not yet committed its
-  `<style>` element. To read calculated styles, wait for
-  `detail.uix_node.updateComplete` in a JavaScript directive first.
+  `<style>` element. To read calculated styles in a later directive, first use
+  an [`action: javascript`](./directives.md#javascript-action) directive with
+  `data.code: "return event.detail.uix_node.updateComplete;"`. The action waits
+  for that Promise before the next directive runs.
 - `uix-theme-update` — after that UIX node reprocesses a theme update. This
   event fires even when the resulting UIX CSS is unchanged.
 

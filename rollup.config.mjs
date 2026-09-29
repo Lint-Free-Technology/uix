@@ -3,6 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import esbuild from "rollup-plugin-esbuild";
 import { babel } from "@rollup/plugin-babel"; 
+import webAwesomeCompatibility from "./build/rollup-webawesome.mjs";
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -19,6 +20,7 @@ export default [
       format: "es",
     },
     plugins: [
+      webAwesomeCompatibility(),
       nodeResolve(),
       commonjs(),
       json(),
@@ -35,12 +37,13 @@ export default [
     ],
   },
   {
-    input: "src/custom-panel/main-custom-panel.ts",
+    input: "src/frame/main-frame.ts",
     output: {
-      file: "custom_components/uix/uixCustomPanel.js",
+      file: "custom_components/uix/uixFrame.js",
       format: "es",
     },
     plugins: [
+      webAwesomeCompatibility(),
       nodeResolve(),
       commonjs(),
       json(),

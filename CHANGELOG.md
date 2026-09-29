@@ -1,3 +1,22 @@
+## [8.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.1...v8.4.0-beta.2) (2026-09-28)
+
+### ⭐ New Features
+
+* Load document fonts via `uix-fonts` theme variable. ([#643](https://github.com/Lint-Free-Technology/uix/issues/643)) ([ccd1865](https://github.com/Lint-Free-Technology/uix/commit/ccd1865ce11e6575a805f894edc4e87912b219b9))
+
+## [8.4.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0-beta.1) (2026-09-24)
+
+### ⭐ New Features
+
+* Add internal frame runtime (uixFrame) and replace custom-panel loader. Allows styling inside iFrame of loaded by ha-panel-custom and ha-panel-app ([#623](https://github.com/Lint-Free-Technology/uix/issues/623)) ([a43f3e2](https://github.com/Lint-Free-Technology/uix/commit/a43f3e2bf03edb808c0ea8d83af426d06626181e))
+
+## [8.3.1](https://github.com/Lint-Free-Technology/uix/compare/v8.3.0...v8.3.1) (2026-09-22)
+
+### 🐞 Bug Fixes
+
+* **forge:** Restore Map spark operation after breaking due to Home Assistant 2026.9.0 map upgrades ([#633](https://github.com/Lint-Free-Technology/uix/issues/633)) ([32ce9ab](https://github.com/Lint-Free-Technology/uix/commit/32ce9ab13df98f4beb3106ad94de0a46aba3af91)), references [#632](https://github.com/Lint-Free-Technology/uix/issues/632)
+* Workaround the loading of webawesome-ha causing Frontend not to load on older devices including iOS 15. ([#631](https://github.com/Lint-Free-Technology/uix/issues/631)) ([d97c350](https://github.com/Lint-Free-Technology/uix/commit/d97c350075818376a9fac85cd6f3f867340c8e67)), closes [#629](https://github.com/Lint-Free-Technology/uix/issues/629)
+
 ## [8.3.0](https://github.com/Lint-Free-Technology/uix/compare/v8.2.0...v8.3.0) (2026-09-20)
 
 ### ⭐ New Features

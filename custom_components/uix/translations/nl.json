@@ -8,8 +8,7 @@
             "old_frontend_script_resource": "Conflicterende Frontend‑scriptresource {resource} is geregistreerd als een Dashboard‑resource. Verwijder deze voordat je UIX toevoegt.",
             "old_frontend_script_extra_module": "Conflicterende Frontend‑scriptresource {resource} is geregistreerd als een extra module. Verwijder deze voordat je UIX toevoegt."
         },
-        "step": {
-        }
+        "step": {}
     },
     "options": {
         "step": {
@@ -68,11 +67,11 @@
                 "description": "Configureer experimentele functies voor UIX.",
                 "data": {
                     "always_patch_ha_card": "Altijd ha-card patchen",
-                    "style_custom_panels": "Aangepaste panelen stylen die als iframe worden geladen"
+                    "style_frame_panels": "Framepanelen stylen die als iframe worden geladen"
                 },
                 "data_description": {
                     "always_patch_ha_card": "Wanneer ingeschakeld, wordt ha-card altijd gepatcht, zelfs wanneer er geen kaartconfiguratie is. Dit maakt patching mogelijk wanneer ha-card wordt gebruikt in instellingen dashboards of aangepaste panelen.",
-                    "style_custom_panels": "Wanneer ingeschakeld, wordt UIX‑thema‑styling toegepast op aangepaste panelen die als iframe worden geladen."
+                    "style_frame_panels": "Indien ingeschakeld, wordt UIX-themastijl toegepast binnen ondersteunde app- en aangepaste paneelframes."
                 }
             },
             "broker_settings": {

@@ -237,4 +237,4 @@ rules:
 ```
 
 !!! warning
-    Panel state is asynchronous. An interaction using a panel rule cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning.
+    Panel state is asynchronous. An interaction with a panel rule in its interaction-level `rules` cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning. Later non-`block` directives may still have their own panel rules; those rules condition only those directives after the event has been blocked.

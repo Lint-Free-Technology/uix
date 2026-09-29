@@ -57,6 +57,12 @@ interface EntityFilterConfig {
   group: boolean | Record<string, string>;
 }
 
+/** A camera position expressed using Home Assistant map zoom semantics. */
+interface MapView {
+  center: { lat: number; lng: number };
+  zoom: number;
+}
+
 /**
  * Map spark — provides memory mode, fit-map, and tour mode for map cards
  * used inside UIX Forge.
@@ -301,6 +307,70 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     return huiMap?.shadowRoot?.querySelector("ha-map") ?? null;
   }
 
+  /**
+   * Return the frontend's map-engine abstraction.
+   *
+   * Current Home Assistant Frontend versions use this for both MapLibre and
+   * the Leaflet fallback. Older frontend versions exposed the Leaflet instance
+   * directly, which remains supported below where needed.
+   */
+  private _getMapEngine(haMap: any = this._getHaMap()): any {
+    return haMap?._engine ?? null;
+  }
+
+  /** Return the host element used by either supported map renderer. */
+  private _getMapContainer(haMap: any): HTMLElement | null {
+    return haMap?.shadowRoot?.querySelector("#map, .leaflet-container") as HTMLElement | null;
+  }
+
+  private _mapHasUsableSize(haMap: any): boolean {
+    const engine = this._getMapEngine(haMap);
+    if (engine?.hasUsableSize) {
+      try {
+        return engine.hasUsableSize();
+      } catch {
+        return false;
+      }
+    }
+    return !!haMap?.leafletMap && haMap.clientWidth > 0;
+  }
+
+  /**
+   * Read the current camera for memory mode. MapEngine deliberately does not
+   * expose camera getters, so this uses its native renderer only for this
+   * backwards-compatible feature. Other map operations use MapEngine itself.
+   */
+  private _getMapView(haMap: any = this._getHaMap()): MapView | null {
+    const engine = this._getMapEngine(haMap);
+    const leafletMap = engine?.leafletMap ?? haMap?.leafletMap;
+    if (leafletMap?.getCenter && leafletMap?.getZoom) {
+      const center = leafletMap.getCenter();
+      return { center: { lat: center.lat, lng: center.lng }, zoom: leafletMap.getZoom() };
+    }
+
+    const mapLibre = engine?._map;
+    if (mapLibre?.getCenter && mapLibre?.getZoom) {
+      const center = mapLibre.getCenter();
+      // MapLibre is one level below Home Assistant's Leaflet-compatible zoom.
+      return { center: { lat: center.lat, lng: center.lng }, zoom: mapLibre.getZoom() + 1 };
+    }
+    return null;
+  }
+
+  /** Set a camera through MapEngine, retaining the legacy Leaflet path. */
+  private _setMapView(haMap: any, center: { lat: number; lng: number }, zoom?: number, reset = false): void {
+    const engine = this._getMapEngine(haMap);
+    if (engine?.setView) {
+      engine.setView([center.lat, center.lng], zoom);
+      return;
+    }
+
+    const leafletMap = haMap?.leafletMap;
+    if (leafletMap?.setView) {
+      leafletMap.setView([center.lat, center.lng], zoom, reset ? { reset: true } : undefined);
+    }
+  }
+
   private async _waitForMapToBeReady(gen: number, checkGen: () => boolean): Promise<any> {
     let haMap = this._getHaMap();
     let huiMap = this._getHuiMapCard();
@@ -309,9 +379,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const hasOriginalShowAll = originalConfig.show_all === true;
 
     while (
-      (!haMap?.leafletMap ||
-        !haMap?.Leaflet ||
-        haMap?.clientWidth === 0 ||
+      ((!this._getMapEngine(haMap) && !haMap?.leafletMap) ||
+        !this._mapHasUsableSize(haMap) ||
         !huiMap?._filteredMapEntities ||
         (hasOriginalShowAll && huiMap._filteredMapEntities.length === 0)) &&
       tries < 60
@@ -322,20 +391,21 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       haMap = this._getHaMap();
       huiMap = this._getHuiMapCard();
     }
-    if (!checkGen() || !haMap?.leafletMap || !huiMap?._filteredMapEntities) return null;
+    if (!checkGen() || (!this._getMapEngine(haMap) && !haMap?.leafletMap) || !this._mapHasUsableSize(haMap) || !huiMap?._filteredMapEntities) return null;
     return haMap;
   }
 
   private _saveMapState(): void {
     if (!this._memory) return;
     const haMap = this._getHaMap();
-    const leafletMap = haMap?.leafletMap;
-    if (leafletMap) {
+    if (haMap) {
       try {
-        this._savedZoom = leafletMap.getZoom();
-        this._savedCenter = leafletMap.getCenter();
+        const mapView = this._getMapView(haMap);
+        if (!mapView) return;
+        this._savedZoom = mapView.zoom;
+        this._savedCenter = mapView.center;
       } catch {
-        // leafletMap may not be fully initialised yet — skip saving
+        // The renderer may not be fully initialised yet — skip saving.
       }
     }
   }
@@ -363,10 +433,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       const doRestore = () => {
         if (gen !== this._callGeneration) return;
         const haMap = this._getHaMap();
-        const leafletMap = haMap?.leafletMap;
         // Skip memory restore when tour is playing — the tour manages map position.
-        if (leafletMap && savedCenter && !(this._tour && this._tourPlaying)) {
-          leafletMap.setView(savedCenter, savedZoom, { reset: true });
+        if (haMap && savedCenter && !(this._tour && this._tourPlaying)) {
+          this._setMapView(haMap, savedCenter, savedZoom ?? undefined, true);
         }
       };
 
@@ -398,7 +467,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         const haMap = await this._waitForMapToBeReady(gen, () => fitMapGen === this._fitMapGen);
         if (haMap) {
           let tries = 0;
-          while ((haMap.clientWidth === 0 || !haMap.leafletMap || !haMap.Leaflet) && tries < 20) {
+          while (!this._mapHasUsableSize(haMap) && tries < 20) {
             if (gen !== this._callGeneration || this._fitMapAbort === undefined || this._fitMapAbort.cancelled) return;
             await new Promise(res => setTimeout(res, 50));
             tries++;
@@ -534,7 +603,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
     if (gen !== this._tourSetupGen) return;
 
-    // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+    // Wait for the map engine and _filteredMapEntities to be populated.
     const haMap = await this._waitForMapToBeReady(gen, () => gen === this._tourSetupGen);
     if (!haMap) return;
 
@@ -576,9 +645,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     this._tourRingSvgEl = null;
     this._tourRingEl = null;
 
-    // Inject into the Leaflet container inside ha-map's open shadow root.
-    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
-    if (!leafletContainer) return;
+    // Inject into the renderer container inside ha-map's open shadow root.
+    const mapContainer = this._getMapContainer(haMap);
+    if (!mapContainer) return;
 
     // ── Container ───────────────────────────────────────────────────────────
     const container = document.createElement("div");
@@ -653,8 +722,8 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   private _applyTourButtonPosition(el: HTMLElement): void {
-    const pos = this._tourIconPosition ?? { bottom: "10px", right: "10px" };
-    const isDefault = pos.bottom === "10px" && pos.right === "10px";
+    const pos = this._tourIconPosition ?? { bottom: "40px", right: "10px" };
+    const isDefault = pos.bottom === "40px" && pos.right === "10px";
     if (isDefault) {
       return;
     }
@@ -737,10 +806,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _flyToPoi(poi: { lat: number; lng: number; zoom?: number }): void {
     const haMap = this._getHaMap();
-    const leafletMap = haMap?.leafletMap;
-    if (!leafletMap) return;
-    const zoom = poi.zoom ?? this._tourZoom ?? leafletMap.getZoom();
-    leafletMap.setView([poi.lat, poi.lng], zoom);
+    if (!haMap) return;
+    const zoom = poi.zoom ?? this._tourZoom ?? this._getMapView(haMap)?.zoom;
+    this._setMapView(haMap, { lat: poi.lat, lng: poi.lng }, zoom);
   }
 
   /**
@@ -898,7 +966,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   private async _setupSlider(): Promise<void> {
     const gen = ++this._sliderSetupGen;
 
-    // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+    // Wait for the map engine and _filteredMapEntities to be populated.
     const haMap = await this._waitForMapToBeReady(gen, () => gen === this._sliderSetupGen);
     if (!haMap) return;
 
@@ -944,9 +1012,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._sliderLabelEl = null;
     }
 
-    // Inject into Leaflet container of ha-map's open shadow root.
-    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
-    if (!leafletContainer) return;
+    // Inject into the renderer container of ha-map's open shadow root.
+    const mapContainer = this._getMapContainer(haMap);
+    if (!mapContainer) return;
 
     // ── Container ───────────────────────────────────────────────────────────
     const container = document.createElement("div");
@@ -963,7 +1031,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.style.setProperty("pointer-events", "auto");
     this._applySliderPosition(container);
 
-    // Stop Leaflet from intercepting navigation gestures (dragging/scrolling) on the slider container.
+    // Stop map navigation gestures (dragging/scrolling) on the slider container.
     // We only stop propagation of mousedown/touchstart/pointerdown (which starts drags), click/dblclick (zoom/pan),
     // and wheel/mousewheel (scroll-zoom). We MUST NOT stop mousemove/mouseup/pointermove/pointerup/touchmove/touchend,
     // otherwise the document/window won't receive them, breaking standard dragging and release of the slider control!
@@ -1115,7 +1183,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _applySliderPosition(el: HTMLElement): void {
     const sliderPos = this._hoursToShowConfig?.position;
-    const isDefault = !sliderPos || (sliderPos.bottom === "10px" && sliderPos.right === "10px");
+    const isDefault = !sliderPos || (sliderPos.bottom === "40px" && sliderPos.right === "10px");
     if (isDefault) {
       return;
     }
@@ -1200,7 +1268,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     const gen = ++this._entityFilterSetupGen;
 
     try {
-      // Wait for the Leaflet map to be fully initialised and _filteredMapEntities to be populated.
+      // Wait for the map engine and _filteredMapEntities to be populated.
       const haMap = await this._waitForMapToBeReady(gen, () => gen === this._entityFilterSetupGen);
       if (!haMap) return;
 
@@ -1226,15 +1294,16 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
   }
 
   private _getOrCreateBottomRightControls(haMap: any): HTMLElement | null {
-    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
-    if (!leafletContainer) return null;
+    const mapContainer = this._getMapContainer(haMap);
+    if (!mapContainer) return null;
 
-    let controls = leafletContainer.querySelector(".uix-map-controls-bottom-right") as HTMLElement | null;
+    let controls = mapContainer.querySelector(".uix-map-controls-bottom-right") as HTMLElement | null;
     if (!controls) {
       controls = document.createElement("div");
       controls.classList.add("uix-map-controls-bottom-right");
       controls.style.setProperty("position", "absolute");
-      controls.style.setProperty("bottom", "10px");
+      // Keep the default spark controls clear of the renderer attribution.
+      controls.style.setProperty("bottom", "40px");
       controls.style.setProperty("right", "10px");
       controls.style.setProperty("z-index", "1000");
       controls.style.setProperty("display", "flex");
@@ -1250,16 +1319,16 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
         }
       `;
       controls.appendChild(style);
-      leafletContainer.appendChild(controls);
+      mapContainer.appendChild(controls);
     }
     return controls;
   }
 
   private _mountBottomRightControl(container: HTMLElement, order: string, positionConfig: any, haMap: any): void {
-    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
-    if (!leafletContainer) return;
+    const mapContainer = this._getMapContainer(haMap);
+    if (!mapContainer) return;
 
-    const isDefault = !positionConfig || (positionConfig.bottom === "10px" && positionConfig.right === "10px");
+    const isDefault = !positionConfig || (positionConfig.bottom === "40px" && positionConfig.right === "10px");
 
     if (isDefault) {
       const controls = this._getOrCreateBottomRightControls(haMap);
@@ -1270,7 +1339,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       }
     }
 
-    leafletContainer.appendChild(container);
+    mapContainer.appendChild(container);
   }
 
   /** Create the entity filter overlay or update its list if it already exists. */
@@ -1286,9 +1355,9 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
       this._entityFilterContainerEl = null;
     }
 
-    // Inject into Leaflet container of ha-map's open shadow root.
-    const leafletContainer = haMap.shadowRoot?.querySelector(".leaflet-container") as HTMLElement | null;
-    if (!leafletContainer) return;
+    // Inject into the renderer container of ha-map's open shadow root.
+    const mapContainer = this._getMapContainer(haMap);
+    if (!mapContainer) return;
 
     // ── Container ───────────────────────────────────────────────────────────
     const container = document.createElement("div");
@@ -1298,7 +1367,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
     container.style.setProperty("pointer-events", "auto");
     this._applyEntityFilterPosition(container);
 
-    // Stop Leaflet from intercepting navigation gestures (dragging/scrolling) on the container.
+    // Stop map navigation gestures (dragging/scrolling) on the container.
     const stopEvents = [
       "mousedown",
       "pointerdown",
@@ -1844,7 +1913,7 @@ export class UixForgeSparkMap extends UixForgeSparkBase {
 
   private _applyEntityFilterPosition(el: HTMLElement): void {
     const filterPos = this._entityFilterConfig?.position;
-    const isDefault = !filterPos || (filterPos.bottom === "10px" && filterPos.right === "10px");
+    const isDefault = !filterPos || (filterPos.bottom === "40px" && filterPos.right === "10px");
     if (isDefault) {
       return;
     }
