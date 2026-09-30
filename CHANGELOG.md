@@ -1,3 +1,17 @@
+## [8.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.2...v8.4.0-beta.3) (2026-09-30)
+
+### ⭐ New Features
+
+* Apply `--uix-image-for-<entity_id>` overrides to Map panel overview tabs ([#628](https://github.com/Lint-Free-Technology/uix/issues/628)) ([258b0ff](https://github.com/Lint-Free-Technology/uix/commit/258b0ff9e7d17e6994a99fbeeccf82dfb18cea2f))
+
+### 🐞 Bug Fixes
+
+* **beta:** Fix getting custom/app panel slug for theme type from deep panel urls ([0874fba](https://github.com/Lint-Free-Technology/uix/commit/0874fba36c93ee19aaf5a9893642acd0a85b69ba))
+
+### ⚙️ Miscellaneous
+
+* Update map entity-picture styling so styling `--uix-image-for-<entity_id>` does not race with the markers which are always recreated in the new bubble clusters in Home Assistant 2026.10.0 ([#627](https://github.com/Lint-Free-Technology/uix/issues/627)) ([fcb33d3](https://github.com/Lint-Free-Technology/uix/commit/fcb33d3eaf9bf07902d49ab1f0f883bde62ea0a9))
+
 ## [8.4.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.1...v8.4.0-beta.2) (2026-09-28)
 
 ### ⭐ New Features
