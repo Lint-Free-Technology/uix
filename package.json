@@ -41,7 +41,7 @@
     "lit": "^3.3.3",
     "memoize-one": "^6.0.0",
     "parse-duration": "^2.1.9",
-    "tinykeys": "^4.0.0"
+    "tinykeys": "^4.0.1"
   },
   "overrides": {
     "@babel/core": "$@babel/core",
