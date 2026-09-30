@@ -53,9 +53,6 @@ const getParentMap = (el: any): any | null => {
   return haMap?.tagName?.toLowerCase() === "ha-map" ? haMap : null;
 };
 
-const isClusterBubbleMarker = (el: any): boolean =>
-  Boolean(el.closest?.(".cluster-bubble"));
-
 const getMapImageOverride = (el: any): string | undefined => {
   const entityId = getEntityId(el);
   if (!entityId) return undefined;
@@ -146,7 +143,7 @@ const applyImage = (el: any, imageUrl: string | null): void => {
     case "ha-entity-marker":
       if (imageUrl) {
         // Reading entityPicture can populate _uixOriginalEntityPicture when a
-        // cluster-bubble marker is served from the map-level override cache.
+        // marker is served from the map-level override cache.
         const entityPicture = el.entityPicture;
         el._uix_replaced_image = el._uix_replaced_image
           ?? el._uixOriginalEntityPicture
@@ -292,9 +289,7 @@ const bindUix = async (el: any) => {
       if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) {
         return originalPicture;
       }
-      const imageOverride = isClusterBubbleMarker(this)
-        ? getMapImageOverride(this)
-        : undefined;
+      const imageOverride = getMapImageOverride(this);
       if (imageOverride) {
         this._uixOriginalEntityPicture = originalPicture ?? false;
         return imageOverride;
