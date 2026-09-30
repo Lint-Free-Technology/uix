@@ -1,3 +1,9 @@
+## [8.4.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.3...v8.4.0-beta.4) (2026-09-30)
+
+### 🐞 Bug Fixes
+
+* **beta:** Extend ha-entity-marker entityPicture patch for all markers and not just those in a cluster bubble. Fixes seeing non-override entity icon/image on non-clustered markers. ([e6e1ad4](https://github.com/Lint-Free-Technology/uix/commit/e6e1ad4d8ce017662189a9ca58ea61e124e37b17))
+
 ## [8.4.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.2...v8.4.0-beta.3) (2026-09-30)
 
 ### ⭐ New Features
