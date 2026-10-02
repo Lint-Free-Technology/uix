@@ -1,3 +1,9 @@
+## [8.4.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.4...v8.4.0-beta.5) (2026-10-02)
+
+### ⭐ New Features
+
+* Add popover UIX Action ([#648](https://github.com/Lint-Free-Technology/uix/issues/648)) ([cc77055](https://github.com/Lint-Free-Technology/uix/commit/cc7705563141cab18edfc45af060db90c96ae241))
+
 ## [8.4.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.3...v8.4.0-beta.4) (2026-09-30)
 
 ### 🐞 Bug Fixes
