@@ -31,6 +31,7 @@ Available sparks:
 - :mag: [Search](./sparks/search.md) - queries a container within a forged element with a CSS selector and optional inner text to find, then apply mutations to the found element(s).
 - :material-map: [Map](./sparks/map.md) — preserve the map view and add tours, history sliders, and entity filters with configurable control positions.
 - :material-lock: [Lock](./sparks/lock.md) — overlay a lock icon on any element to block interaction until the user passes a PIN, passphrase, or confirmation challenge.
+- :material-form-select: [Form](./sparks/form.md) — add a Home Assistant form and optional submit and clear actions to a forged element.
 - :material-star-four-points-outline: [Overlay Icon](./sparks/overlay-icon.md) — overlay a `ha-icon`/`ha-state-icon` on any element inside the forged element.
 - :material-image-outline: [Background](./sparks/background.md) — inject a background layer (colour, image, video, or live camera) behind any element within the forged element.
 - :material-palette: [Theme](./sparks/theme.md) — apply a Frontend theme to the forged element or one of its descendants.

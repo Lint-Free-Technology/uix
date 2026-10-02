@@ -56,6 +56,8 @@ Dispatches a [`CustomEvent`](https://developer.mozilla.org/en-US/docs/Web/API/Cu
 
 For a normal dashboard action, the event is dispatched on `window`. For a UIX Broker `button` directive, UIX automatically dispatches from the button's placement reference — its `after` target, `before` target, or directive anchor — with `bubbles: true` and `composed: true`. The receiving Broker interaction can therefore use an event-path anchor such as `target`, `<`, or `<$`; it does not need to re-search from an absolute `select_tree` path.
 
+When an event action is triggered by a UIX Forge [form spark](../forge/sparks/form.md), the current form values are appended to this action's `data` and become properties of the event `detail`.
+
 For example, this Broker button dispatches `toggle-yaml-mode` from its placement reference:
 
 ```yaml
@@ -190,6 +192,8 @@ right in left-to-right layouts and on the left in right-to-left layouts. A
 button with an action closes the popover after that action runs; an action-less
 button closes it on click.
 
+When the popover card contains a UIX Forge [form spark](../forge/sparks/form.md), its current form values are appended to the action data for both footer buttons. The form spark may omit its own Submit and Clear buttons in this layout.
+
 Set `target: none` to show the same content as a centered adaptive dialog
 instead of anchoring it to the action source. An integration or custom caller
 may instead provide an actual DOM element as `target` to choose a different
@@ -294,6 +298,8 @@ Runs JavaScript code in the browser session with `hass` provided and an optional
 | `data:` | - | - | Javascript options. |
 | | `code` | **REQUIRED** | Javascript code to run. |
 | | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variables.<name>`. Named variables can be of any type. |
+
+When a JavaScript action is triggered by a UIX Forge [form spark](../forge/sparks/form.md), the current form values are appended to `data.variables` and are available as `variables.<field-name>`.
 
 Example javascript action with variable and using hass object to turn off a light.
 

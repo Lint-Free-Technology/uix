@@ -3,6 +3,7 @@ import { apply_uix, ModdedElement, UixConfig } from "./helpers/apply_uix";
 import { ensureCustomElement } from "./helpers/dom/ensure-element";
 import { actionHandlerBind } from "./helpers/dom/action-handler";
 import { createHaButton, dispatchHaButtonAction, UixButtonConfig } from "./helpers/dom/ha-button";
+import { withHaFormActionData } from "./helpers/dom/ha-form";
 import {
   createLockRetryState,
   LockRetryState,
@@ -44,11 +45,28 @@ function hasPopoverButtonAction(config: Record<string, any>, action: unknown): b
   return !!actionConfig && typeof actionConfig === "object" && actionConfig.action !== "none";
 }
 
+function withPopoverFormData(config: Record<string, any>, formData: Record<string, any>): Record<string, any> {
+  if (Object.keys(formData).length === 0) return config;
+
+  const withData = (action: unknown) => {
+    if (!action || typeof action !== "object" || Array.isArray(action)) return action;
+    return withHaFormActionData(action as Record<string, any>, formData);
+  };
+
+  return {
+    ...config,
+    tap_action: withData(config.tap_action),
+    hold_action: withData(config.hold_action),
+    double_tap_action: withData(config.double_tap_action),
+  };
+}
+
 function createPopoverButton(
   config: Record<string, any>,
   defaults: Pick<UixButtonConfig, "variant" | "appearance">,
   slot: "primaryAction" | "secondaryAction",
   closePopover?: () => void,
+  formData?: () => Record<string, any>,
 ) {
   const buttonConfig: UixButtonConfig = {
     ...config,
@@ -62,7 +80,11 @@ function createPopoverButton(
   button = createHaButton(buttonConfig, (event) => {
     event.stopPropagation();
     if (!hasPopoverButtonAction(config, event.detail?.action)) return;
-    dispatchHaButtonAction(button, buttonConfig, event);
+    dispatchHaButtonAction(
+      button,
+      formData ? withPopoverFormData(buttonConfig, formData()) : buttonConfig,
+      event,
+    );
     closePopover?.();
   });
   button.slot = slot;
@@ -322,6 +344,14 @@ export class Actions {
 
     await ensureCustomElement("ha-adaptive-popover");
     const popover: any = document.createElement("ha-adaptive-popover");
+    const formDataById = new Map<string, Record<string, any>>();
+    const popoverFormData = () => Object.assign({}, ...formDataById.values());
+    popover.addEventListener("uix-form-data-changed", (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: string; data?: Record<string, any> | null }>).detail;
+      if (!detail?.id) return;
+      if (detail.data == null) formDataById.delete(detail.id);
+      else formDataById.set(detail.id, detail.data);
+    });
     popover.dialogAnchor = target instanceof Element ? target : undefined;
     popover.headerTitle = data.title;
     popover.headerSubtitle = data.subtitle;
@@ -392,6 +422,7 @@ export class Actions {
           { variant: "neutral", appearance: "filled" },
           "secondaryAction",
           () => { popover.open = false; },
+          popoverFormData,
         ));
       }
       if (data.buttons.primary != null) {
@@ -404,6 +435,7 @@ export class Actions {
           { variant: "brand", appearance: "accent" },
           "primaryAction",
           () => { popover.open = false; },
+          popoverFormData,
         ));
       }
       if (footer.childElementCount) {
