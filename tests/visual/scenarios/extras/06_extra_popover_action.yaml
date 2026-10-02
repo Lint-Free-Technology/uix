@@ -54,7 +54,7 @@ interactions:
 
 assertions:
   - type: element_present
-    root: hui-grid-section
+    root: home-assistant
     selector: ha-adaptive-popover[open]
   - type: snapshot
     name: 69_extra_popover_action

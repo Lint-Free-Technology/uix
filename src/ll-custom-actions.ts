@@ -416,16 +416,15 @@ export class Actions {
       }
     }
 
-    if (target instanceof Element) {
-      target.after(popover);
-    } else {
-      const base = await hass_base_el();
-      if (!base?.shadowRoot) {
-        console.error("UIX: popover could not find the Home Assistant shadow root:", data);
-        return;
-      }
-      base.shadowRoot.append(popover);
+    const base = await hass_base_el();
+    if (!base?.shadowRoot) {
+      console.error("UIX: popover could not find the Home Assistant shadow root:", data);
+      return;
     }
+    // Keep the overlay out of the dashboard view. Masonry applies a fixed
+    // position to descendant ha-buttons, which otherwise also catches footer
+    // buttons when the popover is inserted beside its triggering card.
+    base.shadowRoot.append(popover);
     if (data.uix) {
       await apply_uix(
         popover as ModdedElement,
