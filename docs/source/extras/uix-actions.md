@@ -205,7 +205,7 @@ the `uix-popover-card` class. Style `.uix-popover-card` directly to set CSS
 custom properties on the card host without crossing a shadow root; use
 `".uix-popover-card $"` for rules inside the card's shadow root.
 
-For example, show HTML content in a popover when a tile is selected:
+For example, show HTML content in a popover when a button is selected:
 
 ```yaml
 type: button

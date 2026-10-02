@@ -60,6 +60,7 @@ function createPopoverButton(
   );
   let button: HTMLElement;
   button = createHaButton(buttonConfig, (event) => {
+    event.stopPropagation();
     if (!hasPopoverButtonAction(config, event.detail?.action)) return;
     dispatchHaButtonAction(button, buttonConfig, event);
     closePopover?.();
@@ -92,6 +93,7 @@ function createPopoverIconButton(config: Record<string, any>) {
     actionHandlerBind(button, { hasHold, hasDoubleClick });
   }
   button.addEventListener("action", (event) => {
+    event.stopPropagation();
     dispatchHaButtonAction(button, buttonConfig, event as CustomEvent);
   });
 
@@ -100,9 +102,15 @@ function createPopoverIconButton(config: Record<string, any>) {
 }
 
 function isolatePopoverButton(button: HTMLElement, closePopover?: () => void) {
-  // A footer button must not also trigger the action configured on its source card.
+  // Keep gestures within the popover so a nested target cannot also trigger an
+  // actionable ancestor. Do not use stopImmediatePropagation: the button's
+  // own Home Assistant action handler must still receive them.
   const stopPropagation = (event: Event) => event.stopPropagation();
   button.addEventListener("pointerdown", stopPropagation, { passive: true });
+  button.addEventListener("touchstart", stopPropagation, { passive: true });
+  for (const eventName of ["touchend", "touchcancel", "mousedown", "keydown"]) {
+    button.addEventListener(eventName, stopPropagation);
+  }
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     closePopover?.();
