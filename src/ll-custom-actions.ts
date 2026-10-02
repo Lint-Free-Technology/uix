@@ -38,6 +38,12 @@ function captureHassActionAnchor(event: Event) {
   }
 }
 
+function hasPopoverButtonAction(config: Record<string, any>, action: unknown): boolean {
+  if (typeof action !== "string") return false;
+  const actionConfig = config[`${action}_action`];
+  return !!actionConfig && typeof actionConfig === "object" && actionConfig.action !== "none";
+}
+
 function createPopoverButton(
   config: Record<string, any>,
   defaults: Pick<UixButtonConfig, "variant" | "appearance">,
@@ -49,13 +55,12 @@ function createPopoverButton(
     variant: config.variant ?? defaults.variant,
     appearance: config.appearance ?? defaults.appearance,
   };
-  const hasAction = [
-    buttonConfig.tap_action,
-    buttonConfig.hold_action,
-    buttonConfig.double_tap_action,
-  ].some((action) => action?.action && action.action !== "none");
+  const hasAction = ["tap", "hold", "double_tap"].some((action) =>
+    hasPopoverButtonAction(config, action)
+  );
   let button: HTMLElement;
   button = createHaButton(buttonConfig, (event) => {
+    if (!hasPopoverButtonAction(config, event.detail?.action)) return;
     dispatchHaButtonAction(button, buttonConfig, event);
     closePopover?.();
   });
