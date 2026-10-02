@@ -1,3 +1,9 @@
+## [8.4.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.5...v8.4.0-beta.6) (2026-10-02)
+
+### 🐞 Bug Fixes
+
+* **beta:** Move `popover` DOM placement keeping existing anchor. Fixes footer buttons moving to bottom of screen on Masonry view. ([88d6bf9](https://github.com/Lint-Free-Technology/uix/commit/88d6bf948bf385a7f0e164f9f30725db2c0530b9))
+
 ## [8.4.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.4...v8.4.0-beta.5) (2026-10-02)
 
 ### ⭐ New Features
