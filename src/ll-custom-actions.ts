@@ -1,4 +1,8 @@
-import { hass, hass_base_el } from "./helpers/hass";
+import { hass, hass_base_el, provideHass } from "./helpers/hass";
+import { apply_uix, ModdedElement, UixConfig } from "./helpers/apply_uix";
+import { ensureCustomElement } from "./helpers/dom/ensure-element";
+import { actionHandlerBind } from "./helpers/dom/action-handler";
+import { createHaButton, dispatchHaButtonAction, UixButtonConfig } from "./helpers/dom/ha-button";
 import {
   createLockRetryState,
   LockRetryState,
@@ -7,6 +11,68 @@ import {
 
 const lockedActionRetryStates = new Map<string, LockRetryState>();
 const fallbackLockedActionRetryStates = new WeakMap<EventTarget, Map<string, LockRetryState>>();
+
+function createPopoverButton(
+  config: Record<string, any>,
+  defaults: Pick<UixButtonConfig, "variant" | "appearance">,
+  slot: "primaryAction" | "secondaryAction",
+  closePopover?: () => void,
+) {
+  const buttonConfig: UixButtonConfig = {
+    ...config,
+    variant: config.variant ?? defaults.variant,
+    appearance: config.appearance ?? defaults.appearance,
+  };
+  let button: HTMLElement;
+  button = createHaButton(buttonConfig, (event) => {
+    dispatchHaButtonAction(button, buttonConfig, event);
+  });
+  button.slot = slot;
+
+  isolatePopoverButton(button, closePopover);
+  return button;
+}
+
+function createPopoverIconButton(config: Record<string, any>) {
+  const buttonConfig: UixButtonConfig = { ...config };
+  const button = document.createElement("ha-icon-button") as HTMLElement & { label?: string };
+  const label = config.label || config.icon;
+  button.slot = "headerActionItems";
+  button.label = label;
+  button.setAttribute("aria-label", label);
+  if (config.color) button.style.color = config.color;
+
+  const icon = document.createElement("ha-icon") as HTMLElement & { icon?: string };
+  icon.icon = config.icon;
+  button.append(icon);
+
+  const hasTap = !!(buttonConfig.tap_action && buttonConfig.tap_action.action !== "none");
+  const hasHold = !!(buttonConfig.hold_action && buttonConfig.hold_action.action !== "none");
+  const hasDoubleClick = !!(
+    buttonConfig.double_tap_action && buttonConfig.double_tap_action.action !== "none"
+  );
+  if (hasTap || hasHold || hasDoubleClick) {
+    actionHandlerBind(button, { hasHold, hasDoubleClick });
+  }
+  button.addEventListener("action", (event) => {
+    dispatchHaButtonAction(button, buttonConfig, event as CustomEvent);
+  });
+
+  isolatePopoverButton(button);
+  return button;
+}
+
+function isolatePopoverButton(button: HTMLElement, closePopover?: () => void) {
+  // A footer button must not also trigger the action configured on its source card.
+  const stopPropagation = (event: Event) => event.stopPropagation();
+  for (const eventName of ["pointerdown", "mousedown", "touchstart"]) {
+    button.addEventListener(eventName, stopPropagation);
+  }
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    closePopover?.();
+  });
+}
 
 const lockedActionState = (source: EventTarget, data: Record<string, any>): LockRetryState => {
   const hasId = data.id != null && data.id !== "";
@@ -163,6 +229,168 @@ export class Actions {
     });
     base.dispatchEvent(event);
   }
+  static async popover(data: Record<string, any>, _uix: Record<string, any>, source: EventTarget) {
+    const hasContent = Object.prototype.hasOwnProperty.call(data, "content");
+    const hasCard = Object.prototype.hasOwnProperty.call(data, "card");
+    const dismissible = data.dismissible ?? data.dismissable ?? true;
+    const target = data.target === undefined ? source : data.target;
+    if (hasContent && hasCard) {
+      console.error("UIX: popover accepts either content or card, not both:", data);
+      return;
+    }
+    if (target !== null && target !== "none" && !(target instanceof Element)) {
+      console.error("UIX: popover target must be an Element or none:", target);
+      return;
+    }
+    if (data.width != null && !["small", "large", "full"].includes(data.width)) {
+      console.error("UIX: popover width must be small, large, or full:", data.width);
+      return;
+    }
+    if (data.subtitle_position != null && !["above", "below"].includes(data.subtitle_position)) {
+      console.error("UIX: popover subtitle_position must be above or below:", data.subtitle_position);
+      return;
+    }
+    if (typeof dismissible !== "boolean") {
+      console.error("UIX: popover dismissible must be a boolean:", dismissible);
+      return;
+    }
+    if (!dismissible && data.buttons == null) {
+      console.error("UIX: a non-dismissible popover requires footer buttons:", data);
+      return;
+    }
+    if (
+      data.style !== undefined &&
+      (!data.style || typeof data.style !== "object" || Array.isArray(data.style))
+    ) {
+      console.error("UIX: popover style must be an object of CSS property names and values:", data.style);
+      return;
+    }
+    if (
+      data.uix !== undefined &&
+      (!data.uix || typeof data.uix !== "object" || Array.isArray(data.uix))
+    ) {
+      console.error("UIX: popover uix must be an object:", data.uix);
+      return;
+    }
+
+    await ensureCustomElement("ha-adaptive-popover");
+    const popover: any = document.createElement("ha-adaptive-popover");
+    popover.dialogAnchor = target instanceof Element ? target : undefined;
+    popover.headerTitle = data.title;
+    popover.headerSubtitle = data.subtitle;
+    popover.width = data.width ?? "small";
+    popover.withoutHeader = data.without_header === true;
+    if (data.style) {
+      for (const [property, value] of Object.entries(data.style)) {
+        if (!property.trim() || (typeof value !== "string" && typeof value !== "number")) {
+          console.error("UIX: popover style values must be strings or numbers:", data.style);
+          return;
+        }
+        popover.style.setProperty(property, String(value));
+      }
+    }
+    if (data.subtitle_position != null) {
+      popover.setAttribute("header-subtitle-position", data.subtitle_position);
+    }
+    popover.addEventListener("closed", () => popover.remove(), { once: true });
+
+    if (hasContent) {
+      popover.innerHTML = String(data.content ?? "");
+    } else if (hasCard) {
+      if (!data.card || typeof data.card !== "object" || Array.isArray(data.card)) {
+        console.error("UIX: popover card must be a Home Assistant card config object:", data.card);
+        return;
+      }
+      const helpers = await (window as any).loadCardHelpers();
+      const card = await helpers.createCardElement(data.card);
+      card.classList.add("uix-popover-card");
+      await provideHass(card);
+      popover.append(card);
+    }
+
+    if (data.icons != null) {
+      if (!Array.isArray(data.icons)) {
+        console.error("UIX: popover icons must be a list:", data.icons);
+        return;
+      }
+      for (const iconConfig of data.icons) {
+        if (
+          !iconConfig ||
+          typeof iconConfig !== "object" ||
+          Array.isArray(iconConfig) ||
+          typeof iconConfig.icon !== "string" ||
+          !iconConfig.icon
+        ) {
+          console.error("UIX: each popover icon must be a button object with an icon:", iconConfig);
+          return;
+        }
+        popover.append(createPopoverIconButton(iconConfig));
+      }
+    }
+
+    if (data.buttons != null) {
+      if (typeof data.buttons !== "object" || Array.isArray(data.buttons)) {
+        console.error("UIX: popover buttons must be an object:", data.buttons);
+        return;
+      }
+      const footer = document.createElement("ha-dialog-footer");
+      footer.slot = "footer";
+      if (data.buttons.secondary != null) {
+        if (typeof data.buttons.secondary !== "object" || Array.isArray(data.buttons.secondary)) {
+          console.error("UIX: popover secondary button must be an object:", data.buttons.secondary);
+          return;
+        }
+        footer.append(createPopoverButton(
+          data.buttons.secondary,
+          { variant: "neutral", appearance: "filled" },
+          "secondaryAction",
+          () => { popover.open = false; },
+        ));
+      }
+      if (data.buttons.primary != null) {
+        if (typeof data.buttons.primary !== "object" || Array.isArray(data.buttons.primary)) {
+          console.error("UIX: popover primary button must be an object:", data.buttons.primary);
+          return;
+        }
+        footer.append(createPopoverButton(
+          data.buttons.primary,
+          { variant: "brand", appearance: "accent" },
+          "primaryAction",
+          () => { popover.open = false; },
+        ));
+      }
+      if (footer.childElementCount) {
+        popover.hideCloseButton = !dismissible;
+        popover.preventScrimClose = !dismissible;
+        popover.append(footer);
+      } else {
+        console.error("UIX: popover buttons must include a primary or secondary button:", data.buttons);
+        return;
+      }
+    }
+
+    if (target instanceof Element) {
+      target.after(popover);
+    } else {
+      const base = await hass_base_el();
+      if (!base?.shadowRoot) {
+        console.error("UIX: popover could not find the Home Assistant shadow root:", data);
+        return;
+      }
+      base.shadowRoot.append(popover);
+    }
+    if (data.uix) {
+      await apply_uix(
+        popover as ModdedElement,
+        "dialog",
+        data.uix as UixConfig,
+        { config: data },
+        false,
+        "type-uix-popover",
+      );
+    }
+    popover.open = true;
+  }
   static async javascript(data: Record<string, any>) {
     if (!data || typeof data.code !== "string" || !data.code.trim()) {
       console.error("UIX: Invalid or empty code for javascript action:", data);
@@ -238,6 +466,7 @@ const actionList: Record<string, Function> = {
   clear_cache: Actions.clear_cache,
   more_info: Actions.more_info,
   toast: Actions.toast,
+  popover: Actions.popover,
   "clear-cache": Actions.clear_cache,
   "more-info": Actions.more_info,
   javascript: Actions.javascript,
