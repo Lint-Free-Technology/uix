@@ -11,6 +11,32 @@ import {
 
 const lockedActionRetryStates = new Map<string, LockRetryState>();
 const fallbackLockedActionRetryStates = new WeakMap<EventTarget, Map<string, LockRetryState>>();
+const hassActionAnchors = new WeakMap<object, HTMLElement>();
+
+function captureHassActionAnchor(event: Event) {
+  const detail = (event as CustomEvent).detail;
+  if (!detail || typeof detail !== "object") return;
+
+  const config = (detail as any).config;
+  const action = (detail as any).action;
+  if (!config || typeof config !== "object" || typeof action !== "string") return;
+
+  const actionConfig = config[`${action}_action`] ?? (config.action ? config : undefined);
+  if (!actionConfig || typeof actionConfig !== "object" || actionConfig.action !== "fire-dom-event") {
+    return;
+  }
+
+  const uix = actionConfig.uix ?? actionConfig.card_mod;
+  if (!uix || typeof uix !== "object") return;
+
+  const anchor = event.composedPath().find((target) => target instanceof HTMLElement);
+  if (anchor instanceof HTMLElement) {
+    // Home Assistant will subsequently dispatch `ll-custom`, sometimes from
+    // window. Preserve the originating element without mutating the card
+    // configuration, which Home Assistant may freeze.
+    hassActionAnchors.set(uix, anchor);
+  }
+}
 
 function createPopoverButton(
   config: Record<string, any>,
@@ -65,9 +91,7 @@ function createPopoverIconButton(config: Record<string, any>) {
 function isolatePopoverButton(button: HTMLElement, closePopover?: () => void) {
   // A footer button must not also trigger the action configured on its source card.
   const stopPropagation = (event: Event) => event.stopPropagation();
-  for (const eventName of ["pointerdown", "mousedown", "touchstart"]) {
-    button.addEventListener(eventName, stopPropagation);
-  }
+  button.addEventListener("pointerdown", stopPropagation, { passive: true });
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     closePopover?.();
@@ -111,6 +135,7 @@ const lockedActionState = (source: EventTarget, data: Record<string, any>): Lock
 // Add a listener to execute UIX custom actions via the Home Assistant `fire-dom-event` / `ll-custom` action
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
+  document.addEventListener("hass-action", captureHassActionAnchor, { capture: true });
   document.addEventListener("ll-custom", (event: Event) => {
     const detail = (event as CustomEvent).detail;
     if (!detail || typeof detail !== "object") {
@@ -124,7 +149,10 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
     if (actionName && typeof actionName === "string" && typeof actionList[actionName] === "function") {
       try {
         const data = (uix as any).data ?? {};
-        const source = (event.composedPath().find((target) => target instanceof HTMLElement)
+        const capturedAnchor = hassActionAnchors.get(uix);
+        hassActionAnchors.delete(uix);
+        const source = (capturedAnchor
+          ?? event.composedPath().find((target) => target instanceof HTMLElement)
           ?? event.target) as EventTarget;
         const result = (actionList as any)[actionName](data, uix, source);
         if (result && typeof (result as Promise<unknown>).catch === "function") {

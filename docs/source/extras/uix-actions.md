@@ -207,8 +207,9 @@ custom properties on the card host without crossing a shadow root; use
 For example, show HTML content in a popover when a tile is selected:
 
 ```yaml
-type: tile
-entity: light.bed_light
+type: button
+show_icon: false
+name: Popover
 tap_action:
   action: fire-dom-event
   uix:
@@ -219,9 +220,10 @@ tap_action:
       subtitle_position: above
       width: small
       content: |
-        <p>Use the light controls from this dashboard.</p>
+        <p>You can toggle the light using the primary action.</p>
+        <p>You can navigate to config/dashboard with the cog icon.</p>
       style:
-        "--ha-dialog-border-radius": 24px
+        "--ha-dialog-border-radius": 12px
       uix:
         style:
           "$": |
@@ -244,9 +246,23 @@ tap_action:
             action: toggle
 ```
 
+![Popover action example](../assets/page-assets/extras/extra-popover-action.gif)
+
 To render a card instead, replace `content` with `card` - this example includes clearing card border and background using UIX styling:
 
 ```yaml
+type: button
+show_icon: false
+name: Popover
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: popover
+    data:
+      title: Bed light
+      subtitle: Quick controls
+      subtitle_position: above
+      width: small
       card:
         type: entities
         entities:
@@ -254,10 +270,12 @@ To render a card instead, replace `content` with `card` - this example includes 
       uix:
         style: |
           .uix-popover-card {
-            --ha-card-border-radius: 0px;
+            --ha-card-border-width: 0px;
             --ha-card-background: none;
           }
 ```
+
+![Popover action example](../assets/page-assets/extras/extra-popover-action-card.gif)
 
 ## `javascript` - run javascript code in Browser session
 
