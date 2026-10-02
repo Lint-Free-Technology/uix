@@ -1,6 +1,5 @@
 import { Unpromise } from "@watchable/unpromise";
 import { hass_base_el } from "../hass";
-import { selectTree } from "../selecttree";
 
 const DEFAULT_TIMEOUT_MS = 2000;
 
@@ -26,16 +25,10 @@ async function ensureHaAdaptivePopover(): Promise<CustomElementConstructor> {
     return Promise.reject(new Error(`Failed to get hass base element.`));
   }
   const haShadow = haEl.shadowRoot!;
-  const partialPanelResolver = await selectTree(haShadow, "home-assistant-main $ partial-panel-resolver");
-  if (!partialPanelResolver) {
-    return Promise.reject(new Error(`Failed to get partial panel resolver.`));
-  }
   const haFullCalendar = customElements.get("ha-full-calendar");
   if (!haFullCalendar) {
-    const calendarPanelLoad = partialPanelResolver.routerOptions?.routes?.['calendar']?.load;
-    if (calendarPanelLoad) {
-      await calendarPanelLoad();
-    }
+    const helpers = await (window as any).loadCardHelpers();
+    await helpers.createCardElement({ type: "calendar" });
   }
   return customElements.whenDefined("ha-full-calendar").then(() => {
     let haFullCalendar: any = haShadow.getElementById("uix-full-calendar");

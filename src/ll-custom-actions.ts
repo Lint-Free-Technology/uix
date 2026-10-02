@@ -49,13 +49,19 @@ function createPopoverButton(
     variant: config.variant ?? defaults.variant,
     appearance: config.appearance ?? defaults.appearance,
   };
+  const hasAction = [
+    buttonConfig.tap_action,
+    buttonConfig.hold_action,
+    buttonConfig.double_tap_action,
+  ].some((action) => action?.action && action.action !== "none");
   let button: HTMLElement;
   button = createHaButton(buttonConfig, (event) => {
     dispatchHaButtonAction(button, buttonConfig, event);
+    closePopover?.();
   });
   button.slot = slot;
 
-  isolatePopoverButton(button, closePopover);
+  isolatePopoverButton(button, hasAction ? undefined : closePopover);
   return button;
 }
 

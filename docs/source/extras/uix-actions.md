@@ -183,8 +183,9 @@ button and removes itself after it is closed.
 not used. Set `label`, `icon`, `start_icon`, `end_icon`, `entity`, `size`,
 `variant`, `appearance`, and any of `tap_action`, `hold_action`, or
 `double_tap_action` as needed. Footer positions are logical: primary is on the
-right in left-to-right layouts and on the left in right-to-left layouts. Every
-footer button closes the popover after it is selected.
+right in left-to-right layouts and on the left in right-to-left layouts. A
+button with an action closes the popover after that action runs; an action-less
+button closes it on click.
 
 Set `target: none` to show the same content as a centered adaptive dialog
 instead of anchoring it to the action source. An integration or custom caller
