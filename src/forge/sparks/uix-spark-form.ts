@@ -3,6 +3,7 @@ import {
   createHaForm,
   createHaFormButton,
   dispatchHaFormAction,
+  haFormDataForSchema,
   haFormDefaultData,
   UixHaFormButtonConfig,
   UixHaFormDensity,
@@ -54,6 +55,12 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   private _data: Record<string, any>;
   private _wrapperElement: HTMLElement | null = null;
   private _actionsConfig = "";
+  private _placement: {
+    wrapper: HTMLElement;
+    parent: Node;
+    element: HTMLElement;
+    before: boolean;
+  } | null = null;
   private readonly _id: string;
   private readonly _stopPropagation = (event: Event) => event.stopPropagation();
 
@@ -67,6 +74,9 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
     this._applyConfig(config);
+    this._data = haFormDataForSchema(this.schema, this._data);
+    const form = this._wrapperElement?.querySelector(":scope > ha-form") as UixHaFormElement | null;
+    if (form) form.data = this._data;
     const generation = this._beginUpdate();
     void this._attach(generation);
   }
@@ -112,6 +122,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   }
 
   private _remove(): void {
+    this._placement = null;
     if (!this._wrapperElement) return;
     this._publishData(null);
     this._removeWrapperListeners(this._wrapperElement);
@@ -176,11 +187,22 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
     if (slot) wrapper.setAttribute("slot", slot);
     else wrapper.removeAttribute("slot");
 
-    if (this.before && !this.after) {
+    const before = !!this.before && !this.after;
+    if (
+      this._placement?.wrapper === wrapper &&
+      this._placement.parent === parent &&
+      this._placement.element === element &&
+      this._placement.before === before
+    ) {
+      return;
+    }
+
+    if (before) {
       if (wrapper.nextSibling !== element) parent.insertBefore(wrapper, element);
     } else if (element.nextSibling !== wrapper) {
       parent.insertBefore(wrapper, element.nextSibling);
     }
+    this._placement = { wrapper, parent, element, before };
   }
 
   private _updateElement(wrapper: HTMLElement): void {

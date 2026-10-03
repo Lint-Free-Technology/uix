@@ -106,6 +106,37 @@ export function haFormDefaultData(schema: readonly UixHaFormSchema[]): Record<st
   }, {} as Record<string, any>);
 }
 
+/**
+ * Retain only values represented by a schema, applying defaults for fields
+ * introduced by a schema update. Nested and flattened schema groups mirror
+ * Home Assistant's ha-form data shape.
+ */
+export function haFormDataForSchema(
+  schema: readonly UixHaFormSchema[],
+  data: Record<string, any>,
+): Record<string, any> {
+  return schema.reduce((reconciled, field) => {
+    if (Array.isArray(field.schema)) {
+      const flattened = field.flatten || !field.name;
+      const nestedData = flattened
+        ? data
+        : isRecord(data[field.name])
+          ? data[field.name]
+          : {};
+      const nested = haFormDataForSchema(field.schema, nestedData);
+      if (flattened) Object.assign(reconciled, nested);
+      else if (Object.keys(nested).length > 0) reconciled[field.name] = nested;
+    } else if (field.name) {
+      if (Object.prototype.hasOwnProperty.call(data, field.name)) {
+        reconciled[field.name] = data[field.name];
+      } else if (field.default !== undefined) {
+        reconciled[field.name] = field.default;
+      }
+    }
+    return reconciled;
+  }, {} as Record<string, any>);
+}
+
 /** Create a labelled ha-button with an optional leading or trailing icon. */
 export function createHaFormButton(
   config: UixHaFormButtonConfig,
