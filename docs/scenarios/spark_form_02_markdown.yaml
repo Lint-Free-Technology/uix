@@ -1,0 +1,28 @@
+id: doc_spark_form_markdown
+description: "UIX Forge form spark with markdown content (form.md)"
+view_path: doc-spark-form-markdown
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: form
+        before: hui-markdown-card $ ha-markdown
+        schema:
+          - name: note
+            selector:
+              text:
+                multiline: true
+        submit:
+          action:
+            action: perform-action
+            perform_action: script.save_note
+  element:
+    type: markdown
+    content: "## Add a note"
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/form-markdown.png
+  root: uix-forge
+  padding: 16

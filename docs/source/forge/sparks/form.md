@@ -21,6 +21,7 @@ forge:
   mold: card
   sparks:
     - type: form
+      density: dense
       schema:
         - name: message
           label: Message
@@ -42,6 +43,8 @@ forge:
           action: perform-action
           perform_action: script.send_message
 ```
+
+![Form spark basic example](../../assets/page-assets/forge/sparks/form-basic.png)
 
 The action receives `data.message` and `data.priority` which will be available in the script as `{{ message }}` and `{{ priority }}`. By default, submit clears the form after a valid action is dispatched.
 
@@ -111,8 +114,10 @@ forge:
           perform_action: script.save_note
 element:
   type: markdown
-  content: "# Add a note"
+  content: "## Add a note"
 ```
+
+![Form spark markdown example](../../assets/page-assets/forge/sparks/form-markdown.png)
 
 ## Configuration
 
@@ -152,7 +157,7 @@ When neither `after`, `before`, nor `for` is given, a blank Forge card uses `uix
 | `variant` | string | `neutral` | Button color variant: `brand`, `neutral`, `danger`, `warning`, or `success`. |
 | `appearance` | string | `filled` | Button appearance: `accent`, `filled`, `outlined`, or `plain`. |
 
-The Clear button always clears the inputs, whether or not it has an action. Schema defaults provide the initial values; after clearing, fields are empty. Use `clear: true` for an unconfigured Clear button.
+The Clear button always clears the inputs, whether or not it has an action. Schema defaults provide the initial values on first display; after clearing, fields are always empty. Use `clear: true` for an unconfigured Clear button.
 
 ## Density
 
@@ -288,6 +293,8 @@ tap_action:
                         - normal
                         - urgent
 ```
+
+![Form spark popover example](../../assets/page-assets/forge/sparks/form-popover.gif)
 
 When submitted with message `Hello Jim` and priority `urgent`:
 
