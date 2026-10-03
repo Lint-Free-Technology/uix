@@ -124,7 +124,11 @@ export function haFormDataForSchema(
         : isRecord(data[field.name])
           ? data[field.name]
           : {};
-      const nested = haFormDataForSchema(field.schema, nestedData, previousSchema);
+      const nested = haFormDataForSchema(
+        field.schema,
+        nestedData,
+        flattened ? previousSchema : schemaGroup(previousSchema, field.name),
+      );
       if (flattened) Object.assign(reconciled, nested);
       else if (Object.keys(nested).length > 0) reconciled[field.name] = nested;
     } else if (field.name) {
@@ -139,11 +143,20 @@ export function haFormDataForSchema(
 }
 
 function schemaHasField(schema: readonly UixHaFormSchema[], name: string): boolean {
-  return schema.some((field) =>
-    Array.isArray(field.schema)
-      ? schemaHasField(field.schema, name)
-      : field.name === name,
-  );
+  return schema.some((field) => {
+    if (Array.isArray(field.schema)) {
+      return (field.flatten || !field.name) && schemaHasField(field.schema, name);
+    }
+    return field.name === name;
+  });
+}
+
+function schemaGroup(
+  schema: readonly UixHaFormSchema[],
+  name: string,
+): readonly UixHaFormSchema[] {
+  const group = schema.find((field) => field.name === name && Array.isArray(field.schema));
+  return group?.schema ?? [];
 }
 
 /** Create a labelled ha-button with an optional leading or trailing icon. */
