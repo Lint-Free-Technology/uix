@@ -1,0 +1,40 @@
+id: forge_spark_form
+description: "UIX form spark"
+view_path: forge-spark-form
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: form
+        density: dense
+        schema:
+          - name: message
+            label: Message
+            selector:
+              text: {}
+          - name: priority
+            label: Priority
+            default: normal
+            selector:
+              select:
+                options:
+                  - normal
+                  - urgent
+        submit:
+          text: Send
+          icon: mdi:send
+          icon_position: end
+          action:
+            action: perform-action
+            perform_action: script.send_message
+        clear: true
+
+assertions:
+  - type: element_present
+    root: uix-forge-blank-card
+    selector: div.uix-forge-form
+  - type: snapshot
+    name: "71_forge_spark_form"
+    threshold: 0.01
