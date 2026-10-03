@@ -107,13 +107,14 @@ export function haFormDefaultData(schema: readonly UixHaFormSchema[]): Record<st
 }
 
 /**
- * Retain only values represented by a schema, applying defaults for fields
- * introduced by a schema update. Nested and flattened schema groups mirror
- * Home Assistant's ha-form data shape.
+ * Retain only values represented by a schema, applying defaults only to
+ * fields introduced by a schema update. Nested and flattened schema groups
+ * mirror Home Assistant's ha-form data shape.
  */
 export function haFormDataForSchema(
   schema: readonly UixHaFormSchema[],
   data: Record<string, any>,
+  previousSchema: readonly UixHaFormSchema[] = [],
 ): Record<string, any> {
   return schema.reduce((reconciled, field) => {
     if (Array.isArray(field.schema)) {
@@ -123,18 +124,26 @@ export function haFormDataForSchema(
         : isRecord(data[field.name])
           ? data[field.name]
           : {};
-      const nested = haFormDataForSchema(field.schema, nestedData);
+      const nested = haFormDataForSchema(field.schema, nestedData, previousSchema);
       if (flattened) Object.assign(reconciled, nested);
       else if (Object.keys(nested).length > 0) reconciled[field.name] = nested;
     } else if (field.name) {
       if (Object.prototype.hasOwnProperty.call(data, field.name)) {
         reconciled[field.name] = data[field.name];
-      } else if (field.default !== undefined) {
+      } else if (!schemaHasField(previousSchema, field.name) && field.default !== undefined) {
         reconciled[field.name] = field.default;
       }
     }
     return reconciled;
   }, {} as Record<string, any>);
+}
+
+function schemaHasField(schema: readonly UixHaFormSchema[], name: string): boolean {
+  return schema.some((field) =>
+    Array.isArray(field.schema)
+      ? schemaHasField(field.schema, name)
+      : field.name === name,
+  );
 }
 
 /** Create a labelled ha-button with an optional leading or trailing icon. */

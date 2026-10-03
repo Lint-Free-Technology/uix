@@ -73,8 +73,9 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
 
   configUpdated(config: Record<string, any>): void {
     super.configUpdated(config);
+    const previousSchema = this.schema;
     this._applyConfig(config);
-    this._data = haFormDataForSchema(this.schema, this._data);
+    this._data = haFormDataForSchema(this.schema, this._data, previousSchema);
     const form = this._wrapperElement?.querySelector(":scope > ha-form") as UixHaFormElement | null;
     if (form) form.data = this._data;
     const generation = this._beginUpdate();
