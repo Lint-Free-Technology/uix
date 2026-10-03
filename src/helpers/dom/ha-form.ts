@@ -155,8 +155,22 @@ function schemaGroup(
   schema: readonly UixHaFormSchema[],
   name: string,
 ): readonly UixHaFormSchema[] {
-  const group = schema.find((field) => field.name === name && Array.isArray(field.schema));
-  return group?.schema ?? [];
+  return findSchemaGroup(schema, name) ?? [];
+}
+
+function findSchemaGroup(
+  schema: readonly UixHaFormSchema[],
+  name: string,
+): readonly UixHaFormSchema[] | undefined {
+  for (const field of schema) {
+    if (!Array.isArray(field.schema)) continue;
+    if (field.name === name && !field.flatten) return field.schema;
+    if (field.flatten || !field.name) {
+      const nested = findSchemaGroup(field.schema, name);
+      if (nested !== undefined) return nested;
+    }
+  }
+  return undefined;
 }
 
 /** Create a labelled ha-button with an optional leading or trailing icon. */
