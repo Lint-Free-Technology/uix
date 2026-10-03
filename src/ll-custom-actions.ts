@@ -352,6 +352,11 @@ export class Actions {
       return Object.assign({}, ...Array.from(formDataById.values(), (entry) => entry.data));
     };
     popover.addEventListener("uix-form-data-changed", (event: Event) => {
+      const nearestPopover = event.composedPath().find((target) =>
+        target instanceof HTMLElement && target.localName === "ha-adaptive-popover",
+      );
+      if (nearestPopover !== popover) return;
+
       const detail = (event as CustomEvent<{ id?: string; data?: Record<string, any> | null }>).detail;
       if (!detail?.id) return;
       if (detail.data == null) formDataById.delete(detail.id);
