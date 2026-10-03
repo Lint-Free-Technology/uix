@@ -164,7 +164,11 @@ export function withHaFormActionData(
   action: Record<string, any>,
   data: Record<string, any>,
 ): Record<string, any> {
-  const actionData = isRecord(action.data) ? action.data : {};
+  const actionData = isRecord(action.data)
+    ? action.data
+    : isRecord(action.service_data)
+      ? action.service_data
+      : {};
   const mergedAction = {
     ...action,
     data: { ...actionData, ...data },

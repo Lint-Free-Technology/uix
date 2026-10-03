@@ -53,6 +53,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   private submitClears = true;
   private _data: Record<string, any>;
   private _wrapperElement: HTMLElement | null = null;
+  private _actionsConfig = "";
   private readonly _id: string;
   private readonly _stopPropagation = (event: Event) => event.stopPropagation();
 
@@ -71,7 +72,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   }
 
   private _applyConfig(config: Record<string, any>): void {
-    this.after = config.after || config.for || this._defaultTarget();
+    this.after = config.after || config.for || (config.before ? "" : this._defaultTarget());
     this.before = config.before || "";
     this.schema = Array.isArray(config.schema) ? config.schema : [];
     this.density = UIX_HA_FORM_DENSITIES.includes(config.density)
@@ -106,7 +107,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   }
 
   disconnectedCallback(): void {
-    this._cancelPending();
+    this._beginUpdate();
     this._remove();
   }
 
@@ -116,6 +117,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
     this._removeWrapperListeners(this._wrapperElement);
     this._wrapperElement.remove();
     this._wrapperElement = null;
+    this._actionsConfig = "";
   }
 
   private async _attach(generation: number): Promise<void> {
@@ -135,10 +137,17 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
 
     const elements = await this.controller.target(selector, this._cancel);
     const element = elements?.[0];
-    if (!element || generation !== this._callGeneration) return;
+    if (generation !== this._callGeneration) return;
+    if (!element) {
+      this._remove();
+      return;
+    }
 
     const parent = element.parentElement || element.parentNode;
-    if (!parent) return;
+    if (!parent) {
+      this._remove();
+      return;
+    }
 
     const existingWrapper = (parent as ParentNode).querySelector?.(
       `div[${FORM_ID_ATTR}="${this._id}"]`,
@@ -159,7 +168,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
       const slot = element.getAttribute("slot");
       if (slot) wrapper.setAttribute("slot", slot);
 
-      if (this.before) {
+      if (this.before && !this.after) {
         parent.insertBefore(wrapper, element);
       } else {
         parent.insertBefore(wrapper, element.nextSibling);
@@ -188,12 +197,16 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
     let actions = wrapper.querySelector(":scope > .uix-forge-form-actions") as HTMLElement | null;
     if (!hasActions) {
       actions?.remove();
+      this._actionsConfig = "";
       return;
     }
+    const actionsConfig = JSON.stringify({ clear: this.clear, submit: this.submit });
     if (!actions) {
       actions = document.createElement("div");
       actions.className = "uix-forge-form-actions";
       wrapper.appendChild(actions);
+    } else if (actionsConfig === this._actionsConfig) {
+      return;
     }
     actions.replaceChildren();
 
@@ -218,11 +231,14 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
       );
       button.addEventListener("click", () => {
         if (form.reportValidity?.() === false) return;
-        dispatchHaFormAction(button, this.submit?.action, form.data ?? {});
+        const action = this.submit?.action;
+        if (!action || typeof action !== "object" || Array.isArray(action)) return;
+        dispatchHaFormAction(button, action, form.data ?? {});
         if (this.submitClears) this._clear(form);
       });
       actions.appendChild(button);
     }
+    this._actionsConfig = actionsConfig;
   }
 
   private _clear(form: UixHaFormElement): void {
@@ -248,6 +264,8 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
   private _handleValueChanged = (event: CustomEvent<{ value?: Record<string, any> }>): void => {
     event.stopPropagation();
     this._data = event.detail?.value ?? {};
+    const form = this._wrapperElement?.querySelector(":scope > ha-form") as UixHaFormElement | null;
+    if (form) form.data = this._data;
     this._publishData(this._data);
   };
 
