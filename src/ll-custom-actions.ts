@@ -344,13 +344,23 @@ export class Actions {
 
     await ensureCustomElement("ha-adaptive-popover");
     const popover: any = document.createElement("ha-adaptive-popover");
-    const formDataById = new Map<string, Record<string, any>>();
-    const popoverFormData = () => Object.assign({}, ...formDataById.values());
+    const formDataById = new Map<string, { data: Record<string, any>; source: HTMLElement }>();
+    const popoverFormData = () => {
+      for (const [id, entry] of formDataById) {
+        if (!entry.source.isConnected) formDataById.delete(id);
+      }
+      return Object.assign({}, ...Array.from(formDataById.values(), (entry) => entry.data));
+    };
     popover.addEventListener("uix-form-data-changed", (event: Event) => {
       const detail = (event as CustomEvent<{ id?: string; data?: Record<string, any> | null }>).detail;
       if (!detail?.id) return;
       if (detail.data == null) formDataById.delete(detail.id);
-      else formDataById.set(detail.id, detail.data);
+      else {
+        const source = event.composedPath().find((target): target is HTMLElement =>
+          target instanceof HTMLElement,
+        );
+        if (source) formDataById.set(detail.id, { data: detail.data, source });
+      }
     });
     popover.dialogAnchor = target instanceof Element ? target : undefined;
     popover.headerTitle = data.title;

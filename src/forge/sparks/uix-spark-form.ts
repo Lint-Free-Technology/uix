@@ -164,19 +164,23 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
       style.textContent = FORM_CSS;
       wrapper.appendChild(style);
       this._addWrapperListeners(wrapper);
-
-      const slot = element.getAttribute("slot");
-      if (slot) wrapper.setAttribute("slot", slot);
-
-      if (this.before && !this.after) {
-        parent.insertBefore(wrapper, element);
-      } else {
-        parent.insertBefore(wrapper, element.nextSibling);
-      }
     }
 
+    this._placeWrapper(wrapper, parent, element);
     this._wrapperElement = wrapper;
     this._updateElement(wrapper);
+  }
+
+  private _placeWrapper(wrapper: HTMLElement, parent: Node, element: HTMLElement): void {
+    const slot = element.getAttribute("slot");
+    if (slot) wrapper.setAttribute("slot", slot);
+    else wrapper.removeAttribute("slot");
+
+    if (this.before && !this.after) {
+      if (wrapper.nextSibling !== element) parent.insertBefore(wrapper, element);
+    } else if (element.nextSibling !== wrapper) {
+      parent.insertBefore(wrapper, element.nextSibling);
+    }
   }
 
   private _updateElement(wrapper: HTMLElement): void {
