@@ -278,6 +278,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
     wrapper.addEventListener("click", this._stopPropagation);
     wrapper.addEventListener("mousedown", this._stopPropagation);
     wrapper.addEventListener("touchstart", this._stopPropagation);
+    wrapper.addEventListener("keydown", this._stopPropagation);
     wrapper.addEventListener("value-changed", this._handleValueChanged as EventListener);
   }
 
@@ -285,6 +286,7 @@ export class UixForgeSparkForm extends UixForgeSparkBase {
     wrapper.removeEventListener("click", this._stopPropagation);
     wrapper.removeEventListener("mousedown", this._stopPropagation);
     wrapper.removeEventListener("touchstart", this._stopPropagation);
+    wrapper.removeEventListener("keydown", this._stopPropagation);
     wrapper.removeEventListener("value-changed", this._handleValueChanged as EventListener);
   }
 
