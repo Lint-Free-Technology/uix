@@ -18,6 +18,7 @@ import { UixForgeSparkBackground } from "./uix-spark-background";
 import { UixForgeSparkTheme } from "./uix-spark-theme";
 import { UixForgeSparkOverlayIcon } from "./uix-spark-overlay-icon";
 import { UixForgeSparkMoreInfo } from "./uix-spark-more-info";
+import { UixForgeSparkForm } from "./uix-spark-form";
 import { selectTree } from "../../helpers/selecttree";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
@@ -36,6 +37,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "background": UixForgeSparkBackground,
     "theme": UixForgeSparkTheme,
     "more-info": UixForgeSparkMoreInfo,
+    "form": UixForgeSparkForm,
 };
 
 export class UixForgeSparkController {

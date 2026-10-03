@@ -9,6 +9,9 @@ export async function ensureCustomElement(selector: string, timeoutMs = DEFAULT_
   }
   let resolver: Promise<CustomElementConstructor>;
   switch (selector) {
+    case "ha-form":
+      resolver = ensureHaForm();
+      break;
     case "ha-adaptive-popover":
       resolver = ensureHaAdaptivePopover();
       break;
@@ -90,4 +93,17 @@ async function ensureHaAdaptivePopover(): Promise<CustomElementConstructor> {
   }).catch((err) => {
     return Promise.reject(new Error(`${err.message}`));
   });
+}
+
+export async function ensureHaForm(): Promise<CustomElementConstructor> {
+  const helpers = await (window as any).loadCardHelpers();
+  if (!helpers) {
+    return Promise.reject(new Error(`Failed to load card helpers.`));
+  }
+  const card = await helpers.createCardElement({ type: "button" });
+  if (!card) {
+    return Promise.reject(new Error(`Failed to create card element.`));
+  }
+  await card.constructor.getConfigElement();
+  return customElements.whenDefined("ha-form");
 }

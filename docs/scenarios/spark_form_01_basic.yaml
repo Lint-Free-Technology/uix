@@ -1,0 +1,36 @@
+id: doc_spark_form_basic
+description: "UIX Forge form spark (form.md)"
+view_path: doc-spark-form-basic
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: form
+        density: dense
+        schema:
+          - name: message
+            label: Message
+            selector:
+              text: {}
+          - name: priority
+            label: Priority
+            default: normal
+            selector:
+              select:
+                options:
+                  - normal
+                  - urgent
+        submit:
+          text: Send
+          icon: mdi:send
+          icon_position: end
+          action:
+            action: perform-action
+            perform_action: script.send_message
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/sparks/form-basic.png
+  root: uix-forge
+  padding: 16
