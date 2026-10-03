@@ -1,3 +1,9 @@
+## [8.4.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.6...v8.4.0-beta.7) (2026-10-03)
+
+### ⭐ New Features
+
+* **forge:** `form` spark with out of the box placement for use with UIX Forge blank card or forged markdown element. ([#649](https://github.com/Lint-Free-Technology/uix/issues/649)) ([622b328](https://github.com/Lint-Free-Technology/uix/commit/622b3281863c8e13656afc72aa35e7a57aa1f385))
+
 ## [8.4.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.5...v8.4.0-beta.6) (2026-10-02)
 
 ### 🐞 Bug Fixes
