@@ -239,7 +239,7 @@ Inspect the rendered field in browser DevTools to identify its selector control,
 
 ## `popover` example
 
-This example uses a UIX `popover` action to host the forged element with with form spark. The `popover` uses its action buttons to call the UIX `javascript` action. The form fields are automatically placed into `variables` of the `javascript` action.
+This example uses a UIX `popover` action to host the forged element with form spark. The `popover` uses its action buttons to call the UIX `javascript` action. The form fields are automatically placed into `variables` of the `javascript` action.
 
 ```yaml
 type: button
