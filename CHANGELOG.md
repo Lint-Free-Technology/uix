@@ -1,3 +1,9 @@
+## [8.4.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.7...v8.4.0-beta.8) (2026-10-04)
+
+### 🐞 Bug Fixes
+
+* **beta:** Refresh all entity markers for an entity_id. Fixes `--uix-image-*` overrides for a map marker not in a bubble cluster. ([bfda833](https://github.com/Lint-Free-Technology/uix/commit/bfda83300c70b430e3320ea0e3cbfbc45f615ce8))
+
 ## [8.4.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.6...v8.4.0-beta.7) (2026-10-03)
 
 ### ⭐ New Features
