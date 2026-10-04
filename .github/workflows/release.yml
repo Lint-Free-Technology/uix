@@ -19,6 +19,11 @@ on:
           - minor
           - major
         default: none
+      release_note_banner:
+        description: "Optional bold notice placed at the top of the release notes"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -77,10 +82,18 @@ jobs:
           printf 'tag: %s\n' "${RELEASE_TAG:-none}"
           printf 'release type: %s\n' "${RELEASE_TYPE:-none}"
 
-      - name: Show generated release notes
+      - name: Format release notes
+        id: notes
         if: ${{ steps.version.outputs.new_version != '' }}
         env:
           RELEASE_NOTES: ${{ steps.version.outputs.changelog }}
+          RELEASE_NOTE_BANNER: ${{ inputs.release_note_banner }}
+        run: node scripts/format-release-notes.mjs >> "$GITHUB_OUTPUT"
+
+      - name: Show generated release notes
+        if: ${{ steps.version.outputs.new_version != '' }}
+        env:
+          RELEASE_NOTES: ${{ steps.notes.outputs.changelog }}
         run: printf '%s\n' "$RELEASE_NOTES"
 
       - name: Require a release branch
@@ -105,7 +118,7 @@ jobs:
       - name: Update changelog
         if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' }}
         env:
-          RELEASE_NOTES: ${{ steps.version.outputs.changelog }}
+          RELEASE_NOTES: ${{ steps.notes.outputs.changelog }}
         run: node scripts/prepend-release-notes.mjs
 
       - name: Commit release files
@@ -138,7 +151,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
           target_commitish: ${{ steps.release_commit.outputs.sha }}
-          body: ${{ steps.version.outputs.changelog }}
+          body: ${{ steps.notes.outputs.changelog }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           make_latest: ${{ steps.version.outputs.prerelease == 'true' && 'false' || 'true' }}
 
