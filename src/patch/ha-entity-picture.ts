@@ -60,8 +60,8 @@ const getMapImageOverride = (el: any): string | undefined => {
   return overrides?.get(entityId);
 };
 
-const refreshClusterBubbleMarkers = (haMap: any, entityId: string): void => {
-  const markers = haMap.shadowRoot?.querySelectorAll?.(".cluster-bubble ha-entity-marker") ?? [];
+const refreshMapMarkers = (haMap: any, entityId: string): void => {
+  const markers = haMap.shadowRoot?.querySelectorAll?.("ha-entity-marker") ?? [];
   for (const marker of markers) {
     if (marker.entityId === entityId) marker.requestUpdate?.();
   }
@@ -85,7 +85,7 @@ const cacheMapImageOverride = (el: any, imageUrl: string | null): void => {
     return;
   }
 
-  refreshClusterBubbleMarkers(haMap, entityId);
+  refreshMapMarkers(haMap, entityId);
 };
 
 const subscribeImageVars = (el, imageVars: { imageVar: string }) => {
