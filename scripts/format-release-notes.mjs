@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 
 const releaseNotes = process.env.RELEASE_NOTES?.trim();
 const releaseNoteBanner = process.env.RELEASE_NOTE_BANNER?.trim();
+const miscellaneousSections = new Set([
+  "Build System",
+  "Build Systems",
+  "Continuous Integration",
+  "Tests",
+]);
 const sectionOrder = new Map([
   ["⚠ BREAKING CHANGES", 0],
   ["⭐ New Features", 10],
@@ -45,7 +51,7 @@ const formattedSections = [];
 
 for (const section of sections) {
   const title =
-    section.title === "Continuous Integration"
+    miscellaneousSections.has(section.title)
       ? "⚙️ Miscellaneous"
       : section.title;
   const existingSection = formattedSections.find(
