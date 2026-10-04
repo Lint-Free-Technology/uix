@@ -54,15 +54,21 @@ jobs:
         with:
           node-version: 24
 
+      - name: Validate release options
+        if: ${{ inputs.dry_run && inputs.recover_release }}
+        run: |
+          echo 'dry_run and recover_release cannot be used together.' >&2
+          exit 1
+
       - name: Install dependencies
         if: ${{ !inputs.recover_release }}
         run: npm ci
 
       - name: Prepare release recovery
         id: recovery
-        if: ${{ inputs.recover_release }}
+        if: ${{ !inputs.dry_run && inputs.recover_release }}
         run: |
-          VERSION="$(node -p \"require('./package.json').version\")"
+          VERSION="$(node -p 'require("./package.json").version')"
           SUBJECT="$(git log -1 --format=%s)"
           if [ "$SUBJECT" != "chore(release): $VERSION [skip ci]" ]; then
             echo 'Recovery requires the branch head to be its release commit.' >&2
@@ -78,10 +84,20 @@ jobs:
 
       - name: Read release notes for recovery
         id: recovery_notes
-        if: ${{ inputs.recover_release }}
+        if: ${{ !inputs.dry_run && inputs.recover_release }}
         env:
           RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
         run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
+
+      - name: Preserve legacy major feature scope
+        id: legacy_major
+        if: ${{ !inputs.recover_release }}
+        run: |
+          PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
+          RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
+          if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: '; then
+            echo 'force_bump=major' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Calculate release
         id: version
@@ -95,8 +111,8 @@ jobs:
           default_bump: false
           default_prerelease_bump: false
           fetch_all_tags: true
-          force_bump: ${{ inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
-          force_prerelease_bump: ${{ inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
+          force_bump: ${{ steps.legacy_major.outputs.force_bump || inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
+          force_prerelease_bump: ${{ steps.legacy_major.outputs.force_bump || inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
           custom_release_rules: >-
             feat:minor:⭐ New Features,fix:patch:🐞 Bug Fixes,revert:patch:🐞 Bug Fixes,
             perf:minor:⚡ Performance Improvements,docs:patch:📔 Documentation,
@@ -188,7 +204,7 @@ jobs:
           make_latest: ${{ steps.version.outputs.prerelease == 'true' && 'false' || 'true' }}
 
       - name: Recover GitHub release
-        if: ${{ inputs.recover_release }}
+        if: ${{ !inputs.dry_run && inputs.recover_release }}
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.recovery.outputs.tag }}
@@ -199,6 +215,14 @@ jobs:
 
       - name: Notify linked issues and pull requests
         if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' && steps.version.outputs.prerelease != 'true' }}
+        uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          comment-template: |
+            Release {release_link} addresses this.
+
+      - name: Notify linked issues and pull requests for recovered release
+        if: ${{ !inputs.dry_run && inputs.recover_release && steps.recovery.outputs.prerelease != 'true' }}
         uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
