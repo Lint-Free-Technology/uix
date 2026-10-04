@@ -2,6 +2,15 @@ import { randomUUID } from "node:crypto";
 
 const releaseNotes = process.env.RELEASE_NOTES?.trim();
 const releaseNoteBanner = process.env.RELEASE_NOTE_BANNER?.trim();
+const sectionOrder = new Map([
+  ["⭐ New Features", 10],
+  ["⚡ Performance Improvements", 20],
+  ["🐞 Bug Fixes", 30],
+  ["📦 Dependency Upgrades", 40],
+  ["📔 Documentation", 50],
+  ["⚙️ Miscellaneous", 60],
+  ["Reverts", 70],
+]);
 
 if (!releaseNotes) {
   throw new Error("RELEASE_NOTES must contain the generated release notes.");
@@ -29,8 +38,7 @@ const sections = sectionIndexes
       title,
       body: lines.slice(start + 1, end).join("\n").trim(),
     };
-  })
-  .reverse();
+  });
 
 const formattedSections = [];
 
@@ -50,11 +58,21 @@ for (const section of sections) {
   }
 }
 
+const orderedSections = formattedSections
+  .map((section, index) => ({ ...section, index }))
+  .sort(
+    (a, b) =>
+      (sectionOrder.get(a.title) ?? Number.MAX_SAFE_INTEGER) -
+        (sectionOrder.get(b.title) ?? Number.MAX_SAFE_INTEGER) ||
+      a.index - b.index,
+  );
+
 const formattedNotes = [
   ...lines.slice(0, sectionIndexes[0]),
   ...(releaseNoteBanner ? [`**${releaseNoteBanner}**`, ""] : []),
-  ...formattedSections.flatMap((section) => [
+  ...orderedSections.flatMap((section) => [
     `### ${section.title}`,
+    "",
     section.body,
     "",
   ]),
