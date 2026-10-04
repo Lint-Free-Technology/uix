@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 const releaseNotes = process.env.RELEASE_NOTES?.trim();
 const releaseNoteBanner = process.env.RELEASE_NOTE_BANNER?.trim();
 const sectionOrder = new Map([
+  ["⚠ BREAKING CHANGES", 0],
   ["⭐ New Features", 10],
   ["⚡ Performance Improvements", 20],
   ["🐞 Bug Fixes", 30],

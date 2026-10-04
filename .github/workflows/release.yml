@@ -24,6 +24,11 @@ on:
         required: false
         type: string
         default: ""
+      recover_release:
+        description: "Republish the latest pushed release commit after an interrupted release"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -50,10 +55,37 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
+        if: ${{ !inputs.recover_release }}
         run: npm ci
+
+      - name: Prepare release recovery
+        id: recovery
+        if: ${{ inputs.recover_release }}
+        run: |
+          VERSION="$(node -p \"require('./package.json').version\")"
+          SUBJECT="$(git log -1 --format=%s)"
+          if [ "$SUBJECT" != "chore(release): $VERSION [skip ci]" ]; then
+            echo 'Recovery requires the branch head to be its release commit.' >&2
+            exit 1
+          fi
+          case "$VERSION" in
+            *-*) PRERELEASE=true ;;
+            *) PRERELEASE=false ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+
+      - name: Read release notes for recovery
+        id: recovery_notes
+        if: ${{ inputs.recover_release }}
+        env:
+          RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
+        run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
 
       - name: Calculate release
         id: version
+        if: ${{ !inputs.recover_release }}
         uses: mathieudutour/github-tag-action@af99e60ce8132224b8e6ebab5023449fe256ed46 # v7.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -66,7 +98,7 @@ jobs:
           force_bump: ${{ inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
           force_prerelease_bump: ${{ inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
           custom_release_rules: >-
-            feat:minor:⭐ New Features,fix:patch:🐞 Bug Fixes,
+            feat:minor:⭐ New Features,fix:patch:🐞 Bug Fixes,revert:patch:🐞 Bug Fixes,
             perf:minor:⚡ Performance Improvements,docs:patch:📔 Documentation,
             deps:patch:📦 Dependency Upgrades,refactor:patch:⚙️ Miscellaneous,
             style:patch:⚙️ Miscellaneous
@@ -154,6 +186,16 @@ jobs:
           body: ${{ steps.notes.outputs.changelog }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           make_latest: ${{ steps.version.outputs.prerelease == 'true' && 'false' || 'true' }}
+
+      - name: Recover GitHub release
+        if: ${{ inputs.recover_release }}
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ steps.recovery.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          body: ${{ steps.recovery_notes.outputs.changelog }}
+          prerelease: ${{ steps.recovery.outputs.prerelease }}
+          make_latest: ${{ steps.recovery.outputs.prerelease == 'true' && 'false' || 'true' }}
 
       - name: Notify linked issues and pull requests
         if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' && steps.version.outputs.prerelease != 'true' }}
