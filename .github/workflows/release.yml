@@ -77,6 +77,12 @@ jobs:
           printf 'tag: %s\n' "${RELEASE_TAG:-none}"
           printf 'release type: %s\n' "${RELEASE_TYPE:-none}"
 
+      - name: Show generated release notes
+        if: ${{ steps.version.outputs.new_version != '' }}
+        env:
+          RELEASE_NOTES: ${{ steps.version.outputs.changelog }}
+        run: printf '%s\n' "$RELEASE_NOTES"
+
       - name: Require a release branch
         if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' }}
         run: |
