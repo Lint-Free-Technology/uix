@@ -183,5 +183,5 @@ At release time, UIX checks both the registered site and metadata URLs. For a st
 - **DO NOT** include `uix.js` in your commits in a pull request. The resource file will be built on release. As UIX is an integration it can't use release assets as `uix.js` needs to be in the `custom_components/uix` folder.
 - **DO** include tests for new visual components of UIX. See README.MD in `tests` folder in repo.
 - Use conventional commits style naming for commits. While this is not mandatory as pull requests will be squashed and title updated to use conventional commit naming.
-- In commit footer or pull request include `BREAKING CHANGE: ...` if it is a breaking change.
+- Use `feat!:` or include `BREAKING CHANGE: ...` in a commit footer or pull request for a breaking change. Both produce a major release.
 - In commit footer or pull request include references to issues fixed/closed e.g. `fixes #1234`.

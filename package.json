@@ -22,13 +22,8 @@
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@semantic-release/changelog": "^7.0.0",
-    "@semantic-release/exec": "^7.1.0",
-    "@semantic-release/git": "^11.0.1",
-    "conventional-changelog-conventionalcommits": "^10.4.0",
     "rollup": "^4.63.3",
     "rollup-plugin-esbuild": "^6.2.1",
-    "semantic-release": "^25.0.9",
     "tslib": "^2.8.1",
     "typescript": "^7.0.2"
   },
@@ -44,11 +39,7 @@
     "tinykeys": "^4.0.0"
   },
   "overrides": {
-    "@babel/core": "$@babel/core",
-    "conventional-changelog-angular": "^9.0.0",
-    "conventional-changelog-writer": "^9.0.0",
-    "conventional-commits-filter": "^6.0.0",
-    "conventional-commits-parser": "^7.0.0"
+    "@babel/core": "$@babel/core"
   },
   "allowScripts": {
     "fsevents@2.3.3": true,
