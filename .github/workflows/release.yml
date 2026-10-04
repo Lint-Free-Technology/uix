@@ -95,7 +95,7 @@ jobs:
         run: |
           PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
           RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
-          if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: '; then
+          if git log --format=%s "$RANGE" | grep -Eq '^feat\(major\)(!)?: '; then
             echo 'force_bump=major' >> "$GITHUB_OUTPUT"
           fi
 
