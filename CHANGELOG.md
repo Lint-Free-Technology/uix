@@ -1,3 +1,16 @@
+## [8.4.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.8...v8.4.0-beta.9) (2026-10-05)
+
+
+**Requires Home Assistant 2026.10.0b0 or greater**
+
+### ⭐ New Features
+
+* **broker:** Allow prior javascript or template directive to be used as a compact rule in following directives ([105b8cd](https://github.com/Lint-Free-Technology/uix/commit/105b8cd446ea082553be627530efe8a752d57dec))
+
+### ⚙️ Miscellaneous
+
+* migrate release tooling from semantic-release to GitHub Actions ([#651](https://github.com/Lint-Free-Technology/uix/issues/651)) ([21af5a2](https://github.com/Lint-Free-Technology/uix/commit/21af5a266e19d337be816cc7ed23ce1b68b8eadf))
+
 ## [8.4.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.7...v8.4.0-beta.8) (2026-10-04)
 
 ### 🐞 Bug Fixes
