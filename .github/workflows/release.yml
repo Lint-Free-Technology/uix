@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Calculate the release without changing the branch, tags, or GitHub releases
+        description: "Preview release only — do not create a commit, tag, or GitHub Release"
         required: false
         type: boolean
         default: false
       force_bump:
-        description: "Dry-run only: calculate a release even when no commit requests one"
+        description: "When previewing, force this bump when no commit requests a release"
         required: false
         type: choice
         options:
@@ -20,12 +20,12 @@ on:
           - major
         default: none
       release_note_banner:
-        description: "Optional bold notice placed at the top of the release notes"
+        description: "Release-note banner (optional; shown in bold at the top)"
         required: false
         type: string
         default: ""
       recover_release:
-        description: "Republish the latest pushed release commit after an interrupted release"
+        description: "Recover the GitHub Release for the latest pushed release commit (not a preview)"
         required: false
         type: boolean
         default: false
