@@ -419,6 +419,22 @@ function capturedRulePath(path: string): string {
   return path.replace(/^@captured(?:\.)?/, "");
 }
 
+function isCapturedRulePath(path: string): boolean {
+  return path === "@captured" || path.startsWith("@captured.") || path.startsWith("@captured[");
+}
+
+/**
+ * A compact directive-result rule starts with the id of an earlier template or
+ * javascript directive. `captured` is reserved for event data instead.
+ */
+function isDirectiveResultRulePath(path: string): boolean {
+  return /^@[A-Za-z_][A-Za-z0-9_-]*(?:$|\.|\[)/.test(path) && !isCapturedRulePath(path);
+}
+
+function directiveResultRulePath(path: string): string {
+  return path.slice(1);
+}
+
 function panelRulePath(path: string): string {
   return path.replace(/^@panel(?:\.)?/, "");
 }
@@ -1344,13 +1360,15 @@ export class UixBroker {
             );
           }
         } else {
-          const capturedMatchers = Object.entries(typedRule).filter(
-            ([key]) => key === "@captured" || key.startsWith("@captured."),
+          const compactMatchers = Object.entries(typedRule).filter(
+            ([path]) => isCapturedRulePath(path) || (phase === "directive" && isDirectiveResultRulePath(path)),
           );
-          if (capturedMatchers.length) {
-            result = capturedMatchers.every(([path, matcher]) => {
-              const capturedValue = getCapturedPathValue(context.captured, capturedRulePath(path));
-              return matchesCapturedValue(capturedValue.value, matcher, false, capturedValue.exists);
+          if (compactMatchers.length) {
+            result = compactMatchers.every(([path, matcher]) => {
+              const matchedValue = isCapturedRulePath(path)
+                ? getCapturedPathValue(context.captured, capturedRulePath(path))
+                : getCapturedPathValue(context.results, directiveResultRulePath(path));
+              return matchesCapturedValue(matchedValue.value, matcher, false, matchedValue.exists);
             });
           } else {
             console.warn(`UIX Broker: unknown rule type "${typedRule.type}".`);

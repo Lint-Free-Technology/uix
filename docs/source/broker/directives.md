@@ -26,6 +26,19 @@ Directives run one at a time after every interaction rule matches. Each directiv
 
 Add `rules` to any directive except `block` to condition just that directive. The syntax is the same as [interaction rules](./rules.md). For `property`, `event`, `call`, `action-handler`, `button`, `badge`, `text-content`, `tile-icon`, `tooltip`, and `lock`, host-element rules inspect the resolved directive anchor by default. For `action`, `template`, `javascript`, and `wait`, they inspect the interaction anchor. An `event` directive targeting `window` or `document` also uses the interaction anchor for these rules. A rule's own `anchor` remains relative to that default anchor, or can be absolute as usual.
 
+Compact directive rules can also match a result saved by an earlier `template` or `javascript` directive. Use its `id` with an `@` prefix, followed by an optional dot or bracket path. This is available only in directive rules: interaction rules run before directives and therefore cannot reference their results.
+
+```yaml
+- type: javascript
+  id: permission
+  code: |
+    return { allowed: hass.user.is_admin };
+- type: button
+  rules:
+    - "@permission.allowed": true
+  icon: mdi:shield-check
+```
+
 ```yaml
 directives:
   - type: property
