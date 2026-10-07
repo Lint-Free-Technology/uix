@@ -15,6 +15,7 @@ def test_bundled_webawesome_stylesheet_patch_load_orders() -> None:
             "-e",
             r"""
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import { rollup } from "rollup";
@@ -25,6 +26,7 @@ const require = createRequire(import.meta.url);
 const input = require.resolve(
   "@home-assistant/webawesome/dist/utilities/polyfills/stateset.js"
 );
+const stateSetSource = readFileSync(input, "utf8");
 
 async function bundle(plugins = []) {
   const build = await rollup({ input, plugins });
@@ -42,6 +44,16 @@ const ha = await bundle();
 const uix = await bundle(configs[0].plugins);
 const panel = await bundle(configs[1].plugins);
 const load = (context, code) => vm.runInContext(code, context);
+
+// Keep the compatibility change scoped to Web Awesome's complete, guarded
+// CSSOM patch. Its :is() selector is part of that patch, not a general target.
+const withUnrelatedIs = `${stateSetSource}\nconst untouchedSelector = ":is(.outside)";`;
+const transformed = webAwesomeCompatibility().transform.call(
+  { error(message) { throw new Error(message); } }, withUnrelatedIs, input
+).code;
+assert.doesNotMatch(transformed, /typeof CSSStyleSheet/);
+assert.doesNotMatch(transformed, /Object\.defineProperty\(CSSStyleSheet\.prototype/);
+assert.match(transformed, /":is\(\.outside\)"/);
 
 function browser(modern = false) {
   const context = vm.createContext({});
@@ -123,7 +135,7 @@ for (const patched of [uix, panel]) {
     const sheet = new context.CSSStyleSheet();
     sheet.replaceSync(":state(active) { color: red; }");
     assert.equal(sheet.received,
-      ":where(:state(active), :--active, [state-active]) { color: red; }");
+      ":is(:state(active), :--active, [state-active]) { color: red; }");
     const descriptor = Object.getOwnPropertyDescriptor(
       context.CSSStyleSheet.prototype, "replaceSync"
     );
