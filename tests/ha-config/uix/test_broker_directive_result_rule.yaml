@@ -1,0 +1,24 @@
+uix_broker:
+  - realm: browser
+    listen:
+      - uix-broker-ready
+    anchor: "&home-assistant $ home-assistant-main $ ha-sidebar"
+    directives:
+      - type: javascript
+        id: permissions
+        code: |
+          return { allow: true, deny: false };
+      - type: button
+        rules:
+          - "@permissions.allow": true
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-home $ a#item div.content"
+        icon: mdi:shield-check
+        color: teal
+        size: s
+      - type: button
+        rules:
+          - "@permissions.deny": true
+        anchor: "$ div.panels-list div.wrapper ha-list-nav slot ha-list-item-button#sidebar-panel-logbook $ a#item div.content"
+        icon: mdi:shield-remove
+        color: red
+        size: s

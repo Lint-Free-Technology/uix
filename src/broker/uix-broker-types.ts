@@ -104,7 +104,7 @@ export type UixBrokerEventTarget = "anchor" | "window" | "document";
 
 export type UixBrokerDirective = {
   type: "block" | "action" | "action-handler" | "property" | "event" | "call" | "button" | "badge" | "text-content" | "tile-icon" | "tooltip" | "lock" | "template" | "javascript" | "wait";
-  /** Optional conditions that must all match before this directive runs. Not supported by block. */
+  /** Optional conditions that must all match before this directive runs. Compact rules can reference prior directive results. Not supported by block. */
   rules?: UixBrokerRule[];
   /** Optional select_tree target for property, event, call, action-handler, button, badge, text-content, tile-icon, tooltip, and lock directives. */
   anchor?: UixBrokerSelectTreeAnchor;

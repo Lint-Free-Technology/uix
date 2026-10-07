@@ -36,7 +36,7 @@ See [Realms](./realms.md), [Interaction Anchors](./interaction-anchors.md), [Rul
 | `reentrant` | Defaults to `true`. Set to `false` to ignore matching events for the same interaction while it is resolving or running. |
 | `debug` | Set to `true` to log the interaction lifecycle in the browser developer console. |
 
-Each interaction is independent. All of its rules must match before directives run, and directives run one at a time in configuration order.
+Each interaction is independent. All of its rules must match before directives run, and directives run one at a time in configuration order. The `block` directive is applied synchronously before the remaining directives, regardless of its position in the list.
 
 Use a browser-realm `listen` list when the same interaction should run for more than one browser event:
 
@@ -91,11 +91,11 @@ also reloads registered Broker files.
 
 ## Synchronous vs asynchronous interaction execution paths
 
-Captured-data and browser-identity rules run synchronously before interaction-anchor resolution. Event-path interaction anchors are also resolved synchronously. This allows a browser-realm interaction to apply a `block` directive using captured data, browser identity, and elements already in the event's composed path.
+Captured-data, browser-identity, user, administrator-status, URL-fragment, and search-parameter rules run synchronously before interaction-anchor resolution. Event-path interaction anchors are also resolved synchronously. This allows a browser-realm interaction to apply a `block` directive using these rules and elements already in the event's composed path.
 
 Because the `block` [directive](directives.md) must run synchronously, interactions containing `block` require their [interaction anchor](interaction-anchors.md) and [host-element rule](rules.md#host-element-rules) anchors to be immediately available. UIX Broker makes one synchronous lookup; if either is unavailable, it skips the interaction.
 
-After a blocking interaction has resolved and applied `block`, anchors supplied by later `property`, `event`, `call`, and `button` directives still use the normal asynchronous retry behaviour.
+After a blocking interaction has resolved and applied `block`, [directive anchors](./directives.md#directive-anchors) and their host-element rule anchors still use the normal asynchronous retry behaviour.
 
 For interactions without `block`, missing [interaction anchors](interaction-anchors.md) and [host-element rule](rules.md#host-element-rules) anchors are retried every 50 ms for up to two seconds. This permits an interaction listening to a browser event such as `show-dialog` to wait for the dialog to mount before selecting the dialog or one of its elements as the interaction anchor.
 

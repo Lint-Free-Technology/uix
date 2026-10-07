@@ -1,0 +1,68 @@
+id: doc_extra_popover_action
+description: "UIX popover action on a button"
+view_path: doc-extra-popover-action
+
+card:
+  type: button
+  show_icon: false
+  name: Popover
+  tap_action:
+    action: fire-dom-event
+    uix:
+      action: popover
+      data:
+        title: Bed light
+        subtitle: Quick controls
+        subtitle_position: above
+        width: small
+        content: |
+          <p>You can toggle the light using the primary action.</p>
+          <p>You can navigate to config/dashboard with the cog icon.</p>
+        style:
+          "--ha-dialog-border-radius": 12px
+        uix:
+          style:
+            "$": |
+              .content-wrapper {
+                --dialog-content-padding: 0 var(--ha-space-6) var(--ha-space-6);
+              }
+        icons:
+          - icon: mdi:cog
+            label: Settings
+            tap_action:
+              action: navigate
+              navigation_path: /config/dashboard
+        buttons:
+          secondary:
+            label: Cancel
+          primary:
+            label: Toggle
+            entity: light.bed_light
+            tap_action:
+              action: toggle
+  
+doc_animation:
+  output: docs/source/assets/page-assets/extras/extra-popover-action.gif
+  root: hui-button-card
+  padding: 16 150 360 150
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: hui-button-card
+          selector: ha-card
+          settle_ms: 0
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: hui-button-card
+          selector: ha-card
+          settle_ms: 0
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - interactions:
+        - type: hover_away
+    - frames: 50   # ~3 s

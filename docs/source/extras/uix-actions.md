@@ -1,6 +1,6 @@
 ---
 title: UIX actions
-description: Learn how UIX actions can clear cache, show more-info or toast messages, protect an action with a code, run JavaScript, and dispatch browser events.
+description: Learn how UIX actions can clear cache, show more-info, toast messages or popovers, protect an action with a code, run JavaScript, and dispatch browser events.
 ---
 # UIX actions
 
@@ -55,6 +55,8 @@ Dispatches a [`CustomEvent`](https://developer.mozilla.org/en-US/docs/Web/API/Cu
 | `data` | - | `{}` | Event `detail`. |
 
 For a normal dashboard action, the event is dispatched on `window`. For a UIX Broker `button` directive, UIX automatically dispatches from the button's placement reference — its `after` target, `before` target, or directive anchor — with `bubbles: true` and `composed: true`. The receiving Broker interaction can therefore use an event-path anchor such as `target`, `<`, or `<$`; it does not need to re-search from an absolute `select_tree` path.
+
+When an event action is triggered by a UIX Forge [form spark](../forge/sparks/form.md), the current form values are appended to this action's `data` and become properties of the event `detail`.
 
 For example, this Broker button dispatches `toggle-yaml-mode` from its placement reference:
 
@@ -152,6 +154,137 @@ tap_action:
 
 ![UIX toast action example](../assets/page-assets/extras/extra-toast-action.gif)
 
+## `popover` - show an anchored Home Assistant popover
+
+!!! info
+    popover action available in 8.4.0-beta.5
+
+Shows a Home Assistant adaptive popover anchored to the element that triggered
+the `ll-custom` action. It includes Home Assistant's standard accessible close
+button and removes itself after it is closed.
+
+| config | setting | default | description |
+| --- | --- | --- | --- |
+| `action: popover` | - | - | Shows an adaptive popover with options set in `data:`. |
+| `data:` | - | - | Popover options. |
+| | `target` | action source | An `Element` to anchor beside. Set to `none` to render a centered adaptive dialog under Home Assistant's shadow root. |
+| | `title` | - | Sets the popover `headerTitle`. |
+| | `subtitle` | - | Sets the popover `headerSubtitle`. |
+| | `subtitle_position` | `below` | Sets the `header-subtitle-position` attribute. Accepted values are `above` and `below`. |
+| | `width` | `small` | Sets the popover width. Accepted values are `small`, `large`, and `full`. |
+| | `without_header` | `false` | When `true`, hides the header and its close button. The popover can still be closed with <kbd>Escape</kbd> unless `dismissible` is `false`. |
+| | `dismissible` | `true` | Allows the close button, <kbd>Escape</kbd>, and outside dismissal. Set to `false` to require a footer button. `dismissable` is accepted as an alias. |
+| | `content` | - | HTML content to place inside the popover. Cannot be used with `card`. |
+| | `card` | - | Home Assistant card configuration rendered inside the popover. Cannot be used with `content`. |
+| | `style` | - | Flat map of CSS property names and string or numeric values, applied inline to `ha-adaptive-popover`. |
+| | `uix` | - | UIX styling configuration applied to the popover as a `dialog` with class `type-uix-popover`. |
+| | `icons` | - | List of icon-only action buttons placed in the header. Each entry requires `icon`. |
+| | `buttons` | - | Optional footer button configuration. At least one button is required when `dismissible` is `false`. |
+| | `buttons.primary` | - | Button placed at the footer's primary end. Defaults to `variant: brand` and `appearance: accent`. |
+| | `buttons.secondary` | - | Button placed before the primary button. Defaults to `variant: neutral` and `appearance: filled`. |
+
+`buttons.primary` and `buttons.secondary` use the same button settings as a
+[Forge button spark](../forge/sparks/button.md), except placement settings are
+not used. Set `label`, `icon`, `start_icon`, `end_icon`, `entity`, `size`,
+`variant`, `appearance`, and any of `tap_action`, `hold_action`, or
+`double_tap_action` as needed. Footer positions are logical: primary is on the
+right in left-to-right layouts and on the left in right-to-left layouts. A
+button with an action closes the popover after that action runs; an action-less
+button closes it on click.
+
+When the popover card contains a UIX Forge [form spark](../forge/sparks/form.md), its current form values are appended to the action data for both footer buttons. The form spark may omit its own Submit and Clear buttons in this layout.
+
+Set `target: none` to show the same content as a centered adaptive dialog
+instead of anchoring it to the action source. An integration or custom caller
+may instead provide an actual DOM element as `target` to choose a different
+anchor.
+
+Each `icons` entry uses Home Assistant's native round icon button. It must set
+`icon`; use `label` to provide its accessible name. It supports `entity`,
+`color`, and `tap_action`, `hold_action`, or `double_tap_action`. Header icons
+do not close the popover, which makes them suitable for actions such as opening
+settings or help.
+
+Use `style` for direct properties on the popover and `uix` to style its header,
+footer, or other internals using the usual UIX DOM navigation. The action data
+is available to UIX templates as `config`. A card rendered with `card` receives
+the `uix-popover-card` class. Style `.uix-popover-card` directly to set CSS
+custom properties on the card host without crossing a shadow root; use
+`".uix-popover-card $"` for rules inside the card's shadow root.
+
+For example, show HTML content in a popover when a button is selected:
+
+```yaml
+type: button
+show_icon: false
+name: Popover
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: popover
+    data:
+      title: Bed light
+      subtitle: Quick controls
+      subtitle_position: above
+      width: small
+      content: |
+        <p>You can toggle the light using the primary action.</p>
+        <p>You can navigate to config/dashboard with the cog icon.</p>
+      style:
+        "--ha-dialog-border-radius": 12px
+      uix:
+        style:
+          "$": |
+            .content-wrapper {
+              --dialog-content-padding: 0 var(--ha-space-6) var(--ha-space-6);
+            }
+      icons:
+        - icon: mdi:cog
+          label: Settings
+          tap_action:
+            action: navigate
+            navigation_path: /config/dashboard
+      buttons:
+        secondary:
+          label: Cancel
+        primary:
+          label: Toggle
+          entity: light.bed_light
+          tap_action:
+            action: toggle
+```
+
+![Popover action example](../assets/page-assets/extras/extra-popover-action.gif)
+
+To render a card instead, replace `content` with `card` - this example includes clearing card border and background using UIX styling:
+
+```yaml
+type: button
+show_icon: false
+name: Popover
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: popover
+    data:
+      title: Bed light
+      subtitle: Quick controls
+      subtitle_position: above
+      width: small
+      card:
+        type: entities
+        entities:
+          - light.bed_light
+      uix:
+        style: |
+          .uix-popover-card {
+            --ha-card-border-width: 0px;
+            --ha-card-background: none;
+          }
+```
+
+![Popover action example](../assets/page-assets/extras/extra-popover-action-card.gif)
+
 ## `javascript` - run javascript code in Browser session
 
 Runs JavaScript code in the browser session with `hass` provided and an optional `variables` object.
@@ -165,6 +298,8 @@ Runs JavaScript code in the browser session with `hass` provided and an optional
 | `data:` | - | - | Javascript options. |
 | | `code` | **REQUIRED** | Javascript code to run. |
 | | `variables` | `{}` | Optional variables object. Each named variable is available in javascript as `variables.<name>`. Named variables can be of any type. |
+
+When a JavaScript action is triggered by a UIX Forge [form spark](../forge/sparks/form.md), the current form values are appended to `data.variables` and are available as `variables.<field-name>`.
 
 Example javascript action with variable and using hass object to turn off a light.
 

@@ -1,0 +1,84 @@
+id: doc_spark_form_popover
+description: "UIX Forge form spark in a popover (form.md)"
+view_path: doc-spark-form-popover
+
+card:
+  type: button
+  name: Popover
+  show_icon: false
+  tap_action:
+    action: fire-dom-event
+    uix:
+      action: popover
+      data:
+        buttons:
+          primary:
+            label: Send
+            end_icon: mdi:send
+            tap_action:
+              action: fire-dom-event
+              uix:
+                action: javascript
+                data:
+                  variables:
+                    source: contact-form
+                  code: >
+                    console.info(`Submitted: Message: ${variables.message},
+                    Priority: ${variables.priority} from ${variables.source}`);
+        uix:
+          style: |
+            .uix-popover-card {
+              --ha-card-border-width: 0px;
+              --ha-card-background: none;
+              --uix-form-padding: 0px;
+              --ha-radio-option-active-color: black;
+            }
+        card:
+          type: custom:uix-forge
+          forge:
+            mold: card
+            sparks:
+              - type: form
+                density: dense
+                schema:
+                  - name: message
+                    label: Message
+                    selector:
+                      text: {}
+                  - name: priority
+                    label: Priority
+                    default: normal
+                    selector:
+                      select:
+                        options:
+                          - normal
+                          - urgent
+
+doc_animation:
+  output: docs/source/assets/page-assets/forge/sparks/form-popover.gif
+  root: hui-button-card
+  padding: 16 150 360 150
+  interval_ms: 66
+  threshold: 0.02
+  cursor: pointer
+  segments:
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover
+          root: 
+            - hui-button-card
+          selector: ha-card
+          settle_ms: 100
+      frames: 14   # ~1 s
+    - interactions:
+        - type: click
+          root: 
+            - hui-button-card
+          selector: ha-card
+          settle_ms: 50
+      frames: 3   # ~0.2 s
+      click_circle: true
+    - frames: 7   # ~0.5 s
+    - interactions:
+        - type: hover_away
+      frames: 50   # ~4 s

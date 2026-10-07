@@ -30,6 +30,12 @@
 - Source: Photo by Simone Secci
 - Changes: cropped square
 
+## question_mark_transparent_cropped.jpg
+
+- License: <https://unsplash.com/license>
+- Source: Photo by D koi
+- Changes: cropped square
+
 ## Lorem Piscum
 
 - License: <https://unsplash.com/license>

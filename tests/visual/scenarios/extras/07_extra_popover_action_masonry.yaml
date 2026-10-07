@@ -1,0 +1,62 @@
+id: extra_popover_action_masonry
+description: "Popover footer buttons remain in the popover on a Masonry dashboard"
+view_path: extra-popover-action-masonry
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+
+dashboard:
+  title: Popover Masonry test
+  views:
+    - title: Popover Masonry
+      path: extra-popover-action-masonry
+      type: masonry
+      cards:
+        - type: tile
+          entity: light.bed_light
+          tap_action:
+            action: fire-dom-event
+            uix:
+              action: popover
+              data:
+                title: Bed light
+                card:
+                  type: tile
+                  entity: light.bed_light
+                dismissible: false
+                buttons:
+                  secondary:
+                    label: Cancel
+                  primary:
+                    label: Toggle
+                    entity: light.bed_light
+                    tap_action:
+                      action: toggle
+                uix:
+                  style: |
+                    .uix-popover-card {
+                      --ha-card-border-width: 0px;
+                    }
+
+interactions:
+  - type: click
+    root: hui-tile-card
+    selector: ha-card
+    settle_ms: 500
+
+assertions:
+  - type: element_present
+    root: home-assistant
+    selector: ha-adaptive-popover[open]
+  - type: css_property
+    root: home-assistant
+    selector: ha-adaptive-popover[open] > ha-dialog-footer > ha-button
+    property: position
+    expected: static
+  - type: snapshot
+    name: 70_extra_popover_action_masonry
+    threshold: 0.01

@@ -11,6 +11,7 @@ from .helpers import check_all_broker_files, get_all_broker_configs, get_version
 from .const import (
     CONF_ALWAYS_PATCH_HA_CARD,
     CONF_STYLE_CUSTOM_PANELS,
+    CONF_STYLE_FRAME_PANELS,
     DOMAIN,
     WS_CONNECT,
     WS_LOG,
@@ -73,7 +74,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     disable_icon_styling = False
                     disable_entity_picture_image_override = False
                     always_patch_ha_card = False
-                    style_custom_panels = False
+                    style_frame_panels = False
                     uix_broker: list[dict] = []
                     uix_broker_files: list[str] = []
                     if entries:
@@ -86,7 +87,10 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                         disable_icon_styling = entries[0].options.get(CONF_DISABLE_ICON_STYLING, False)
                         disable_entity_picture_image_override = entries[0].options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False)
                         always_patch_ha_card = entries[0].options.get(CONF_ALWAYS_PATCH_HA_CARD, False)
-                        style_custom_panels = entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False)
+                        style_frame_panels = entries[0].options.get(
+                            CONF_STYLE_FRAME_PANELS,
+                            entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False),
+                        )
                         uix_broker = list(entries[0].options.get(CONF_UIX_BROKER, []))
                         uix_broker_files = list(entries[0].options.get(CONF_UIX_BROKER_FILES, []))
                     send_update({
@@ -98,7 +102,8 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                         CONF_DISABLE_ICON_STYLING: disable_icon_styling,
                         CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: disable_entity_picture_image_override,
                         CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
-                        CONF_STYLE_CUSTOM_PANELS: style_custom_panels,
+                        CONF_STYLE_FRAME_PANELS: style_frame_panels,
+                        CONF_STYLE_CUSTOM_PANELS: style_frame_panels,
                         CONF_UIX_BROKER: await hass.async_add_executor_job(
                             get_all_broker_configs, hass, uix_broker, uix_broker_files
                         ),
@@ -126,7 +131,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         disable_icon_styling = False
         disable_entity_picture_image_override = False
         always_patch_ha_card = False
-        style_custom_panels = False
+        style_frame_panels = False
         uix_broker: list[dict] = []
         uix_broker_files: list[str] = []
         if entries:
@@ -139,7 +144,10 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             disable_icon_styling = entries[0].options.get(CONF_DISABLE_ICON_STYLING, False)
             disable_entity_picture_image_override = entries[0].options.get(CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE, False)
             always_patch_ha_card = entries[0].options.get(CONF_ALWAYS_PATCH_HA_CARD, False)
-            style_custom_panels = entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False)
+            style_frame_panels = entries[0].options.get(
+                CONF_STYLE_FRAME_PANELS,
+                entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False),
+            )
             uix_broker = list(entries[0].options.get(CONF_UIX_BROKER, []))
             uix_broker_files = list(entries[0].options.get(CONF_UIX_BROKER_FILES, []))
         send_update({
@@ -151,7 +159,8 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             CONF_DISABLE_ICON_STYLING: disable_icon_styling,
             CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE: disable_entity_picture_image_override,
             CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
-            CONF_STYLE_CUSTOM_PANELS: style_custom_panels,
+            CONF_STYLE_FRAME_PANELS: style_frame_panels,
+            CONF_STYLE_CUSTOM_PANELS: style_frame_panels,
             CONF_UIX_BROKER: await hass.async_add_executor_job(
                 get_all_broker_configs, hass, uix_broker, uix_broker_files
             ),

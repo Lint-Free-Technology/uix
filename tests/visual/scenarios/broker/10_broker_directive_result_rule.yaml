@@ -1,0 +1,26 @@
+id: broker_directive_result_rule
+description: "UIX Broker directive rules using a prior JavaScript result"
+view_path: broker-directive-result-rule
+
+setup:
+  - type: add_broker_file
+    file_path: uix/test_broker_directive_result_rule.yaml
+
+card:
+  type: heading
+  heading: "Broker Directive Result Rule Test"
+
+assertions:
+  - type: element_present
+    root: "ha-list-item-button#sidebar-panel-home"
+    selector: ha-button.uix-forge-spark-icon-button
+  - type: element_absent
+    root: "ha-list-item-button#sidebar-panel-logbook"
+    selector: ha-button.uix-forge-spark-icon-button
+  - type: snapshot
+    name: "72_directive_result_rule"
+    threshold: 0.01
+
+teardown:
+  - type: remove_broker_file
+    file_path: uix/test_broker_directive_result_rule.yaml

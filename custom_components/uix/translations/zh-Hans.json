@@ -8,8 +8,7 @@
             "old_frontend_script_resource": "冲突的前端脚本资源 {resource} 已注册为仪表盘（Dashboard）资源。请在添加 UIX 之前将其移除。",
             "old_frontend_script_extra_module": "冲突的前端脚本资源 {resource} 已注册为额外模块（extra module）。请在添加 UIX 之前将其移除。"
         },
-        "step": {
-        }
+        "step": {}
     },
     "options": {
         "step": {
@@ -68,11 +67,11 @@
                 "description": "配置 UIX 的实验性功能。",
                 "data": {
                     "always_patch_ha_card": "始终修补 ha-card",
-                    "style_custom_panels": "为作为 iframe 加载的自定义面板应用 UIX 主题样式"
+                    "style_frame_panels": "为以 iframe 加载的框架面板应用样式"
                 },
                 "data_description": {
                     "always_patch_ha_card": "启用后，即使没有卡片配置，也始终修补 ha-card。这允许在设置仪表盘或自定义面板中使用 ha-card 时进行修补。",
-                    "style_custom_panels": "启用后，将对作为 iframe 加载的自定义面板应用 UIX 主题样式。"
+                    "style_frame_panels": "启用后，将在支持的应用和自定义面板框架内应用 UIX 主题样式。"
                 }
             },
             "broker_settings": {

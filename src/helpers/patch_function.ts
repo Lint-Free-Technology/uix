@@ -37,13 +37,45 @@ export const patch_object = (obj, patch) => {
   }
 };
 
+// Patch a property getter while preserving the element's original setter and
+// Lit property metadata. This is needed for values that must be available while
+// an element is being created, before an `updated` callback can run.
+export const patch_getter = (obj, property, override) => {
+  if (!obj) return false;
+
+  let prototype = obj;
+  let descriptor: PropertyDescriptor | undefined;
+  while (prototype && !descriptor) {
+    descriptor = Object.getOwnPropertyDescriptor(prototype, property);
+    prototype = Object.getPrototypeOf(prototype);
+  }
+  if (!descriptor?.get) return false;
+
+  const original = descriptor.get;
+  try {
+    Object.defineProperty(obj, property, {
+      ...descriptor,
+      get: function (this: any) {
+        try {
+          return override.call(this, original.bind(this));
+        } catch (e) {
+          return original.call(this);
+        }
+      },
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 export const patch_prototype = async (cls, patch, afterwards?) => {
   if (typeof cls === "string") {
     await customElements.whenDefined(cls);
     cls = customElements.get(cls);
   }
   const patched = patch_object(cls.prototype, patch);
-  afterwards?.();
+  afterwards?.(cls);
   return patched;
 };
 

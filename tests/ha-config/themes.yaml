@@ -403,6 +403,10 @@ uix-custom-panel-theme:
   primary-background-color: "white"
   sidebar-background-color: "white"
 
+  uix-fonts: |
+    ChicagoFLF:
+      source: url("https://cdn.jsdelivr.net/npm/@sakun/system.css@0.1.11/fonts/ChicagoFLF.woff2") format("woff2")
+
   uix-theme: uix-custom-panel-theme
   uix-test-custom-panel-yaml: |
     .: |
@@ -424,3 +428,13 @@ uix-custom-panel-theme:
         color: yellow;
         box-shadow: 0 0 10px 5px yellow;
       }
+
+uix-font-theme:
+  uix-theme: uix-font-theme
+
+  uix-fonts: |
+    ChicagoFLF:
+      source: url("https://cdn.jsdelivr.net/npm/@sakun/system.css@0.1.11/fonts/ChicagoFLF.woff2") format("woff2")
+
+  ha-font-family-body: "ChicagoFLF"
+  ha-font-family-heading: "ChicagoFLF"

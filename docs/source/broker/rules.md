@@ -205,7 +205,7 @@ rules:
 
 ### Compact captured-data form
 
-For compact configurations, map one or more captured paths directly in an object rule. Every entry must match. The `@captured` prefix is retained only in this compact form.
+For compact configurations, map one or more captured paths directly in an object rule. Every entry must match. The `@captured` prefix is retained only in this compact form. [Directive rules](./directives.md#directive-rules) can additionally use `@<directive-id>` to match a result from an earlier `template` or `javascript` directive.
 
 ```yaml
 rules:
@@ -237,4 +237,4 @@ rules:
 ```
 
 !!! warning
-    Panel state is asynchronous. An interaction using a panel rule cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning.
+    Panel state is asynchronous. An interaction with a panel rule in its interaction-level `rules` cannot use a `block` directive, because blocking an event must complete in the event's synchronous call stack. UIX Broker skips such interactions and logs a warning. Later non-`block` directives may still have their own panel rules; those rules condition only those directives after the event has been blocked.

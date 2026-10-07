@@ -1,0 +1,16 @@
+id: font-via-theme
+description: "UIX loads fonts via the theme"
+view_path: font-via-theme
+
+theme: uix-font-theme
+
+card:
+  type: heading
+  heading: Theme Font is ChicagoFLF
+  heading_style: title
+  icon: mdi:home
+
+assertions:
+  - type: snapshot
+    name: "68_custom_panel_iframe"
+    threshold: 0.02

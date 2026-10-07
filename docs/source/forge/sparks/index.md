@@ -20,6 +20,7 @@ Available sparks:
 - :material-map: [Map](map.md) — preserve the zoom level and centre of a map card across Home Assistant state updates.
 - :material-lock: [Lock](lock.md) — overlay a lock icon on any element to block interaction until the user passes a PIN, passphrase, or confirmation challenge.
 - :material-information-outline: [More-info](more-info.md) — embed Home Assistant more-info content for an entity inside a forged element.
+- :material-form-select: [Form](form.md) — add a Home Assistant form and optional submit and clear actions to a forged element.
 - :material-star-four-points-outline: [Overlay Icon](overlay-icon.md) — overlay a `ha-icon`/`ha-state-icon` on any element inside the forged element.
 - :material-image-outline: [Background](background.md) — inject a background layer (colour, image, video, or live camera) behind any element within the forged element.
 - :material-palette: [Theme](theme.md) — apply a Frontend theme to the forged element or one of its descendants.
