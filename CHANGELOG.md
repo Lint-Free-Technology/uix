@@ -1,3 +1,28 @@
+## [8.4.0](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0) (2026-10-07)
+
+
+### ⭐ New Features
+
+* Add internal frame runtime (uixFrame) and replace custom-panel loader. Allows styling inside iFrame of loaded by ha-panel-custom and ha-panel-app ([#623](https://github.com/Lint-Free-Technology/uix/issues/623)) ([a43f3e2](https://github.com/Lint-Free-Technology/uix/commit/a43f3e2bf03edb808c0ea8d83af426d06626181e))
+* Add popover UIX Action ([#648](https://github.com/Lint-Free-Technology/uix/issues/648)) ([cc77055](https://github.com/Lint-Free-Technology/uix/commit/cc7705563141cab18edfc45af060db90c96ae241))
+* Apply `--uix-image-for-<entity_id>` overrides to Map panel overview tabs ([#628](https://github.com/Lint-Free-Technology/uix/issues/628)) ([258b0ff](https://github.com/Lint-Free-Technology/uix/commit/258b0ff9e7d17e6994a99fbeeccf82dfb18cea2f))
+* Load document fonts via `uix-fonts` theme variable. ([#643](https://github.com/Lint-Free-Technology/uix/issues/643)) ([ccd1865](https://github.com/Lint-Free-Technology/uix/commit/ccd1865ce11e6575a805f894edc4e87912b219b9))
+* **broker:** Allow prior javascript or template directive to be used as a compact rule in following directives ([105b8cd](https://github.com/Lint-Free-Technology/uix/commit/105b8cd446ea082553be627530efe8a752d57dec))
+* **forge:** `form` spark with out of the box placement for use with UIX Forge blank card or forged markdown element. ([#649](https://github.com/Lint-Free-Technology/uix/issues/649)) ([622b328](https://github.com/Lint-Free-Technology/uix/commit/622b3281863c8e13656afc72aa35e7a57aa1f385))
+
+### 🐞 Bug Fixes
+
+* **beta:** Extend ha-entity-marker entityPicture patch for all markers and not just those in a cluster bubble. Fixes seeing non-override entity icon/image on non-clustered markers. ([e6e1ad4](https://github.com/Lint-Free-Technology/uix/commit/e6e1ad4d8ce017662189a9ca58ea61e124e37b17))
+* **beta:** Fix getting custom/app panel slug for theme type from deep panel urls ([0874fba](https://github.com/Lint-Free-Technology/uix/commit/0874fba36c93ee19aaf5a9893642acd0a85b69ba))
+* **beta:** Move `popover` DOM placement keeping existing anchor. Fixes footer buttons moving to bottom of screen on Masonry view. ([88d6bf9](https://github.com/Lint-Free-Technology/uix/commit/88d6bf948bf385a7f0e164f9f30725db2c0530b9))
+* **beta:** Refresh all entity markers for an entity_id. Fixes `--uix-image-*` overrides for a map marker not in a bubble cluster. ([bfda833](https://github.com/Lint-Free-Technology/uix/commit/bfda83300c70b430e3320ea0e3cbfbc45f615ce8))
+
+### ⚙️ Miscellaneous
+
+* migrate release tooling from semantic-release to GitHub Actions ([#651](https://github.com/Lint-Free-Technology/uix/issues/651)) ([21af5a2](https://github.com/Lint-Free-Technology/uix/commit/21af5a266e19d337be816cc7ed23ce1b68b8eadf))
+* migrate release tooling from semantic-release to GitHub Actions ([#651](https://github.com/Lint-Free-Technology/uix/issues/651)) ([3524838](https://github.com/Lint-Free-Technology/uix/commit/35248384b30a96ef76b15c4aeba59cbbb6800b22))
+* Update map entity-picture styling so styling `--uix-image-for-<entity_id>` does not race with the markers which are always recreated in the new bubble clusters in Home Assistant 2026.10.0 ([#627](https://github.com/Lint-Free-Technology/uix/issues/627)) ([fcb33d3](https://github.com/Lint-Free-Technology/uix/commit/fcb33d3eaf9bf07902d49ab1f0f883bde62ea0a9))
+
 ## [8.4.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0-beta.8...v8.4.0-beta.9) (2026-10-05)
 
 
