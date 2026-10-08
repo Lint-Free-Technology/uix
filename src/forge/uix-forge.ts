@@ -466,6 +466,9 @@ export class UixForge extends LitElement {
     if (!_isPlainObject(resolvedElementBase) || !resolvedElementBase.type) {
       throw new Error("uix-forge: layered configuration requires element_base.type");
     }
+    if (!_isPlainObject(this._layeredElementOverlaySource)) {
+      throw new Error("uix-forge: layered element must be a mapping");
+    }
     if (Object.prototype.hasOwnProperty.call(this._layeredElementOverlaySource, "type")) {
       throw new Error("uix-forge: layered element cannot override type; set it in element_base");
     }
@@ -528,6 +531,9 @@ export class UixForge extends LitElement {
   }
 
   private _setLayeredOverrides(values: any): void {
+    // This builder is inactive in layered mode. Clear any subscriptions left
+    // from an earlier non-layered configuration before activating overrides.
+    this._clearTemplateBindings(this._forgedElementConfig);
     this._clearTemplateBindings(this._layeredOverridesConfig);
     this._layeredOverrideTemplatePaths = this._collectLayeredTemplatePaths(values);
     this._layeredOverridesConfig.nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
@@ -989,14 +995,20 @@ export class UixForge extends LitElement {
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
     this.templatesReady = false;
-    const resolved = this._resolveFoundry({ ...this.config });
-    if (!resolved) {
+    let resolved: ResolvedForgeConfig | null;
+    try {
+      resolved = this._resolveFoundry({ ...this.config });
+      if (!resolved) {
+        this._refreshForgeTemplatesInFlight = false;
+        return;
+      }
+      this._resolvedUix = resolved.forge?.uix;
+      this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
+      this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
+    } catch (err) {
       this._refreshForgeTemplatesInFlight = false;
-      return;
+      throw err;
     }
-    this._resolvedUix = resolved.forge?.uix;
-    this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
-    this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
     this._billets = forgeConfig.billets;

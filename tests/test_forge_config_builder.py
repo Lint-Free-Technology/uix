@@ -370,7 +370,22 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  element_base: { type: 'markdown', content: '## {{ states(\\'sensor.kitchen_sensor\\') }}' },"
                 "  element: { title: '{{ config.entity }}' }"
                 "});"
-                "setTimeout(() => process.stdout.write(JSON.stringify(forge.forgedElementConfig)), 25);"
+                "setTimeout(() => {"
+                "  const result = { config: forge.forgedElementConfig };"
+                "  forge._layeredElementOverlaySource = [];"
+                "  try { forge._validateLayeredConfig({ type: 'markdown' }, true); }"
+                "  catch (err) { result.overlayError = err.message; }"
+                "  forge._forgedElementConfig.bindings().set('stale', { callback: () => {} });"
+                "  forge.templatesReady = false;"
+                "  forge._setLayeredOverrides({ title: 'Replacement' });"
+                "  result.staleBindings = forge._forgedElementConfig.bindings().size;"
+                "  forge.config = { element_disabled_paths: [['title']] };"
+                "  forge._resolveFoundry = () => ({ forge: { mold: 'card' }, element: {}, elementBase: { type: 'markdown' }, hasElementBase: true });"
+                "  try { forge.refreshForgeTemplates(); }"
+                "  catch (err) { result.refreshError = err.message; }"
+                "  result.refreshInFlight = forge._refreshForgeTemplatesInFlight;"
+                "  process.stdout.write(JSON.stringify(result));"
+                "}, 25);"
             ),
             str(FORGE_TYPES_TS),
             str(FORGE_TS),
@@ -379,8 +394,15 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
         text=True,
     )
 
-    assert json.loads(output) == {
+    result = json.loads(output)
+    assert result["config"] == {
         "type": "markdown",
         "content": "## {{ states('sensor.kitchen_sensor') }}",
         "title": "light.kitchen",
     }
+    assert result["overlayError"] == "uix-forge: layered element must be a mapping"
+    assert result["staleBindings"] == 0
+    assert result["refreshError"] == (
+        "uix-forge: disabled element path title does not exist in the resolved element overlay"
+    )
+    assert result["refreshInFlight"] is False
