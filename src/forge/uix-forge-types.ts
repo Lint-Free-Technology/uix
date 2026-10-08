@@ -18,6 +18,8 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "foundry", 
   "forge", 
   "element", 
+  "element_base",
+  "element_disabled_paths",
   "disabled",
   "row_span",
   "column_span",
@@ -124,6 +126,8 @@ export interface UixForgeConfig {
   foundry?: string;
   forge?: UixForgeForge;
   element?: UixForgeElement;
+  element_base?: UixForgeElement;
+  element_disabled_paths?: UixForgeConfigPath[];
   disabled?: boolean;
   state_color?: boolean;
   color?: string;

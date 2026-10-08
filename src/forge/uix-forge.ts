@@ -106,20 +106,133 @@ function _mergeFoundryConfig(foundry: any, local: any, key?: string): any {
   return result;
 }
 
+const LAYERED_OVERRIDE_INACTIVE = Symbol("layered-override-inactive");
+
+function _isPlainObject(value: any): value is Record<string, any> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function _cloneConfigValue(value: any): any {
+  if (Array.isArray(value)) return value.map(_cloneConfigValue);
+  if (_isPlainObject(value)) {
+    const clone: Record<string, any> = {};
+    for (const key of Object.keys(value)) {
+      clone[key] = _cloneConfigValue(value[key]);
+    }
+    return clone;
+  }
+  return value;
+}
+
+function _layeredPathKey(path: string[]): string {
+  return JSON.stringify(path);
+}
+
+function _isLayeredPathDisabled(path: string[], disabledPaths: UixForgeConfigPath[]): boolean {
+  return disabledPaths.some((disabledPath) =>
+    disabledPath.length <= path.length && disabledPath.every((segment, index) => segment === path[index])
+  );
+}
+
+function _activeLayeredOverrideValues(
+  value: any,
+  disabledPaths: UixForgeConfigPath[],
+  path: string[] = []
+): any | typeof LAYERED_OVERRIDE_INACTIVE {
+  if (_isLayeredPathDisabled(path, disabledPaths)) return LAYERED_OVERRIDE_INACTIVE;
+  if (!_isPlainObject(value)) return _cloneConfigValue(value);
+
+  const keys = Object.keys(value);
+  if (keys.length === 0) return {};
+  const result: Record<string, any> = {};
+  let hasActiveChild = false;
+  for (const key of keys) {
+    const child = _activeLayeredOverrideValues(value[key], disabledPaths, [...path, key]);
+    if (child === LAYERED_OVERRIDE_INACTIVE) continue;
+    result[key] = child;
+    hasActiveChild = true;
+  }
+  return hasActiveChild ? result : LAYERED_OVERRIDE_INACTIVE;
+}
+
+function _composeLayeredValue(
+  base: any,
+  override: any,
+  disabledPaths: UixForgeConfigPath[],
+  templatePaths: ReadonlySet<string>,
+  path: string[]
+): any | typeof LAYERED_OVERRIDE_INACTIVE {
+  if (_isLayeredPathDisabled(path, disabledPaths)) return LAYERED_OVERRIDE_INACTIVE;
+
+  // Template output is one opaque replacement unit, even when it happens to
+  // evaluate to a mapping or an array.
+  if (templatePaths.has(_layeredPathKey(path))) return _cloneConfigValue(override);
+
+  if (!_isPlainObject(override)) return _cloneConfigValue(override);
+
+  const baseIsMapping = _isPlainObject(base);
+  const result = baseIsMapping ? _cloneConfigValue(base) : {};
+  const keys = Object.keys(override);
+  if (keys.length === 0) return result;
+
+  let hasActiveContribution = false;
+  for (const key of keys) {
+    const composed = _composeLayeredValue(
+      baseIsMapping ? base[key] : undefined,
+      override[key],
+      disabledPaths,
+      templatePaths,
+      [...path, key]
+    );
+    if (composed === LAYERED_OVERRIDE_INACTIVE) continue;
+    result[key] = composed;
+    hasActiveContribution = true;
+  }
+
+  // A mapping whose only values are disabled must not materialize a new empty
+  // parent. An explicitly-authored empty mapping remains a real replacement.
+  if (!baseIsMapping && !hasActiveContribution) return LAYERED_OVERRIDE_INACTIVE;
+  return result;
+}
+
+/** Compose an element-owned base with the active Forge override source. */
+export function composeLayeredElementConfig(
+  base: any,
+  values: Record<string, any> = {},
+  disabledPaths: UixForgeConfigPath[] = [],
+  templatePaths: ReadonlySet<string> = new Set()
+): any {
+  const composed = _composeLayeredValue(base, values, disabledPaths, templatePaths, []);
+  return composed === LAYERED_OVERRIDE_INACTIVE ? _cloneConfigValue(base ?? {}) : composed;
+}
+
+function _validateFoundryLayeredFields(foundry: any, name: string): void {
+  if (foundry?.element_disabled_paths !== undefined) {
+    throw new Error(`uix-forge: foundry '${name}' cannot set element_disabled_paths`);
+  }
+}
+
+type ResolvedForgeConfig = {
+  forge: any;
+  element: any;
+  elementBase: any;
+  hasElementBase: boolean;
+};
+
 export function _resolveFoundryConfig(
-  config: { foundry?: string; forge?: any; element?: any },
+  config: { foundry?: string; forge?: any; element?: any; element_base?: any },
   foundries?: Record<string, any>,
   ready = true,
   visited: Set<string> = new Set(),
   isTopLevel = true
-): { forge: any; element: any } | null {
+): ResolvedForgeConfig | null {
   const foundryName = config.foundry;
 
   if (isTopLevel && (!foundries || (Object.keys(foundries).length === 0 && !ready))) {
     return null;
   }
 
-  let result: { forge: any; element: any } | null = null;
+  let result: ResolvedForgeConfig | null = null;
 
   if (foundryName) {
     // If the coordinator foundries haven't been loaded yet, return null to indicate "pending"
@@ -130,6 +243,7 @@ export function _resolveFoundryConfig(
     if (!foundryData) {
       throw new Error(`Foundry '${foundryName}' not found. Check that it is defined in the UIX integration.`);
     }
+    _validateFoundryLayeredFields(foundryData, foundryName);
     if (visited.has(foundryName)) {
       throw new Error(`Circular foundry reference detected: '${foundryName}'.`);
     }
@@ -139,20 +253,28 @@ export function _resolveFoundryConfig(
     // Recursively resolve the foundry's own base (if it also references another foundry).
     const baseResolved = foundryData.foundry
       ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited, false)
-      : { forge: {}, element: {} };
+      : { forge: {}, element: {}, elementBase: {}, hasElementBase: false };
     if (baseResolved === null) return null;
 
     // foundryData overrides base, local config overrides foundry
     const foundryForge = _mergeFoundryConfig(baseResolved.forge, foundryData.forge);
     const foundryElement = _mergeFoundryConfig(baseResolved.element, foundryData.element);
+    const foundryElementBase = _mergeFoundryConfig(baseResolved.elementBase, foundryData.element_base);
     result = {
       forge: _mergeFoundryConfig(foundryForge, config.forge),
       element: _mergeFoundryConfig(foundryElement, config.element),
+      elementBase: _mergeFoundryConfig(foundryElementBase, config.element_base),
+      hasElementBase:
+        baseResolved.hasElementBase ||
+        Object.prototype.hasOwnProperty.call(foundryData, "element_base") ||
+        Object.prototype.hasOwnProperty.call(config, "element_base"),
     };
   } else {
     result = {
       forge: config.forge ?? {},
       element: config.element ?? {},
+      elementBase: config.element_base ?? {},
+      hasElementBase: Object.prototype.hasOwnProperty.call(config, "element_base"),
     };
   }
 
@@ -164,12 +286,16 @@ export function _resolveFoundryConfig(
 
     let inheritedForge = {};
     let inheritedElement = {};
+    let inheritedElementBase = {};
+    let inheritedHasElementBase = false;
 
     if (globalFoundry && foundryName !== "global") {
       const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
       if (globalResolved === null) return null;
       inheritedForge = _mergeFoundryConfig(inheritedForge, globalResolved.forge);
       inheritedElement = _mergeFoundryConfig(inheritedElement, globalResolved.element);
+      inheritedElementBase = _mergeFoundryConfig(inheritedElementBase, globalResolved.elementBase);
+      inheritedHasElementBase = inheritedHasElementBase || globalResolved.hasElementBase;
     }
 
     if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
@@ -177,11 +303,15 @@ export function _resolveFoundryConfig(
       if (globalMoldResolved === null) return null;
       inheritedForge = _mergeFoundryConfig(inheritedForge, globalMoldResolved.forge);
       inheritedElement = _mergeFoundryConfig(inheritedElement, globalMoldResolved.element);
+      inheritedElementBase = _mergeFoundryConfig(inheritedElementBase, globalMoldResolved.elementBase);
+      inheritedHasElementBase = inheritedHasElementBase || globalMoldResolved.hasElementBase;
     }
 
     result = {
       forge: _mergeFoundryConfig(inheritedForge, result.forge),
       element: _mergeFoundryConfig(inheritedElement, result.element),
+      elementBase: _mergeFoundryConfig(inheritedElementBase, result.elementBase),
+      hasElementBase: inheritedHasElementBase || result.hasElementBase,
     };
   }
 
@@ -209,6 +339,12 @@ export class UixForge extends LitElement {
   private _showError: boolean;
   private _forgeConfig: UixForgeConfigBuilder;
   private _forgedElementConfig: UixForgeConfigBuilder;
+  private _layeredOverridesConfig: UixForgeConfigBuilder;
+  private _layeredMode = false;
+  private _layeredElementBaseConfig: any;
+  private _layeredElementOverlaySource: any;
+  private _layeredForgedElementConfig: any;
+  private _layeredOverrideTemplatePaths = new Set<string>();
   private _sparkController: UixForgeSparkController;
   private _disconnectTimeout?: number;
   private _foundryUpdateListener?: EventListener;
@@ -227,6 +363,7 @@ export class UixForge extends LitElement {
       this._delayedHass = false;
       this._forgeConfig = new UixForgeConfigBuilder(this.refreshForge.bind(this));
       this._forgedElementConfig = new UixForgeConfigBuilder(this.refreshForgedElement.bind(this));
+      this._layeredOverridesConfig = new UixForgeConfigBuilder(this._refreshLayeredForgedElement.bind(this));
       this._sparkController = new UixForgeSparkController(this);
   }
 
@@ -321,10 +458,97 @@ export class UixForge extends LitElement {
     return output;
   }
 
+  private _validateLayeredConfig(resolvedElementBase: any, hasElementBase: boolean): boolean {
+    if (this.config.element_disabled_paths !== undefined && !hasElementBase) {
+      throw new Error("uix-forge: element_disabled_paths requires element_base");
+    }
+    if (!hasElementBase) return false;
+    if (!_isPlainObject(resolvedElementBase) || !resolvedElementBase.type) {
+      throw new Error("uix-forge: layered configuration requires element_base.type");
+    }
+    if (Object.prototype.hasOwnProperty.call(this._layeredElementOverlaySource, "type")) {
+      throw new Error("uix-forge: layered element cannot override type; set it in element_base");
+    }
+    if (this.config.element_disabled_paths !== undefined && !Array.isArray(this.config.element_disabled_paths)) {
+      throw new Error("uix-forge: element_disabled_paths must be a list of key paths");
+    }
+
+    const values = this._layeredElementOverlaySource ?? {};
+    const seenPaths = new Set<string>();
+    for (const path of this.config.element_disabled_paths ?? []) {
+      if (!Array.isArray(path) || path.length === 0 || path.some((segment) => typeof segment !== "string" || segment.length === 0)) {
+        throw new Error("uix-forge: each disabled override path must be a non-empty list of keys");
+      }
+      const pathKey = _layeredPathKey(path);
+      if (seenPaths.has(pathKey)) {
+        throw new Error(`uix-forge: duplicate disabled override path ${path.join(".")}`);
+      }
+      seenPaths.add(pathKey);
+
+      let current: any = values;
+      for (let index = 0; index < path.length; index++) {
+        if (!_isPlainObject(current) || !Object.prototype.hasOwnProperty.call(current, path[index])) {
+          throw new Error(`uix-forge: disabled element path ${path.join(".")} does not exist in the resolved element overlay`);
+        }
+        current = current[path[index]];
+        if (index < path.length - 1 && Array.isArray(current)) {
+          throw new Error("uix-forge: disabled override paths cannot address array entries");
+        }
+      }
+    }
+    return true;
+  }
+
+  private _collectLayeredTemplatePaths(value: any, path: string[] = [], paths = new Set<string>()): Set<string> {
+    if (typeof value === "string" && this.hasTemplateOrNestedTemplate(value)) {
+      paths.add(_layeredPathKey(path));
+      return paths;
+    }
+    if (value !== null && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        this._collectLayeredTemplatePaths(child, [...path, key], paths);
+      }
+    }
+    return paths;
+  }
+
+  private _clearTemplateBindings(config: UixForgeConfigBuilder): void {
+    config.bindings().forEach((binding) => unbind_template(binding.callback));
+    config.bindings().clear();
+  }
+
+  private _refreshLayeredForgedElement(path: UixForgeConfigPath = []): void {
+    this._layeredForgedElementConfig = composeLayeredElementConfig(
+      this._layeredElementBaseConfig,
+      this._layeredOverridesConfig.config,
+      this.config.element_disabled_paths ?? [],
+      this._layeredOverrideTemplatePaths
+    );
+    if (this.templatesReady) this.refreshForgedElement(path);
+  }
+
+  private _setLayeredOverrides(values: any): void {
+    this._clearTemplateBindings(this._layeredOverridesConfig);
+    this._layeredOverrideTemplatePaths = this._collectLayeredTemplatePaths(values);
+    this._layeredOverridesConfig.nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
+    const activeValues = _activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
+    this._layeredOverridesConfig.config = activeValues === LAYERED_OVERRIDE_INACTIVE ? {} : activeValues;
+    this._refreshLayeredForgedElement();
+  }
+
+  private _templateConfig(): UixForgeConfig {
+    if (!this._layeredMode) return this.config;
+    return {
+      ...this.config,
+      element_base: this._layeredElementBaseConfig,
+      element: this._layeredElementOverlaySource,
+    };
+  }
+
   private _resolveFoundry(
-    config: { foundry?: string; forge?: any; element?: any },
+    config: { foundry?: string; forge?: any; element?: any; element_base?: any },
     visited: Set<string> = new Set()
-  ): { forge: any; element: any } | null {
+  ): ResolvedForgeConfig | null {
     const coordinator = (window as any).uixCoordinator;
     return _resolveFoundryConfig(config, coordinator?.foundries, coordinator?.ready, visited);
   }
@@ -358,10 +582,15 @@ export class UixForge extends LitElement {
 
     this._resolvedUix = resolved.forge?.uix;
 
-    this._applyResolvedConfig(resolved.forge, resolved.element);
+    this._applyResolvedConfig(resolved.forge, resolved.element, resolved.elementBase, resolved.hasElementBase);
   }
 
-  private _applyResolvedConfig(resolvedForge: any, resolvedElement: any) {
+  private _applyResolvedConfig(
+    resolvedForge: any,
+    resolvedElement: any,
+    resolvedElementBase: any,
+    hasElementBase: boolean
+  ) {
     if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
       throw new Error("uix-forge: forge config is required (not provided locally or via foundry)");
     }
@@ -369,7 +598,9 @@ export class UixForge extends LitElement {
     if (!resolvedForge.mold || !UIX_FORGE_FORGE_MOLDS.includes(resolvedForge.mold)) {
       throw new Error(`uix-forge: only forge molds of ${UIX_FORGE_FORGE_MOLDS.join(", ")} are supported at this time`);
     }
-    if (( !resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold)) {
+    this._layeredElementOverlaySource = _cloneConfigValue(resolvedElement);
+    this._layeredMode = this._validateLayeredConfig(resolvedElementBase, hasElementBase);
+    if (!this._layeredMode && (!resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold)) {
       throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
@@ -399,6 +630,7 @@ export class UixForge extends LitElement {
     const nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
     this._forgeConfig.nestedTemplateOpen = nestedTemplateOpen;
     this._forgedElementConfig.nestedTemplateOpen = nestedTemplateOpen;
+    this._layeredOverridesConfig.nestedTemplateOpen = nestedTemplateOpen;
     const forgeConfig = { ...resolvedForge };
     delete forgeConfig.type;
     delete forgeConfig.mold;
@@ -410,25 +642,35 @@ export class UixForge extends LitElement {
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     const elementConfig = { ...resolvedElement };
-    if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
-      elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
-      delete elementConfig.state_color;
-    }
-    if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
-      const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
-      elementConfig.color = this.config.color ?? configStateColorMigrated;
-    }
-    if (this.config?.entities !== undefined) {
-      elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
-    }
-    if (this._mold.isCard() && !elementConfig.type) {
-      elementConfig.type = "custom:uix-forge-blank-card";
-      if (this._mold.isCardBlankClear()) {
-        elementConfig.clear = true;
+    if (!this._layeredMode) {
+      if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+        elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+        delete elementConfig.state_color;
+      }
+      if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+        const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+        elementConfig.color = this.config.color ?? configStateColorMigrated;
+      }
+      if (this.config?.entities !== undefined) {
+        elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+      }
+      if (this._mold.isCard() && !elementConfig.type) {
+        elementConfig.type = "custom:uix-forge-blank-card";
+        if (this._mold.isCardBlankClear()) {
+          elementConfig.clear = true;
+        }
       }
     }
 
-    this.forgedElementConfig = elementConfig;
+    if (this._layeredMode) {
+      this._layeredElementBaseConfig = _cloneConfigValue(resolvedElementBase);
+      this._setLayeredOverrides(this._layeredElementOverlaySource);
+    } else {
+      this._layeredElementBaseConfig = undefined;
+      this._layeredForgedElementConfig = undefined;
+      this._clearTemplateBindings(this._layeredOverridesConfig);
+      this.forgedElementConfig = elementConfig;
+    }
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
     const completeRefresh = () => {
@@ -442,9 +684,9 @@ export class UixForge extends LitElement {
     };
     void Promise.all([
       this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._forgedElementConfig),
+      this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
       this._forgeConfig.configIsReady(),
-      this._forgedElementConfig.configIsReady()
+      (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
     ]).then(() => {
       if (!this.forgedElement) {
         this.forgeElement();
@@ -480,7 +722,7 @@ export class UixForge extends LitElement {
   }
 
   get forgedElementConfig() {
-    const config = this._forgedElementConfig.config;
+    const config = this._layeredMode ? this._layeredForgedElementConfig : this._forgedElementConfig.config;
     if (!config?.uix) return config;
     const mergedUix = this._mergeForgeUix(config.uix);
     if (mergedUix === config.uix) return config;
@@ -488,7 +730,11 @@ export class UixForge extends LitElement {
   }
 
   set forgedElementConfig(config: any) {
-    this._forgedElementConfig.config = config;
+    if (this._layeredMode) {
+      this._layeredForgedElementConfig = config;
+    } else {
+      this._forgedElementConfig.config = config;
+    }
   }
 
   get forgeConfig() {
@@ -550,6 +796,8 @@ export class UixForge extends LitElement {
       const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
       this._resolvedUix = resolved.forge?.uix;
+      this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
+      this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
       const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
       delete forgeConfig.mold;
@@ -560,30 +808,37 @@ export class UixForge extends LitElement {
       delete forgeConfig.template_nesting;
       delete forgeConfig.uix;
       const elementConfig = { ...resolved.element };
-      if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
-        elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
-        delete elementConfig.state_color;
-      }
-      if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
-        const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
-        elementConfig.color = this.config.color ?? configStateColorMigrated;
-      }
-      if (this.config?.entities !== undefined) {
-        elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
-      }
-      if (this._mold.isCard() && !elementConfig.type) {
-        elementConfig.type = "custom:uix-forge-blank-card";
-        if (this._mold.isCardBlankClear()) {
-          elementConfig.clear = true;
+      if (!this._layeredMode) {
+        if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+          elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+          delete elementConfig.state_color;
+        }
+        if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+          const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+          elementConfig.color = this.config.color ?? configStateColorMigrated;
+        }
+        if (this.config?.entities !== undefined) {
+          elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+        }
+        if (this._mold.isCard() && !elementConfig.type) {
+          elementConfig.type = "custom:uix-forge-blank-card";
+          if (this._mold.isCardBlankClear()) {
+            elementConfig.clear = true;
+          }
         }
       }
       this.forgeConfig = forgeConfig;
-      this.forgedElementConfig = { ...elementConfig };
+      if (this._layeredMode) {
+        this._layeredElementBaseConfig = _cloneConfigValue(resolved.elementBase);
+        this._setLayeredOverrides(this._layeredElementOverlaySource);
+      } else {
+        this.forgedElementConfig = { ...elementConfig };
+      }
       Promise.all([
         this.bindTemplates(this._forgeConfig),
-        this.bindTemplates(this._forgedElementConfig),
+        this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
         this._forgeConfig.configIsReady(),
-        this._forgedElementConfig.configIsReady()
+        (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
       ]).then(() => {
         this.templatesReady = true;
         this.refreshForge([]);
@@ -618,6 +873,7 @@ export class UixForge extends LitElement {
       unbind_template(binding.callback);
       });
       this._forgedElementConfig.bindings().clear();
+      this._clearTemplateBindings(this._layeredOverridesConfig);
       this.templatesReady = false;
       this._disconnectTimeout = undefined;
     }, 1000); // 1000ms timeout, adjust as needed
@@ -631,7 +887,7 @@ export class UixForge extends LitElement {
       if (!resolved) return;
       this._resolvedUix = resolved.forge?.uix;
       try {
-        this._applyResolvedConfig(resolved.forge, resolved.element);
+        this._applyResolvedConfig(resolved.forge, resolved.element, resolved.elementBase, resolved.hasElementBase);
       } catch (err) {
         console.error("UIX Forge: Error applying foundry config:", err);
       }
@@ -647,7 +903,20 @@ export class UixForge extends LitElement {
     this.refreshForgeTemplates();
   }
 
-  private async bindTemplates(base: any, current: any = undefined, path: string[] = []) {
+  private _parseLayeredTemplateValue(value: any): any {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return value;
+    try {
+      return JSON.parse(trimmed);
+    } catch (_err) {
+      // A template can legitimately produce a string that resembles JSON. Only
+      // valid JSON is structural output; all other output stays a string.
+      return value;
+    }
+  }
+
+  private async bindTemplates(base: any, current: any = undefined, path: string[] = [], parseLayeredResults = false) {
     const hs = await hass();
     if (current === undefined) {
       current = base.config;
@@ -658,7 +927,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath);
+        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -688,15 +957,21 @@ export class UixForge extends LitElement {
           if (typeof res === "string") {
             res = translate(hs, res);
           }
+          if (parseLayeredResults) {
+            res = this._parseLayeredTemplateValue(res);
+          }
           base.nested = { keys: currentPath, value: res };
-          if (this.templatesReady) {
+          // A layered overlay is composed separately from its template builder.
+          // Recompose as soon as an overlay value arrives, including during the
+          // initial binding pass before templatesReady becomes true.
+          if (parseLayeredResults || this.templatesReady) {
             base.refreshCallback?.(currentPath);
           }
         };
         bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
-          { config: this.config, uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
+          { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
         base.setBinding(bindingPath, callback);
@@ -720,6 +995,8 @@ export class UixForge extends LitElement {
       return;
     }
     this._resolvedUix = resolved.forge?.uix;
+    this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
+    this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
     const forgeConfig = { ...resolved.forge };
     this._macros = forgeConfig.macros;
     this._billets = forgeConfig.billets;
@@ -728,6 +1005,7 @@ export class UixForge extends LitElement {
     const nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
     this._forgeConfig.nestedTemplateOpen = nestedTemplateOpen;
     this._forgedElementConfig.nestedTemplateOpen = nestedTemplateOpen;
+    this._layeredOverridesConfig.nestedTemplateOpen = nestedTemplateOpen;
     delete forgeConfig.type;
     delete forgeConfig.mold;
     delete forgeConfig.macros;
@@ -738,24 +1016,31 @@ export class UixForge extends LitElement {
     delete forgeConfig.uix;
     this.forgeConfig = forgeConfig;
     const elementConfig = { ...resolved.element };
-    if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
-      elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
-      delete elementConfig.state_color;
-    }
-    if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
-      const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
-      elementConfig.color = this.config.color ?? configStateColorMigrated;
-    }
-    if (this.config?.entities !== undefined) {
-      elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
-    }
-    if (this._mold.isCard() && !elementConfig.type) {
-      elementConfig.type = "custom:uix-forge-blank-card";
-      if (this._mold.isCardBlankClear()) {
-        elementConfig.clear = true;
+    if (!this._layeredMode) {
+      if (elementConfig.state_color !== undefined && elementConfig.color === undefined) {
+        elementConfig.color = elementConfig.state_color === true ? "state" : elementConfig.state_color === false ? "none" : undefined;
+        delete elementConfig.state_color;
+      }
+      if ((this.config.color !== undefined || this.config.state_color !== undefined) && !elementConfig.color) {
+        const configStateColorMigrated: string = this.config.state_color === true ? "state" : this.config.state_color === false ? "none" : undefined;
+        elementConfig.color = this.config.color ?? configStateColorMigrated;
+      }
+      if (this.config?.entities !== undefined) {
+        elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
+      }
+      if (this._mold.isCard() && !elementConfig.type) {
+        elementConfig.type = "custom:uix-forge-blank-card";
+        if (this._mold.isCardBlankClear()) {
+          elementConfig.clear = true;
+        }
       }
     }
-    this.forgedElementConfig = elementConfig;
+    if (this._layeredMode) {
+      this._layeredElementBaseConfig = _cloneConfigValue(resolved.elementBase);
+      this._setLayeredOverrides(this._layeredElementOverlaySource);
+    } else {
+      this.forgedElementConfig = elementConfig;
+    }
     const completeRefresh = () => {
       this._refreshForgeTemplatesInFlight = false;
       if (this._refreshForgeTemplatesPending) {
@@ -767,9 +1052,9 @@ export class UixForge extends LitElement {
     };
     void Promise.all([
       this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._forgedElementConfig),
+      this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
       this._forgeConfig.configIsReady(),
-      this._forgedElementConfig.configIsReady()
+      (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
     ]).then(() => {
       this.templatesReady = true;
       this.refreshForge([]);
@@ -785,15 +1070,18 @@ export class UixForge extends LitElement {
       this._mold.refresh(path);
       this._sparkController.setConfig(this.forgeConfig.sparks);
     }
+    const stylingConfig = this._layeredMode
+      ? this._templateConfig()
+      : { ...this._templateConfig(), element: this.forgedElementConfig };
     apply_uix(
       (this as any),
       this._mold.type.split("_").join("-"),
       this._mergeForgeUix(this._resolvedUix),
       { config: 
         { 
+          ...stylingConfig,
           entity: this.config?.entity,
           forge: this.forgeConfig, 
-          element: this.forgedElementConfig 
         }, 
         uixForge: this._sparkController.templateVariables(),
         ...this._mold.templateVariables() 
