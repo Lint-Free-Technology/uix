@@ -39,7 +39,11 @@ def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
                 "  withMarker: `a${UIX_FORGE_NESTED_TEMPLATE_MARKER}b`,"
                 "  nested: { list: [`x${UIX_FORGE_NESTED_TEMPLATE_MARKER}y`, 'z'] }"
                 "};"
-                "process.stdout.write(JSON.stringify(builder._config));"
+                "const opaque = new UixForgeConfigBuilder(() => {});"
+                "opaque.config = { generated: '{{ forge_result }}' };"
+                "const opaqueReady = opaque.configIsReady().then(() => true);"
+                "opaque.nested = { keys: ['generated'], value: { content: '{{ states(\\'sensor.kitchen\\') }}' }, opaque: true };"
+                "opaqueReady.then((ready) => process.stdout.write(JSON.stringify({ config: builder._config, opaqueReady: ready })));"
             ),
             str(FORGE_TYPES_TS),
         ],
@@ -47,10 +51,12 @@ def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
         text=True,
     )
 
-    config = json.loads(output)
+    result = json.loads(output)
+    config = result["config"]
     assert config["plain"] == "value"
     assert config["withMarker"] == "ab"
     assert config["nested"]["list"] == ["xy", "z"]
+    assert result["opaqueReady"] is True
 
 
 def test_foundry_sparks_not_duplicated() -> None:
@@ -384,6 +390,13 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  try { forge.refreshForgeTemplates(); }"
                 "  catch (err) { result.refreshError = err.message; }"
                 "  result.refreshInFlight = forge._refreshForgeTemplatesInFlight;"
+                "  forge._layeredOverridesConfig.bindings().set('layered', { callback: () => {} });"
+                "  forge._layeredElementBaseConfig = { type: 'markdown' };"
+                "  forge.config = {};"
+                "  forge._resolveFoundry = () => ({ forge: { mold: 'card' }, element: { type: 'markdown' }, elementBase: {}, hasElementBase: false });"
+                "  forge.refreshForgeTemplates();"
+                "  result.layeredBindingsAfterModeSwitch = forge._layeredOverridesConfig.bindings().size;"
+                "  result.layeredBaseClearedAfterModeSwitch = forge._layeredElementBaseConfig === undefined;"
                 "  process.stdout.write(JSON.stringify(result));"
                 "}, 25);"
             ),
@@ -406,3 +419,5 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
         "uix-forge: disabled element path title does not exist in the resolved element overlay"
     )
     assert result["refreshInFlight"] is False
+    assert result["layeredBindingsAfterModeSwitch"] == 0
+    assert result["layeredBaseClearedAfterModeSwitch"] is True

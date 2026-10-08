@@ -542,6 +542,13 @@ export class UixForge extends LitElement {
     this._refreshLayeredForgedElement();
   }
 
+  private _clearLayeredConfig(): void {
+    this._layeredElementBaseConfig = undefined;
+    this._layeredForgedElementConfig = undefined;
+    this._layeredOverrideTemplatePaths.clear();
+    this._clearTemplateBindings(this._layeredOverridesConfig);
+  }
+
   private _templateConfig(): UixForgeConfig {
     if (!this._layeredMode) return this.config;
     return {
@@ -672,9 +679,7 @@ export class UixForge extends LitElement {
       this._layeredElementBaseConfig = _cloneConfigValue(resolvedElementBase);
       this._setLayeredOverrides(this._layeredElementOverlaySource);
     } else {
-      this._layeredElementBaseConfig = undefined;
-      this._layeredForgedElementConfig = undefined;
-      this._clearTemplateBindings(this._layeredOverridesConfig);
+      this._clearLayeredConfig();
       this.forgedElementConfig = elementConfig;
     }
     this._refreshForgeTemplatesInFlight = true;
@@ -909,16 +914,16 @@ export class UixForge extends LitElement {
     this.refreshForgeTemplates();
   }
 
-  private _parseLayeredTemplateValue(value: any): any {
-    if (typeof value !== "string") return value;
+  private _parseLayeredTemplateValue(value: any): { value: any; opaque: boolean } {
+    if (typeof value !== "string") return { value, opaque: false };
     const trimmed = value.trim();
-    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return value;
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return { value, opaque: false };
     try {
-      return JSON.parse(trimmed);
+      return { value: JSON.parse(trimmed), opaque: true };
     } catch (_err) {
       // A template can legitimately produce a string that resembles JSON. Only
       // valid JSON is structural output; all other output stays a string.
-      return value;
+      return { value, opaque: false };
     }
   }
 
@@ -960,13 +965,16 @@ export class UixForge extends LitElement {
         const macroStr = buildMacros(this._macros, template);
         const billetStr = buildBillets(this._billets, macroStr + template);
         const callback = (res: any) => {
+          let opaque = false;
           if (typeof res === "string") {
             res = translate(hs, res);
           }
           if (parseLayeredResults) {
-            res = this._parseLayeredTemplateValue(res);
+            const parsed = this._parseLayeredTemplateValue(res);
+            res = parsed.value;
+            opaque = parsed.opaque;
           }
-          base.nested = { keys: currentPath, value: res };
+          base.nested = { keys: currentPath, value: res, opaque };
           // A layered overlay is composed separately from its template builder.
           // Recompose as soon as an overlay value arrives, including during the
           // initial binding pass before templatesReady becomes true.
@@ -1051,6 +1059,7 @@ export class UixForge extends LitElement {
       this._layeredElementBaseConfig = _cloneConfigValue(resolved.elementBase);
       this._setLayeredOverrides(this._layeredElementOverlaySource);
     } else {
+      this._clearLayeredConfig();
       this.forgedElementConfig = elementConfig;
     }
     const completeRefresh = () => {
