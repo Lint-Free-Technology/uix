@@ -83,6 +83,18 @@ UI eXtension will show a toast message when it detects that a reload is needed t
 !!! note
     While the Auto reload code is in 8.1.0, auto Reload will be available when you next update. When you install 8.1.0, device will still be running 8.0.1 code which does not have the auto reload feature.
 
+## Can the reload/restart toast message be suppressed?
+
+No, the toast messages exist to satisfy the requirement of Frontend UIX JavaScript code matching the UIX integration code.
+
+There are two cases which bring up a toast. Both cases are a mismatch and need immediate attention.
+
+1. You have updated UIX and restarted Home Assistant. If the Browser is running old code, a reload message will show. An auto reload happens after 60 seconds allowing for unattended kiosks to self update Frontend code.
+2. You have updated UIX but have **NOT** restarted Home Assistant. In this case the new Frontend JavaScript code is served as it is in the integration folder, but as Home Assistant has not restarted the Frontend JavaScript code is ahead of the integration code. A toast is shown to admins **ONLY** to request a restart of Home Assistant.
+
+!!! tip
+    Only update UIX when you know you can restart Home Assistant straight away. Updating UIX but not restarting is not a supported state for UIX.
+
 ## How do I uninstall UI eXtension?
 
 Uninstallation of UI eXtension is a two step process. First, remove the service entry in Devices & services. Next uninstall the integration either using HACS or manually removing the `uix` folder from `custom_components` directory if you installed manually.
