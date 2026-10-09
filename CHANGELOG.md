@@ -1,3 +1,10 @@
+### [8.4.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.0...v8.4.1-beta.1) (2026-10-09)
+
+
+### 🐞 Bug Fixes
+
+* **forge:** Guard async Forge render paths with template generation. Fixes possible rendering of raw config to element with unpredictable results and errors. ([#661](https://github.com/Lint-Free-Technology/uix/issues/661)) ([b77ef49](https://github.com/Lint-Free-Technology/uix/commit/b77ef49e24e3c3fb479baa26c800807992a57ec3))
+
 ### [8.4.1-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v8.4.1-beta.0) (2026-10-09)
 
 
