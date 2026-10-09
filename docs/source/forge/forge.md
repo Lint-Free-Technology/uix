@@ -231,7 +231,7 @@ foundry: kitchen_tile
 entity: light.kitchen
 ```
 
-In Forge templates, `config.element_base` is the resolved base and `config.element` is the resolved overlay source before evaluation. The wrapped element receives their composed result. `uix` supplied by either layer continues through to UIX Styling, where its templates use normal UIX Styling behavior.
+In Forge templates, `config.element_base` contains the resolved base and `config.element` contains the resolved overlay source before evaluation. Forge composes these layers into the forged element configuration. The `uix` mappings from both layers are merged as part of that composition; UIX Styling receives the merged `uix` configuration, and its templates follow the usual UIX Styling behavior.
 
 ## Template variables and macros
 
@@ -244,8 +244,8 @@ Templates will run in different contexts for forging, UIX styling the forge and 
 | Context | Template variables |
 | - | - |
 | Templates in forge and non-layered `element`, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
-| Templates in layered `element`, except `uix` styling | **forge config**: `config.forge`<br/> **element base**: `config.element_base`<br/>**Forge overlay**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
-| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element` (the Forge overlay in layered configuration)<br/>**element base**: `config.element_base` in layered configuration<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in layered `element`, except `uix` styling | **forge config**: `config.forge`<br/> **element base**: `config.element_base`<br/>**forge overlay**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element` (the complete resolved element configuration, or the resolved Forge overlay in layered configuration)<br/>**additional in layered configuration**: `config.element_base` (the resolved base)<br/>`config.entity` is available if included in global `uix-forge` config. |
 | Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
 
 !!! tip
