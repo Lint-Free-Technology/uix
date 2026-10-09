@@ -317,7 +317,9 @@ def test_invalidated_template_bindings_are_unbound() -> None:
                 "const hassReady = new Promise((resolve) => { resolveHass = resolve; });"
                 "let resolveBinding;"
                 "const bindingRegistered = new Promise((resolve) => { resolveBinding = resolve; });"
-                "let templateCallback; let bindCalls = 0; let unbindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0;"
+                "let resolveHelpers;"
+                "const helpersReady = new Promise((resolve) => { resolveHelpers = resolve; });"
+                "let templateCallback; let bindCalls = 0; let unbindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0; let createdRows = 0;"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
                 "const { code: outputText } = esbuild.transformSync(source, {"
                 "  loader: 'ts', format: 'cjs', target: 'es2020'"
@@ -362,7 +364,15 @@ def test_invalidated_template_bindings_are_unbound() -> None:
                 "  forge._forgeConfig = { bindings: () => forgeBindings };"
                 "  forge._forgedElementConfig = { bindings: () => elementBindings };"
                 "  forge.invalidateTemplates();"
-                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates, forgeBindings: forgeBindings.size, elementBindings: elementBindings.size }));"
+                "  const renderForge = Object.create(moduleObj.exports.UixForge.prototype);"
+                "  Object.assign(renderForge, { _templateGeneration: 1, templatesReady: true,"
+                "    _mold: { isCard: () => false, isBadge: () => false, isRow: () => true, cardHelpers: () => helpersReady, isPreview: () => false } });"
+                "  renderForge.forgeElement();"
+                "  renderForge._templateGeneration = 2;"
+                "  renderForge.templatesReady = false;"
+                "  resolveHelpers({ createRowElement: () => { createdRows++; return {}; } });"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
+                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates, forgeBindings: forgeBindings.size, elementBindings: elementBindings.size, createdRows, forgedElement: Boolean(renderForge.forgedElement) }));"
                 "})().catch((error) => { console.error(error); process.exitCode = 1; });"
             ),
             str(FORGE_TS),
@@ -379,4 +389,6 @@ def test_invalidated_template_bindings_are_unbound() -> None:
         "nestedUpdates": 0,
         "forgeBindings": 0,
         "elementBindings": 0,
+        "createdRows": 0,
+        "forgedElement": False,
     }
