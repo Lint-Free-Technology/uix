@@ -702,12 +702,16 @@ export class UixForge extends LitElement {
             base.refreshCallback?.(currentPath);
           }
         };
-        bind_template(
+        await bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
           { config: this.config, uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
+        if (!this.isTemplateGenerationCurrent(templateGeneration)) {
+          unbind_template(callback);
+          return;
+        }
         base.setBinding(bindingPath, callback);
       } else if (typeof current[k] === "string") {
         base.nested = { keys: currentPath, value: translate(hs, current[k]) };

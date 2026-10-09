@@ -303,7 +303,7 @@ def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
     assert result["inFlight"] is True
 
 
-def test_stale_template_binding_cannot_mutate_current_builder() -> None:
+def test_stale_template_binding_is_unbound_after_registration() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -315,7 +315,9 @@ def test_stale_template_binding_cannot_mutate_current_builder() -> None:
                 "global.customElements = { get: () => true, define: () => {} };"
                 "let resolveHass;"
                 "const hassReady = new Promise((resolve) => { resolveHass = resolve; });"
-                "let templateCallback; let bindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0;"
+                "let resolveBinding;"
+                "const bindingRegistered = new Promise((resolve) => { resolveBinding = resolve; });"
+                "let templateCallback; let bindCalls = 0; let unbindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0;"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
                 "const { code: outputText } = esbuild.transformSync(source, {"
                 "  loader: 'ts', format: 'cjs', target: 'es2020'"
@@ -331,7 +333,7 @@ def test_stale_template_binding_cannot_mutate_current_builder() -> None:
                 "    getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }), ignoreTemplate: () => false"
                 "  };"
                 "  if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: () => hassReady, translate: (_h, value) => value };"
-                "  if (name === '../helpers/templates') return { bind_template: (callback) => { bindCalls++; templateCallback = callback; }, hasTemplate: (value) => String(value).includes('{{'), unbind_template: () => {} };"
+                "  if (name === '../helpers/templates') return { bind_template: (callback) => { bindCalls++; templateCallback = callback; return bindingRegistered; }, hasTemplate: (value) => String(value).includes('{{'), unbind_template: () => { unbindCalls++; } };"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
                 "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
                 "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
@@ -349,10 +351,13 @@ def test_stale_template_binding_cannot_mutate_current_builder() -> None:
                 "(async () => {"
                 "  await staleBinding;"
                 "  forge._templateGeneration = 3;"
-                "  await forge.bindTemplates(base, undefined, [], 3);"
+                "  const registeredBinding = forge.bindTemplates(base, undefined, [], 3);"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
                 "  forge._templateGeneration = 4;"
+                "  resolveBinding();"
+                "  await registeredBinding;"
                 "  templateCallback('stale');"
-                "  process.stdout.write(JSON.stringify({ bindCalls, bindingUpdates, nestedUpdates }));"
+                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates }));"
                 "})().catch((error) => { console.error(error); process.exitCode = 1; });"
             ),
             str(FORGE_TS),
@@ -362,4 +367,4 @@ def test_stale_template_binding_cannot_mutate_current_builder() -> None:
     )
 
     result = json.loads(output)
-    assert result == {"bindCalls": 1, "bindingUpdates": 1, "nestedUpdates": 0}
+    assert result == {"bindCalls": 1, "unbindCalls": 1, "bindingUpdates": 0, "nestedUpdates": 0}
