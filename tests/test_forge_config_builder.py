@@ -302,3 +302,65 @@ def test_stale_template_refresh_does_not_publish_readiness() -> None:
     assert result["templatesReady"] is False
     assert result["refreshCalls"] == 0
     assert result["bindCalls"] == 4
+
+
+def test_stale_template_binding_cannot_mutate_current_builder() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "global.window = { addEventListener: () => {} };"
+                "global.customElements = { get: () => true, define: () => {} };"
+                "let resolveHass;"
+                "const hassReady = new Promise((resolve) => { resolveHass = resolve; });"
+                "let templateCallback; let bindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0;"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code: outputText } = esbuild.transformSync(source, {"
+                "  loader: 'ts', format: 'cjs', target: 'es2020'"
+                "});"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === 'lit') return { html: () => {}, LitElement: class {}, nothing: undefined };"
+                "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === './uix-forge-types') return {"
+                "    UIX_FORGE_ALLOWED_CONFIG_KEYS: [], UIX_FORGE_ARRAY_MERGE_STRATEGIES: {}, UIX_FORGE_DEFAULT_TEMPLATE_VALUE: '',"
+                "    UIX_FORGE_FORGE_MOLDS: [], UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<',"
+                "    UIX_FORGE_PASSTHROUGH_MARKER: '', UIX_FORGE_TYPE: 'uix-forge', UixForgeConfigBuilder: class {},"
+                "    getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }), ignoreTemplate: () => false"
+                "  };"
+                "  if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: () => hassReady, translate: (_h, value) => value };"
+                "  if (name === '../helpers/templates') return { bind_template: (callback) => { bindCalls++; templateCallback = callback; }, hasTemplate: (value) => String(value).includes('{{'), unbind_template: () => {} };"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
+                "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
+                "const forge = Object.create(moduleObj.exports.UixForge.prototype);"
+                "Object.assign(forge, { _templateGeneration: 1, templatesReady: true, config: {}, _templateNestingOpen: '<<', _templateNestingClose: '>>',"
+                "  _mold: { templateVariables: () => ({}) }, _sparkController: { templateVariables: () => ({}) } });"
+                "const base = { config: { value: '{{ states(\"sensor.test\") }}' }, hasBinding: () => false, getBinding: () => undefined,"
+                "  deleteBinding: () => {}, setBinding: () => { bindingUpdates++; }, set nested(_value) { nestedUpdates++; } };"
+                "const staleBinding = forge.bindTemplates(base, undefined, [], 1);"
+                "forge._templateGeneration = 2;"
+                "resolveHass({});"
+                "(async () => {"
+                "  await staleBinding;"
+                "  forge._templateGeneration = 3;"
+                "  await forge.bindTemplates(base, undefined, [], 3);"
+                "  forge._templateGeneration = 4;"
+                "  templateCallback('stale');"
+                "  process.stdout.write(JSON.stringify({ bindCalls, bindingUpdates, nestedUpdates }));"
+                "})().catch((error) => { console.error(error); process.exitCode = 1; });"
+            ),
+            str(FORGE_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result == {"bindCalls": 1, "bindingUpdates": 1, "nestedUpdates": 0}
