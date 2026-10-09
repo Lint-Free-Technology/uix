@@ -218,6 +218,7 @@ export class UixForge extends LitElement {
   private _view: LovelaceElement;
   private _refreshForgeTemplatesInFlight = false;
   private _refreshForgeTemplatesPending = false;
+  private _refreshOperation = 0;
   private _templateGeneration = 0;
 
   constructor() {
@@ -432,7 +433,10 @@ export class UixForge extends LitElement {
     this.forgedElementConfig = elementConfig;
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
+    const refreshOperation = ++this._refreshOperation;
+    const templateGeneration = this._templateGeneration;
     const completeRefresh = () => {
+      if (refreshOperation !== this._refreshOperation) return;
       this._refreshForgeTemplatesInFlight = false;
       if (this._refreshForgeTemplatesPending) {
         this._refreshForgeTemplatesPending = false;
@@ -447,6 +451,7 @@ export class UixForge extends LitElement {
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
     ]).then(() => {
+      if (templateGeneration !== this._templateGeneration) return;
       if (!this.forgedElement) {
         this.forgeElement();
       }
@@ -580,12 +585,14 @@ export class UixForge extends LitElement {
       }
       this.forgeConfig = forgeConfig;
       this.forgedElementConfig = { ...elementConfig };
+      const templateGeneration = this._templateGeneration;
       Promise.all([
         this.bindTemplates(this._forgeConfig),
         this.bindTemplates(this._forgedElementConfig),
         this._forgeConfig.configIsReady(),
         this._forgedElementConfig.configIsReady()
       ]).then(() => {
+        if (templateGeneration !== this._templateGeneration) return;
         this.templatesReady = true;
         this.refreshForge([]);
         this._sparkController.setConfig(this.forgeConfig.sparks);
@@ -710,16 +717,19 @@ export class UixForge extends LitElement {
   private invalidateTemplates() {
     this._templateGeneration += 1;
     this.templatesReady = false;
+    return this._templateGeneration;
   }
 
   refreshForgeTemplates() {
     if (this._refreshForgeTemplatesInFlight) {
       this._refreshForgeTemplatesPending = true;
+      this.invalidateTemplates();
       return;
     }
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
-    this.invalidateTemplates();
+    const refreshOperation = ++this._refreshOperation;
+    const templateGeneration = this.invalidateTemplates();
     const resolved = this._resolveFoundry({ ...this.config });
     if (!resolved) {
       this._refreshForgeTemplatesInFlight = false;
@@ -763,6 +773,7 @@ export class UixForge extends LitElement {
     }
     this.forgedElementConfig = elementConfig;
     const completeRefresh = () => {
+      if (refreshOperation !== this._refreshOperation) return;
       this._refreshForgeTemplatesInFlight = false;
       if (this._refreshForgeTemplatesPending) {
         this._refreshForgeTemplatesPending = false;
@@ -777,6 +788,7 @@ export class UixForge extends LitElement {
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
     ]).then(() => {
+      if (templateGeneration !== this._templateGeneration) return;
       this.templatesReady = true;
       this.refreshForge([]);
     }, (err) => {
@@ -981,14 +993,19 @@ export class UixForge extends LitElement {
         this._view.style.setProperty("display", "none");
         document.body.appendChild(this._view);
       }
+      const view = this._view;
       window.customElements.whenDefined("hui-view-footer").then(() => {
+        if (view && document.body.contains(view)) {
+          document.body.removeChild(view);
+        }
+        if (this._view === view) {
+          this._view = undefined;
+        }
         if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement) return;
         this.forgedElement = document.createElement("hui-view-footer") as LovelaceElement;
         (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
         this.forgedElement.hass = this.hass;
         this.forgedElement.lovelace = { editMode: false };
-        document.body.contains(this._view) && document.body.removeChild(this._view);
-        this._view = undefined;
         this.refreshForge(["hidden"]);
       });
       return;
