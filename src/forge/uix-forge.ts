@@ -611,14 +611,6 @@ export class UixForge extends LitElement {
     // Delay unbinding to allow for quick reconnects without rebinding
     this._disconnectTimeout = window.setTimeout(() => {
       super.disconnectedCallback();
-      this._forgeConfig.bindings().forEach((binding) => {
-      unbind_template(binding.callback);
-      });
-      this._forgeConfig.bindings().clear();
-      this._forgedElementConfig.bindings().forEach((binding) => {
-      unbind_template(binding.callback);
-      });
-      this._forgedElementConfig.bindings().clear();
       this.invalidateTemplates();
       this._disconnectTimeout = undefined;
     }, 1000); // 1000ms timeout, adjust as needed
@@ -721,6 +713,8 @@ export class UixForge extends LitElement {
 
   private invalidateTemplates() {
     this.cancelTemplateRefresh();
+    this.clearTemplateBindings(this._forgeConfig);
+    this.clearTemplateBindings(this._forgedElementConfig);
     this._templateGeneration += 1;
     this.templatesReady = false;
     return this._templateGeneration;
@@ -749,6 +743,13 @@ export class UixForge extends LitElement {
   private cancelTemplateRefresh() {
     this._cancelTemplateRefresh?.();
     this._cancelTemplateRefresh = undefined;
+  }
+
+  private clearTemplateBindings(base: UixForgeConfigBuilder) {
+    const bindings = base?.bindings?.();
+    if (!bindings) return;
+    bindings.forEach((binding) => unbind_template(binding.callback));
+    bindings.clear();
   }
 
   private completeTemplateRefresh(refreshOperation: number) {

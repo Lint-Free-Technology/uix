@@ -303,7 +303,7 @@ def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
     assert result["inFlight"] is True
 
 
-def test_stale_template_binding_is_unbound_after_registration() -> None:
+def test_invalidated_template_bindings_are_unbound() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -357,7 +357,12 @@ def test_stale_template_binding_is_unbound_after_registration() -> None:
                 "  resolveBinding();"
                 "  await registeredBinding;"
                 "  templateCallback('stale');"
-                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates }));"
+                "  const forgeBindings = new Map([['removed', { callback: () => {} }]]);"
+                "  const elementBindings = new Map([['removed', { callback: () => {} }]]);"
+                "  forge._forgeConfig = { bindings: () => forgeBindings };"
+                "  forge._forgedElementConfig = { bindings: () => elementBindings };"
+                "  forge.invalidateTemplates();"
+                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates, forgeBindings: forgeBindings.size, elementBindings: elementBindings.size }));"
                 "})().catch((error) => { console.error(error); process.exitCode = 1; });"
             ),
             str(FORGE_TS),
@@ -367,4 +372,11 @@ def test_stale_template_binding_is_unbound_after_registration() -> None:
     )
 
     result = json.loads(output)
-    assert result == {"bindCalls": 1, "unbindCalls": 1, "bindingUpdates": 0, "nestedUpdates": 0}
+    assert result == {
+        "bindCalls": 1,
+        "unbindCalls": 3,
+        "bindingUpdates": 0,
+        "nestedUpdates": 0,
+        "forgeBindings": 0,
+        "elementBindings": 0,
+    }
