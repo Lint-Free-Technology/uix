@@ -218,6 +218,7 @@ export class UixForge extends LitElement {
   private _view: LovelaceElement;
   private _refreshForgeTemplatesInFlight = false;
   private _refreshForgeTemplatesPending = false;
+  private _templateGeneration = 0;
 
   constructor() {
       super();
@@ -343,7 +344,7 @@ export class UixForge extends LitElement {
       }
     });
 
-    this.templatesReady = false;
+    this.invalidateTemplates();
     this.config = config;
 
     const resolved = this._resolveFoundry(config);
@@ -618,7 +619,7 @@ export class UixForge extends LitElement {
       unbind_template(binding.callback);
       });
       this._forgedElementConfig.bindings().clear();
-      this.templatesReady = false;
+      this.invalidateTemplates();
       this._disconnectTimeout = undefined;
     }, 1000); // 1000ms timeout, adjust as needed
   }
@@ -706,6 +707,11 @@ export class UixForge extends LitElement {
     }
   }
 
+  private invalidateTemplates() {
+    this._templateGeneration += 1;
+    this.templatesReady = false;
+  }
+
   refreshForgeTemplates() {
     if (this._refreshForgeTemplatesInFlight) {
       this._refreshForgeTemplatesPending = true;
@@ -713,7 +719,7 @@ export class UixForge extends LitElement {
     }
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
-    this.templatesReady = false;
+    this.invalidateTemplates();
     const resolved = this._resolveFoundry({ ...this.config });
     if (!resolved) {
       this._refreshForgeTemplatesInFlight = false;
@@ -823,12 +829,16 @@ export class UixForge extends LitElement {
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isRow()) {
+      const templateGeneration = this._templateGeneration;
+      const forgedElement = this.forgedElement;
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement !== forgedElement) return;
         const newElement = helpers.createRowElement(this.forgedElementConfig);
         newElement.hass = this.hass;
         newElement.preview = this._mold.isPreview();
-        this.forgedElement.updateComplete.then(() => {
-          this.forgedElement.replaceWith(newElement);
+        forgedElement.updateComplete.then(() => {
+          if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement !== forgedElement) return;
+          forgedElement.replaceWith(newElement);
           this.forgedElement = newElement;
           this.refreshForge(["hidden"]);
         });
@@ -840,6 +850,7 @@ export class UixForge extends LitElement {
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isPictureElement()) {
+      const templateGeneration = this._templateGeneration;
       const config = {
         type: "conditional",
         conditions: [
@@ -855,6 +866,7 @@ export class UixForge extends LitElement {
         ]
       };
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration) return;
         this.forgedElement = helpers.createHuiElement(config);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
@@ -903,7 +915,9 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isRow()) {
+      const templateGeneration = this._templateGeneration;
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement) return;
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();  
@@ -912,9 +926,10 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isSection()) {
+      const templateGeneration = this._templateGeneration;
       (this.parentElement as any)._updateVisibility = () => {}
       getLovelaceRoot(document).then((root) => {
-        if (!root) {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement || !root) {
           return;
         }
         const view = root._viewRoot?.querySelector("hui-view");
@@ -926,6 +941,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isPictureElement()) {
+      const templateGeneration = this._templateGeneration;
       const config = {
         type: "conditional",
         conditions: [
@@ -941,6 +957,7 @@ export class UixForge extends LitElement {
         ]
       };
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement) return;
         this.forgedElement = helpers.createHuiElement(config);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
@@ -951,6 +968,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isFooter()) {
+      const templateGeneration = this._templateGeneration;
       // Create a dummy hui-view to load sections view which loads hui-view-footer, 
       // which is needed to forge the footer element even if not used in a view with a footer. 
       // The dummy view is hidden and not added to the DOM if hui-view-footer is already defined, 
@@ -964,6 +982,7 @@ export class UixForge extends LitElement {
         document.body.appendChild(this._view);
       }
       window.customElements.whenDefined("hui-view-footer").then(() => {
+        if (!this.templatesReady || templateGeneration !== this._templateGeneration || this.forgedElement) return;
         this.forgedElement = document.createElement("hui-view-footer") as LovelaceElement;
         (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
         this.forgedElement.hass = this.hass;
