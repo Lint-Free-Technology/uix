@@ -35,6 +35,11 @@ card:
 
 assertions: []
 
+teardown:
+  - type: device_registry_update
+    entity_id: light.bed_light
+    area_id: null
+
 doc_animation:
   output: docs/source/assets/page-assets/forge/forge-auto-entities.gif
   root: auto-entities
