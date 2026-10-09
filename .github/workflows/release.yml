@@ -89,13 +89,13 @@ jobs:
           RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
         run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
 
-      - name: Preserve legacy major feature scope
+      - name: Force major releases for breaking changes
         id: legacy_major
         if: ${{ !inputs.recover_release }}
         run: |
           PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
           RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
-          if git log --format=%s "$RANGE" | grep -Eq '^feat\(major\)(!)?: '; then
+          if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: |^[[:alnum:]][[:alnum:]_-]*(\([^)]+\))?!: |^BREAKING[ -]CHANGE:'; then
             echo 'force_bump=major' >> "$GITHUB_OUTPUT"
           fi
 
