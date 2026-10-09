@@ -28,7 +28,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@home-assistant/webawesome": "3.7.0-ha.1",
+    "@home-assistant/webawesome": "3.14.0-ha.0",
     "@watchable/unpromise": "^1.0.2",
     "color-name": "^2.1.1",
     "js-yaml": "^5.4.2",
