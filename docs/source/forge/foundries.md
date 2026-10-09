@@ -1,10 +1,10 @@
 ---
 title: Foundries
-description: Foundries are server-stored UIX Forge configurations that let you define reusable forge and element configurations once and apply them to many elements.
+description: Foundries are reusable UIX Forge configurations that let you define forge and element fragments once and apply them to many elements.
 ---
 # Foundries
 
-A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define a `forge` and `element` config once, give it a name, and reference it in any number of elements with a single `foundry:` key. Local element config is merged on top, so you can still override any value per element.
+A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define `forge` and `element` fragments once, give it a name, and reference it in any number of elements with a single `foundry:` key. In layered configuration, a Foundry can also provide an `element_base` fragment. Local fragments are merged on top, so you can still override values per element.
 
 ## Global foundries
 
@@ -28,8 +28,8 @@ UI Foundries are configured directly through the Home Assistant integration UI a
 1. Go to **Settings → Devices & Services → UI eXtension → Configure (cog)**.
 2. Choose **Manage UI foundries**, then one of the options:
    - **Add a foundry** — enter a name and a YAML config object.
-   - **Edit a foundry** — select an existing foundry from the dropdown, then update its config.
-   - **Delete a foundry** — select an existing foundry from the dropdown and confirm.
+   - **Edit a foundry** — select a saved foundry from the dropdown, then update its config.
+   - **Delete a foundry** — select a saved foundry from the dropdown and confirm.
 
 The foundry name must be unique. It is used as the `foundry:` key in your element config.
 
@@ -129,7 +129,7 @@ type: custom:uix-forge
 foundry: my_tile
 ```
 
-The foundry's `forge` and `element` configs are applied as if they were written directly on the UIX Forge config.
+The foundry's `forge`, `element`, and, when supplied, `element_base` configs are applied as if they were written directly on the UIX Forge config.
 
 You can add or override any key locally — local values take precedence over the foundry:
 
@@ -142,7 +142,7 @@ element:
 
 ## Foundry config structure
 
-A foundry is a YAML object that can contain any combination of `forge` and `element` keys:
+A foundry is a YAML object that can contain `foundry`, `forge`, `element`, and `element_base` keys:
 
 ```yaml
 forge:
@@ -158,7 +158,9 @@ element:
   entity: "{{ 'sun.sun' }}"
 ```
 
-The same keys are valid here as on a normal `uix-forge` element. See the [UIX Forge](./index.md) for details on `forge` and `element` options.
+`element_base` and `element` are resolved independently. A resolved `element_base` selects layered configuration, after which the fragments are composed. `element_disabled_paths` remains local to the consuming Forge: a Foundry, including `global` and `global_<mold>`, cannot set it.
+
+See [layered configuration](./forge.md#layered-configuration) for the complete contract, and [UIX Forge](./index.md) for the other `forge` and `element` options.
 
 ## Including external files and secrets
 
@@ -251,7 +253,7 @@ When a forge configuration is resolved, it merges settings from several sources.
 4. **Foundry** — the explicitly named foundry config.
 5. **Local** — keys defined directly on the forge config.
 
-For **object values** (e.g. `forge`, `element`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `forge.sparks`:
+For **object values** (e.g. `forge`, `element`, and `element_base`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. `element_base` and `element` stay as separate fragments during Foundry resolution; when a resolved `element_base` is present, they are composed as layered configuration. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `forge.sparks`:
 
 - Local spark entries are **appended** by default.
 - To override/merge a spark, give both entries the same `id` (or `spark_id`).

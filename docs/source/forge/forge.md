@@ -6,12 +6,12 @@ description: UIX Forge config details including macros, billets, template nestin
 
 UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines template-driven configuration with additional behaviors called **sparks**. Use it to:
 
-- **Forge** any standard Home Assistant element from templates, allowing the entire element config to react to entity states, user, browser and other template variables.
+- **Forge** Home Assistant elements from templates, allowing the Forge-owned configuration to react to entity states, user, browser, and other template variables.
 - **Add sparks** — self-contained behaviors that augment the forged element.
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
 !!! tip "Wrap in UIX Forge"
-    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element, card-feature to easily wrap the existing element's code in UIX Forge to quickly get started from a base element.
+    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element, card-feature to wrap an element's code in UIX Forge and get started.
 
 ## Basic structure
 
@@ -23,7 +23,7 @@ forge:
 element:
   type: tile
   entity: "{{ 'sun.sun' }}"
-  # any valid element config, templates supported
+  # Forge processes template values in non-layered configuration.
 ```
 
 `forge` controls how UIX Forge itself behaves; `element` is the configuration of the Home Assistant element that will be rendered inside it.
@@ -38,7 +38,7 @@ element:
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
 | `grid_options` | mapping | ✅ | — | Lovelace grid options (e.g. `rows`, `columns`) for when `mold` is `card`. Ignored for any other `mold`. |
 | `show_error` | boolean | | `false` | When `true`, show the Lovelace error card instead of hiding it when the forged element errors. |
-| `template_nesting` | string | | `"<<>>"` | Four-character string used to escape nested templates. A single setting controls both Jinja forms: with the default `<<>>`, use `<<...>>` for `{{...}}` and `<%...%>` for `{%...%}` in the same nested template. Use when the element config itself contains Jinja2-like syntax. When nesting multiple forge layers deep, add an extra `<>` pair per additional layer (e.g. `<<< >>>` and `<<% %>>` for two layers of nesting). |
+| `template_nesting` | string | | `"<<>>"` | Four-character string used to escape nested templates. A single setting controls both Jinja forms: with the default `<<>>`, use `<<...>>` for `{{...}}` and `<%...%>` for `{%...%}` in the same nested template. Use it in a non-layered `element` or layered `element` overlay when a Forge template must emit Jinja-like syntax. `element_base` templates pass through unchanged and do not need nesting. When nesting multiple Forge layers deep, add an extra `<>` pair per additional layer (e.g. `<<< >>>` and `<<% %>>` for two layers of nesting). |
 | `sparks` | list | ✅ | `[]` | List of [spark](./sparks/index.md) configurations to attach to the forged element. |
 | `delayed_hass` | boolean | | - | Flag to delay the passing of hass object to the card until after it is loaded. Used to suppress console errors or other issues for some custom cards. e.g. apexcharts_card. |
 
@@ -48,7 +48,7 @@ element:
 
 ## Element config
 
-Any valid Lovelace element configuration. Every string value in `element` is processed as a template, giving access to the same variables as [UIX templates](../using/templates.md) (`config`, `user`, `browser`, `hash`, `panel`).
+Any valid Lovelace element configuration. In non-layered configuration, `element` is the complete forged-element configuration and Forge processes its string values as templates. In [layered configuration](#layered-configuration), `element` is the Forge-owned overlay; use `element_base` for the element-owned base.
 
 The `uix` key inside `element` is passed through as is to [UIX Styling](../using/index.md), with [UIX Styling](../using/index.md) rendering any templates. Use it to style the forged element as you would any other element:
 
@@ -141,6 +141,101 @@ entities:
 !!! tip
     The blank card content div will be given a height of `var(--row-height, 56px)` when no other content has been applied via a spark, either as a sibling to or child of the div. However when there is a sibling to the div but it is empty, the height will be `0px`. IN all cases this height can be styled explicitly using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
 
+## Layered configuration
+
+!!! info
+    Layered configuration available in 9.0.0-beta.0
+
+Layered configuration wraps an element that owns its own templates. It works with every supported Forge mold and does not require a visual editor.
+
+Add `element_base` to use layered configuration. It holds the wrapped element's complete element-owned configuration; Forge passes it through without detecting, evaluating, rewriting, or requiring escapes for its template strings. `element` holds the Forge-owned overlay and Forge processes its active values using normal template rules.
+
+```yaml
+type: custom:uix-forge
+entity: light.kitchen
+forge:
+  mold: card
+element_base:
+  type: markdown
+  # This template belongs to the Markdown card and passes through Forge unchanged.
+  content: |
+    ## Temp: {{ states('sensor.kitchen_sensor') }}
+element:
+  title: "{{ config.entity }}"
+```
+
+`element` is a mapping in layered mode. Its mappings merge recursively over `element_base`; scalars and arrays replace the value at their path. `null` is an ordinary value, not a delete instruction. An empty array deliberately clears the base array. `type` belongs in `element_base` and cannot be overridden. A Forge template that returns an object or array replaces its complete target rather than merging with the base; emit a JSON object or array (for example with `| tojson`) for structural template output.
+
+| Top-level key | Layered role |
+| --- | --- |
+| `element_base` | Required element-owned base. It must provide `type`; its template strings are passed to the wrapped element unchanged. |
+| `element` | Optional Forge-owned overlay. Its active string values are processed as Forge templates, then composed over `element_base`. It cannot set `type`. |
+| `element_disabled_paths` | Optional local-only list of inactive overlay paths. It is retained for UI editing and is not allowed in a Foundry. |
+
+!!! note "Native visibility templates"
+    Put a card's native `visibility` configuration in `element_base`. Layered mode passes its template conditions through to Home Assistant unchanged, so a native card can evaluate its own visibility templates without Forge nesting or ignore markers. This is separate from Forge's own `forge.hidden` behavior.
+
+```yaml
+element_base:
+  type: entities
+  entities:
+    - light.kitchen
+    - light.dining_room
+element:
+  # Replaces the complete entities array with the template result.
+  entities: "{{ integration_entities('light') | list | tojson }}"
+```
+
+### Disabled overrides
+
+All `element` values are active by default. `element_disabled_paths` retains an element source value without applying it. Each path is a list of mapping keys so a key containing `.` remains unambiguous. Disabling a parent disables the whole subtree; its child selections remain stored and become active again if the parent path is removed from `element_disabled_paths`.
+
+```yaml
+element:
+  name: "{{ states('sensor.room_label') }}"
+  tap_action:
+    action: more-info
+    confirmation:
+      text: Confirm
+element_disabled_paths:
+  - [name]
+  - [tap_action, action]
+```
+
+The example retains both template sources, but the rendered element uses its base `name` and base `tap_action.action`; the active `tap_action.confirmation` mapping still composes with the base. A disabled path must point to a value in the resolved `element` overlay. Array entries are replacement units and cannot be individually disabled.
+
+### Foundries and template context
+
+Foundries may provide `element_base` and `element` fragments, but never `element_disabled_paths`. Global and named Foundries participate in the same resolution order:
+
+```text
+global → global_<mold> → inherited/named Foundry → local configuration
+```
+
+Foundry and local `element_base` fragments form the resolved element-owned base. Foundry and local `element` fragments form the resolved Forge-owned overlay. `element_disabled_paths` belongs only to the local card and applies after that overlay resolves, allowing a card to suppress a Foundry-provided value without changing the Foundry.
+
+Any Forge whose resolved configuration contains `element_base` uses layered configuration.
+
+```yaml
+uix_foundries:
+  kitchen_tile:
+    forge:
+      mold: card
+    element_base:
+      type: markdown
+      content: |
+        ## {{ states('sensor.room_label') }}
+    element:
+      title: "{{ config.entity }}"
+
+# A dashboard card can take both layers from the Foundry.
+type: custom:uix-forge
+foundry: kitchen_tile
+entity: light.kitchen
+```
+
+In Forge templates, `config.element_base` contains the resolved base and `config.element` contains the resolved overlay source before evaluation. Forge composes these layers into the forged element configuration. The `uix` mappings from both layers are merged as part of that composition; UIX Styling receives the merged `uix` configuration, and its templates follow the usual UIX Styling behavior.
+
 ## Template variables and macros
 
 Macros from the forge are passed through to UIX Styling for both the forge and the forged element, making forge macros available to use in UIX Styling for both forge and forged element.
@@ -151,8 +246,9 @@ Templates will run in different contexts for forging, UIX styling the forge and 
 <!-- markdownlint-disable MD046 -->
 | Context | Template variables |
 | - | - |
-| Templates in forge and element, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
-| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in forge and non-layered `element`, except `uix` styling | **forge config**: `config.forge`<br/> **element config**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in layered `element`, except `uix` styling | **forge config**: `config.forge`<br/> **element base**: `config.element_base`<br/>**forge overlay**: `config.element`<br/>`config.entity` is available if included in global `uix-forge` config. |
+| Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element` (the complete resolved element configuration, or the resolved Forge overlay in layered configuration)<br/>**additional in layered configuration**: `config.element_base` (the resolved base)<br/>`config.entity` is available if included in global `uix-forge` config. |
 | Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
 
 !!! tip
@@ -339,7 +435,7 @@ See [Billets in foundries](./foundries.md#billets-in-foundries) for patterns on 
 
 `{# uix-forge.ignore #}`
 
-If you need to pass through a whole template unchanged to the forged element, you can have UIX Forge ignore the template altogether. Use this when the forged element accepts templates as part of config and template nesting is not required.
+In non-layered configuration, if you need to pass through a whole template unchanged to the forged element, you can have UIX Forge ignore the template altogether. Use this when the forged element accepts templates as part of config and template nesting is not required. In layered configuration, put the wrapped element's template in `element_base` instead; it passes through without an ignore marker.
 
 Templates are ignored by UIX Forge when they include `{# uix-forge.ignore #}`.
 
@@ -379,7 +475,7 @@ When you need for a template to include both local forge or element template and
 
 ### Template nesting
 
-If the element you are forging uses Jinja style templates or same markers (e.g. ha-nunjucks) then you will need to either ignore or nest these templates. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
+If a non-layered `element`, or a layered `element` overlay, needs to emit Jinja-style templates or the same markers (e.g. ha-nunjucks), you need to either ignore or nest those templates. Templates in `element_base` pass through unchanged. The default nesting characters are `<<>>`. This can be adjusted in forge config if required. Jinja statement/flow-control delimiters (`{% %}`) are inferred from the nesting character config. When default nesting characters `<<>>` are in use, use `<% %>` for single nesting of Jinja statements/flow-control syntax.
 
 ??? example "Single level template nesting example"
     Below is an example using `custom:template-entity-row` which itself supports templates. This requires any template that needs to be rendered by `custom:template-entity-row` to be nested in `<<>>` nesting characters.
@@ -563,7 +659,7 @@ UIX Forge supports `custom:auto-entities` in two ways:
 
 ## UIX styling
 
-Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates, where `config.forge` and `config.element` are the resolved forge and element configs and `uixForge` contains any [spark](./sparks/tooltip.md) template variables. `config.entity` will also be available if set in the global `uix-forge` config.
+Add a `uix` key under `forge` to apply [UIX styling](../using/index.md) to the forge element wrapper itself. Template variables `config.forge`, `config.element`, and `uixForge` are available in the style templates. In layered configuration, `config.element` is the resolved Forge overlay and `config.element_base` is also available; otherwise `config.element` is the complete resolved element config. `uixForge` contains any [spark](./sparks/tooltip.md) template variables. `config.entity` will also be available if set in the global `uix-forge` config.
 
 ```yaml
 type: custom:uix-forge

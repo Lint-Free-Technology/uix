@@ -1,0 +1,112 @@
+id: forge_layered_foundry_context
+description: "Layered Foundries keep the base separate from Forge overlay templates, macros, billets, and UIX styling"
+view_path: forge-layered-foundry-context
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+  - type: add_foundry
+    name: global
+    config:
+      forge:
+        billets:
+          global_label: Global billet
+
+  - type: add_foundry
+    name: layered-foundry-context
+    config:
+      forge:
+        mold: card
+        billets:
+          title_prefix: Foundry billet
+        macros:
+          describe_layers:
+            params:
+              - base_type
+              - overlay_type
+            template: "{{ title_prefix }} / {{ global_label }} / base={{ base_type }} / overlay={{ overlay_type }}"
+      element_base:
+        type: markdown
+        content: |
+          ## Native Foundry base: {{ states('light.bed_light') }}
+        uix:
+          style:
+            .: |
+              :host {
+                --ha-card-border-width: 3px;
+                --ha-card-border-color: rgb(147, 51, 234);
+              }
+      element:
+        title: "{{ describe_layers(config.element_base.type, config.element.type | default('absent')) }}"
+        uix:
+          style:
+            ha-card: |
+              ha-card {
+                background: rgb(255, 247, 237);
+              }
+
+card:
+  type: custom:uix-forge
+  foundry: layered-foundry-context
+  entity: light.bed_light
+  forge:
+    billets:
+      title_prefix: Local billet
+  element:
+    uix:
+      style:
+        ha-card: |
+          ha-card {
+            background: rgb(239, 246, 255);
+          }
+
+assertions:
+  - type: element_present
+    root: uix-forge
+    selector: hui-markdown-card
+
+  - type: text_equals
+    root:
+      - uix-forge
+      - hui-markdown-card
+      - ha-markdown
+    selector: ha-markdown-element h2
+    expected: "Native Foundry base: on"
+
+  - type: object_property_text_equals
+    root: uix-forge
+    selector: hui-markdown-card
+    property: _config.title
+    expected: "Local billet / Global billet / base=markdown / overlay=absent"
+
+  - type: css_property
+    root:
+      - uix-forge
+      - hui-markdown-card
+    selector: ha-card
+    property: borderTopColor
+    expected: "rgb(147, 51, 234)"
+
+  - type: css_property
+    root:
+      - uix-forge
+      - hui-markdown-card
+    selector: ha-card
+    property: backgroundColor
+    expected: "rgb(239, 246, 255)"
+
+  - type: snapshot
+    name: "74_forge_layered_foundry_context"
+    threshold: 0.02
+
+teardown:
+  - type: delete_foundry
+    name: layered-foundry-context
+  - type: delete_foundry
+    name: global
