@@ -143,6 +143,9 @@ entities:
 
 ## Layered configuration
 
+!!! info
+    Layered configuration available in 9.0.0-beta.0
+
 Layered configuration wraps an element that owns its own templates. It works with every supported Forge mold and does not require a visual editor.
 
 Add `element_base` to use layered configuration. It holds the wrapped element's complete element-owned configuration; Forge passes it through without detecting, evaluating, rewriting, or requiring escapes for its template strings. `element` holds the Forge-owned overlay and Forge processes its active values using normal template rules.
