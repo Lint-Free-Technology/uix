@@ -1,3 +1,17 @@
+### [8.4.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.0...v8.4.1-beta.1) (2026-10-09)
+
+
+### 🐞 Bug Fixes
+
+* **forge:** Guard async Forge render paths with template generation. Fixes possible rendering of raw config to element with unpredictable results and errors. ([#661](https://github.com/Lint-Free-Technology/uix/issues/661)) ([b77ef49](https://github.com/Lint-Free-Technology/uix/commit/b77ef49e24e3c3fb479baa26c800807992a57ec3))
+
+### [8.4.1-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v8.4.1-beta.0) (2026-10-09)
+
+
+### ⚙️ Miscellaneous
+
+* Serve Frontend JavaScript asset bundles from temp snapshot. Allows upgrade of UIX with deferred restart. ([#660](https://github.com/Lint-Free-Technology/uix/issues/660)) ([c800e60](https://github.com/Lint-Free-Technology/uix/commit/c800e607f23dde55e54b5e0e769de4a6b7464390))
+
 ## [8.4.0](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0) (2026-10-07)
 
 

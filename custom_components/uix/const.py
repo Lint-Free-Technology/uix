@@ -6,6 +6,7 @@ FRONTEND_SCRIPT_URL = "uix.js"
 FRONTEND_SCRIPT_FRAME = "uixFrame.js"
 
 DATA_EXTRA_MODULE_URL = "frontend_extra_module_url"
+DATA_FRONTEND_ASSET_SNAPSHOT = f"{DOMAIN}_frontend_asset_snapshot"
 
 WS_CONNECT = f"{DOMAIN}/connect"
 WS_LOG = f"{DOMAIN}/log"

@@ -421,3 +421,167 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
     assert result["refreshInFlight"] is False
     assert result["layeredBindingsAfterModeSwitch"] == 0
     assert result["layeredBaseClearedAfterModeSwitch"] is True
+
+
+def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "global.window = { addEventListener: () => {} };"
+                "global.customElements = { get: () => true, define: () => {} };"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code: outputText } = esbuild.transformSync(source, {"
+                "  loader: 'ts', format: 'cjs', target: 'es2020'"
+                "});"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === 'lit') return { html: () => {}, LitElement: class {}, nothing: undefined };"
+                "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === './uix-forge-types') return {"
+                "    UIX_FORGE_ALLOWED_CONFIG_KEYS: [],"
+                "    UIX_FORGE_ARRAY_MERGE_STRATEGIES: { sparks: { idKeys: ['id', 'spark_id'], requireTypeMatch: true } },"
+                "    UIX_FORGE_DEFAULT_TEMPLATE_VALUE: '',"
+                "    UIX_FORGE_FORGE_MOLDS: [],"
+                "    UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>',"
+                "    UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<',"
+                "    UIX_FORGE_PASSTHROUGH_MARKER: '',"
+                "    UIX_FORGE_TYPE: 'uix-forge',"
+                "    UixForgeConfigBuilder: class {},"
+                "    getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' })"
+                "  };"
+                "  if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: async () => {}, translate: (_h, value) => value };"
+                "  if (name === '../helpers/templates') return { bind_template: () => {}, hasTemplate: () => false, unbind_template: () => {} };"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
+                "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
+                "const { UixForge } = moduleObj.exports;"
+                "const first = new Promise(() => {});"
+                "const second = new Promise(() => {});"
+                "let bindCalls = 0; let refreshCalls = 0;"
+                "const readyBuilder = { config: {}, configIsReady: () => first };"
+                "const forge = Object.create(UixForge.prototype);"
+                "Object.assign(forge, {"
+                "  _refreshForgeTemplatesInFlight: false, _refreshForgeTemplatesPending: false, _refreshOperation: 0, _templateGeneration: 0,"
+                "  templatesReady: true, config: {}, _macros: undefined, _billets: undefined,"
+                "  _layeredOverrideTemplatePaths: new Set(),"
+                "  _mold: { isCard: () => true, isCardBlankClear: () => false },"
+                "  _forgeConfig: { ...readyBuilder }, _forgedElementConfig: { ...readyBuilder }"
+                "});"
+                "forge._resolveFoundry = () => ({ forge: { mold: 'card' }, element: { type: 'tile' } });"
+                "forge.bindTemplates = () => (bindCalls++ < 2 ? first : second);"
+                "forge.refreshForge = () => { refreshCalls++; };"
+                "forge.refreshForgeTemplates();"
+                "forge.refreshForgeTemplates();"
+                "setTimeout(() => {"
+                "  process.stdout.write(JSON.stringify({ templatesReady: forge.templatesReady, refreshCalls, bindCalls, inFlight: forge._refreshForgeTemplatesInFlight }));"
+                "}, 0);"
+            ),
+            str(FORGE_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["templatesReady"] is False
+    assert result["refreshCalls"] == 0
+    assert result["bindCalls"] == 4
+    assert result["inFlight"] is True
+
+
+def test_invalidated_template_bindings_are_unbound() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "global.window = { addEventListener: () => {} };"
+                "global.customElements = { get: () => true, define: () => {} };"
+                "let resolveHass;"
+                "const hassReady = new Promise((resolve) => { resolveHass = resolve; });"
+                "let resolveBinding;"
+                "const bindingRegistered = new Promise((resolve) => { resolveBinding = resolve; });"
+                "let resolveHelpers;"
+                "const helpersReady = new Promise((resolve) => { resolveHelpers = resolve; });"
+                "let templateCallback; let bindCalls = 0; let unbindCalls = 0; let bindingUpdates = 0; let nestedUpdates = 0; let createdRows = 0;"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code: outputText } = esbuild.transformSync(source, {"
+                "  loader: 'ts', format: 'cjs', target: 'es2020'"
+                "});"
+                "const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                "  if (name === 'lit') return { html: () => {}, LitElement: class {}, nothing: undefined };"
+                "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === './uix-forge-types') return {"
+                "    UIX_FORGE_ALLOWED_CONFIG_KEYS: [], UIX_FORGE_ARRAY_MERGE_STRATEGIES: {}, UIX_FORGE_DEFAULT_TEMPLATE_VALUE: '',"
+                "    UIX_FORGE_FORGE_MOLDS: [], UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<',"
+                "    UIX_FORGE_PASSTHROUGH_MARKER: '', UIX_FORGE_TYPE: 'uix-forge', UixForgeConfigBuilder: class {},"
+                "    getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }), ignoreTemplate: () => false"
+                "  };"
+                "  if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: () => hassReady, translate: (_h, value) => value };"
+                "  if (name === '../helpers/templates') return { bind_template: (callback) => { bindCalls++; templateCallback = callback; return bindingRegistered; }, hasTemplate: (value) => String(value).includes('{{'), unbind_template: () => { unbindCalls++; } };"
+                "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
+                "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
+                "const forge = Object.create(moduleObj.exports.UixForge.prototype);"
+                "Object.assign(forge, { _templateGeneration: 1, templatesReady: true, config: {}, _templateNestingOpen: '<<', _templateNestingClose: '>>',"
+                "  _mold: { templateVariables: () => ({}) }, _sparkController: { templateVariables: () => ({}) } });"
+                "const base = { config: { value: '{{ states(\"sensor.test\") }}' }, hasBinding: () => false, getBinding: () => undefined,"
+                "  deleteBinding: () => {}, setBinding: () => { bindingUpdates++; }, set nested(_value) { nestedUpdates++; } };"
+                "const staleBinding = forge.bindTemplates(base, undefined, [], false, 1);"
+                "forge._templateGeneration = 2;"
+                "resolveHass({});"
+                "(async () => {"
+                "  await staleBinding;"
+                "  forge._templateGeneration = 3;"
+                "  const registeredBinding = forge.bindTemplates(base, undefined, [], false, 3);"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
+                "  forge._templateGeneration = 4;"
+                "  resolveBinding();"
+                "  await registeredBinding;"
+                "  templateCallback('stale');"
+                "  const forgeBindings = new Map([['removed', { callback: () => {} }]]);"
+                "  const elementBindings = new Map([['removed', { callback: () => {} }]]);"
+                "  forge._forgeConfig = { bindings: () => forgeBindings };"
+                "  forge._forgedElementConfig = { bindings: () => elementBindings };"
+                "  forge.invalidateTemplates();"
+                "  const renderForge = Object.create(moduleObj.exports.UixForge.prototype);"
+                "  Object.assign(renderForge, { _templateGeneration: 1, templatesReady: true,"
+                "    _mold: { isCard: () => false, isBadge: () => false, isRow: () => true, cardHelpers: () => helpersReady, isPreview: () => false } });"
+                "  renderForge.forgeElement();"
+                "  renderForge._templateGeneration = 2;"
+                "  renderForge.templatesReady = false;"
+                "  resolveHelpers({ createRowElement: () => { createdRows++; return {}; } });"
+                "  await new Promise((resolve) => setTimeout(resolve, 0));"
+                "  process.stdout.write(JSON.stringify({ bindCalls, unbindCalls, bindingUpdates, nestedUpdates, forgeBindings: forgeBindings.size, elementBindings: elementBindings.size, createdRows, forgedElement: Boolean(renderForge.forgedElement) }));"
+                "})().catch((error) => { console.error(error); process.exitCode = 1; });"
+            ),
+            str(FORGE_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result == {
+        "bindCalls": 1,
+        "unbindCalls": 3,
+        "bindingUpdates": 0,
+        "nestedUpdates": 0,
+        "forgeBindings": 0,
+        "elementBindings": 0,
+        "createdRows": 0,
+        "forgedElement": False,
+    }

@@ -354,6 +354,9 @@ export class UixForge extends LitElement {
   private _view: LovelaceElement;
   private _refreshForgeTemplatesInFlight = false;
   private _refreshForgeTemplatesPending = false;
+  private _refreshOperation = 0;
+  private _cancelTemplateRefresh?: () => void;
+  private _templateGeneration = 0;
 
   constructor() {
       super();
@@ -515,9 +518,11 @@ export class UixForge extends LitElement {
     return paths;
   }
 
-  private _clearTemplateBindings(config: UixForgeConfigBuilder): void {
-    config.bindings().forEach((binding) => unbind_template(binding.callback));
-    config.bindings().clear();
+  private _clearTemplateBindings(config?: UixForgeConfigBuilder): void {
+    const bindings = config?.bindings?.();
+    if (!bindings) return;
+    bindings.forEach((binding) => unbind_template(binding.callback));
+    bindings.clear();
   }
 
   private _refreshLayeredForgedElement(path: UixForgeConfigPath = []): void {
@@ -580,7 +585,7 @@ export class UixForge extends LitElement {
       }
     });
 
-    this.templatesReady = false;
+    this.invalidateTemplates();
     this.config = config;
 
     const resolved = this._resolveFoundry(config);
@@ -682,23 +687,20 @@ export class UixForge extends LitElement {
       this._clearLayeredConfig();
       this.forgedElementConfig = elementConfig;
     }
-    this._refreshForgeTemplatesInFlight = true;
-    this._refreshForgeTemplatesPending = false;
-    const completeRefresh = () => {
-      this._refreshForgeTemplatesInFlight = false;
-      if (this._refreshForgeTemplatesPending) {
-        this._refreshForgeTemplatesPending = false;
-        void Promise.resolve()
-          .then(() => this.refreshForgeTemplates())
-          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
-      }
-    };
-    void Promise.all([
-      this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
+    const { refreshOperation, cancelled } = this.beginTemplateRefresh();
+    const templateGeneration = this._templateGeneration;
+    const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
+    const templatesBound = Promise.all([
+      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
+      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
       this._forgeConfig.configIsReady(),
-      (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
-    ]).then(() => {
+      elementConfigBuilder.configIsReady()
+    ]);
+    void Promise.race([
+      templatesBound.then(() => true),
+      cancelled.then(() => false),
+    ]).then((templatesReady) => {
+      if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
       if (!this.forgedElement) {
         this.forgeElement();
       }
@@ -707,7 +709,7 @@ export class UixForge extends LitElement {
       this._sparkController.setConfig(this.forgeConfig.sparks);
     }, (err) => {
       console.error("UIX Forge: Error applying forge config:", err);
-    }).then(completeRefresh);
+    }).then(() => this.completeTemplateRefresh(refreshOperation));
   }
 
   private _mergeForgeMacros(uixConfig?: UixConfig): UixConfig | undefined {
@@ -845,12 +847,15 @@ export class UixForge extends LitElement {
       } else {
         this.forgedElementConfig = { ...elementConfig };
       }
+      const templateGeneration = this._templateGeneration;
+      const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
       Promise.all([
-        this.bindTemplates(this._forgeConfig),
-        this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
+        this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
+        this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
         this._forgeConfig.configIsReady(),
-        (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
+        elementConfigBuilder.configIsReady()
       ]).then(() => {
+        if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
         this.templatesReady = true;
         this.refreshForge([]);
         this._sparkController.setConfig(this.forgeConfig.sparks);
@@ -876,16 +881,7 @@ export class UixForge extends LitElement {
     // Delay unbinding to allow for quick reconnects without rebinding
     this._disconnectTimeout = window.setTimeout(() => {
       super.disconnectedCallback();
-      this._forgeConfig.bindings().forEach((binding) => {
-      unbind_template(binding.callback);
-      });
-      this._forgeConfig.bindings().clear();
-      this._forgedElementConfig.bindings().forEach((binding) => {
-      unbind_template(binding.callback);
-      });
-      this._forgedElementConfig.bindings().clear();
-      this._clearTemplateBindings(this._layeredOverridesConfig);
-      this.templatesReady = false;
+      this.invalidateTemplates();
       this._disconnectTimeout = undefined;
     }, 1000); // 1000ms timeout, adjust as needed
   }
@@ -927,18 +923,26 @@ export class UixForge extends LitElement {
     }
   }
 
-  private async bindTemplates(base: any, current: any = undefined, path: string[] = [], parseLayeredResults = false) {
+  private async bindTemplates(
+    base: any,
+    current: any = undefined,
+    path: string[] = [],
+    parseLayeredResults = false,
+    templateGeneration = this._templateGeneration
+  ) {
     const hs = await hass();
+    if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
     if (current === undefined) {
       current = base.config;
     }
     for (const k of Object.keys(current)) {
+      if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
       if (current[k] === undefined) continue;
       if (current[k] === null) continue;
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults);
+        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults, templateGeneration);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -965,6 +969,7 @@ export class UixForge extends LitElement {
         const macroStr = buildMacros(this._macros, template);
         const billetStr = buildBillets(this._billets, macroStr + template);
         const callback = (res: any) => {
+          if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
           let opaque = false;
           if (typeof res === "string") {
             res = translate(hs, res);
@@ -982,12 +987,16 @@ export class UixForge extends LitElement {
             base.refreshCallback?.(currentPath);
           }
         };
-        bind_template(
+        await bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
           { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
+        if (!this.isTemplateGenerationCurrent(templateGeneration)) {
+          unbind_template(callback);
+          return;
+        }
         base.setBinding(bindingPath, callback);
       } else if (typeof current[k] === "string") {
         base.nested = { keys: currentPath, value: translate(hs, current[k]) };
@@ -995,18 +1004,65 @@ export class UixForge extends LitElement {
     }
   }
 
+  private invalidateTemplates() {
+    this.cancelTemplateRefresh();
+    this._clearTemplateBindings(this._forgeConfig);
+    this._clearTemplateBindings(this._forgedElementConfig);
+    this._clearTemplateBindings(this._layeredOverridesConfig);
+    this._templateGeneration += 1;
+    this.templatesReady = false;
+    return this._templateGeneration;
+  }
+
+  private isTemplateGenerationCurrent(templateGeneration: number) {
+    return templateGeneration === this._templateGeneration;
+  }
+
+  private canRenderTemplateGeneration(templateGeneration: number) {
+    return this.templatesReady && this.isTemplateGenerationCurrent(templateGeneration);
+  }
+
+  private beginTemplateRefresh() {
+    this.cancelTemplateRefresh();
+    this._refreshForgeTemplatesInFlight = true;
+    this._refreshForgeTemplatesPending = false;
+    let cancel!: () => void;
+    const cancelled = new Promise<void>((resolve) => {
+      cancel = resolve;
+    });
+    this._cancelTemplateRefresh = cancel;
+    return { refreshOperation: ++this._refreshOperation, cancelled };
+  }
+
+  private cancelTemplateRefresh() {
+    this._cancelTemplateRefresh?.();
+    this._cancelTemplateRefresh = undefined;
+  }
+
+  private completeTemplateRefresh(refreshOperation: number) {
+    if (refreshOperation !== this._refreshOperation) return;
+    this._cancelTemplateRefresh = undefined;
+    this._refreshForgeTemplatesInFlight = false;
+    if (!this._refreshForgeTemplatesPending) return;
+    this._refreshForgeTemplatesPending = false;
+    void Promise.resolve()
+      .then(() => this.refreshForgeTemplates())
+      .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
+  }
+
   refreshForgeTemplates() {
     if (this._refreshForgeTemplatesInFlight) {
       this._refreshForgeTemplatesPending = true;
+      this.invalidateTemplates();
       return;
     }
-    this._refreshForgeTemplatesInFlight = true;
-    this._refreshForgeTemplatesPending = false;
-    this.templatesReady = false;
+    const templateGeneration = this.invalidateTemplates();
+    const { refreshOperation, cancelled } = this.beginTemplateRefresh();
     let resolved: ResolvedForgeConfig | null;
     try {
       resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) {
+        this.cancelTemplateRefresh();
         this._refreshForgeTemplatesInFlight = false;
         return;
       }
@@ -1014,6 +1070,7 @@ export class UixForge extends LitElement {
       this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
       this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
     } catch (err) {
+      this.cancelTemplateRefresh();
       this._refreshForgeTemplatesInFlight = false;
       throw err;
     }
@@ -1062,26 +1119,23 @@ export class UixForge extends LitElement {
       this._clearLayeredConfig();
       this.forgedElementConfig = elementConfig;
     }
-    const completeRefresh = () => {
-      this._refreshForgeTemplatesInFlight = false;
-      if (this._refreshForgeTemplatesPending) {
-        this._refreshForgeTemplatesPending = false;
-        void Promise.resolve()
-          .then(() => this.refreshForgeTemplates())
-          .catch((err) => console.error("UIX Forge: Error running deferred forge template refresh:", err));
-      }
-    };
-    void Promise.all([
-      this.bindTemplates(this._forgeConfig),
-      this.bindTemplates(this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig, undefined, [], this._layeredMode),
+    const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
+    const templatesBound = Promise.all([
+      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
+      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
       this._forgeConfig.configIsReady(),
-      (this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig).configIsReady()
-    ]).then(() => {
+      elementConfigBuilder.configIsReady()
+    ]);
+    void Promise.race([
+      templatesBound.then(() => true),
+      cancelled.then(() => false),
+    ]).then((templatesReady) => {
+      if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
       this.templatesReady = true;
       this.refreshForge([]);
     }, (err) => {
       console.error("UIX Forge: Error refreshing forge templates:", err);
-    }).then(completeRefresh);
+    }).then(() => this.completeTemplateRefresh(refreshOperation));
   }
 
   refreshForge(path: UixForgeConfigPath) {
@@ -1132,12 +1186,16 @@ export class UixForge extends LitElement {
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isRow()) {
+      const templateGeneration = this._templateGeneration;
+      const forgedElement = this.forgedElement;
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement !== forgedElement) return;
         const newElement = helpers.createRowElement(this.forgedElementConfig);
         newElement.hass = this.hass;
         newElement.preview = this._mold.isPreview();
-        this.forgedElement.updateComplete.then(() => {
-          this.forgedElement.replaceWith(newElement);
+        forgedElement.updateComplete.then(() => {
+          if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement !== forgedElement) return;
+          forgedElement.replaceWith(newElement);
           this.forgedElement = newElement;
           this.refreshForge(["hidden"]);
         });
@@ -1149,6 +1207,7 @@ export class UixForge extends LitElement {
       this.refreshForge(["hidden"]);
     }
     if (this._mold.isPictureElement()) {
+      const templateGeneration = this._templateGeneration;
       const config = {
         type: "conditional",
         conditions: [
@@ -1164,6 +1223,7 @@ export class UixForge extends LitElement {
         ]
       };
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.canRenderTemplateGeneration(templateGeneration)) return;
         this.forgedElement = helpers.createHuiElement(config);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
@@ -1212,7 +1272,9 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isRow()) {
+      const templateGeneration = this._templateGeneration;
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement) return;
         this.forgedElement = helpers.createRowElement(this.forgedElementConfig);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();  
@@ -1221,9 +1283,10 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isSection()) {
+      const templateGeneration = this._templateGeneration;
       (this.parentElement as any)._updateVisibility = () => {}
       getLovelaceRoot(document).then((root) => {
-        if (!root) {
+        if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement || !root) {
           return;
         }
         const view = root._viewRoot?.querySelector("hui-view");
@@ -1235,6 +1298,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isPictureElement()) {
+      const templateGeneration = this._templateGeneration;
       const config = {
         type: "conditional",
         conditions: [
@@ -1250,6 +1314,7 @@ export class UixForge extends LitElement {
         ]
       };
       this._mold.cardHelpers().then((helpers) => {
+        if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement) return;
         this.forgedElement = helpers.createHuiElement(config);
         this.forgedElement.hass = this.hass;
         this.forgedElement.preview = this._mold.isPreview();
@@ -1260,6 +1325,7 @@ export class UixForge extends LitElement {
       return;
     }
     if (this._mold.isFooter()) {
+      const templateGeneration = this._templateGeneration;
       // Create a dummy hui-view to load sections view which loads hui-view-footer, 
       // which is needed to forge the footer element even if not used in a view with a footer. 
       // The dummy view is hidden and not added to the DOM if hui-view-footer is already defined, 
@@ -1272,13 +1338,19 @@ export class UixForge extends LitElement {
         this._view.style.setProperty("display", "none");
         document.body.appendChild(this._view);
       }
+      const view = this._view;
       window.customElements.whenDefined("hui-view-footer").then(() => {
+        if (view && document.body.contains(view)) {
+          document.body.removeChild(view);
+        }
+        if (this._view === view) {
+          this._view = undefined;
+        }
+        if (!this.canRenderTemplateGeneration(templateGeneration) || this.forgedElement) return;
         this.forgedElement = document.createElement("hui-view-footer") as LovelaceElement;
         (this.forgedElement.config as any) = { card: this.forgedElementConfig, max_width: this.forgeConfig.max_width ?? "600" };
         this.forgedElement.hass = this.hass;
         this.forgedElement.lovelace = { editMode: false };
-        document.body.contains(this._view) && document.body.removeChild(this._view);
-        this._view = undefined;
         this.refreshForge(["hidden"]);
       });
       return;
