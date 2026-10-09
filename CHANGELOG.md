@@ -1,3 +1,10 @@
+### [8.4.1-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v8.4.1-beta.0) (2026-10-09)
+
+
+### ⚙️ Miscellaneous
+
+* Serve Frontend JavaScript asset bundles from temp snapshot. Allows upgrade of UIX with deferred restart. ([#660](https://github.com/Lint-Free-Technology/uix/issues/660)) ([c800e60](https://github.com/Lint-Free-Technology/uix/commit/c800e607f23dde55e54b5e0e769de4a6b7464390))
+
 ## [8.4.0](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0) (2026-10-07)
 
 
