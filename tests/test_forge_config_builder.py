@@ -231,7 +231,7 @@ def test_uix_forge_not_ready_hidden_and_grid_options() -> None:
     assert result["gridOptions"] == {}
 
 
-def test_stale_template_refresh_does_not_publish_readiness() -> None:
+def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -270,11 +270,10 @@ def test_stale_template_refresh_does_not_publish_readiness() -> None:
                 "};"
                 "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
                 "const { UixForge } = moduleObj.exports;"
-                "let resolveFirst; let resolveSecond;"
-                "const first = new Promise((resolve) => { resolveFirst = resolve; });"
-                "const second = new Promise((resolve) => { resolveSecond = resolve; });"
+                "const first = new Promise(() => {});"
+                "const second = new Promise(() => {});"
                 "let bindCalls = 0; let refreshCalls = 0;"
-                "const readyBuilder = { config: {}, configIsReady: () => Promise.resolve(true) };"
+                "const readyBuilder = { config: {}, configIsReady: () => first };"
                 "const forge = Object.create(UixForge.prototype);"
                 "Object.assign(forge, {"
                 "  _refreshForgeTemplatesInFlight: false, _refreshForgeTemplatesPending: false, _refreshOperation: 0, _templateGeneration: 0,"
@@ -287,9 +286,8 @@ def test_stale_template_refresh_does_not_publish_readiness() -> None:
                 "forge.refreshForge = () => { refreshCalls++; };"
                 "forge.refreshForgeTemplates();"
                 "forge.refreshForgeTemplates();"
-                "resolveFirst();"
                 "setTimeout(() => {"
-                "  process.stdout.write(JSON.stringify({ templatesReady: forge.templatesReady, refreshCalls, bindCalls }));"
+                "  process.stdout.write(JSON.stringify({ templatesReady: forge.templatesReady, refreshCalls, bindCalls, inFlight: forge._refreshForgeTemplatesInFlight }));"
                 "}, 0);"
             ),
             str(FORGE_TS),
@@ -302,6 +300,7 @@ def test_stale_template_refresh_does_not_publish_readiness() -> None:
     assert result["templatesReady"] is False
     assert result["refreshCalls"] == 0
     assert result["bindCalls"] == 4
+    assert result["inFlight"] is True
 
 
 def test_stale_template_binding_cannot_mutate_current_builder() -> None:

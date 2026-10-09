@@ -219,6 +219,7 @@ export class UixForge extends LitElement {
   private _refreshForgeTemplatesInFlight = false;
   private _refreshForgeTemplatesPending = false;
   private _refreshOperation = 0;
+  private _cancelTemplateRefresh?: () => void;
   private _templateGeneration = 0;
 
   constructor() {
@@ -431,15 +432,19 @@ export class UixForge extends LitElement {
     }
 
     this.forgedElementConfig = elementConfig;
-    const refreshOperation = this.beginTemplateRefresh();
+    const { refreshOperation, cancelled } = this.beginTemplateRefresh();
     const templateGeneration = this._templateGeneration;
-    void Promise.all([
+    const templatesBound = Promise.all([
       this.bindTemplates(this._forgeConfig, undefined, [], templateGeneration),
       this.bindTemplates(this._forgedElementConfig, undefined, [], templateGeneration),
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
-    ]).then(() => {
-      if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    ]);
+    void Promise.race([
+      templatesBound.then(() => true),
+      cancelled.then(() => false),
+    ]).then((templatesReady) => {
+      if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
       if (!this.forgedElement) {
         this.forgeElement();
       }
@@ -711,6 +716,7 @@ export class UixForge extends LitElement {
   }
 
   private invalidateTemplates() {
+    this.cancelTemplateRefresh();
     this._templateGeneration += 1;
     this.templatesReady = false;
     return this._templateGeneration;
@@ -725,13 +731,25 @@ export class UixForge extends LitElement {
   }
 
   private beginTemplateRefresh() {
+    this.cancelTemplateRefresh();
     this._refreshForgeTemplatesInFlight = true;
     this._refreshForgeTemplatesPending = false;
-    return ++this._refreshOperation;
+    let cancel!: () => void;
+    const cancelled = new Promise<void>((resolve) => {
+      cancel = resolve;
+    });
+    this._cancelTemplateRefresh = cancel;
+    return { refreshOperation: ++this._refreshOperation, cancelled };
+  }
+
+  private cancelTemplateRefresh() {
+    this._cancelTemplateRefresh?.();
+    this._cancelTemplateRefresh = undefined;
   }
 
   private completeTemplateRefresh(refreshOperation: number) {
     if (refreshOperation !== this._refreshOperation) return;
+    this._cancelTemplateRefresh = undefined;
     this._refreshForgeTemplatesInFlight = false;
     if (!this._refreshForgeTemplatesPending) return;
     this._refreshForgeTemplatesPending = false;
@@ -746,8 +764,8 @@ export class UixForge extends LitElement {
       this.invalidateTemplates();
       return;
     }
-    const refreshOperation = this.beginTemplateRefresh();
     const templateGeneration = this.invalidateTemplates();
+    const { refreshOperation, cancelled } = this.beginTemplateRefresh();
     const resolved = this._resolveFoundry({ ...this.config });
     if (!resolved) {
       this._refreshForgeTemplatesInFlight = false;
@@ -790,13 +808,17 @@ export class UixForge extends LitElement {
       }
     }
     this.forgedElementConfig = elementConfig;
-    void Promise.all([
+    const templatesBound = Promise.all([
       this.bindTemplates(this._forgeConfig, undefined, [], templateGeneration),
       this.bindTemplates(this._forgedElementConfig, undefined, [], templateGeneration),
       this._forgeConfig.configIsReady(),
       this._forgedElementConfig.configIsReady()
-    ]).then(() => {
-      if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    ]);
+    void Promise.race([
+      templatesBound.then(() => true),
+      cancelled.then(() => false),
+    ]).then((templatesReady) => {
+      if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
       this.templatesReady = true;
       this.refreshForge([]);
     }, (err) => {
