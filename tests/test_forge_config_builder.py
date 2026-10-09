@@ -472,7 +472,7 @@ def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
                 "  templatesReady: true, config: {}, _macros: undefined, _billets: undefined,"
                 "  _layeredOverrideTemplatePaths: new Set(),"
                 "  _mold: { isCard: () => true, isCardBlankClear: () => false },"
-                "  _forgeConfig: { ...readyBuilder }, _forgedElementConfig: { ...readyBuilder }"
+                "  _forgeConfig: { ...readyBuilder }, _forgedElementConfig: { ...readyBuilder }, _layeredOverridesConfig: { ...readyBuilder }"
                 "});"
                 "forge._resolveFoundry = () => ({ forge: { mold: 'card' }, element: { type: 'tile' } });"
                 "forge.bindTemplates = () => (bindCalls++ < 2 ? first : second);"
