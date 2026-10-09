@@ -1,3 +1,14 @@
+## [9.0.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.1...v9.0.0-beta.0) (2026-10-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* Add layered config to Forge which allows for `element_base` which is fully owned by the element and can include the element's native templates eliminating need for nested templates in such scenarios. (#658)
+
+### ⭐ New Features
+
+* Add layered config to Forge which allows for `element_base` which is fully owned by the element and can include the element's native templates eliminating need for nested templates in such scenarios. ([#658](https://github.com/Lint-Free-Technology/uix/issues/658)) ([22f8d93](https://github.com/Lint-Free-Technology/uix/commit/22f8d93f01318b0d2c590b39732d40e012d49a11))
+
 ### [8.4.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.0...v8.4.1-beta.1) (2026-10-09)
 
 
