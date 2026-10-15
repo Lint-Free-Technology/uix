@@ -159,11 +159,13 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const emitted = [];"
                 "global.CustomEvent = class { constructor(type, init) { this.type = type; Object.assign(this, init); } };"
                 "global.window = { uixCoordinator: { foundries: {"
-                "  card_tile_base: { forge: { mold: 'card' }, element: { type: 'tile' } },"
+                "  card_tile_base: { forge: { mold: 'card' }, element: { type: 'tile', name: 'Foundry name' } },"
                 "  compatible: { foundry: 'card_tile_base' },"
                 "  wrong_type: { forge: { mold: 'card' }, element: { type: 'markdown' } },"
                 "  wrong_mold: { forge: { mold: 'badge' } },"
-                "  unconstrained: { forge: {}, element: {} }"
+                "  unconstrained: { forge: {}, element: {} },"
+                "  dynamic_type: { forge: { mold: 'card' }, element: { type: '{{ config.type }}' } },"
+                "  broken: { foundry: 'missing' }"
                 "} }, addEventListener() {}, removeEventListener() {} };"
                 "global.customElements = { get() {}, define() {} };"
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
@@ -185,6 +187,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "  if (name === './uix-forge') {"
                 "    const resolve = (config, foundries) => {"
                 "      const foundry = config.foundry ? foundries?.[config.foundry] : undefined;"
+                "      if (config.foundry && !foundry) throw new Error('Foundry not found');"
                 "      const base = foundry?.foundry ? resolve({ foundry: foundry.foundry }, foundries) : { forge: {}, element: {} };"
                 "      return { forge: { ...base.forge, ...foundry?.forge, ...config.forge }, element: { ...base.element, ...foundry?.element, ...config.element }, elementBase: config.element_base ?? {}, hasElementBase: Object.hasOwn(config, 'element_base') };"
                 "    };"
@@ -207,6 +210,12 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const pending = editor._pendingFoundry?.name;"
                 "editor._applyFoundry(editor._pendingFoundry, true);"
                 "const exportedFoundry = editor._exportFoundryConfig();"
+                "const emittedBeforeDynamic = emitted.length;"
+                "editor._selectFoundry({ detail: { value: 'dynamic_type' } });"
+                "const dynamicSelectionBlocked = emitted.length === emittedBeforeDynamic;"
+                "const brokenEditor = new moduleObj.exports.UixForgeEditor();"
+                "brokenEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'broken' });"
+                "const brokenFoundrySafe = brokenEditor._resolvedSelectedFoundryConfig() === undefined && brokenEditor._exportFoundryConfig().element && Object.keys(brokenEditor._exportFoundryConfig().element).length === 0;"
                 "const anchoredEditor = new moduleObj.exports.UixForgeEditor();"
                 "let anchoredConfig;"
                 "anchoredEditor._emit = (config) => { anchoredEditor._config = config; anchoredConfig = config; };"
@@ -220,7 +229,18 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "entityEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card', hidden: '{{ config.entity }}' } });"
                 "const usesGlobalForgeEntity = entityEditor._usesGlobalForgeEntity();"
                 "entityEditor._setGlobalForgeEntity({ detail: { value: 'light.kitchen' } });"
-                "process.stdout.write(JSON.stringify({ options, pending, emitted, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+                "const sparkEditor = new moduleObj.exports.UixForgeEditor();"
+                "let sparkUpdates = 0; sparkEditor.requestUpdate = () => sparkUpdates++; sparkEditor._sparkDraft = {}; sparkEditor._setSparkNull();"
+                "const previewEditor = new moduleObj.exports.UixForgeEditor();"
+                "previewEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile' }, element: { name: 'Original' } });"
+                "previewEditor._editingPath = ['name']; previewEditor._templateDraftValid = false; previewEditor._previewingTemplate = true; previewEditor._previewTemplateDraft();"
+                "const unanchoredEditor = new moduleObj.exports.UixForgeEditor();"
+                "let unanchoredEmits = 0; unanchoredEditor._emit = () => unanchoredEmits++; unanchoredEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { name: 'Local' } }); unanchoredEditor._toggleTemplatePath(['name']);"
+                "const disabledEditor = new moduleObj.exports.UixForgeEditor();"
+                "let disabledConfig; disabledEditor._emit = (config) => { disabledEditor._config = config; disabledConfig = config; };"
+                "disabledEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'compatible', element_base: { type: 'tile' }, element: { icon: 'mdi:one' }, element_disabled_paths: [['name']] });"
+                "disabledEditor._editingPath = ['icon']; disabledEditor._templateDraft = 'mdi:two'; disabledEditor._templateDraftValid = true; disabledEditor._templateDisabledPaths = [['name']]; disabledEditor._applyTemplateDraft(false);"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
             ),
             str(FORGE_EDITOR_TS),
         ],
@@ -235,14 +255,20 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
         "unconstrained": True,
         "wrong_mold": False,
         "wrong_type": False,
+        "dynamic_type": False,
     }
     assert [option["name"] for option in result["options"]] == [
         "card_tile_base",
         "compatible",
         "unconstrained",
         "wrong_type",
+        "dynamic_type",
         "wrong_mold",
     ]
+    assert result["options"][-2]["dynamicType"] is True
+    assert result["options"][-2]["selectable"] is False
+    assert result["dynamicSelectionBlocked"] is True
+    assert result["brokenFoundrySafe"] is True
     assert result["pending"] == "wrong_type"
     assert result["hasPicker"] is True
     assert result["hasRowRenderer"] is True
@@ -253,6 +279,11 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     assert result["hasFoundryInUseNotice"] is True
     assert result["hasWarningContinue"] is True
     assert result["usesGlobalForgeEntity"] is True
+    assert result["sparkUpdates"] == 1
+    assert result["sparkDraft"] is None
+    assert result["previewingAfterInvalidPreview"] is True
+    assert result["unanchoredEmits"] == 0
+    assert result["disabledPathsAfterLocalEdit"] == [["name"]]
     assert result["entityConfig"] == {
         "type": "custom:uix-forge",
         "forge": {"mold": "card", "hidden": "{{ config.entity }}"},
@@ -260,7 +291,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     }
     assert result["resolvedFoundry"] == {
         "forge": {"mold": "card"},
-        "element": {"type": "tile"},
+        "element": {"type": "tile", "name": "Foundry name"},
     }
     assert result["exportedFoundry"] == {
         "forge": {"mold": "card"},

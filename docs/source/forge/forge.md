@@ -50,6 +50,11 @@ matches that Native type. A mismatched mold is shown in red, disabled, and
 listed last; it cannot be selected. A type mismatch is shown in red and
 requires confirmation. Confirming it clears the local Native configuration
 before selecting the Foundry; Forge-owned Element values remain in place.
+Foundries with an invalid, missing, or cyclic inheritance chain are omitted so
+they cannot prevent the picker from showing healthy Foundries. A Foundry with
+a templated or otherwise dynamic `element.type` is valid in YAML-only Forge,
+but is disabled in this visual picker because it cannot safely provide a
+Native type anchor.
 
 After selecting a Foundry, the tab shows its resolved `forge` and `element`
 mapping in a read-only YAML editor below the picker. This includes inherited
@@ -57,9 +62,10 @@ named Foundries, but not global Foundries or the local card configuration. The
 code area is limited to 200px high while Home Assistant retains control of its
 toolbar, scrolling, and normal fullscreen expansion.
 
-When the selected Foundry has an `element.type`, the editor uses it as the
-Native type and locks type changes. Clear or replace the Foundry to choose a
-different Native type.
+When the selected Foundry has a concrete `element.type`, the editor uses it as
+the Native type and locks type changes. Clear or replace the Foundry to choose
+a different Native type. Dynamic types remain YAML-only and are never copied
+into the Native layer.
 
 The **Export** tab displays copy-only YAML that can be pasted into a Foundry.
 It resolves the selected named Foundry inheritance, then combines the Native
@@ -150,6 +156,10 @@ parent suppresses its subtree but preserves each child's saved state. Arrays
 and a template that produces a structural value are edited as a single
 replacement value. The wrapped element's top-level `type` is not available as
 a template because layered `element.type` is invalid.
+Enable/Disable becomes available after a Native element is selected; this
+prevents the visual editor from creating disabled paths before there is a
+Native source to suppress. Editing another template preserves valid disabled
+paths inherited from a selected Foundry or global overlay.
 
 Existing direct non-layered Card and Badge Forges show a **Convert to layered
 editor** action. Conversion moves only `element.type` to

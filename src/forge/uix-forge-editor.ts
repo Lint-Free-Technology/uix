@@ -27,6 +27,8 @@ type FoundryOption = {
   type?: string;
   moldCompatible: boolean;
   typeCompatible: boolean;
+  dynamicType: boolean;
+  selectable: boolean;
   compatible: boolean;
 };
 
@@ -61,6 +63,7 @@ const clone = (value: any): any => {
 
 const pathKey = (path: string[]) => JSON.stringify(path);
 const isMapping = (value: any): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
+const isConcreteElementType = (value: any): value is string => typeof value === "string" && !/[{%]|<<|>>/.test(value);
 const hasDisabledAncestor = (path: string[], disabled: UixForgeConfigPath[]) => disabled.some((candidate) => candidate.length < path.length && candidate.every((part, index) => part === path[index]));
 
 function hasPath(value: any, path: string[]): boolean {
@@ -287,35 +290,43 @@ export class UixForgeEditor extends LitElement {
     if (!isMapping(foundries)) return [];
     const nativeType = this._hasNativeElement() ? this._config?.element_base?.type : undefined;
     const mold = this._mold();
-    return Object.entries(foundries)
-      .filter((entry): entry is [string, Record<string, any>] => isMapping(entry[1]))
-      .map(([name]) => {
+    const options: FoundryOption[] = [];
+    for (const [name] of Object.entries(foundries).filter((entry): entry is [string, Record<string, any>] => isMapping(entry[1]))) {
+      try {
         const anchor = _resolveFoundryAnchor(name, foundries, (window as any).uixCoordinator?.ready);
         const foundryMold = anchor?.mold;
         const foundryType = anchor?.type;
+        const dynamicType = foundryType !== undefined && !isConcreteElementType(foundryType);
         const moldCompatible = !foundryMold || foundryMold === mold;
-        const typeCompatible = !nativeType || !foundryType || foundryType === nativeType;
-        return {
+        const typeCompatible = !dynamicType && (!nativeType || !foundryType || foundryType === nativeType);
+        options.push({
           name,
           mold: foundryMold,
           type: foundryType,
           moldCompatible,
           typeCompatible,
+          dynamicType,
+          selectable: moldCompatible && !dynamicType,
           compatible: moldCompatible && typeCompatible,
-        };
-      })
-      .sort((first, second) =>
-        Number(!first.moldCompatible) - Number(!second.moldCompatible) ||
-        Number(second.compatible) - Number(first.compatible) ||
-        first.name.localeCompare(second.name)
-      );
+        });
+      } catch {
+        // An unrelated invalid Foundry must not prevent healthy entries from
+        // being offered by this contextual picker.
+      }
+    }
+    const rank = (option: FoundryOption) => option.compatible ? 0 : option.selectable ? 1 : option.moldCompatible ? 2 : 3;
+    return options.sort((first, second) => rank(first) - rank(second) || first.name.localeCompare(second.name));
   }
 
   private _selectedFoundryType(): string | undefined {
     const foundryName = this._config?.foundry;
     const foundries = (window as any).uixCoordinator?.foundries;
     if (!foundryName || !isMapping(foundries)) return undefined;
-    return _resolveFoundryAnchor(foundryName, foundries, (window as any).uixCoordinator?.ready)?.type;
+    try {
+      return _resolveFoundryAnchor(foundryName, foundries, (window as any).uixCoordinator?.ready)?.type;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
@@ -329,13 +340,18 @@ export class UixForgeEditor extends LitElement {
     const foundries = coordinator?.foundries;
     if (!foundryName || !isMapping(foundries)) return undefined;
 
-    const resolved = _resolveFoundryConfig(
-      { foundry: foundryName },
-      foundries,
-      coordinator?.ready,
-      new Set(),
-      false,
-    );
+    let resolved;
+    try {
+      resolved = _resolveFoundryConfig(
+        { foundry: foundryName },
+        foundries,
+        coordinator?.ready,
+        new Set(),
+        false,
+      );
+    } catch {
+      return undefined;
+    }
     if (!resolved) return undefined;
 
     // Keep the inspection value a YAML object rather than exposing resolver
@@ -353,13 +369,21 @@ export class UixForgeEditor extends LitElement {
    */
   private _exportFoundryConfig(): Record<string, any> {
     const coordinator = (window as any).uixCoordinator;
-    const resolved = _resolveFoundryConfig(
-      this._config ?? {},
-      coordinator?.foundries,
-      coordinator?.ready,
-      new Set(),
-      false,
-    );
+    let resolved;
+    try {
+      resolved = _resolveFoundryConfig(
+        this._config ?? {},
+        coordinator?.foundries,
+        coordinator?.ready,
+        new Set(),
+        false,
+      );
+    } catch {
+      // Keep the editor usable while configuration YAML refers to a broken
+      // Foundry. The Foundry/runtime diagnostic remains the authority for
+      // fixing that reference.
+      resolved = undefined;
+    }
     if (!resolved) return { forge: clone(this._config?.forge ?? {}), element: {} };
 
     const base = isMapping(resolved.elementBase) ? resolved.elementBase : {};
@@ -371,6 +395,19 @@ export class UixForgeEditor extends LitElement {
         ? composeLayeredElementConfig(base, element, this._disabledPaths())
         : clone(element),
     };
+  }
+
+  private _resolvedOverlaySource(config: UixForgeConfig): Record<string, any> | undefined {
+    const coordinator = (window as any).uixCoordinator;
+    try {
+      const resolved = _resolveFoundryConfig(config, coordinator?.foundries, coordinator?.ready);
+      return isMapping(resolved?.element) ? resolved.element : undefined;
+    } catch {
+      // Keep existing disabled paths while a Foundry cannot be resolved. The
+      // runtime will surface the actual Foundry error rather than reactivating
+      // a previously disabled value during an unrelated local edit.
+      return undefined;
+    }
   }
 
   /**
@@ -395,13 +432,14 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _nativeTypeLocked(): boolean {
-    return typeof this._selectedFoundryType() === "string";
+    return isConcreteElementType(this._selectedFoundryType());
   }
 
   private _foundryCompatibilityText(foundry: FoundryOption): string {
     if (!foundry.moldCompatible) {
       return `Incompatible mold: ${foundry.mold ?? "none"}; requires ${this._mold() ?? "none"}`;
     }
+    if (foundry.dynamicType) return "Dynamic element type: use the YAML editor";
     if (!foundry.typeCompatible) return "Incompatible with selected native card";
     return "Compatible with selected native card";
   }
@@ -413,7 +451,7 @@ export class UixForgeEditor extends LitElement {
     id: foundry.name,
     primary: foundry.name,
     secondary: this._foundryCompatibilityText(foundry),
-    disabled: !foundry.moldCompatible,
+    disabled: !foundry.selectable,
     foundry,
   }));
 
@@ -421,7 +459,7 @@ export class UixForgeEditor extends LitElement {
     const foundry = item.foundry;
     if (!foundry) return html`<ha-combo-box-item><span slot="headline">${item.primary}</span></ha-combo-box-item>`;
     return html`
-      <ha-combo-box-item type="button" .disabled=${!foundry.moldCompatible}>
+      <ha-combo-box-item type="button" .disabled=${!foundry.selectable}>
         <span slot="headline">${foundry.name}</span>
         <span
           slot="supporting-text"
@@ -453,7 +491,7 @@ export class UixForgeEditor extends LitElement {
     }
     if (typeof name !== "string") return;
     const foundry = this._foundryOptions().find((option) => option.name === name);
-    if (!foundry || !foundry.moldCompatible || foundry.name === this._config?.foundry) return;
+    if (!foundry || !foundry.selectable || foundry.name === this._config?.foundry) return;
     if (foundry.compatible) {
       this._applyFoundry(foundry, false);
     } else {
@@ -470,7 +508,7 @@ export class UixForgeEditor extends LitElement {
       this._nativeGUIMode = true;
       this._nativeGUIModeAvailable = true;
     }
-    if (foundry.type) {
+    if (isConcreteElementType(foundry.type)) {
       next.element_base = {
         ...(isMapping(next.element_base) ? clone(next.element_base) : {}),
         type: foundry.type,
@@ -683,6 +721,10 @@ export class UixForgeEditor extends LitElement {
     this._sparkDraft = null;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
+    // The draft is intentionally non-reactive while the source editor owns
+    // it. Switching to the literal-null view therefore needs an explicit
+    // render even when the other reactive fields were already unchanged.
+    this.requestUpdate();
   }
 
   private _sparkEditorLabel(): string {
@@ -799,10 +841,12 @@ export class UixForgeEditor extends LitElement {
     // Preview deliberately activates the edited source. A disabled ancestor
     // suppresses the source too, so it must be omitted for this transient
     // preview along with the source's own disabled path.
+    const next = { ...this._config, element };
+    const resolvedOverlay = this._resolvedOverlaySource(next);
     const disabled = savedDisabled
       .filter((path) => !preview || !path.every((segment, index) => this._editingPath![index] === segment))
-      .filter((path) => hasPath(element, path));
-    const next = { ...this._config, element, element_disabled_paths: disabled };
+      .filter((path) => !resolvedOverlay || hasPath(resolvedOverlay, path));
+    next.element_disabled_paths = disabled;
     if (!disabled.length) delete next.element_disabled_paths;
     this._emit(next);
     return true;
@@ -826,8 +870,9 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _previewTemplateDraft(): void {
-    this._previewingTemplate = true;
-    if (!this._applyTemplateDraft(true)) this._previewingTemplate = false;
+    // Preserve an earlier successful preview if this later attempt is invalid;
+    // Cancel must still restore the pre-edit source in that case.
+    if (this._applyTemplateDraft(true)) this._previewingTemplate = true;
   }
 
   private _closeTemplateEditor(): void {
@@ -1003,7 +1048,7 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _toggleTemplatePath(path: string[]): void {
-    if (!this._config || hasDisabledAncestor(path, this._disabledPaths())) return;
+    if (!this._config || !this._hasNativeElement() || hasDisabledAncestor(path, this._disabledPaths())) return;
     const disabled = this._disabledPaths(); const index = disabled.findIndex((candidate) => pathKey(candidate) === pathKey(path));
     if (index >= 0) disabled.splice(index, 1); else disabled.push(path);
     const next = { ...this._config, element_disabled_paths: disabled };
@@ -1220,7 +1265,7 @@ export class UixForgeEditor extends LitElement {
           ><ha-icon icon="mdi:pencil"></ha-icon></ha-icon-button>
           <ha-icon-button
             .label=${`${row.exactDisabled ? "Enable" : "Disable"} ${row.path.join(".")}`}
-            .disabled=${row.parentDisabled}
+            .disabled=${row.parentDisabled || !this._hasNativeElement()}
             @click=${() => this._toggleTemplatePath(row.path)}
           ><ha-icon icon=${row.exactDisabled ? "mdi:toggle-switch-off-outline" : "mdi:toggle-switch"}></ha-icon></ha-icon-button>
           <ha-icon-button

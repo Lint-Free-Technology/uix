@@ -173,12 +173,18 @@ editor context and currently selected Native type:
   `badge` mold.
 - If Native has a type, a Foundry `element.type`, when present, must equal it.
 - A missing Foundry mold or type does not make it incompatible.
+- A templated or otherwise dynamic Foundry `element.type` is not a reliable
+  Native type anchor. It remains valid in YAML-only/non-layered Forge, but the
+  visual picker shows it disabled and directs the user to the YAML editor.
 
 Compatible options report **Compatible with selected native card**. Incompatible
 type options report **Incompatible with selected native card** in the error
 colour; compatible options use the success colour. A Foundry whose mold does
 not match reports its incompatible mold and required contextual mold, is
 disabled, and cannot be selected.
+Invalid, missing, or cyclic Foundries are omitted from the visual picker rather
+than preventing the remaining Foundries from rendering. Dynamic-type Foundries
+are also disabled, but remain visible with their YAML-only explanation.
 Compatible Foundries are listed first, then type-incompatible Foundries, then
 disabled mold-incompatible Foundries; each group is ordered alphabetically by
 Foundry name. The trailing metadata is two normal-weight `--ha-font-size-s`
@@ -191,11 +197,12 @@ Forge-owned `element`, `forge`, or disabled-path source. This leaves the Native
 selection unresolved for a later choice. The outer Forge runtime then applies
 normal Foundry merging.
 
-When a selected Foundry resolves to an `element.type`, the editor writes that
-same type to local `element_base.type` (preserving a compatible existing Native
-configuration). Native type selection is then locked: the type picker and
-**Change element type** action are unavailable until the Foundry is cleared or
-replaced by one without a type.
+When a selected Foundry resolves to a concrete `element.type`, the editor
+writes that same type to local `element_base.type` (preserving a compatible
+existing Native configuration). Native type selection is then locked: the type
+picker and **Change element type** action are unavailable until the Foundry is
+cleared or replaced by one without a type. Dynamic types are YAML-only and are
+never copied into `element_base` by the visual editor.
 
 Clearing the picker removes only the local `foundry` key. It preserves the
 local Native layer, Forge-owned element layer, and disabled paths, and cancels
@@ -380,6 +387,13 @@ tap_action                                             [Edit] [On]  [Remove]
   replacement node. Their complete YAML may be edited, but they have no
   independently enabled child entries.
 
+Enablement controls require a selected Native `element_base`, because a custom
+template can exist before there is a base path to suppress. Custom paths may
+still be added and edited in that state, but the visual editor must not write
+`element_disabled_paths` until Native source exists. When an edit or Preview
+does write disabled paths, it retains every path that still exists in the full
+resolved overlay, including inherited Foundry and global overlay values.
+
 The table greys an exact disabled row or a row disabled by its parent. It must
 distinguish a row's stored toggle state from its effective state under a
 disabled parent, and remain faithful to the layered configuration contract's
@@ -398,6 +412,9 @@ returns to the picker and table. YAML-invalid
 drafts remain editable and show Home Assistant's YAML feedback. Preview and
 Save & Exit validate the current YAML parse when pressed and, when invalid,
 show the error without applying configuration.
+If an earlier Preview succeeded and a later Preview is invalid, that later
+failure must not clear the preview state: **Cancel** still restores the
+pre-edit configuration.
 The YAML editor must retain its local text while typing; it must not serialize
 the parsed YAML back into the field after each keystroke.
 
