@@ -377,9 +377,12 @@ export function _resolveFoundryAnchor(
   };
 }
 
-function forgeStubConfig(mold: "card" | "badge"): UixForgeConfig {
+function forgeStubConfig(
+  mold: "card" | "badge",
+  customType: string = UIX_FORGE_TYPE
+): UixForgeConfig {
   return {
-    type: `custom:${UIX_FORGE_TYPE}`,
+    type: `custom:${customType}`,
     forge: { mold },
     // The visual editor may receive a native element or a Foundry next. Do not
     // persist a placeholder type: it would conflict with a Foundry's type
@@ -1570,7 +1573,7 @@ export class UixForge extends LitElement {
 
 class UixForgeBadgePickerStub extends UixForge {
   public static getStubConfig(): UixForgeConfig {
-    return forgeStubConfig("badge");
+    return forgeStubConfig("badge", "uix-forge-badge");
   }
 }
 

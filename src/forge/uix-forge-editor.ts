@@ -80,7 +80,7 @@ const clone = (value: any): any => {
 
 const pathKey = (path: string[]) => JSON.stringify(path);
 const isMapping = (value: any): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
-const isConcreteElementType = (value: any): value is string => typeof value === "string" && !/[{%]|<<|>>/.test(value);
+const isConcreteElementType = (value: any): value is string => typeof value === "string" && value.trim().length > 0 && !/[{%]|<<|>>/.test(value);
 const hasDisabledAncestor = (path: string[], disabled: UixForgeConfigPath[]) => disabled.some((candidate) => candidate.length < path.length && candidate.every((part, index) => part === path[index]));
 const isPathPrefix = (prefix: string[], path: string[]): boolean => prefix.length <= path.length && prefix.every((part, index) => part === path[index]);
 
@@ -280,7 +280,10 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _hasNativeElement(): boolean {
-    return isMapping(this._config?.element_base) && typeof this._config.element_base.type === "string";
+    // Home Assistant's Native editor needs an actual element definition. A
+    // templated type remains valid hand-authored YAML, but cannot safely be
+    // passed to a type-specific visual editor.
+    return isMapping(this._config?.element_base) && isConcreteElementType(this._config.element_base.type);
   }
 
   private _isDirectVisualConfig(): boolean {

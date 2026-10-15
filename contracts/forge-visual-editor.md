@@ -51,6 +51,10 @@ In particular:
   mode. The layered configuration contract defines the separate inherited
   Foundry type-anchor exception; selecting or editing Foundries is outside this
   visual editor's scope.
+- Native visual editing additionally requires that `element_base.type` is a
+  non-empty, concrete string. A templated or otherwise dynamic local type is
+  valid YAML source but remains on the outer YAML editor path; it is never sent
+  to Home Assistant's type-specific Native editor.
 - A template, scalar, array, or `null` in `element` replaces its target; an
   authored mapping merges recursively. Array entries are not independently
   addressable.
@@ -115,7 +119,7 @@ describe this copy → create Forge → paste-base workflow.
 
 `UixForge.getConfigElement()` supplies the Forge editor for a direct, local
 Card or Badge configuration, whether its Native type is selected or unresolved.
-The editor contains four
+The editor contains five
 transient ownership tabs:
 
 1. **Native** — an embedded Home Assistant element editor for

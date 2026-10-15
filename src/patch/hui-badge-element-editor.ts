@@ -45,7 +45,7 @@ class HuiBadgeElementEditorPatch extends LitElement {
    * Keep the containing Home Assistant editor from exposing a competing tab.
    */
   _handleTabChanged(_orig, event: CustomEvent, ...rest) {
-    if (this.value?.type === "custom:uix-forge" && ["visibility", "layout"].includes(event.detail?.name)) {
+    if (this._isForgeBadge() && ["visibility", "layout"].includes(event.detail?.name)) {
       event.stopPropagation();
       return;
     }
@@ -54,9 +54,13 @@ class HuiBadgeElementEditorPatch extends LitElement {
 
   updated(_orig, ...args) {
     _orig?.(...args);
-    const blockOuterTabs = this.value?.type === "custom:uix-forge";
+    const blockOuterTabs = this._isForgeBadge();
     this.renderRoot?.querySelectorAll<HTMLElement>("ha-tab-group-tab[panel=visibility], ha-tab-group-tab[panel=layout]")
       .forEach((tab) => tab.toggleAttribute("hidden", blockOuterTabs));
+  }
+
+  private _isForgeBadge(): boolean {
+    return this.value?.type === "custom:uix-forge" || this.value?.type === "custom:uix-forge-badge";
   }
 
   async getConfigElement(_orig, ...args) {
