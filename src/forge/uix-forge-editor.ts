@@ -135,6 +135,7 @@ export class UixForgeEditor extends LitElement {
   @state() private _tab: EditorTab = "native";
   @state() private _forgeValue: Record<string, any> = {};
   @state() private _forgeError?: string;
+  @state() private _uixStylingError?: { layer: "forge" | "native" | "element"; message: string };
   @state() private _forgeEditorMode: ForgeEditorMode = "ui";
   @state() private _forgeUiTab: ForgeUiTab = "general";
   @state() private _selectedSpark = 0;
@@ -224,6 +225,7 @@ export class UixForgeEditor extends LitElement {
     if (preservesLocalState) return;
     this._forgeValue = this._forgeSource();
     this._forgeError = this._templateError = undefined;
+    this._uixStylingError = undefined;
     this._forgeEditorMode = "ui";
     this._forgeUiTab = "general";
     this._selectedSpark = 0;
@@ -707,10 +709,10 @@ export class UixForgeEditor extends LitElement {
   private _setUixStyling(layer: "forge" | "native" | "element", event: CustomEvent): void {
     const { value, isValid, errorMsg } = event.detail ?? {};
     if (!isValid || !isMapping(value)) {
-      this._forgeError = errorMsg || "UIX styling must be a YAML mapping.";
+      this._uixStylingError = { layer, message: errorMsg || "UIX styling must be a YAML mapping." };
       return;
     }
-    this._forgeError = undefined;
+    if (this._uixStylingError?.layer === layer) this._uixStylingError = undefined;
     const source = this._uixSource(layer);
     source.uix = clone(value);
     if (layer === "forge") {
@@ -777,6 +779,9 @@ export class UixForgeEditor extends LitElement {
       this._sparkDraft = yaml;
       this._sparkDraftValid = true;
     } catch (error) {
+      // Keep the failed raw source in the controlled editor. Re-rendering an
+      // error must never replace what the user is in the process of fixing.
+      this._sparkDraft = source;
       this._sparkDraftValid = false;
       this._sparkDraftError = error instanceof Error ? error.message : String(error);
     }
@@ -959,9 +964,9 @@ export class UixForgeEditor extends LitElement {
 
   private _setTemplateCodeDraft(event: CustomEvent): void {
     const value = event.detail?.value?.source;
-    const validityChanged = this._templateDraftValid !== (typeof value === "string" && value.length > 0);
+    const validityChanged = this._templateDraftValid !== (typeof value === "string");
     this._templateDraft = value;
-    this._templateDraftValid = typeof value === "string" && value.length > 0;
+    this._templateDraftValid = typeof value === "string";
     // Code-mode button disabled state is the only live reactive affordance.
     if (validityChanged) this.requestUpdate();
   }
@@ -1775,6 +1780,9 @@ export class UixForgeEditor extends LitElement {
       <ha-alert class="help-alert" alert-type="info">
         UIX Styling here applies to ${appliesTo}. Do not include a <code>uix:</code> key.
       </ha-alert>
+      ${this._uixStylingError?.layer === layer ? html`
+        <ha-alert class="editor-alert" alert-type="error">${this._uixStylingError.message}</ha-alert>
+      ` : nothing}
       ${this._renderHelpAlert(
         "https://uix.lf.technology/forge/forge/#uix-styling",
         "Learn more about UIX styling",

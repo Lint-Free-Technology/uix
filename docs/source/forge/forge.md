@@ -171,7 +171,9 @@ choice: it creates an active `null` replacement, which clears the matching
 Native/base value. It does not mean “use the base value”; use **Disable** or
 **Remove** for that. A null value can later become a template source or object
 mapping without losing any source. Mappings and other typed configuration
-values continue to use the YAML editor. Disabling retains its source in `element` and writes its key path to
+values continue to use the YAML editor. An empty template source is a valid
+empty-string replacement; it is distinct from null and from removing the
+path. Disabling retains its source in `element` and writes its key path to
 `element_disabled_paths`; it is different from removing the value. A disabled
 parent suppresses its subtree but preserves each child's saved state. Arrays
 and a template that produces a structural value are edited as a single

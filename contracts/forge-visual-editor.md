@@ -320,7 +320,8 @@ Every **UIX styling** panel provides a mapping-only `ha-yaml-editor`, followed
 by a clear reminder that the field is the *contents* of that mapping and must
 not contain another `uix:` key. The Native tab's panel edits
 `element_base.uix`, the Element tab's panel edits `element.uix`, and the
-General panel edits `forge.uix`.
+General panel edits `forge.uix`. A non-mapping or invalid YAML diagnostic is
+rendered beside the affected panel; it is not confined to the Forge tab.
 
 Each visual Forge pane and UIX styling panel ends with a non-dismissible information help alert.
 Only those documentation-link alerts use a question-mark icon rather than Home
@@ -443,6 +444,8 @@ failure must not clear the preview state: **Cancel** still restores the
 pre-edit configuration.
 The YAML editor must retain its local text while typing; it must not serialize
 the parsed YAML back into the field after each keystroke.
+This also applies to scalar Spark code input: a failed YAML parse retains the
+raw invalid text so the user can correct it.
 
 An individual string template value uses an `ha-form` field with Home
 Assistant's `template` selector, rather than a YAML editor. This accepts a bare
@@ -454,7 +457,9 @@ mapping. It first warns that it will discard the local scalar draft, and only
 an explicit confirmation replaces that draft with an empty mapping. It never
 attempts to parse or reinterpret scalar source as YAML.
 
-`null` is a separate explicit source kind, never an empty template source. The
+`null` is a separate explicit source kind, never an empty template source. An
+empty string remains a valid scalar replacement and is distinct from both
+`null` and removing the path. The
 source and YAML editor toolbars offer **Set to null**, which warns before
 discarding the current local draft. A literal-null view identifies the active
 replacement and offers **Edit as template** and **Convert to object
