@@ -180,6 +180,9 @@ editor context and currently selected Native type:
 - A templated or otherwise dynamic Foundry `element.type` is not a reliable
   Native type anchor. It remains valid in YAML-only/non-layered Forge, but the
   visual picker shows it disabled and directs the user to the YAML editor.
+- A Foundry that declares a non-string `element.type` is invalid. The visual
+  picker displays it as unavailable and directs the user to the YAML editor;
+  it must never treat that declaration as an unconstrained missing type.
 - A Foundry-owned `element_base` is valid runtime source, including native
   templates, but is YAML-only in the visual editor. The picker does not select
   it and a configuration inheriting one remains in YAML until its Native source
@@ -287,7 +290,7 @@ context-locked mold and is not editable in either mode.
 1. **General** begins with the current context-locked mold, then provides an
    `ha-form` for `hidden` (template selector) and `grid_options` (object
    selector). A collapsed **Control** expansion panel contains `show_error`,
-   `template_nesting`, and `delayed_hass`. A second collapsed **UIX styling**
+   `template_nesting`, and boolean `delayed_hass`. A second collapsed **UIX styling**
    panel edits the contents of `forge.uix` as a mapping.
 2. **Macros & billets** provides separate mapping-only `ha-yaml-editor`
    controls for `macros` and `billets`.

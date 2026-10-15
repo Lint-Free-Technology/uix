@@ -54,7 +54,8 @@ Foundries with an invalid, missing, or cyclic inheritance chain are omitted so
 they cannot prevent the picker from showing healthy Foundries. A Foundry with
 a templated or otherwise dynamic `element.type` is valid in YAML-only Forge,
 but is disabled in this visual picker because it cannot safely provide a
-Native type anchor.
+Native type anchor. A Foundry which declares a non-string `element.type` is
+also disabled rather than being treated as though it had no type.
 
 A Foundry may also include `element_base` for native, pass-through source such
 as templates evaluated by the wrapped element. This remains YAML-only in the
@@ -94,7 +95,7 @@ three tabs:
 
 - **General**, beginning with the context-locked mold, for `hidden`,
   and `grid_options`. Its collapsed **Control** section contains `show_error`,
-  `template_nesting`, and `delayed_hass`. Its separate collapsed **UIX
+  `template_nesting`, and boolean `delayed_hass`. Its separate collapsed **UIX
   styling** section edits the contents of `forge.uix`.
 - **Macros & billets** for the two mapping values.
 - **Sparks**, where the top picker adds a registered Spark and each Spark has

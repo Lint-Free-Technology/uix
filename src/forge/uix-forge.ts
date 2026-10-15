@@ -361,7 +361,7 @@ export function _resolveFoundryAnchor(
   foundryName: string,
   foundries?: Record<string, any>,
   ready = true
-): { mold?: string; type?: string; hasFoundryElementBase?: boolean } | null {
+): { mold?: string; type?: string; hasInvalidElementType?: boolean; hasFoundryElementBase?: boolean } | null {
   const resolved = _resolveFoundryConfig(
     { foundry: foundryName },
     foundries,
@@ -370,9 +370,13 @@ export function _resolveFoundryAnchor(
     false
   );
   if (resolved === null) return null;
+  const hasElementType = _isPlainObject(resolved.element)
+    && Object.prototype.hasOwnProperty.call(resolved.element, "type");
+  const elementType = hasElementType ? resolved.element.type : undefined;
   return {
     mold: typeof resolved.forge?.mold === "string" ? resolved.forge.mold : undefined,
-    type: typeof resolved.element?.type === "string" ? resolved.element.type : undefined,
+    type: typeof elementType === "string" ? elementType : undefined,
+    hasInvalidElementType: hasElementType && typeof elementType !== "string" ? true : undefined,
     hasFoundryElementBase: resolved.hasElementBase || undefined,
   };
 }
@@ -750,11 +754,14 @@ export class UixForge extends LitElement {
     if (resolvedForge.template_nesting && resolvedForge.template_nesting.length !== 4) {
       throw new Error("uix-forge: forge template_nesting must be four characters");
     }
+    if (resolvedForge.delayed_hass !== undefined && typeof resolvedForge.delayed_hass !== "boolean") {
+      throw new Error("uix-forge: forge delayed_hass must be a boolean");
+    }
     this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
     this._macros = resolvedForge.macros;
     this._billets = resolvedForge.billets;
     this._showError = resolvedForge.show_error || false;
-    this._delayedHass = resolvedForge.delayed_hass || false;
+    this._delayedHass = resolvedForge.delayed_hass === true;
 
     this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
     this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;

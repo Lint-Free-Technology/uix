@@ -136,8 +136,9 @@ def test_foundry_sparks_not_duplicated() -> None:
                 "let foundryDisabledPathsError;"
                 "try { _resolveFoundryConfig({ foundry: 'invalid' }, { invalid: { element_disabled_paths: [['title']] } }); } catch (err) { foundryDisabledPathsError = err.message; }"
                 "const foundryAnchor = _resolveFoundryAnchor('inherited_tile', foundries);"
+                "const invalidFoundryAnchor = _resolveFoundryAnchor('invalid_type', { invalid_type: { element: { type: null } } });"
                 "const badgeStubUsesBadgeType = source.includes('return forgeStubConfig(\"badge\", \"uix-forge-badge\");');"
-                "process.stdout.write(JSON.stringify({ resolved, stub, preparedOverlay, foundryNativeBase, globalNativeBase, foundryDisabledPathsError, foundryAnchor, badgeStubUsesBadgeType }));"
+                "process.stdout.write(JSON.stringify({ resolved, stub, preparedOverlay, foundryNativeBase, globalNativeBase, foundryDisabledPathsError, foundryAnchor, invalidFoundryAnchor, badgeStubUsesBadgeType }));"
             ),
             str(FORGE_TS),
         ],
@@ -172,6 +173,7 @@ def test_foundry_sparks_not_duplicated() -> None:
     assert result["globalNativeBase"]["hasElementBase"] is True
     assert result["foundryDisabledPathsError"] == "uix-forge: foundry 'invalid' cannot set element_disabled_paths"
     assert result["foundryAnchor"] == {"mold": "card", "type": "tile"}
+    assert result["invalidFoundryAnchor"] == {"hasInvalidElementType": True}
     assert result["badgeStubUsesBadgeType"] is True
 
 
@@ -192,6 +194,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "  wrong_mold: { forge: { mold: 'badge' } },"
                 "  unconstrained: { forge: {}, element: {} },"
                 "  dynamic_type: { forge: { mold: 'card' }, element: { type: '{{ config.type }}' } },"
+                "  invalid_type: { forge: { mold: 'card' }, element: { type: null } },"
                 "  foundry_native_base: { forge: { mold: 'card' }, element_base: { type: 'tile' } },"
                 "  broken: { foundry: 'missing' }"
                 "} }, addEventListener() {}, removeEventListener() {} };"
@@ -221,7 +224,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "    };"
                 "    return {"
                 "      _resolveFoundryConfig: resolve,"
-                "      _resolveFoundryAnchor: (foundryName, foundries) => { const resolved = resolve({ foundry: foundryName }, foundries); return { mold: resolved.forge.mold, type: resolved.element.type, hasFoundryElementBase: resolved.hasElementBase || undefined }; },"
+                "      _resolveFoundryAnchor: (foundryName, foundries) => { const resolved = resolve({ foundry: foundryName }, foundries); const hasType = Object.hasOwn(resolved.element, 'type'); return { mold: resolved.forge.mold, type: typeof resolved.element.type === 'string' ? resolved.element.type : undefined, hasInvalidElementType: hasType && typeof resolved.element.type !== 'string' || undefined, hasFoundryElementBase: resolved.hasElementBase || undefined }; },"
                 "      composeLayeredElementConfig: (base, element) => ({ ...base, ...element })"
                 "    };"
                 "  }"
@@ -241,6 +244,8 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const emittedBeforeDynamic = emitted.length;"
                 "editor._selectFoundry({ detail: { value: 'dynamic_type' } });"
                 "const dynamicSelectionBlocked = emitted.length === emittedBeforeDynamic;"
+                "editor._selectFoundry({ detail: { value: 'invalid_type' } });"
+                "const invalidSelectionBlocked = emitted.length === emittedBeforeDynamic;"
                 "const brokenEditor = new moduleObj.exports.UixForgeEditor();"
                 "brokenEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'broken' });"
                 "const brokenFoundrySafe = brokenEditor._resolvedSelectedFoundryConfig() === undefined && brokenEditor._exportFoundryConfig().element && Object.keys(brokenEditor._exportFoundryConfig().element).length === 0;"
@@ -283,7 +288,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const elementShortcutEditor = new moduleObj.exports.UixForgeEditor(); elementShortcutEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'tile', state_color: true } });"
                 "const dotPathEditor = new moduleObj.exports.UixForgeEditor(); let dotPathConfig; dotPathEditor._emit = (config) => { dotPathEditor._config = config; dotPathConfig = config; }; dotPathEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', variables: { 'room.label': 'Kitchen' } } });"
                 "const dotOption = dotPathEditor._templateOptions().find((option) => option.label === 'variables.room.label'); dotPathEditor._addTemplate({ detail: { value: dotOption.value } });"
-                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, tooltipOpen: tooltipEditor._config.forge.sparks[0].open, sparkMode: sparkModeEditor._forgeEditorMode, sparkModeError: sparkModeEditor._forgeError, finalSparkConfig: finalSparkEditor._config, invalidSparkDraft: invalidSparkEditor._sparkDraft, invalidSparkValid: invalidSparkEditor._sparkDraftValid, emptyTemplateValid: emptyTemplateEditor._templateDraftValid, stylingError: stylingErrorEditor._uixStylingError, cancelTemplateConfig: cancelTemplateEditor._config, descendantDisabledPaths: descendantCancelEditor._config.element_disabled_paths, globalAnchorInitiallyLocked, globalAnchorConvertible, globalAnchorError: globalAnchorEditor._pickerError, dynamicNativeVisual: dynamicNativeEditor._hasNativeElement(), dynamicNativeDirectVisual: dynamicNativeEditor._isDirectVisualConfig(), previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasFoundryTransitionValidation: source.includes('const transitionError = this._foundryTransitionError(next);'), hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, invalidSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, tooltipOpen: tooltipEditor._config.forge.sparks[0].open, sparkMode: sparkModeEditor._forgeEditorMode, sparkModeError: sparkModeEditor._forgeError, finalSparkConfig: finalSparkEditor._config, invalidSparkDraft: invalidSparkEditor._sparkDraft, invalidSparkValid: invalidSparkEditor._sparkDraftValid, emptyTemplateValid: emptyTemplateEditor._templateDraftValid, stylingError: stylingErrorEditor._uixStylingError, cancelTemplateConfig: cancelTemplateEditor._config, descendantDisabledPaths: descendantCancelEditor._config.element_disabled_paths, globalAnchorInitiallyLocked, globalAnchorConvertible, globalAnchorError: globalAnchorEditor._pickerError, dynamicNativeVisual: dynamicNativeEditor._hasNativeElement(), dynamicNativeDirectVisual: dynamicNativeEditor._isDirectVisualConfig(), previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasFoundryTransitionValidation: source.includes('const transitionError = this._foundryTransitionError(next);'), hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
             ),
             str(FORGE_EDITOR_TS),
         ],
@@ -299,6 +304,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
         "wrong_mold": False,
         "wrong_type": False,
         "dynamic_type": False,
+        "invalid_type": False,
         "foundry_native_base": False,
     }
     assert [option["name"] for option in result["options"]] == [
@@ -308,15 +314,20 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
         "wrong_type",
         "dynamic_type",
         "foundry_native_base",
+        "invalid_type",
         "wrong_mold",
     ]
     dynamic_option = next(option for option in result["options"] if option["name"] == "dynamic_type")
+    invalid_type_option = next(option for option in result["options"] if option["name"] == "invalid_type")
     foundry_native_base_option = next(option for option in result["options"] if option["name"] == "foundry_native_base")
     assert dynamic_option["dynamicType"] is True
     assert dynamic_option["selectable"] is False
+    assert invalid_type_option["invalidType"] is True
+    assert invalid_type_option["selectable"] is False
     assert foundry_native_base_option["foundryElementBase"] is True
     assert foundry_native_base_option["selectable"] is False
     assert result["dynamicSelectionBlocked"] is True
+    assert result["invalidSelectionBlocked"] is True
     assert result["brokenFoundrySafe"] is True
     assert result["pending"] == "wrong_type"
     assert result["hasPicker"] is True
@@ -653,6 +664,11 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "unresolvedBadge.refreshForge = () => {};"
                 "let unresolvedBadgeError = null;"
                 "try { unresolvedBadge.setConfig({ type: 'custom:uix-forge', forge: { mold: 'badge' } }); } catch (err) { unresolvedBadgeError = err.message; }"
+                "const invalidDelayedHass = new forgeModule.UixForge();"
+                "invalidDelayedHass.forgeElement = () => {};"
+                "invalidDelayedHass.refreshForge = () => {};"
+                "let invalidDelayedHassError = null;"
+                "try { invalidDelayedHass.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card', delayed_hass: 'false' }, element: { type: 'markdown' } }); } catch (err) { invalidDelayedHassError = err.message; }"
                 "forge.setConfig({"
                 "  type: 'custom:uix-forge',"
                 "  entity: 'light.kitchen',"
@@ -661,7 +677,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  element: { title: '{{ config.entity }}' }"
                 "});"
                 "setTimeout(() => {"
-                "  const result = { config: forge.forgedElementConfig, unresolvedBadgeError };"
+                "  const result = { config: forge.forgedElementConfig, unresolvedBadgeError, invalidDelayedHassError };"
                 "  forge._layeredElementOverlaySource = [];"
                 "  try { forge._validateLayeredConfig({ type: 'markdown' }, true); }"
                 "  catch (err) { result.overlayError = err.message; }"
@@ -698,6 +714,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
         "title": "light.kitchen",
     }
     assert result["unresolvedBadgeError"] is None
+    assert result["invalidDelayedHassError"] == "uix-forge: forge delayed_hass must be a boolean"
     assert result["overlayError"] == "uix-forge: layered element must be a mapping"
     assert result["staleBindings"] == 0
     assert result["refreshError"] == (

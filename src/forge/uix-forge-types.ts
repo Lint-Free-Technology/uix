@@ -112,7 +112,7 @@ export interface UixForgeForge {
     template_nesting?: string;
     sparks?: Record<string, any>[];
     uix?: UixConfig;
-    delayed_hass?: boolean | string;
+    delayed_hass?: boolean;
     max_width?: string;
 }
 

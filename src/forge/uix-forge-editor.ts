@@ -28,6 +28,7 @@ type FoundryOption = {
   moldCompatible: boolean;
   typeCompatible: boolean;
   dynamicType: boolean;
+  invalidType: boolean;
   foundryElementBase: boolean;
   selectable: boolean;
   compatible: boolean;
@@ -350,10 +351,11 @@ export class UixForgeEditor extends LitElement {
         const anchor = _resolveFoundryAnchor(name, foundries, (window as any).uixCoordinator?.ready);
         const foundryMold = anchor?.mold;
         const foundryType = anchor?.type;
+        const invalidType = anchor?.hasInvalidElementType === true;
         const dynamicType = foundryType !== undefined && !isConcreteElementType(foundryType);
         const foundryElementBase = anchor?.hasFoundryElementBase === true;
         const moldCompatible = !foundryMold || foundryMold === mold;
-        const typeCompatible = !dynamicType && (!nativeType || !foundryType || foundryType === nativeType);
+        const typeCompatible = !invalidType && !dynamicType && (!nativeType || !foundryType || foundryType === nativeType);
         options.push({
           name,
           mold: foundryMold,
@@ -361,8 +363,9 @@ export class UixForgeEditor extends LitElement {
           moldCompatible,
           typeCompatible,
           dynamicType,
+          invalidType,
           foundryElementBase,
-          selectable: moldCompatible && !dynamicType && !foundryElementBase,
+          selectable: moldCompatible && !invalidType && !dynamicType && !foundryElementBase,
           compatible: moldCompatible && typeCompatible && !foundryElementBase,
         });
       } catch {
@@ -548,6 +551,7 @@ export class UixForgeEditor extends LitElement {
       return `Incompatible mold: ${foundry.mold ?? "none"}; requires ${this._mold() ?? "none"}`;
     }
     if (foundry.foundryElementBase) return "Foundry Native base: use the YAML editor";
+    if (foundry.invalidType) return "Invalid element type: use the YAML editor";
     if (foundry.dynamicType) return "Dynamic element type: use the YAML editor";
     if (!foundry.typeCompatible) return "Incompatible with selected native card";
     return "Compatible with selected native card";
@@ -582,7 +586,7 @@ export class UixForgeEditor extends LitElement {
           style="font-size: var(--ha-font-size-s); font-weight: var(--ha-font-weight-normal)"
         >
           <div>mold: ${foundry.mold ?? "none"}</div>
-          <div>type: ${foundry.type ?? "none"}</div>
+          <div>type: ${foundry.invalidType ? "invalid" : foundry.type ?? "none"}</div>
         </div>
       </ha-combo-box-item>
     `;
