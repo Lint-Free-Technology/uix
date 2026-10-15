@@ -33,6 +33,8 @@ type FoundryOption = {
 };
 
 const VISUAL_MOLDS: readonly VisualMold[] = ["card", "badge"];
+const TEMPLATE_PICKER_PATH_PREFIX = "__uix_path__:";
+const NON_LAYERED_SHORTCUT_KEYS = ["entities", "color", "state_color"] as const;
 const TEMPLATE_FORM_SCHEMA = [{
   name: "source",
   required: false,
@@ -270,7 +272,13 @@ export class UixForgeEditor extends LitElement {
   private _isConvertible(): boolean {
     if (!this._config || this._config.foundry || this._config.element_base || !this._mold()) return false;
     const element = this._config.element;
-    return isMapping(element) && typeof element.type === "string" && !/[{%]|<<|>>/.test(element.type) && !this._config.element_disabled_paths;
+    const hasLegacyShortcut = NON_LAYERED_SHORTCUT_KEYS.some((key) => this._config![key] !== undefined)
+      || isMapping(element) && element.state_color !== undefined;
+    return isMapping(element)
+      && typeof element.type === "string"
+      && !/[{%]|<<|>>/.test(element.type)
+      && !this._config.element_disabled_paths
+      && !hasLegacyShortcut;
   }
 
   private _forgeSource(): Record<string, any> {
@@ -356,10 +364,12 @@ export class UixForgeEditor extends LitElement {
 
     // Keep the inspection value a YAML object rather than exposing resolver
     // internals such as `elementBase` and type-anchor bookkeeping.
-    return {
+    const config: Record<string, any> = {
       forge: clone(resolved.forge ?? {}),
       element: clone(resolved.element ?? {}),
     };
+    if (resolved.hasElementBase && isMapping(resolved.elementBase)) config.element_base = clone(resolved.elementBase);
+    return config;
   }
 
   /**
@@ -1185,12 +1195,26 @@ export class UixForgeEditor extends LitElement {
   private _templateOptions() {
     return this._nativeTemplatePaths(this._config?.element_base)
       .filter(({ path }) => path[0] !== "type" && path[0] !== "uix" && this._pathCanBeAdded(path))
-      .map(({ path }) => ({ value: path.join("."), label: path.join(".") }));
+      // Preserve literal dots in Native mapping keys. The picker value is an
+      // opaque reversible path while the familiar dotted label remains purely
+      // presentational; custom input continues to use dotted paths below.
+      .map(({ path }) => ({ value: `${TEMPLATE_PICKER_PATH_PREFIX}${JSON.stringify(path)}`, label: path.join(".") }));
   }
 
   private _templatePath(value: unknown): string[] | undefined {
     if (typeof value !== "string") return undefined;
-    const path = value.split(".").map((part) => part.trim());
+    let path: string[];
+    if (value.startsWith(TEMPLATE_PICKER_PATH_PREFIX)) {
+      try {
+        const encoded = JSON.parse(value.slice(TEMPLATE_PICKER_PATH_PREFIX.length));
+        if (!Array.isArray(encoded) || encoded.some((part) => typeof part !== "string")) return undefined;
+        path = encoded;
+      } catch {
+        return undefined;
+      }
+    } else {
+      path = value.split(".").map((part) => part.trim());
+    }
     if (!path.length || path.some((part) => !part) || path[0] === "type" || path[0] === "uix") return undefined;
     return path;
   }

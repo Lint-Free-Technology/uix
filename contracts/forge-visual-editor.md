@@ -508,6 +508,11 @@ Conversion is available only when all of the following are true:
 - the source has no unsupported combination that the layered configuration
   contract rejects.
 
+Top-level non-layered compatibility shortcuts (`entities`, `color`, and
+`state_color`) and an `element.state_color` migration are not convertible:
+they are applied only in non-layered runtime mode. They remain YAML-authored
+until an explicit migration can preserve their behavior.
+
 Blank Forge elements, dynamic/template element types, unsupported molds, and
 Foundry-backed configurations stay on the YAML path. A Foundry must never be
 flattened into local configuration merely to open the editor. Shared Foundry
