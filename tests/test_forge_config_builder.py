@@ -10,6 +10,8 @@ FORGE_TYPES_TS = REPO_ROOT / "src" / "forge" / "uix-forge-types.ts"
 FORGE_TS = REPO_ROOT / "src" / "forge" / "uix-forge.ts"
 FORGE_EDITOR_TS = REPO_ROOT / "src" / "forge" / "uix-forge-editor.ts"
 MAP_SPARK_TS = REPO_ROOT / "src" / "forge" / "sparks" / "uix-spark-map.ts"
+CARD_EDITOR_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-card-element-editor.ts"
+BADGE_EDITOR_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-badge-element-editor.ts"
 
 
 def test_map_spark_editor_options_exclude_map_card_fields() -> None:
@@ -17,6 +19,46 @@ def test_map_spark_editor_options_exclude_map_card_fields() -> None:
     options = source.split("static readonly editorOptions = ", 1)[1].split(";", 1)[0]
     assert '"show_all"' not in options
     assert '"entities"' not in options
+
+
+def test_native_editors_detect_forge_editor_embedding() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const compile = (path) => {"
+                "  const source = fs.readFileSync(path, 'utf8');"
+                "  const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } });"
+                "  let patched; const moduleObj = { exports: {} };"
+                "  const customRequire = (name) => {"
+                "    if (name === 'lit') return { LitElement: class {} };"
+                "    if (name === '../helpers/patch_function') return { patch_element: () => (ctor) => { patched = ctor; }, patch_object: () => {} };"
+                "    throw new Error(`Unexpected import: ${name}`);"
+                "  };"
+                "  new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "  return patched;"
+                "};"
+                "const CardPatch = compile(process.argv[1]); const BadgePatch = compile(process.argv[2]);"
+                "const embedded = (Patch, method) => { const editor = new Patch(); editor.value = { type: 'tile' }; editor.getRootNode = () => ({ host: { localName: 'uix-forge-editor' } }); return editor[method](); };"
+                "const normal = (Patch, method) => { const editor = new Patch(); editor.value = { type: 'tile' }; editor.getRootNode = () => ({ host: { localName: 'hui-dialog-edit-card' } }); return editor[method](); };"
+                "process.stdout.write(JSON.stringify({ cardEmbedded: embedded(CardPatch, '_isForgeCard'), cardNormal: normal(CardPatch, '_isForgeCard'), badgeEmbedded: embedded(BadgePatch, '_isForgeBadge'), badgeNormal: normal(BadgePatch, '_isForgeBadge') }));"
+            ),
+            str(CARD_EDITOR_PATCH_TS),
+            str(BADGE_EDITOR_PATCH_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {
+        "cardEmbedded": True,
+        "cardNormal": False,
+        "badgeEmbedded": True,
+        "badgeNormal": False,
+    }
 
 
 def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
@@ -219,8 +261,9 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "    const resolve = (config, foundries) => {"
                 "      const foundry = config.foundry ? foundries?.[config.foundry] : undefined;"
                 "      if (config.foundry && !foundry) throw new Error('Foundry not found');"
-                "      const base = foundry?.foundry ? resolve({ foundry: foundry.foundry }, foundries) : { forge: {}, element: {}, elementBase: {}, hasElementBase: false };"
-                "      return { forge: { ...base.forge, ...foundry?.forge, ...config.forge }, element: { ...base.element, ...foundry?.element, ...config.element }, elementBase: { ...base.elementBase, ...foundry?.element_base, ...config.element_base }, hasElementBase: base.hasElementBase || Object.hasOwn(foundry ?? {}, 'element_base') || Object.hasOwn(config, 'element_base') };"
+                "      const base = foundry?.foundry ? resolve({ foundry: foundry.foundry }, foundries) : { forge: {}, element: {}, elementBase: {}, hasElementBase: false, hasFoundryElementType: false, foundryElementType: undefined };"
+                "      const foundryHasType = Object.hasOwn(foundry?.element ?? {}, 'type');"
+                "      return { forge: { ...base.forge, ...foundry?.forge, ...config.forge }, element: { ...base.element, ...foundry?.element, ...config.element }, elementBase: { ...base.elementBase, ...foundry?.element_base, ...config.element_base }, hasElementBase: base.hasElementBase || Object.hasOwn(foundry ?? {}, 'element_base') || Object.hasOwn(config, 'element_base'), hasFoundryElementType: base.hasFoundryElementType || foundryHasType, foundryElementType: foundryHasType ? foundry.element.type : base.foundryElementType };"
                 "    };"
                 "    return {"
                 "      _resolveFoundryConfig: resolve,"
@@ -273,7 +316,12 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "previewEditor._editingPath = ['name']; previewEditor._templateDraftValid = false; previewEditor._previewingTemplate = true; previewEditor._previewTemplateDraft();"
                 "const cancelTemplateEditor = new moduleObj.exports.UixForgeEditor(); cancelTemplateEditor._emit = (config) => { cancelTemplateEditor._config = config; }; cancelTemplateEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', entity: 'light.old' }, element: { name: 'Original' } }); cancelTemplateEditor._openTemplateEditor(['name']); cancelTemplateEditor._templateDraft = 'Preview'; cancelTemplateEditor._previewTemplateDraft(); cancelTemplateEditor._emit({ ...cancelTemplateEditor._config, element_base: { type: 'tile', entity: 'light.new' } }); cancelTemplateEditor._cancelTemplateEditor();"
                 "const descendantCancelEditor = new moduleObj.exports.UixForgeEditor(); descendantCancelEditor._emit = (config) => { descendantCancelEditor._config = config; }; descendantCancelEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile' }, element: { tap_action: { action: 'navigate', navigation_path: '/old' } }, element_disabled_paths: [['tap_action', 'navigation_path']] }); descendantCancelEditor._openTemplateEditor(['tap_action']); descendantCancelEditor._templateDraft = null; descendantCancelEditor._previewTemplateDraft(); descendantCancelEditor._cancelTemplateEditor();"
-                "const globalAnchorEditor = new moduleObj.exports.UixForgeEditor(); globalAnchorEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'markdown' } }); globalAnchorEditor._resolvedFoundryElementType = () => 'tile'; const globalAnchorInitiallyLocked = globalAnchorEditor._nativeTypeLocked(); const globalAnchorConvertible = globalAnchorEditor._isConvertible(); globalAnchorEditor._stageNativeCandidate({ type: 'markdown' });"
+                "const globalAnchorEditor = new moduleObj.exports.UixForgeEditor(); globalAnchorEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'markdown' } }); globalAnchorEditor._resolvedFoundryElementAnchor = () => ({ hasType: true, type: 'tile' }); const globalAnchorInitiallyLocked = globalAnchorEditor._nativeTypeLocked(); const globalAnchorConvertible = globalAnchorEditor._isConvertible(); globalAnchorEditor._stageNativeCandidate({ type: 'markdown' });"
+                "const malformedElementEditor = new moduleObj.exports.UixForgeEditor(); malformedElementEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: null } });"
+                "const malformedLayeredEditor = new moduleObj.exports.UixForgeEditor(); malformedLayeredEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile' }, element: { type: null } });"
+                "const invalidFoundryEditor = new moduleObj.exports.UixForgeEditor(); invalidFoundryEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'invalid_type', element_base: { type: 'tile' } });"
+                "const dynamicFoundryEditor = new moduleObj.exports.UixForgeEditor(); dynamicFoundryEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'dynamic_type', element_base: { type: 'tile' } });"
+                "const mismatchedFoundryEditor = new moduleObj.exports.UixForgeEditor(); mismatchedFoundryEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'card_tile_base', element_base: { type: 'markdown' } });"
                 "const dynamicNativeEditor = new moduleObj.exports.UixForgeEditor(); dynamicNativeEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: '{{ config.card_type }}' } });"
                 "const emptyTemplateEditor = new moduleObj.exports.UixForgeEditor(); emptyTemplateEditor._templateDraftValid = true; emptyTemplateEditor._setTemplateCodeDraft({ detail: { value: { source: '' } } });"
                 "const stylingErrorEditor = new moduleObj.exports.UixForgeEditor(); stylingErrorEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile' } }); stylingErrorEditor._setUixStyling('native', { detail: { value: [], isValid: true } });"
@@ -288,7 +336,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const elementShortcutEditor = new moduleObj.exports.UixForgeEditor(); elementShortcutEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'tile', state_color: true } });"
                 "const dotPathEditor = new moduleObj.exports.UixForgeEditor(); let dotPathConfig; dotPathEditor._emit = (config) => { dotPathEditor._config = config; dotPathConfig = config; }; dotPathEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', variables: { 'room.label': 'Kitchen' } } });"
                 "const dotOption = dotPathEditor._templateOptions().find((option) => option.label === 'variables.room.label'); dotPathEditor._addTemplate({ detail: { value: dotOption.value } });"
-                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, invalidSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, tooltipOpen: tooltipEditor._config.forge.sparks[0].open, sparkMode: sparkModeEditor._forgeEditorMode, sparkModeError: sparkModeEditor._forgeError, finalSparkConfig: finalSparkEditor._config, invalidSparkDraft: invalidSparkEditor._sparkDraft, invalidSparkValid: invalidSparkEditor._sparkDraftValid, emptyTemplateValid: emptyTemplateEditor._templateDraftValid, stylingError: stylingErrorEditor._uixStylingError, cancelTemplateConfig: cancelTemplateEditor._config, descendantDisabledPaths: descendantCancelEditor._config.element_disabled_paths, globalAnchorInitiallyLocked, globalAnchorConvertible, globalAnchorError: globalAnchorEditor._pickerError, dynamicNativeVisual: dynamicNativeEditor._hasNativeElement(), dynamicNativeDirectVisual: dynamicNativeEditor._isDirectVisualConfig(), previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasFoundryTransitionValidation: source.includes('const transitionError = this._foundryTransitionError(next);'), hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, invalidSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, tooltipOpen: tooltipEditor._config.forge.sparks[0].open, sparkMode: sparkModeEditor._forgeEditorMode, sparkModeError: sparkModeEditor._forgeError, finalSparkConfig: finalSparkEditor._config, invalidSparkDraft: invalidSparkEditor._sparkDraft, invalidSparkValid: invalidSparkEditor._sparkDraftValid, emptyTemplateValid: emptyTemplateEditor._templateDraftValid, stylingError: stylingErrorEditor._uixStylingError, cancelTemplateConfig: cancelTemplateEditor._config, descendantDisabledPaths: descendantCancelEditor._config.element_disabled_paths, globalAnchorInitiallyLocked, globalAnchorConvertible, globalAnchorError: globalAnchorEditor._pickerError, malformedElementVisual: malformedElementEditor._isDirectVisualConfig(), malformedLayeredVisual: malformedLayeredEditor._isDirectVisualConfig(), invalidFoundryVisual: invalidFoundryEditor._isDirectVisualConfig(), dynamicFoundryVisual: dynamicFoundryEditor._isDirectVisualConfig(), mismatchedFoundryVisual: mismatchedFoundryEditor._isDirectVisualConfig(), dynamicNativeVisual: dynamicNativeEditor._hasNativeElement(), dynamicNativeDirectVisual: dynamicNativeEditor._isDirectVisualConfig(), previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasFoundryTransitionValidation: source.includes('const transitionError = this._foundryTransitionError(next);'), hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
             ),
             str(FORGE_EDITOR_TS),
         ],
@@ -355,6 +403,11 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     assert result["globalAnchorInitiallyLocked"] is False
     assert result["globalAnchorConvertible"] is False
     assert "incompatible" in result["globalAnchorError"]
+    assert result["malformedElementVisual"] is False
+    assert result["malformedLayeredVisual"] is False
+    assert result["invalidFoundryVisual"] is False
+    assert result["dynamicFoundryVisual"] is False
+    assert result["mismatchedFoundryVisual"] is False
     assert result["dynamicNativeVisual"] is False
     assert result["dynamicNativeDirectVisual"] is False
     assert result["hasFoundryTransitionValidation"] is True

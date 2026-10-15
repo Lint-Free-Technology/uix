@@ -70,7 +70,7 @@ class HuiCardElementEditorPatch extends LitElement {
    * own tabs for those same outer values.
    */
   renderConfigElement(_orig, ...args) {
-    if (this.value?.type !== "custom:uix-forge") return _orig?.(...args);
+    if (!this._isForgeCard()) return _orig?.(...args);
 
     // Shadow Lit's reactive accessors for the duration of the synchronous
     // render. Assigning the public properties directly would schedule another
@@ -95,6 +95,11 @@ class HuiCardElementEditorPatch extends LitElement {
       if (sectionConfig) Object.defineProperty(this, "sectionConfig", sectionConfig);
       else delete (this as any).sectionConfig;
     }
+  }
+
+  private _isForgeCard(): boolean {
+    if (this.value?.type === "custom:uix-forge") return true;
+    return (this.getRootNode() as ShadowRoot).host?.localName === "uix-forge-editor";
   }
 
   async getConfigElement(_orig, ...args) {

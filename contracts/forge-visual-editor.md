@@ -83,6 +83,14 @@ This unresolved state is valid for both supported picker contexts. A Card Forge
 uses its existing transient blank-card preview; a Badge Forge has no preview
 until an element type resolves. Neither preview fallback is persisted.
 
+A direct `element` mapping with an own `type` key is not unresolved, even when
+that value is `null`, `false`, or otherwise malformed; it remains YAML-only.
+Likewise, an existing configuration with a selected or global Foundry type
+anchor that is dynamic, malformed, or mismatched with `element_base.type` does
+not qualify for visual editing. The editor leaves those runtime-invalid states
+on the YAML path instead of rendering Native controls that could emit another
+invalid layered configuration.
+
 The configuration passed to Home Assistant and saved in the dashboard is the
 complete authored Forge configuration above. UI-only state is never persisted.
 

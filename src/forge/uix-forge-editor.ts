@@ -290,12 +290,21 @@ export class UixForgeEditor extends LitElement {
   private _isDirectVisualConfig(): boolean {
     if (!this._config || !this._mold()) return false;
     if (this._hasFoundryElementBase()) return false;
+    // Do not open the visual editor for an existing Foundry anchor that
+    // layered runtime validation would reject (dynamic, malformed, or a
+    // mismatch with the authored Native type).
+    if (this._foundryTransitionError(this._config)) return false;
+    const element = this._config.element;
+    // A local layered overlay must be a mapping and cannot declare its own
+    // type. This includes pre-existing malformed source, not just the
+    // unresolved state below.
+    if (element !== undefined && (!isMapping(element) || Object.prototype.hasOwnProperty.call(element, "type"))) return false;
     if (this._hasNativeElement()) return true;
     // An unselected Native element is a valid visual-editor state. It must
-    // have no type in either authored element layer; a typed direct element is
-    // instead offered the explicit conversion flow below.
+    // have no own type in either authored element layer; any declared type,
+    // including a malformed value such as null, remains YAML-only.
     return this._config.element_base === undefined
-      && (!isMapping(this._config.element) || typeof this._config.element.type !== "string");
+      && (element === undefined || isMapping(element));
   }
 
   private _hasFoundryElementBase(): boolean {
@@ -319,11 +328,11 @@ export class UixForgeEditor extends LitElement {
     const element = this._config.element;
     const hasLegacyShortcut = NON_LAYERED_SHORTCUT_KEYS.some((key) => this._config![key] !== undefined)
       || isMapping(element) && element.state_color !== undefined;
-    const inheritedType = this._resolvedFoundryElementType();
+    const inheritedAnchor = this._resolvedFoundryElementAnchor();
     return isMapping(element)
       && typeof element.type === "string"
       && !/[{%]|<<|>>/.test(element.type)
-      && (!inheritedType || (isConcreteElementType(inheritedType) && element.type === inheritedType))
+      && (!inheritedAnchor.hasType || (isConcreteElementType(inheritedAnchor.type) && element.type === inheritedAnchor.type))
       && !this._config.element_disabled_paths
       && !hasLegacyShortcut;
   }
@@ -377,25 +386,17 @@ export class UixForgeEditor extends LitElement {
     return options.sort((first, second) => rank(first) - rank(second) || first.name.localeCompare(second.name));
   }
 
-  private _selectedFoundryType(): string | undefined {
-    const foundryName = this._config?.foundry;
-    const foundries = (window as any).uixCoordinator?.foundries;
-    if (!foundryName || !isMapping(foundries)) return undefined;
-    try {
-      return _resolveFoundryAnchor(foundryName, foundries, (window as any).uixCoordinator?.ready)?.type;
-    } catch {
-      return undefined;
-    }
-  }
-
   /** Includes global and global_<mold> anchors used by runtime resolution. */
-  private _resolvedFoundryElementType(): any {
+  private _resolvedFoundryElementAnchor(): { hasType: boolean; type: any } {
     const coordinator = (window as any).uixCoordinator;
     try {
       const resolved = _resolveFoundryConfig(this._config ?? {}, coordinator?.foundries, coordinator?.ready);
-      return resolved?.hasFoundryElementType ? resolved.foundryElementType : undefined;
+      return {
+        hasType: resolved?.hasFoundryElementType === true,
+        type: resolved?.foundryElementType,
+      };
     } catch {
-      return undefined;
+      return { hasType: false, type: undefined };
     }
   }
 
@@ -542,8 +543,10 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _nativeTypeLocked(): boolean {
+    const inheritedAnchor = this._resolvedFoundryElementAnchor();
     return this._hasNativeElement()
-      && isConcreteElementType(this._resolvedFoundryElementType() ?? this._selectedFoundryType());
+      && inheritedAnchor.hasType
+      && isConcreteElementType(inheritedAnchor.type);
   }
 
   private _foundryCompatibilityText(foundry: FoundryOption): string {
@@ -1263,13 +1266,13 @@ export class UixForgeEditor extends LitElement {
 
   private _stageNativeCandidate = (candidate: unknown): void => {
     if (!isMapping(candidate) || typeof candidate.type !== "string" || !this._config) return;
-    const inheritedType = this._resolvedFoundryElementType();
-    if (inheritedType && !isConcreteElementType(inheritedType)) {
-      this._pickerError = "The inherited Foundry element type is dynamic and can only be edited in YAML.";
+    const inheritedAnchor = this._resolvedFoundryElementAnchor();
+    if (inheritedAnchor.hasType && !isConcreteElementType(inheritedAnchor.type)) {
+      this._pickerError = "The inherited Foundry element type is invalid or dynamic and can only be edited in YAML.";
       return;
     }
-    if (inheritedType && candidate.type !== inheritedType) {
-      this._pickerError = `This Native element type is incompatible with the inherited Foundry type ${inheritedType}.`;
+    if (inheritedAnchor.hasType && candidate.type !== inheritedAnchor.type) {
+      this._pickerError = `This Native element type is incompatible with the inherited Foundry type ${inheritedAnchor.type}.`;
       return;
     }
     if (JSON.stringify(this._config.element_base) !== JSON.stringify(candidate)) {

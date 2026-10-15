@@ -56,6 +56,9 @@ a templated or otherwise dynamic `element.type` is valid in YAML-only Forge,
 but is disabled in this visual picker because it cannot safely provide a
 Native type anchor. A Foundry which declares a non-string `element.type` is
 also disabled rather than being treated as though it had no type.
+Existing Forge YAML with a dynamic, malformed, or mismatched Foundry type
+anchor likewise remains in the full YAML editor until its configuration is
+valid for the Native editor.
 
 A Foundry may also include `element_base` for native, pass-through source such
 as templates evaluated by the wrapped element. This remains YAML-only in the

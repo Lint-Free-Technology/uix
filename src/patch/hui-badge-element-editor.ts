@@ -60,7 +60,8 @@ class HuiBadgeElementEditorPatch extends LitElement {
   }
 
   private _isForgeBadge(): boolean {
-    return this.value?.type === "custom:uix-forge" || this.value?.type === "custom:uix-forge-badge";
+    if (this.value?.type === "custom:uix-forge" || this.value?.type === "custom:uix-forge-badge") return true;
+    return (this.getRootNode() as ShadowRoot).host?.localName === "uix-forge-editor";
   }
 
   async getConfigElement(_orig, ...args) {
