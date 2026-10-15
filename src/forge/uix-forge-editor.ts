@@ -168,6 +168,7 @@ export class UixForgeEditor extends LitElement {
   @state() private _nativeGUIModeAvailable = true;
   @state() private _pendingFoundry?: FoundryOption;
   @state() private _foundryDisabledPathsNotice?: UixForgeConfigPath[];
+  @state() private _foundrySelectionError?: string;
   private _foundryUpdateListener = () => this.requestUpdate();
 
   static styles = css`
@@ -252,6 +253,7 @@ export class UixForgeEditor extends LitElement {
     this._nativeGUIModeAvailable = true;
     this._pendingFoundry = undefined;
     this._foundryDisabledPathsNotice = undefined;
+    this._foundrySelectionError = undefined;
   }
 
   connectedCallback(): void {
@@ -492,6 +494,24 @@ export class UixForgeEditor extends LitElement {
     return { config: next, removed };
   }
 
+  /** Ensure a Foundry transition remains valid after global anchors resolve. */
+  private _foundryTransitionError(config: UixForgeConfig): string | undefined {
+    const coordinator = (window as any).uixCoordinator;
+    try {
+      const resolved = _resolveFoundryConfig(config, coordinator?.foundries, coordinator?.ready);
+      if (!resolved?.hasFoundryElementType) return undefined;
+      const type = resolved.foundryElementType;
+      if (!isConcreteElementType(type)) return "The inherited Foundry element type is dynamic and can only be edited in YAML.";
+      const base = resolved.elementBase;
+      if (resolved.hasElementBase && (!isMapping(base) || base.type !== type)) {
+        return `This Foundry change would make the Native type incompatible with inherited type ${type}. Choose a matching Native element first.`;
+      }
+    } catch {
+      // Existing Foundry-resolution diagnostics remain authoritative.
+    }
+    return undefined;
+  }
+
   /**
    * A direct source reference is safe to recognise. Do not try to infer a
    * reference concealed in a macro invocation; YAML remains available for
@@ -514,7 +534,8 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _nativeTypeLocked(): boolean {
-    return isConcreteElementType(this._resolvedFoundryElementType() ?? this._selectedFoundryType());
+    return this._hasNativeElement()
+      && isConcreteElementType(this._resolvedFoundryElementType() ?? this._selectedFoundryType());
   }
 
   private _foundryCompatibilityText(foundry: FoundryOption): string {
@@ -569,6 +590,12 @@ export class UixForgeEditor extends LitElement {
       const next = { ...this._config };
       delete next.foundry;
       this._pendingFoundry = undefined;
+      const transitionError = this._foundryTransitionError(next);
+      if (transitionError) {
+        this._foundrySelectionError = transitionError;
+        return;
+      }
+      this._foundrySelectionError = undefined;
       const pruned = this._withoutOrphanedDisabledPaths(next);
       this._foundryDisabledPathsNotice = pruned.removed.length ? pruned.removed : undefined;
       this._emit(pruned.config);
@@ -600,6 +627,12 @@ export class UixForgeEditor extends LitElement {
       };
     }
     this._pendingFoundry = undefined;
+    const transitionError = this._foundryTransitionError(next);
+    if (transitionError) {
+      this._foundrySelectionError = transitionError;
+      return;
+    }
+    this._foundrySelectionError = undefined;
     const pruned = this._withoutOrphanedDisabledPaths(next);
     this._foundryDisabledPathsNotice = pruned.removed.length ? pruned.removed : undefined;
     this._emit(pruned.config);
@@ -997,8 +1030,12 @@ export class UixForgeEditor extends LitElement {
       const beforeElement = this._templateBeforeEdit.element;
       if (isMapping(beforeElement) && hasPath(beforeElement, path)) {
         const element = setPath(this._overlay(), path, clone(readPath(beforeElement, path)));
-        const currentDisabled = this._disabledPaths().filter((candidate) => !isPathPrefix(candidate, path));
-        const originalDisabled = (this._templateDisabledPaths ?? []).filter((candidate) => isPathPrefix(candidate, path));
+        // A preview of a parent replacement prunes disabled descendants which
+        // no longer exist in the transient value. Restoring the parent must
+        // restore every disabled path that intersects this subtree.
+        const intersectsEditedPath = (candidate: string[]) => isPathPrefix(candidate, path) || isPathPrefix(path, candidate);
+        const currentDisabled = this._disabledPaths().filter((candidate) => !intersectsEditedPath(candidate));
+        const originalDisabled = (this._templateDisabledPaths ?? []).filter(intersectsEditedPath);
         const disabled = [...currentDisabled, ...originalDisabled];
         const next = { ...this._config, element, element_disabled_paths: disabled } as UixForgeConfig;
         if (!disabled.length) delete next.element_disabled_paths;
@@ -1793,6 +1830,11 @@ export class UixForgeEditor extends LitElement {
           <ha-alert class="table-alert" alert-type="warning" dismissable @alert-dismissed-clicked=${() => { this._foundryDisabledPathsNotice = undefined; }}>
             ${this._foundryDisabledPathsNotice.length === 1 ? "A disabled Element path" : "Disabled Element paths"}
             no longer exist${this._foundryDisabledPathsNotice.length === 1 ? "s" : ""} in the selected Foundry and ${this._foundryDisabledPathsNotice.length === 1 ? "was" : "were"} re-enabled.
+          </ha-alert>
+        ` : nothing}
+        ${this._foundrySelectionError ? html`
+          <ha-alert class="table-alert" alert-type="warning" dismissable @alert-dismissed-clicked=${() => { this._foundrySelectionError = undefined; }}>
+            ${this._foundrySelectionError}
           </ha-alert>
         ` : nothing}
         ${resolvedFoundry ? html`

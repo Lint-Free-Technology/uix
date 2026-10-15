@@ -73,6 +73,11 @@ the Native type and locks type changes. Clear or replace the Foundry to choose
 a different Native type. Dynamic types remain YAML-only and are never copied
 into the Native layer.
 
+Global Foundry type anchors are applied in the same way. An empty Native state
+can still open the picker to choose the required type, while an existing Native
+card is protected from incompatible type changes. Clearing or changing a
+Foundry is refused when it would expose an incompatible global type anchor.
+
 The **Export** tab displays copy-only YAML that can be pasted into a Foundry.
 It resolves the selected named Foundry inheritance, then preserves Native
 `element_base` alongside the active Element overlay instead of flattening the

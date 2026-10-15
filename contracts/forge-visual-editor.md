@@ -209,6 +209,13 @@ picker and **Change element type** action are unavailable until the Foundry is
 cleared or replaced by one without a type. Dynamic types are YAML-only and are
 never copied into `element_base` by the visual editor.
 
+Global Foundry anchors apply to the same validation. They do not lock an empty
+Native state, so the user can choose the required type, but they lock a
+selected Native type and reject incompatible picker choices. Clearing or
+replacing a named Foundry validates the candidate against the newly effective
+global anchor before emitting it; an incompatible existing Native layer is
+left unchanged with a warning.
+
 Clearing the picker removes only the local `foundry` key. It preserves the
 local Native layer, Forge-owned element layer, and disabled paths, and cancels
 any pending incompatible-Foundry confirmation.
@@ -423,8 +430,9 @@ order. **Preview** applies the current valid draft to the normal Home Assistant
 preview temporarily, including temporarily enabling the edited path. If it or
 one of its parents is disabled, Preview omits that disabled path only from its
 transient preview configuration. **Cancel** returns to the picker and table and
-restores only the previewed source and its temporary enablement state when
-Preview was used; unrelated configuration changes remain intact. **Save & Exit**
+restores only the previewed source and every temporarily-pruned disabled path
+above or below that source when Preview was used; unrelated configuration
+changes remain intact. **Save & Exit**
 applies the current valid draft, restores the pre-edit disabled-path state, and
 returns to the picker and table. YAML-invalid
 drafts remain editable and show Home Assistant's YAML feedback. Preview and
