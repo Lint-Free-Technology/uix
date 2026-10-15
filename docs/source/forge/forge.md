@@ -106,6 +106,10 @@ including removing Sparks or editing complete Spark source.
 If a Spark list contains a non-object entry, correct that list in the Forge
 code editor before returning to visual Spark editing.
 
+Most newly added Spark options begin as `null` so you can choose their source
+in the editor. Options that require a concrete value at runtime instead start
+with their valid default.
+
 Native includes an explicit **Choose/Change native element** action. Selecting
 an element immediately replaces the Native source and opens its normal Home
 Assistant editor. **Cancel** leaves the picker without selecting an element;

@@ -36,6 +36,11 @@ type FoundryOption = {
 const VISUAL_MOLDS: readonly VisualMold[] = ["card", "badge"];
 const TEMPLATE_PICKER_PATH_PREFIX = "__uix_path__:";
 const NON_LAYERED_SHORTCUT_KEYS = ["entities", "color", "state_color"] as const;
+// Options ordinarily start as editable null source. Keep the exceptional
+// runtime-nonnullable option valid from the moment it is added.
+const SPARK_OPTION_DEFAULTS: Record<string, Record<string, any>> = {
+  tooltip: { open: false },
+};
 const TEMPLATE_FORM_SCHEMA = [{
   name: "source",
   required: false,
@@ -77,6 +82,7 @@ const pathKey = (path: string[]) => JSON.stringify(path);
 const isMapping = (value: any): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
 const isConcreteElementType = (value: any): value is string => typeof value === "string" && !/[{%]|<<|>>/.test(value);
 const hasDisabledAncestor = (path: string[], disabled: UixForgeConfigPath[]) => disabled.some((candidate) => candidate.length < path.length && candidate.every((part, index) => part === path[index]));
+const isPathPrefix = (prefix: string[], path: string[]): boolean => prefix.length <= path.length && prefix.every((part, index) => part === path[index]);
 
 function hasPath(value: any, path: string[]): boolean {
   let current = value;
@@ -305,9 +311,11 @@ export class UixForgeEditor extends LitElement {
     const element = this._config.element;
     const hasLegacyShortcut = NON_LAYERED_SHORTCUT_KEYS.some((key) => this._config![key] !== undefined)
       || isMapping(element) && element.state_color !== undefined;
+    const inheritedType = this._resolvedFoundryElementType();
     return isMapping(element)
       && typeof element.type === "string"
       && !/[{%]|<<|>>/.test(element.type)
+      && (!inheritedType || (isConcreteElementType(inheritedType) && element.type === inheritedType))
       && !this._config.element_disabled_paths
       && !hasLegacyShortcut;
   }
@@ -365,6 +373,17 @@ export class UixForgeEditor extends LitElement {
     if (!foundryName || !isMapping(foundries)) return undefined;
     try {
       return _resolveFoundryAnchor(foundryName, foundries, (window as any).uixCoordinator?.ready)?.type;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Includes global and global_<mold> anchors used by runtime resolution. */
+  private _resolvedFoundryElementType(): any {
+    const coordinator = (window as any).uixCoordinator;
+    try {
+      const resolved = _resolveFoundryConfig(this._config ?? {}, coordinator?.foundries, coordinator?.ready);
+      return resolved?.hasFoundryElementType ? resolved.foundryElementType : undefined;
     } catch {
       return undefined;
     }
@@ -495,7 +514,7 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _nativeTypeLocked(): boolean {
-    return isConcreteElementType(this._selectedFoundryType());
+    return isConcreteElementType(this._resolvedFoundryElementType() ?? this._selectedFoundryType());
   }
 
   private _foundryCompatibilityText(foundry: FoundryOption): string {
@@ -750,7 +769,22 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _cancelSparkOptionEditor(): void {
-    if (this._previewingSpark && this._sparkBeforeEdit) this._emit(this._sparkBeforeEdit);
+    if (this._previewingSpark && this._sparkBeforeEdit && this._editingSparkOption) {
+      const { sparkIndex, key } = this._editingSparkOption;
+      const beforeSparks = this._sparkBeforeEdit.forge?.sparks;
+      const beforeSpark = Array.isArray(beforeSparks) ? beforeSparks[sparkIndex] : undefined;
+      const forge = this._forgeSource();
+      const sparks = Array.isArray(forge.sparks) ? clone(forge.sparks) : [];
+      if (isMapping(sparks[sparkIndex]) && isMapping(beforeSpark)) {
+        if (Object.prototype.hasOwnProperty.call(beforeSpark, key)) sparks[sparkIndex] = { ...sparks[sparkIndex], [key]: clone(beforeSpark[key]) };
+        else {
+          const { [key]: _removed, ...rest } = sparks[sparkIndex];
+          sparks[sparkIndex] = rest;
+        }
+        forge.sparks = sparks;
+        this._emitForgeSource(forge);
+      }
+    }
     this._closeSparkOptionEditor();
   }
 
@@ -808,9 +842,10 @@ export class UixForgeEditor extends LitElement {
     if (typeof key !== "string" || !spark || Object.prototype.hasOwnProperty.call(spark, key)) return;
     const forge = this._forgeSource();
     const sparks = clone(forge.sparks);
-    sparks[sparkIndex] = { ...spark, [key]: null };
+    const defaultValue = SPARK_OPTION_DEFAULTS[spark.type]?.[key] ?? null;
+    sparks[sparkIndex] = { ...spark, [key]: defaultValue };
     forge.sparks = sparks;
-    this._sparkInfoOption = { sparkIndex, key };
+    this._sparkInfoOption = defaultValue === null ? { sparkIndex, key } : undefined;
     this._emitForgeSource(forge);
   }
 
@@ -957,7 +992,19 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _cancelTemplateEditor(): void {
-    if (this._previewingTemplate && this._templateBeforeEdit) this._emit(this._templateBeforeEdit);
+    if (this._previewingTemplate && this._templateBeforeEdit && this._editingPath) {
+      const path = this._editingPath;
+      const beforeElement = this._templateBeforeEdit.element;
+      if (isMapping(beforeElement) && hasPath(beforeElement, path)) {
+        const element = setPath(this._overlay(), path, clone(readPath(beforeElement, path)));
+        const currentDisabled = this._disabledPaths().filter((candidate) => !isPathPrefix(candidate, path));
+        const originalDisabled = (this._templateDisabledPaths ?? []).filter((candidate) => isPathPrefix(candidate, path));
+        const disabled = [...currentDisabled, ...originalDisabled];
+        const next = { ...this._config, element, element_disabled_paths: disabled } as UixForgeConfig;
+        if (!disabled.length) delete next.element_disabled_paths;
+        this._emit(next);
+      }
+    }
     this._closeTemplateEditor();
   }
 
@@ -1159,6 +1206,15 @@ export class UixForgeEditor extends LitElement {
 
   private _stageNativeCandidate = (candidate: unknown): void => {
     if (!isMapping(candidate) || typeof candidate.type !== "string" || !this._config) return;
+    const inheritedType = this._resolvedFoundryElementType();
+    if (inheritedType && !isConcreteElementType(inheritedType)) {
+      this._pickerError = "The inherited Foundry element type is dynamic and can only be edited in YAML.";
+      return;
+    }
+    if (inheritedType && candidate.type !== inheritedType) {
+      this._pickerError = `This Native element type is incompatible with the inherited Foundry type ${inheritedType}.`;
+      return;
+    }
     if (JSON.stringify(this._config.element_base) !== JSON.stringify(candidate)) {
       this._emit({ ...this._config, element_base: clone(candidate) });
     }

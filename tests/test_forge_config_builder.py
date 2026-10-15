@@ -9,6 +9,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FORGE_TYPES_TS = REPO_ROOT / "src" / "forge" / "uix-forge-types.ts"
 FORGE_TS = REPO_ROOT / "src" / "forge" / "uix-forge.ts"
 FORGE_EDITOR_TS = REPO_ROOT / "src" / "forge" / "uix-forge-editor.ts"
+MAP_SPARK_TS = REPO_ROOT / "src" / "forge" / "sparks" / "uix-spark-map.ts"
+
+
+def test_map_spark_editor_options_exclude_map_card_fields() -> None:
+    source = MAP_SPARK_TS.read_text()
+    options = source.split("static readonly editorOptions = ", 1)[1].split(";", 1)[0]
+    assert '"show_all"' not in options
+    assert '"entities"' not in options
 
 
 def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
@@ -249,9 +257,12 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "entityEditor._setGlobalForgeEntity({ detail: { value: 'light.kitchen' } });"
                 "const sparkEditor = new moduleObj.exports.UixForgeEditor();"
                 "let sparkUpdates = 0; sparkEditor.requestUpdate = () => sparkUpdates++; sparkEditor._sparkDraft = {}; sparkEditor._setSparkNull();"
+                "const tooltipEditor = new moduleObj.exports.UixForgeEditor(); tooltipEditor._emit = (config) => { tooltipEditor._config = config; }; tooltipEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card', sparks: [{ type: 'tooltip' }] } }); tooltipEditor._addSparkOption(0, { detail: { value: 'open' } });"
                 "const previewEditor = new moduleObj.exports.UixForgeEditor();"
                 "previewEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile' }, element: { name: 'Original' } });"
                 "previewEditor._editingPath = ['name']; previewEditor._templateDraftValid = false; previewEditor._previewingTemplate = true; previewEditor._previewTemplateDraft();"
+                "const cancelTemplateEditor = new moduleObj.exports.UixForgeEditor(); cancelTemplateEditor._emit = (config) => { cancelTemplateEditor._config = config; }; cancelTemplateEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', entity: 'light.old' }, element: { name: 'Original' } }); cancelTemplateEditor._openTemplateEditor(['name']); cancelTemplateEditor._templateDraft = 'Preview'; cancelTemplateEditor._previewTemplateDraft(); cancelTemplateEditor._emit({ ...cancelTemplateEditor._config, element_base: { type: 'tile', entity: 'light.new' } }); cancelTemplateEditor._cancelTemplateEditor();"
+                "const globalAnchorEditor = new moduleObj.exports.UixForgeEditor(); globalAnchorEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'markdown' } }); globalAnchorEditor._resolvedFoundryElementType = () => 'tile'; const globalAnchorConvertible = globalAnchorEditor._isConvertible(); globalAnchorEditor._stageNativeCandidate({ type: 'markdown' });"
                 "const unanchoredEditor = new moduleObj.exports.UixForgeEditor();"
                 "let unanchoredEmits = 0; unanchoredEditor._emit = () => unanchoredEmits++; unanchoredEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { name: 'Local' } }); unanchoredEditor._toggleTemplatePath(['name']);"
                 "const disabledEditor = new moduleObj.exports.UixForgeEditor();"
@@ -263,7 +274,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const elementShortcutEditor = new moduleObj.exports.UixForgeEditor(); elementShortcutEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'tile', state_color: true } });"
                 "const dotPathEditor = new moduleObj.exports.UixForgeEditor(); let dotPathConfig; dotPathEditor._emit = (config) => { dotPathEditor._config = config; dotPathConfig = config; }; dotPathEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', variables: { 'room.label': 'Kitchen' } } });"
                 "const dotOption = dotPathEditor._templateOptions().find((option) => option.label === 'variables.room.label'); dotPathEditor._addTemplate({ detail: { value: dotOption.value } });"
-                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, tooltipOpen: tooltipEditor._config.forge.sparks[0].open, cancelTemplateConfig: cancelTemplateEditor._config, globalAnchorConvertible, globalAnchorError: globalAnchorEditor._pickerError, previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
             ),
             str(FORGE_EDITOR_TS),
         ],
@@ -310,6 +321,11 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     assert result["usesGlobalForgeEntity"] is True
     assert result["sparkUpdates"] == 1
     assert result["sparkDraft"] is None
+    assert result["tooltipOpen"] is False
+    assert result["cancelTemplateConfig"]["element_base"]["entity"] == "light.new"
+    assert result["cancelTemplateConfig"]["element"]["name"] == "Original"
+    assert result["globalAnchorConvertible"] is False
+    assert "incompatible" in result["globalAnchorError"]
     assert result["previewingAfterInvalidPreview"] is True
     assert result["unanchoredEmits"] == 0
     assert result["disabledPathsAfterLocalEdit"] == [["name"]]

@@ -285,7 +285,8 @@ context-locked mold and is not editable in either mode.
    of registered Spark types, which appends a new minimal `{ type }` Spark and
    selects it. Each Spark tab offers its missing option names in a picker and
    lists every configured option except the locked Spark `type`. Added options
-   start as active `null`. An option's source is
+   start as active `null`, except an option with a runtime-required concrete
+   type receives its valid default. An option's source is
    edited with the same staged source controls as an element Template:
    strings use a code editor, mappings and arrays use `ha-yaml-editor`, and
    `null` explicitly offers a template source or mapping. Like element
@@ -422,7 +423,8 @@ order. **Preview** applies the current valid draft to the normal Home Assistant
 preview temporarily, including temporarily enabling the edited path. If it or
 one of its parents is disabled, Preview omits that disabled path only from its
 transient preview configuration. **Cancel** returns to the picker and table and
-restores the exact pre-edit configuration when Preview was used. **Save & Exit**
+restores only the previewed source and its temporary enablement state when
+Preview was used; unrelated configuration changes remain intact. **Save & Exit**
 applies the current valid draft, restores the pre-edit disabled-path state, and
 returns to the picker and table. YAML-invalid
 drafts remain editable and show Home Assistant's YAML feedback. Preview and

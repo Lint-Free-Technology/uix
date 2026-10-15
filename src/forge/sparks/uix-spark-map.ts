@@ -96,7 +96,9 @@ interface MapView {
  */
 export class UixForgeSparkMap extends UixForgeSparkBase {
   type = "map";
-  static readonly editorOptions = ["memory", "fit_map", "show_all", "entities", "tour", "hours_to_show", "entity_filter"];
+  // `show_all` and `entities` belong to the wrapped map-card configuration,
+  // which this Spark reads from forgedElementConfig; they are not Spark source.
+  static readonly editorOptions = ["memory", "fit_map", "tour", "hours_to_show", "entity_filter"];
 
   // ── Memory mode ───────────────────────────────────────────────────────────
   private _memory: boolean = false;
