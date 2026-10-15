@@ -312,6 +312,12 @@ the source array contains any other value, the editor shows a warning and
 leaves the whole list to Forge code mode, rather than renumbering source
 entries for tab actions.
 
+While a Spark option draft is open, the Forge code-mode switch is blocked until
+the draft is saved or cancelled. This prevents full-array YAML edits from
+reordering the Spark that the draft transaction identifies by index. Removing
+the final local Spark deletes `forge.sparks` rather than storing `[]`, so
+Foundry-provided Sparks resume instead of being explicitly cleared.
+
 Immediately after adding a Spark option, the table displays a transient,
 dismissible local notice naming that option and explaining that it is `null`;
 it directs the user to **Edit as template** or **Convert to object mapping**.

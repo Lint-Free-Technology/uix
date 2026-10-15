@@ -111,6 +111,10 @@ including removing Sparks or editing complete Spark source.
 If a Spark list contains a non-object entry, correct that list in the Forge
 code editor before returning to visual Spark editing.
 
+Save or cancel an open Spark option before switching to the Forge code editor.
+Removing the final locally configured Spark resumes any Sparks provided by the
+selected Foundry rather than clearing them.
+
 Most newly added Spark options begin as `null` so you can choose their source
 in the editor. Options that require a concrete value at runtime instead start
 with their valid default.

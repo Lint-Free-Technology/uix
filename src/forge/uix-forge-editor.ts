@@ -659,6 +659,11 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _setForgeEditorMode(): void {
+    if (this._editingSparkOption) {
+      this._forgeError = "Save & Exit or Cancel the Spark option before showing the Forge code editor.";
+      return;
+    }
+    this._forgeError = undefined;
     this._forgeEditorMode = this._forgeEditorMode === "ui" ? "yaml" : "ui";
   }
 
@@ -915,7 +920,10 @@ export class UixForgeEditor extends LitElement {
     if (!Array.isArray(forge.sparks) || sparkIndex < 0 || sparkIndex >= forge.sparks.length) return;
     const sparks = clone(forge.sparks);
     sparks.splice(sparkIndex, 1);
-    forge.sparks = sparks;
+    // An empty local array clears inherited Foundry Sparks. Removing the last
+    // local Spark instead returns that source to inheritance.
+    if (sparks.length) forge.sparks = sparks;
+    else delete forge.sparks;
     this._selectedSpark = Math.min(sparkIndex, Math.max(0, sparks.length - 1));
     if (this._sparkInfoOption) {
       if (this._sparkInfoOption.sparkIndex === sparkIndex) this._sparkInfoOption = undefined;
