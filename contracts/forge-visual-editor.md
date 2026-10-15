@@ -15,8 +15,9 @@ entities rows, remain supported through YAML.
 
 This contract supports selecting a shared Foundry and producing a copy-only
 Foundry YAML export, but deliberately excludes creating, saving, or editing a
-shared Foundry, changing the wrapped element type after creation, and
-per-array-item overrides. They are outside this contract's scope.
+shared Foundry and per-array-item overrides. The Native tab changes the wrapped
+element type only through its explicit picker; a concrete Foundry type anchor
+locks that picker. They are outside this contract's scope.
 
 ## Persisted representation
 
@@ -49,8 +50,8 @@ In particular:
 - The editor saves the authored layers, never an evaluated preview.
 - `element_base.type` is required. A local `element.type` is invalid in layered
   mode. The layered configuration contract defines the separate inherited
-  Foundry type-anchor exception; selecting or editing Foundries is outside this
-  visual editor's scope.
+  Foundry type-anchor exception. The visual editor can select a Foundry but
+  never edits its shared source.
 - Native visual editing additionally requires that `element_base.type` is a
   non-empty, concrete string. A templated or otherwise dynamic local type is
   valid YAML source but remains on the outer YAML editor path; it is never sent
@@ -87,9 +88,10 @@ A direct `element` mapping with an own `type` key is not unresolved, even when
 that value is `null`, `false`, or otherwise malformed; it remains YAML-only.
 Likewise, an existing configuration with a selected or global Foundry type
 anchor that is dynamic, malformed, or mismatched with `element_base.type` does
-not qualify for visual editing. The editor leaves those runtime-invalid states
-on the YAML path instead of rendering Native controls that could emit another
-invalid layered configuration.
+not qualify for visual editing. A missing, cyclic, or otherwise unresolvable
+selected/global Foundry also remains YAML-only. The editor leaves those
+runtime-invalid states on the YAML path instead of rendering Native controls
+that could emit another invalid layered configuration.
 
 The configuration passed to Home Assistant and saved in the dashboard is the
 complete authored Forge configuration above. UI-only state is never persisted.
@@ -360,15 +362,19 @@ ownership, and wrapped-type validation to the parsed value.
 
 ### Editing tabs
 
-The Forge editor has transient **Native**, **Forge**, and **Element** tabs:
+The Forge editor has five transient tabs. **Native**, **Forge**, and
+**Element** own editable local source; **Foundry** selects and inspects shared
+source, and **Export** provides copy-only YAML:
 
-| Control | Native | Forge | Element |
-| --- | --- | --- | --- |
-| Forge behavior editor | Unavailable | Editable in visual or code mode | Unavailable |
-| Wrapped element editor and picker | Editable | Unavailable | Unavailable |
-| Template table and enablement | Unavailable | Unavailable | Editable |
-| Selected template YAML | Unavailable | Unavailable | Editable |
-| Preview | Live composed result | Live composed result | Live composed result |
+| Control | Native | Forge | Element | Foundry | Export |
+| --- | --- | --- | --- | --- | --- |
+| Forge behavior editor | Unavailable | Editable in visual or code mode | Unavailable | Unavailable | Unavailable |
+| Wrapped element editor and picker | Editable | Unavailable | Unavailable | Unavailable | Unavailable |
+| Template table and enablement | Unavailable | Unavailable | Editable | Unavailable | Unavailable |
+| Selected template YAML | Unavailable | Unavailable | Editable | Unavailable | Unavailable |
+| Foundry picker and resolved inspection | Unavailable | Unavailable | Unavailable | Editable | Unavailable |
+| Copy-only Foundry YAML | Unavailable | Unavailable | Unavailable | Unavailable | Available |
+| Preview | Live composed result | Live composed result | Live composed result | Live composed result | Live composed result |
 
 Native edits always update `element_base`, even when an active overlay masks
 their result in the preview. Forge edits always update `forge`; Element edits

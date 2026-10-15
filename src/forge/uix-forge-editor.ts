@@ -516,7 +516,10 @@ export class UixForgeEditor extends LitElement {
         return `This Foundry change would make the Native type incompatible with inherited type ${type}. Choose a matching Native element first.`;
       }
     } catch {
-      // Existing Foundry-resolution diagnostics remain authoritative.
+      // A broken Foundry cannot safely enter the visual editor: subsequent
+      // Native or Element edits would make a runtime-invalid configuration
+      // look editable. Leave its diagnostic and repair to YAML mode instead.
+      return "The Foundry configuration cannot be resolved and can only be edited in YAML.";
     }
     return undefined;
   }
