@@ -67,6 +67,23 @@ Named, global, and mold-specific global Foundries participate identically in the
 global → global_<mold> → inherited/named Foundry → local configuration
 ```
 
-Foundries may contribute `element_base` and `element` fragments. Each fragment resolves recursively with its matching fragment before layered composition occurs.
+Foundries may contribute `forge` and `element` fragments, but never `element_base` or `element_disabled_paths`. `element_base` and `element_disabled_paths` belong to the local Forge configuration, so the Native element remains an explicit choice of the consuming card.
 
-Any resolved `element_base`, including one supplied by a Foundry, selects layered configuration. Foundries must not set `element_disabled_paths`; it remains local persisted UI-editing state and may disable an overlay value supplied by a Foundry.
+A Foundry's `element` normally remains a Forge-owned overlay, including when it supplies fields other than `type`. A Foundry may also provide a reusable concrete `element.type` as an anchor for a UI-backed layered Forge. In that case, the consuming local configuration may provide `element_base.type` only when it is the identical concrete string:
+
+```yaml
+# Foundry
+forge:
+  mold: card
+element:
+  type: tile
+  name: "{{ config.entity }}"
+
+# Consuming Forge
+foundry: room_tile
+element_base:
+  type: tile
+  entity: light.kitchen
+```
+
+For this matching-type case only, Forge removes the inherited Foundry `type` before composing the overlay. The rest of the Foundry `element` mapping remains an overlay and wins over matching paths in `element_base`. The Foundry type must be a concrete non-template string; a local `element.type`, a mismatch, or a dynamic Foundry type is invalid in layered configuration. Without a local `element_base`, a Foundry with `element.type` remains non-layered exactly as any other complete `element` configuration.

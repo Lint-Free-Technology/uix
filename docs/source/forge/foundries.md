@@ -4,7 +4,7 @@ description: Foundries are reusable UIX Forge configurations that let you define
 ---
 # Foundries
 
-A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define `forge` and `element` fragments once, give it a name, and reference it in any number of elements with a single `foundry:` key. In layered configuration, a Foundry can also provide an `element_base` fragment. Local fragments are merged on top, so you can still override values per element.
+A **foundry** is a named UIX Forge configuration stored in Home Assistant. It acts as a reusable base configuration: define `forge` and `element` fragments once, give it a name, and reference it in any number of elements with a single `foundry:` key. Local fragments are merged on top, so you can still override values per element.
 
 ## Global foundries
 
@@ -129,7 +129,7 @@ type: custom:uix-forge
 foundry: my_tile
 ```
 
-The foundry's `forge`, `element`, and, when supplied, `element_base` configs are applied as if they were written directly on the UIX Forge config.
+The foundry's `forge` and `element` configs are applied as if they were written directly on the UIX Forge config. `element_base` always belongs to the consuming Forge.
 
 You can add or override any key locally — local values take precedence over the foundry:
 
@@ -142,7 +142,7 @@ element:
 
 ## Foundry config structure
 
-A foundry is a YAML object that can contain `foundry`, `forge`, `element`, and `element_base` keys:
+A foundry is a YAML object that can contain `foundry`, `forge`, and `element` keys:
 
 ```yaml
 forge:
@@ -158,7 +158,29 @@ element:
   entity: "{{ 'sun.sun' }}"
 ```
 
-`element_base` and `element` are resolved independently. A resolved `element_base` selects layered configuration, after which the fragments are composed. `element_disabled_paths` remains local to the consuming Forge: a Foundry, including `global` and `global_<mold>`, cannot set it.
+Foundry `element` is Forge-owned overlay configuration. `element_base` and `element_disabled_paths` remain local to the consuming Forge: a Foundry, including `global` and `global_<mold>`, cannot set either one.
+
+### Using a Foundry type with the Native editor
+
+A Foundry may put a concrete element `type` in its `element` mapping. It remains a normal complete Forge element until a consuming Forge adds `element_base`. To use it with the Native editor, repeat the same literal type in the local `element_base`; this declares the Native element while retaining all other Foundry `element` fields as Forge-owned overlays.
+
+```yaml
+# Foundry: room_tile
+forge:
+  mold: card
+element:
+  type: tile
+  name: "{{ config.entity }}"
+
+# Dashboard card
+type: custom:uix-forge
+foundry: room_tile
+element_base:
+  type: tile
+  entity: light.kitchen
+```
+
+The two `type` values must be the same concrete string. A dynamic type, a mismatch, or a local `element.type` is invalid in this layered form. The Foundry's inherited type is used only as the matching Native anchor and is removed from the overlay before composition.
 
 See [layered configuration](./forge.md#layered-configuration) for the complete contract, and [UIX Forge](./index.md) for the other `forge` and `element` options.
 
@@ -253,7 +275,7 @@ When a forge configuration is resolved, it merges settings from several sources.
 4. **Foundry** — the explicitly named foundry config.
 5. **Local** — keys defined directly on the forge config.
 
-For **object values** (e.g. `forge`, `element`, and `element_base`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. `element_base` and `element` stay as separate fragments during Foundry resolution; when a resolved `element_base` is present, they are composed as layered configuration. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `forge.sparks`:
+For **object values** (e.g. `forge` and `element`), merging is recursive: nested keys are merged individually rather than the whole object being replaced. The local `element_base` stays separate from the resolved Foundry `element`; when it is present, they are composed as layered configuration subject to the matching-type rule above. For **array and scalar values**, the local value replaces the foundry value entirely, with one exception for `forge.sparks`:
 
 - Local spark entries are **appended** by default.
 - To override/merge a spark, give both entries the same `id` (or `spark_id`).

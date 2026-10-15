@@ -121,6 +121,7 @@ interface MoreInfoDetailsElement extends HTMLElement {
 
 export class UixForgeSparkMoreInfo extends UixForgeSparkBase {
   type = "more-info";
+  static readonly editorOptions = ["for", "after", "before", "entity", "details", "info"];
 
   private after: string = "";
   private before: string = "";

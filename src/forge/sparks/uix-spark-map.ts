@@ -96,6 +96,7 @@ interface MapView {
  */
 export class UixForgeSparkMap extends UixForgeSparkBase {
   type = "map";
+  static readonly editorOptions = ["memory", "fit_map", "show_all", "entities", "tour", "hours_to_show", "entity_filter"];
 
   // ── Memory mode ───────────────────────────────────────────────────────────
   private _memory: boolean = false;

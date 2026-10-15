@@ -44,6 +44,7 @@ type FormButtonConfig = UixHaFormButtonConfig & {
 
 export class UixForgeSparkForm extends UixForgeSparkBase {
   type = "form";
+  static readonly editorOptions = ["for", "after", "before", "schema", "density", "submit", "clear"];
 
   private after = "";
   private before = "";

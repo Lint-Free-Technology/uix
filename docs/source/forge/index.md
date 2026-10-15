@@ -10,7 +10,7 @@ See [Forge](./forge.md) for complete forge config reference.
 
 ## Foundries
 
-A **foundry** is a reusable UIX Forge configuration that lets you define `forge`, `element`, `element_base`, and `uix` fragments once and share them across many cards. A resolved `element_base` selects layered configuration; `element_disabled_paths` remains local to the consuming Forge.
+A **foundry** is a reusable UIX Forge configuration that lets you define `forge`, `element`, and `uix` fragments once and share them across many cards. `element_base` and `element_disabled_paths` remain local to the consuming Forge; a local `element_base` selects layered configuration.
 
 See [Foundries](./foundries.md) for a full guide including merge behaviour, nested foundries, and management via the integration options.
 

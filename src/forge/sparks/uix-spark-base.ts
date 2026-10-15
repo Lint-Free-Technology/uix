@@ -1,5 +1,5 @@
 import { PropertyValues } from "lit";
-import { UixForgeSparkController } from "./uix-spark-controller";
+import type { UixForgeSparkController } from "./uix-spark-controller";
 
 const UIX_FORGE_ELEMENT_DEFAULT_TARGET_SELECTOR = {
   "custom:uix-forge-blank-card": "uix-forge-blank-card $ div.content",

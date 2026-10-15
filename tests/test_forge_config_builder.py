@@ -8,6 +8,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FORGE_TYPES_TS = REPO_ROOT / "src" / "forge" / "uix-forge-types.ts"
 FORGE_TS = REPO_ROOT / "src" / "forge" / "uix-forge.ts"
+FORGE_EDITOR_TS = REPO_ROOT / "src" / "forge" / "uix-forge-editor.ts"
 
 
 def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
@@ -97,7 +98,7 @@ def test_foundry_sparks_not_duplicated() -> None:
                 "  throw new Error(`Unexpected module import: ${name}`);"
                 "};"
                 "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
-                "const { _resolveFoundryConfig } = moduleObj.exports;"
+                "const { UixForge, _resolveFoundryAnchor, _resolveFoundryConfig } = moduleObj.exports;"
                 "const foundries = {"
                 "  'cover-tile': {"
                 "    forge: {"
@@ -107,12 +108,20 @@ def test_foundry_sparks_not_duplicated() -> None:
                 "        { type: 'button', icon: 'mdi:arrow-up' }"
                 "      ]"
                 "    },"
-                "    element: { type: 'tile' },"
-                "    element_base: { type: 'tile', name: 'Foundry base' }"
-                "  }"
+                "    element: { type: 'tile' }"
+                "  },"
+                "  inherited_tile: { foundry: 'cover-tile' }"
                 "};"
-                "const resolved = _resolveFoundryConfig({ foundry: 'cover-tile', element: { entity: 'cover.test' }, element_base: { entity: 'cover.test' } }, foundries);"
-                "process.stdout.write(JSON.stringify(resolved));"
+                "const config = { foundry: 'cover-tile', element: { entity: 'cover.test' }, element_base: { type: 'tile', entity: 'cover.test' } };"
+                "const resolved = _resolveFoundryConfig(config, foundries);"
+                "const stub = UixForge.getStubConfig();"
+                "const forge = new UixForge();"
+                "forge.config = config;"
+                "const preparedOverlay = forge._prepareLayeredOverlay(resolved.element, resolved.elementBase, resolved.hasElementBase, resolved.foundryElementType, resolved.hasFoundryElementType);"
+                "let foundryBaseError;"
+                "try { _resolveFoundryConfig({ foundry: 'invalid' }, { invalid: { element_base: { type: 'tile' } } }); } catch (err) { foundryBaseError = err.message; }"
+                "const foundryAnchor = _resolveFoundryAnchor('inherited_tile', foundries);"
+                "process.stdout.write(JSON.stringify({ resolved, stub, preparedOverlay, foundryBaseError, foundryAnchor }));"
             ),
             str(FORGE_TS),
         ],
@@ -120,17 +129,172 @@ def test_foundry_sparks_not_duplicated() -> None:
         text=True,
     )
 
-    resolved = json.loads(output)
+    result = json.loads(output)
+    resolved = result["resolved"]
     assert [spark["icon"] for spark in resolved["forge"]["sparks"]] == [
         "mdi:arrow-down",
         "mdi:arrow-up",
     ]
     assert resolved["elementBase"] == {
         "type": "tile",
-        "name": "Foundry base",
         "entity": "cover.test",
     }
     assert resolved["hasElementBase"] is True
+    assert resolved["foundryElementType"] == "tile"
+    assert resolved["hasFoundryElementType"] is True
+    assert result["stub"] == {"type": "custom:uix-forge", "forge": {"mold": "card"}}
+    assert result["preparedOverlay"] == {"entity": "cover.test"}
+    assert result["foundryBaseError"] == "uix-forge: foundry 'invalid' cannot set element_base; use element instead"
+    assert result["foundryAnchor"] == {"mold": "card", "type": "tile"}
+
+
+def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const emitted = [];"
+                "global.CustomEvent = class { constructor(type, init) { this.type = type; Object.assign(this, init); } };"
+                "global.window = { uixCoordinator: { foundries: {"
+                "  card_tile_base: { forge: { mold: 'card' }, element: { type: 'tile' } },"
+                "  compatible: { foundry: 'card_tile_base' },"
+                "  wrong_type: { forge: { mold: 'card' }, element: { type: 'markdown' } },"
+                "  wrong_mold: { forge: { mold: 'badge' } },"
+                "  unconstrained: { forge: {}, element: {} }"
+                "} }, addEventListener() {}, removeEventListener() {} };"
+                "global.customElements = { get() {}, define() {} };"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, {"
+                "  loader: 'ts', format: 'cjs', target: 'es2020',"
+                "  tsconfigRaw: { compilerOptions: { experimentalDecorators: true } }"
+                "});"
+                "const moduleObj = { exports: {} };"
+                "class LitElement {"
+                "  dispatchEvent(event) { emitted.push(event.detail.config); return true; }"
+                "  requestUpdate() {} connectedCallback() {} disconnectedCallback() {}"
+                "}"
+                "const customRequire = (name) => {"
+                "  if (name === 'lit') return { css: () => '', html: () => ({}), LitElement, nothing: undefined };"
+                "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === 'js-yaml') return require('js-yaml');"
+                "  if (name === '../helpers/dom/ensure-element') return { ensureCustomElement: async () => {} };"
+                "  if (name === './sparks/uix-spark-controller') return { UIX_FORGE_SPARK_CLASSES: {} };"
+                "  if (name === './uix-forge') {"
+                "    const resolve = (config, foundries) => {"
+                "      const foundry = config.foundry ? foundries?.[config.foundry] : undefined;"
+                "      const base = foundry?.foundry ? resolve({ foundry: foundry.foundry }, foundries) : { forge: {}, element: {} };"
+                "      return { forge: { ...base.forge, ...foundry?.forge, ...config.forge }, element: { ...base.element, ...foundry?.element, ...config.element }, elementBase: config.element_base ?? {}, hasElementBase: Object.hasOwn(config, 'element_base') };"
+                "    };"
+                "    return {"
+                "      _resolveFoundryConfig: resolve,"
+                "      _resolveFoundryAnchor: (foundryName, foundries) => { const resolved = resolve({ foundry: foundryName }, foundries); return { mold: resolved.forge.mold, type: resolved.element.type }; },"
+                "      composeLayeredElementConfig: (base, element) => ({ ...base, ...element })"
+                "    };"
+                "  }"
+                "  throw new Error(`Unexpected import: ${name}`);"
+                "};"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const editor = new moduleObj.exports.UixForgeEditor();"
+                "editor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', entity: 'light.kitchen' }, element: { name: 'Kitchen' } });"
+                "const options = editor._foundryOptions();"
+                "editor._selectFoundry({ detail: { value: 'compatible' } });"
+                "const resolvedFoundry = editor._resolvedSelectedFoundryConfig();"
+                "editor._selectFoundry({ detail: { value: undefined } });"
+                "editor._selectFoundry({ detail: { value: 'wrong_type' } });"
+                "const pending = editor._pendingFoundry?.name;"
+                "editor._applyFoundry(editor._pendingFoundry, true);"
+                "const exportedFoundry = editor._exportFoundryConfig();"
+                "const anchoredEditor = new moduleObj.exports.UixForgeEditor();"
+                "let anchoredConfig;"
+                "anchoredEditor._emit = (config) => { anchoredEditor._config = config; anchoredConfig = config; };"
+                "anchoredEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' } });"
+                "anchoredEditor._selectFoundry({ detail: { value: 'compatible' } });"
+                "const nativeTypeLocked = anchoredEditor._nativeTypeLocked();"
+                "anchoredEditor._selectFoundry({ detail: { value: 'wrong_mold' } });"
+                "const entityEditor = new moduleObj.exports.UixForgeEditor();"
+                "let entityConfig;"
+                "entityEditor._emit = (config) => { entityEditor._config = config; entityConfig = config; };"
+                "entityEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card', hidden: '{{ config.entity }}' } });"
+                "const usesGlobalForgeEntity = entityEditor._usesGlobalForgeEntity();"
+                "entityEditor._setGlobalForgeEntity({ detail: { value: 'light.kitchen' } });"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+            ),
+            str(FORGE_EDITOR_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert {option["name"]: option["compatible"] for option in result["options"]} == {
+        "card_tile_base": True,
+        "compatible": True,
+        "unconstrained": True,
+        "wrong_mold": False,
+        "wrong_type": False,
+    }
+    assert [option["name"] for option in result["options"]] == [
+        "card_tile_base",
+        "compatible",
+        "unconstrained",
+        "wrong_type",
+        "wrong_mold",
+    ]
+    assert result["pending"] == "wrong_type"
+    assert result["hasPicker"] is True
+    assert result["hasRowRenderer"] is True
+    assert result["hasButtonRows"] is True
+    assert result["hasReadOnlyResolvedEditor"] is True
+    assert result["hasExportTab"] is True
+    assert result["hasGlobalForgeEntityPanel"] is True
+    assert result["hasFoundryInUseNotice"] is True
+    assert result["hasWarningContinue"] is True
+    assert result["usesGlobalForgeEntity"] is True
+    assert result["entityConfig"] == {
+        "type": "custom:uix-forge",
+        "forge": {"mold": "card", "hidden": "{{ config.entity }}"},
+        "entity": "light.kitchen",
+    }
+    assert result["resolvedFoundry"] == {
+        "forge": {"mold": "card"},
+        "element": {"type": "tile"},
+    }
+    assert result["exportedFoundry"] == {
+        "forge": {"mold": "card"},
+        "element": {"type": "markdown", "name": "Kitchen"},
+    }
+    assert result["anchoredConfig"] == {
+        "type": "custom:uix-forge",
+        "forge": {"mold": "card"},
+        "foundry": "compatible",
+        "element_base": {"type": "tile"},
+    }
+    assert result["nativeTypeLocked"] is True
+    assert result["emitted"] == [
+        {
+            "type": "custom:uix-forge",
+            "forge": {"mold": "card"},
+            "element_base": {"type": "tile", "entity": "light.kitchen"},
+            "element": {"name": "Kitchen"},
+            "foundry": "compatible",
+        },
+        {
+            "type": "custom:uix-forge",
+            "forge": {"mold": "card"},
+            "element_base": {"type": "tile", "entity": "light.kitchen"},
+            "element": {"name": "Kitchen"},
+        },
+        {
+            "type": "custom:uix-forge",
+            "forge": {"mold": "card"},
+            "element": {"name": "Kitchen"},
+            "foundry": "wrong_type",
+            "element_base": {"type": "markdown"},
+        },
+    ]
 
 
 def test_global_mold_foundry_overrides_global_foundry() -> None:
@@ -284,8 +448,8 @@ def test_layered_element_composition_preserves_base_and_disabled_source() -> Non
                 "};"
                 "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
                 "const { composeLayeredElementConfig } = moduleObj.exports;"
-                "const base = { type: 'tile', name: '{{ card_owned_name }}', entities: ['light.base'], tap_action: { action: 'toggle', confirmation: { text: 'Base' } }, metadata: { retained: true }, uix: { style: { 'ha-card': 'color: red;', '.base': 'display: block;' }, theme: 'base' } };"
-                "const values = { entities: [], tap_action: { action: 'more-info', confirmation: { text: 'Override' } }, metadata: { generated: true }, new_branch: { item: true }, uix: { style: { 'ha-card': 'color: blue;', '.overlay': 'opacity: 1;' }, theme: 'overlay' } };"
+                "const base = { type: 'tile', name: '{{ card_owned_name }}', entities: ['light.base'], tap_action: { action: 'toggle', navigation_path: '/base', confirmation: { text: 'Base' } }, metadata: { retained: true }, uix: { style: { 'ha-card': 'color: red;', '.base': 'display: block;' }, theme: 'base' } };"
+                "const values = { entities: [], tap_action: { action: 'more-info', navigation_path: null, confirmation: { text: 'Override' } }, metadata: { generated: true }, new_branch: { item: true }, uix: { style: { 'ha-card': 'color: blue;', '.overlay': 'opacity: 1;' }, theme: 'overlay' } };"
                 "const result = composeLayeredElementConfig(base, values, [['tap_action', 'action'], ['new_branch']], new Set([JSON.stringify(['metadata'])]));"
                 "process.stdout.write(JSON.stringify({ result, base, values }));"
             ),
@@ -302,6 +466,7 @@ def test_layered_element_composition_preserves_base_and_disabled_source() -> Non
         "entities": [],
         "tap_action": {
             "action": "toggle",
+            "navigation_path": None,
             "confirmation": {"text": "Override"},
         },
         "metadata": {"generated": True},
@@ -355,6 +520,15 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  setHass() {}"
                 "  refresh() {}"
                 "}"
+                "class BadgeMold {"
+                "  isCard() { return false; }"
+                "  isBadge() { return true; }"
+                "  templateVariables() { return {}; }"
+                "  get type() { return 'badge'; }"
+                "  setConfig() {}"
+                "  setHass() {}"
+                "  refresh() {}"
+                "}"
                 "const forgeModule = compile(process.argv[2], (name) => {"
                 "  if (name === 'lit') return { html: () => {}, LitElement: class {}, nothing: undefined };"
                 "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
@@ -362,13 +536,18 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: async () => ({ user: { name: 'test' } }), translate: (_hass, value) => value };"
                 "  if (name === '../helpers/templates') return templates;"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
-                "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: { card: CardMold } };"
+                "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: { card: CardMold, badge: BadgeMold } };"
                 "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { templateVariables() { return {}; } setConfig() {} } };"
                 "  throw new Error(`Unexpected forge import: ${name}`);"
                 "});"
                 "const forge = new forgeModule.UixForge();"
                 "forge.forgeElement = () => { forge.forgedElement = {}; };"
                 "forge.refreshForge = () => {};"
+                "const unresolvedBadge = new forgeModule.UixForge();"
+                "unresolvedBadge.forgeElement = () => {};"
+                "unresolvedBadge.refreshForge = () => {};"
+                "let unresolvedBadgeError = null;"
+                "try { unresolvedBadge.setConfig({ type: 'custom:uix-forge', forge: { mold: 'badge' } }); } catch (err) { unresolvedBadgeError = err.message; }"
                 "forge.setConfig({"
                 "  type: 'custom:uix-forge',"
                 "  entity: 'light.kitchen',"
@@ -377,7 +556,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  element: { title: '{{ config.entity }}' }"
                 "});"
                 "setTimeout(() => {"
-                "  const result = { config: forge.forgedElementConfig };"
+                "  const result = { config: forge.forgedElementConfig, unresolvedBadgeError };"
                 "  forge._layeredElementOverlaySource = [];"
                 "  try { forge._validateLayeredConfig({ type: 'markdown' }, true); }"
                 "  catch (err) { result.overlayError = err.message; }"
@@ -413,6 +592,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
         "content": "## {{ states('sensor.kitchen_sensor') }}",
         "title": "light.kitchen",
     }
+    assert result["unresolvedBadgeError"] is None
     assert result["overlayError"] == "uix-forge: layered element must be a mapping"
     assert result["staleBindings"] == 0
     assert result["refreshError"] == (

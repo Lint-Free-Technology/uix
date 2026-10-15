@@ -25,6 +25,7 @@ interface MediaSourceResolveResult {
 
 export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   type = "overlay-icon";
+  static readonly editorOptions = ["for", "icon", "image_url", "entity", "value", "color", "icon_color", "icon_position", "icon_size", "icon_background", "state_color"];
 
   private _for: string = "";
   private _icon: string = "";
@@ -392,4 +393,3 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
   }
 }
-
