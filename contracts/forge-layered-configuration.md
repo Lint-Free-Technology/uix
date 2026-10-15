@@ -67,7 +67,13 @@ Named, global, and mold-specific global Foundries participate identically in the
 global → global_<mold> → inherited/named Foundry → local configuration
 ```
 
-Foundries may contribute `forge` and `element` fragments, but never `element_base` or `element_disabled_paths`. `element_base` and `element_disabled_paths` belong to the local Forge configuration, so the Native element remains an explicit choice of the consuming card.
+Foundries may contribute `forge`, `element`, and `element_base` fragments, but
+never `element_disabled_paths`. A Foundry `element_base` is an element-owned
+pass-through base: it merges through Foundry inheritance before any local base,
+and its templates are left for Home Assistant or the wrapped element rather
+than evaluated by Forge. A local `element_base` may extend or replace that base
+using the normal Foundry merge rules. `element_disabled_paths` remains local to
+the consuming Forge configuration.
 
 A Foundry's `element` normally remains a Forge-owned overlay, including when it supplies fields other than `type`. A Foundry may also provide a reusable concrete `element.type` as an anchor for a UI-backed layered Forge. In that case, the consuming local configuration may provide `element_base.type` only when it is the identical concrete string:
 

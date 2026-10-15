@@ -56,11 +56,17 @@ a templated or otherwise dynamic `element.type` is valid in YAML-only Forge,
 but is disabled in this visual picker because it cannot safely provide a
 Native type anchor.
 
+A Foundry may also include `element_base` for native, pass-through source such
+as templates evaluated by the wrapped element. This remains YAML-only in the
+visual editor: the picker does not select it and any configuration inheriting
+it stays in YAML mode so that native source is not altered.
+
 After selecting a Foundry, the tab shows its resolved `forge` and `element`
 mapping in a read-only YAML editor below the picker. This includes inherited
-named Foundries, but not global Foundries or the local card configuration. The
-code area is limited to 200px high while Home Assistant retains control of its
-toolbar, scrolling, and normal fullscreen expansion.
+named Foundries, but not global Foundries or the local card configuration. A
+Foundry-owned `element_base` is included for review. The code area is limited
+to 200px high while Home Assistant retains control of its toolbar, scrolling,
+and normal fullscreen expansion.
 
 When the selected Foundry has a concrete `element.type`, the editor uses it as
 the Native type and locks type changes. Clear or replace the Foundry to choose
@@ -367,15 +373,27 @@ The example retains both template sources, but the rendered element uses its bas
 
 ### Foundries and template context
 
-Foundries may provide `element` fragments, but never `element_base` or `element_disabled_paths`. Global and named Foundries participate in the same resolution order:
+Foundries may provide `element` and `element_base` fragments, but never
+`element_disabled_paths`. Global and named Foundries participate in the same
+resolution order:
 
 ```text
 global → global_<mold> → inherited/named Foundry → local configuration
 ```
 
-The local `element_base` is the element-owned base. Foundry and local `element` fragments form the resolved Forge-owned overlay. `element_disabled_paths` belongs only to the local card and applies after that overlay resolves, allowing a card to suppress a Foundry-provided value without changing the Foundry.
+A Foundry may provide `element_base` as an element-owned pass-through base.
+It merges through Foundry inheritance before a local `element_base`, and its
+templates are evaluated by Home Assistant or the wrapped element rather than
+Forge. Foundry and local `element` fragments form the resolved Forge-owned
+overlay. `element_disabled_paths` belongs only to the local card and applies
+after that overlay resolves, allowing a card to suppress a Foundry-provided
+value without changing the Foundry.
 
-Any Forge with a local `element_base` uses layered configuration. A Foundry may use `element.type` as a reusable native-type anchor, provided local `element_base.type` is the same concrete string. Forge removes only that inherited matching type from the overlay; all other Foundry `element` fields remain overlays.
+Any Forge with a local or Foundry-provided `element_base` uses layered
+configuration. A Foundry may use `element.type` as a reusable native-type
+anchor, provided local `element_base.type` is the same concrete string. Forge
+removes only that inherited matching type from the overlay; all other Foundry
+`element` fields remain overlays.
 
 ```yaml
 uix_foundries:

@@ -28,6 +28,7 @@ type FoundryOption = {
   moldCompatible: boolean;
   typeCompatible: boolean;
   dynamicType: boolean;
+  foundryElementBase: boolean;
   selectable: boolean;
   compatible: boolean;
 };
@@ -261,12 +262,29 @@ export class UixForgeEditor extends LitElement {
 
   private _isDirectVisualConfig(): boolean {
     if (!this._config || !this._mold()) return false;
+    if (this._hasFoundryElementBase()) return false;
     if (this._hasNativeElement()) return true;
     // An unselected Native element is a valid visual-editor state. It must
     // have no type in either authored element layer; a typed direct element is
     // instead offered the explicit conversion flow below.
     return this._config.element_base === undefined
       && (!isMapping(this._config.element) || typeof this._config.element.type !== "string");
+  }
+
+  private _hasFoundryElementBase(): boolean {
+    const foundries = (window as any).uixCoordinator?.foundries;
+    if (!isMapping(foundries)) return false;
+    const mold = this._mold();
+    const names = [this._config?.foundry, "global", mold ? `global_${mold}` : undefined]
+      .filter((name): name is string => typeof name === "string");
+    return names.some((name) => {
+      if (!Object.prototype.hasOwnProperty.call(foundries, name)) return false;
+      try {
+        return _resolveFoundryAnchor(name, foundries, (window as any).uixCoordinator?.ready)?.hasFoundryElementBase === true;
+      } catch {
+        return false;
+      }
+    });
   }
 
   private _isConvertible(): boolean {
@@ -305,6 +323,7 @@ export class UixForgeEditor extends LitElement {
         const foundryMold = anchor?.mold;
         const foundryType = anchor?.type;
         const dynamicType = foundryType !== undefined && !isConcreteElementType(foundryType);
+        const foundryElementBase = anchor?.hasFoundryElementBase === true;
         const moldCompatible = !foundryMold || foundryMold === mold;
         const typeCompatible = !dynamicType && (!nativeType || !foundryType || foundryType === nativeType);
         options.push({
@@ -314,8 +333,9 @@ export class UixForgeEditor extends LitElement {
           moldCompatible,
           typeCompatible,
           dynamicType,
-          selectable: moldCompatible && !dynamicType,
-          compatible: moldCompatible && typeCompatible,
+          foundryElementBase,
+          selectable: moldCompatible && !dynamicType && !foundryElementBase,
+          compatible: moldCompatible && typeCompatible && !foundryElementBase,
         });
       } catch {
         // An unrelated invalid Foundry must not prevent healthy entries from
@@ -449,6 +469,7 @@ export class UixForgeEditor extends LitElement {
     if (!foundry.moldCompatible) {
       return `Incompatible mold: ${foundry.mold ?? "none"}; requires ${this._mold() ?? "none"}`;
     }
+    if (foundry.foundryElementBase) return "Foundry Native base: use the YAML editor";
     if (foundry.dynamicType) return "Dynamic element type: use the YAML editor";
     if (!foundry.typeCompatible) return "Incompatible with selected native card";
     return "Compatible with selected native card";
@@ -1787,7 +1808,7 @@ export class UixForgeEditor extends LitElement {
 
   protected render() {
     if (!this._config) return nothing;
-    if (!this._isDirectVisualConfig()) return html`${this._renderConversion()}<div class="section"><h3>Forge visual editor unavailable</h3><p>Visual editing supports Card and Badge Forges with a selected Native element or no element type. Use Home Assistant's YAML editor for rows, other molds, dynamic types, or invalid layered source.</p></div>`;
+    if (!this._isDirectVisualConfig()) return html`${this._renderConversion()}<div class="section"><h3>Forge visual editor unavailable</h3><p>Visual editing supports Card and Badge Forges with a selected Native element or no element type. Use Home Assistant's YAML editor for rows, other molds, dynamic types, Foundry Native bases, or invalid layered source.</p></div>`;
     return html`
       <ha-tab-group @wa-tab-show=${this._handleTabChanged}>
         <ha-tab-group-tab slot="nav" panel="native" .active=${this._tab === "native"}>Native</ha-tab-group-tab>

@@ -210,15 +210,13 @@ function _validateFoundryLayeredFields(foundry: any, name: string): void {
   if (foundry?.element_disabled_paths !== undefined) {
     throw new Error(`uix-forge: foundry '${name}' cannot set element_disabled_paths`);
   }
-  if (Object.prototype.hasOwnProperty.call(foundry ?? {}, "element_base")) {
-    throw new Error(`uix-forge: foundry '${name}' cannot set element_base; use element instead`);
-  }
 }
 
 type ResolvedForgeConfig = {
   forge: any;
   element: any;
   elementBase: any;
+  /** True when a local or Foundry-owned Native base is present. */
   hasElementBase: boolean;
   /** A concrete element type inherited from a Foundry, before local merging. */
   foundryElementType: any;
@@ -272,13 +270,18 @@ export function _resolveFoundryConfig(
     // foundryData overrides base, local config overrides foundry
     const foundryForge = _mergeFoundryConfig(baseResolved.forge, foundryData.forge);
     const foundryElement = _mergeFoundryConfig(baseResolved.element, foundryData.element);
+    // A Foundry Native base is passed through to the wrapped element. In
+    // particular, its native templates must not become Forge templates.
+    const foundryElementBase = _mergeFoundryConfig(baseResolved.elementBase, foundryData.element_base);
+    const foundryHasElementBase = baseResolved.hasElementBase
+      || Object.prototype.hasOwnProperty.call(foundryData, "element_base");
     const foundryDefinesElementType = _isPlainObject(foundryData.element)
       && Object.prototype.hasOwnProperty.call(foundryData.element, "type");
     result = {
       forge: _mergeFoundryConfig(foundryForge, config.forge),
       element: _mergeFoundryConfig(foundryElement, config.element),
-      elementBase: _mergeFoundryConfig(baseResolved.elementBase, config.element_base),
-      hasElementBase: Object.prototype.hasOwnProperty.call(config, "element_base"),
+      elementBase: _mergeFoundryConfig(foundryElementBase, config.element_base),
+      hasElementBase: foundryHasElementBase || Object.prototype.hasOwnProperty.call(config, "element_base"),
       foundryElementType: foundryDefinesElementType
         ? foundryData.element.type
         : baseResolved.foundryElementType,
@@ -358,7 +361,7 @@ export function _resolveFoundryAnchor(
   foundryName: string,
   foundries?: Record<string, any>,
   ready = true
-): { mold?: string; type?: string } | null {
+): { mold?: string; type?: string; hasFoundryElementBase?: boolean } | null {
   const resolved = _resolveFoundryConfig(
     { foundry: foundryName },
     foundries,
@@ -370,6 +373,7 @@ export function _resolveFoundryAnchor(
   return {
     mold: typeof resolved.forge?.mold === "string" ? resolved.forge.mold : undefined,
     type: typeof resolved.element?.type === "string" ? resolved.element.type : undefined,
+    hasFoundryElementBase: resolved.hasElementBase || undefined,
   };
 }
 

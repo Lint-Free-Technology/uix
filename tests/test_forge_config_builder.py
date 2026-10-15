@@ -118,12 +118,17 @@ def test_foundry_sparks_not_duplicated() -> None:
                 "const forge = new UixForge();"
                 "forge.config = config;"
                 "const preparedOverlay = forge._prepareLayeredOverlay(resolved.element, resolved.elementBase, resolved.hasElementBase, resolved.foundryElementType, resolved.hasFoundryElementType);"
-                "let foundryBaseError;"
-                "try { _resolveFoundryConfig({ foundry: 'invalid' }, { invalid: { element_base: { type: 'tile' } } }); } catch (err) { foundryBaseError = err.message; }"
+                "const foundryNativeBase = _resolveFoundryConfig({ foundry: 'native-child' }, {"
+                "  'native-base': { forge: { mold: 'card' }, element_base: { type: 'markdown', content: '{{ states(\\'sensor.title\\') }}' } },"
+                "  'native-child': { foundry: 'native-base' }"
+                "});"
+                "const globalNativeBase = _resolveFoundryConfig({ forge: { mold: 'card' } }, {"
+                "  global: { element_base: { type: 'markdown', content: '{{ states(\\'sensor.global_title\\') }}' } }"
+                "});"
                 "let foundryDisabledPathsError;"
                 "try { _resolveFoundryConfig({ foundry: 'invalid' }, { invalid: { element_disabled_paths: [['title']] } }); } catch (err) { foundryDisabledPathsError = err.message; }"
                 "const foundryAnchor = _resolveFoundryAnchor('inherited_tile', foundries);"
-                "process.stdout.write(JSON.stringify({ resolved, stub, preparedOverlay, foundryBaseError, foundryDisabledPathsError, foundryAnchor }));"
+                "process.stdout.write(JSON.stringify({ resolved, stub, preparedOverlay, foundryNativeBase, globalNativeBase, foundryDisabledPathsError, foundryAnchor }));"
             ),
             str(FORGE_TS),
         ],
@@ -146,7 +151,16 @@ def test_foundry_sparks_not_duplicated() -> None:
     assert resolved["hasFoundryElementType"] is True
     assert result["stub"] == {"type": "custom:uix-forge", "forge": {"mold": "card"}}
     assert result["preparedOverlay"] == {"entity": "cover.test"}
-    assert result["foundryBaseError"] == "uix-forge: foundry 'invalid' cannot set element_base; use element instead"
+    assert result["foundryNativeBase"]["elementBase"] == {
+        "type": "markdown",
+        "content": "{{ states('sensor.title') }}",
+    }
+    assert result["foundryNativeBase"]["hasElementBase"] is True
+    assert result["globalNativeBase"]["elementBase"] == {
+        "type": "markdown",
+        "content": "{{ states('sensor.global_title') }}",
+    }
+    assert result["globalNativeBase"]["hasElementBase"] is True
     assert result["foundryDisabledPathsError"] == "uix-forge: foundry 'invalid' cannot set element_disabled_paths"
     assert result["foundryAnchor"] == {"mold": "card", "type": "tile"}
 
@@ -168,6 +182,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "  wrong_mold: { forge: { mold: 'badge' } },"
                 "  unconstrained: { forge: {}, element: {} },"
                 "  dynamic_type: { forge: { mold: 'card' }, element: { type: '{{ config.type }}' } },"
+                "  foundry_native_base: { forge: { mold: 'card' }, element_base: { type: 'tile' } },"
                 "  broken: { foundry: 'missing' }"
                 "} }, addEventListener() {}, removeEventListener() {} };"
                 "global.customElements = { get() {}, define() {} };"
@@ -196,7 +211,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "    };"
                 "    return {"
                 "      _resolveFoundryConfig: resolve,"
-                "      _resolveFoundryAnchor: (foundryName, foundries) => { const resolved = resolve({ foundry: foundryName }, foundries); return { mold: resolved.forge.mold, type: resolved.element.type }; },"
+                "      _resolveFoundryAnchor: (foundryName, foundries) => { const resolved = resolve({ foundry: foundryName }, foundries); return { mold: resolved.forge.mold, type: resolved.element.type, hasFoundryElementBase: resolved.hasElementBase || undefined }; },"
                 "      composeLayeredElementConfig: (base, element) => ({ ...base, ...element })"
                 "    };"
                 "  }"
@@ -263,6 +278,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
         "wrong_mold": False,
         "wrong_type": False,
         "dynamic_type": False,
+        "foundry_native_base": False,
     }
     assert [option["name"] for option in result["options"]] == [
         "card_tile_base",
@@ -270,11 +286,15 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
         "unconstrained",
         "wrong_type",
         "dynamic_type",
+        "foundry_native_base",
         "wrong_mold",
     ]
     dynamic_option = next(option for option in result["options"] if option["name"] == "dynamic_type")
+    foundry_native_base_option = next(option for option in result["options"] if option["name"] == "foundry_native_base")
     assert dynamic_option["dynamicType"] is True
     assert dynamic_option["selectable"] is False
+    assert foundry_native_base_option["foundryElementBase"] is True
+    assert foundry_native_base_option["selectable"] is False
     assert result["dynamicSelectionBlocked"] is True
     assert result["brokenFoundrySafe"] is True
     assert result["pending"] == "wrong_type"

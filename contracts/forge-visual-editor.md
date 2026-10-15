@@ -176,6 +176,10 @@ editor context and currently selected Native type:
 - A templated or otherwise dynamic Foundry `element.type` is not a reliable
   Native type anchor. It remains valid in YAML-only/non-layered Forge, but the
   visual picker shows it disabled and directs the user to the YAML editor.
+- A Foundry-owned `element_base` is valid runtime source, including native
+  templates, but is YAML-only in the visual editor. The picker does not select
+  it and a configuration inheriting one remains in YAML until its Native source
+  can be represented without altering that pass-through behavior.
 
 Compatible options report **Compatible with selected native card**. Incompatible
 type options report **Incompatible with selected native card** in the error
@@ -185,6 +189,7 @@ disabled, and cannot be selected.
 Invalid, missing, or cyclic Foundries are omitted from the visual picker rather
 than preventing the remaining Foundries from rendering. Dynamic-type Foundries
 are also disabled, but remain visible with their YAML-only explanation.
+Foundry Native-base options are disabled with the same YAML-only direction.
 Compatible Foundries are listed first, then type-incompatible Foundries, then
 disabled mold-incompatible Foundries; each group is ordered alphabetically by
 Foundry name. The trailing metadata is two normal-weight `--ha-font-size-s`
@@ -229,7 +234,8 @@ When a named Foundry is selected and can be resolved, the tab displays its
 resolved `{ forge, element }` mapping directly below the picker in a read-only
 `ha-yaml-editor`. This view follows inherited named Foundries but excludes
 global Foundries and the local card source. It exposes no resolver bookkeeping
-or `element_base` fields, and supplies Home Assistant's code editor with a
+but does show a Foundry-owned `element_base` so its native source can be
+reviewed. It supplies Home Assistant's code editor with a
 `--code-mirror-max-height` of 200px. The editor therefore manages its own code
 area, toolbar, scrolling, and normal fullscreen expansion control. It is
 inspection-only and never emits a configuration change.
