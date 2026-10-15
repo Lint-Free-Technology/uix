@@ -258,11 +258,12 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "let disabledConfig; disabledEditor._emit = (config) => { disabledEditor._config = config; disabledConfig = config; };"
                 "disabledEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'compatible', element_base: { type: 'tile' }, element: { icon: 'mdi:one' }, element_disabled_paths: [['name']] });"
                 "disabledEditor._editingPath = ['icon']; disabledEditor._templateDraft = 'mdi:two'; disabledEditor._templateDraftValid = true; disabledEditor._templateDisabledPaths = [['name']]; disabledEditor._applyTemplateDraft(false);"
+                "const orphanDisabledEditor = new moduleObj.exports.UixForgeEditor(); let orphanDisabledConfig; orphanDisabledEditor._emit = (config) => { orphanDisabledEditor._config = config; orphanDisabledConfig = config; }; orphanDisabledEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, foundry: 'compatible', element_base: { type: 'tile' }, element_disabled_paths: [['name']] }); orphanDisabledEditor._selectFoundry({ detail: { value: undefined } });"
                 "const shortcutsEditor = new moduleObj.exports.UixForgeEditor(); shortcutsEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, entities: ['light.kitchen'], element: { type: 'entities' } });"
                 "const elementShortcutEditor = new moduleObj.exports.UixForgeEditor(); elementShortcutEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element: { type: 'tile', state_color: true } });"
                 "const dotPathEditor = new moduleObj.exports.UixForgeEditor(); let dotPathConfig; dotPathEditor._emit = (config) => { dotPathEditor._config = config; dotPathConfig = config; }; dotPathEditor.setConfig({ type: 'custom:uix-forge', forge: { mold: 'card' }, element_base: { type: 'tile', variables: { 'room.label': 'Kitchen' } } });"
                 "const dotOption = dotPathEditor._templateOptions().find((option) => option.label === 'variables.room.label'); dotPathEditor._addTemplate({ detail: { value: dotOption.value } });"
-                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
+                "process.stdout.write(JSON.stringify({ options, pending, emitted, dynamicSelectionBlocked, brokenFoundrySafe, anchoredConfig, nativeTypeLocked, resolvedFoundry, exportedFoundry, usesGlobalForgeEntity, entityConfig, sparkUpdates, sparkDraft: sparkEditor._sparkDraft, previewingAfterInvalidPreview: previewEditor._previewingTemplate, unanchoredEmits, disabledPathsAfterLocalEdit: disabledConfig.element_disabled_paths, orphanDisabledConfig, unsafeTemplatePathBlocked: dotPathEditor._templatePath('__proto__.polluted') === undefined, topLevelShortcutConvertible: shortcutsEditor._isConvertible(), elementShortcutConvertible: elementShortcutEditor._isConvertible(), dotPathPickerValue: dotOption.value, dotPathConfig, hasMalformedSparkFallback: source.includes('sourceSparks.some((spark) => !isMapping(spark))') && source.includes('Use Show code editor to correct it'), hasPicker: source.includes('<ha-generic-picker'), hasRowRenderer: source.includes('.rowRenderer=${this._renderFoundryPickerRow}'), hasButtonRows: source.includes('<ha-combo-box-item type=\"button\"'), hasReadOnlyResolvedEditor: source.includes('.readOnly=${true}') && source.includes('Resolved Foundry (mapping)') && source.includes('--code-mirror-max-height: 200px'), hasExportTab: source.includes('panel=\"export\"') && source.includes('icon=\"mdi:export\"') && source.includes('aria-label=\"Export\"'), hasGlobalForgeEntityPanel: source.includes('Global Forge entity (in use)') && source.includes('.selector=${{ entity: {} }}'), hasFoundryInUseNotice: source.includes('Foundry <strong>${this._config.foundry}</strong> is in use. Use Foundry tab to review config.'), hasWarningContinue: source.includes('variant=\"warning\"') && source.includes('Continue') }));"
             ),
             str(FORGE_EDITOR_TS),
         ],
@@ -312,6 +313,9 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     assert result["previewingAfterInvalidPreview"] is True
     assert result["unanchoredEmits"] == 0
     assert result["disabledPathsAfterLocalEdit"] == [["name"]]
+    assert result["orphanDisabledConfig"].get("element_disabled_paths") is None
+    assert result["unsafeTemplatePathBlocked"] is True
+    assert result["hasMalformedSparkFallback"] is True
     assert result["topLevelShortcutConvertible"] is False
     assert result["elementShortcutConvertible"] is False
     assert result["dotPathPickerValue"].startswith("__uix_path__:")
@@ -327,7 +331,8 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
     }
     assert result["exportedFoundry"] == {
         "forge": {"mold": "card"},
-        "element": {"type": "markdown", "name": "Kitchen"},
+        "element_base": {"type": "markdown"},
+        "element": {"name": "Kitchen"},
     }
     assert result["anchoredConfig"] == {
         "type": "custom:uix-forge",

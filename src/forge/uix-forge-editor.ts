@@ -53,12 +53,21 @@ const FORGE_CONTROL_SCHEMA = [
 const CODE_BLOCK_BRACES_PATH = "M5 3C3.9 3 3 3.9 3 5S2.1 7 1 7V9C2.1 9 3 9.9 3 11S3.9 13 5 13H7V11H5V10C5 8.9 4.1 8 3 8C4.1 8 5 7.1 5 6V5H7V3M11 3C12.1 3 13 3.9 13 5S13.9 7 15 7V9C13.9 9 13 9.9 13 11S12.1 13 11 13H9V11H11V10C11 8.9 11.9 8 13 8C11.9 8 11 7.1 11 6V5H9V3H11M22 6V18C22 19.11 21.11 20 20 20H4C2.9 20 2 19.11 2 18V15H4V18H20V6H17.03V4H20C21.11 4 22 4.89 22 6Z";
 const NULL_PATH = "M12,2C13.85,2 15.55,2.78 16.9,4.1L18.6,1.93L20.18,3.16L18.2,5.68C19.33,7.41 20,9.6 20,12C20,17.5 16.42,22 12,22C10.15,22 8.45,21.22 7.1,19.9L5.4,22.07L3.82,20.84L5.8,18.32C4.67,16.59 4,14.4 4,12C4,6.5 7.58,2 12,2M12,4C8.69,4 6,7.58 6,12C6,13.73 6.41,15.33 7.11,16.64L15.67,5.67C14.66,4.62 13.38,4 12,4M12,20C15.31,20 18,16.42 18,12C18,10.27 17.59,8.67 16.89,7.36L8.33,18.33C9.34,19.38 10.62,20 12,20Z";
 const WARNING_PATH = "M13 14H11V10H13M13 18H11V16H13M1 21H23L12 2L1 21M3.72 19L12 4.14L20.28 19H3.72Z";
+const UNSAFE_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
+
+const isSafePath = (path: string[]): boolean => path.length > 0 && path.every((part) => !UNSAFE_PATH_SEGMENTS.has(part));
+
+const setOwn = (target: Record<string, any>, key: string, value: any): void => {
+  Object.defineProperty(target, key, { value, enumerable: true, configurable: true, writable: true });
+};
 
 const clone = (value: any): any => {
   if (Array.isArray(value)) return value.map(clone);
   if (value !== null && typeof value === "object") {
     const result: Record<string, any> = {};
-    for (const [key, child] of Object.entries(value)) result[key] = clone(child);
+    // Imported YAML can contain __proto__; define it as data rather than
+    // invoking the inherited Object.prototype setter while cloning.
+    for (const [key, child] of Object.entries(value)) setOwn(result, key, clone(child));
     return result;
   }
   return value;
@@ -84,20 +93,22 @@ function readPath(value: any, path: string[]): any {
 
 function setPath(value: Record<string, any>, path: string[], replacement: any): Record<string, any> {
   const result = clone(value);
+  if (!isSafePath(path)) return result;
   let target: Record<string, any> = result;
   for (const key of path.slice(0, -1)) {
-    if (!isMapping(target[key])) target[key] = {};
+    if (!Object.prototype.hasOwnProperty.call(target, key) || !isMapping(target[key])) setOwn(target, key, {});
     target = target[key];
   }
-  target[path[path.length - 1]] = replacement;
+  setOwn(target, path[path.length - 1], replacement);
   return result;
 }
 
 function removePath(value: Record<string, any>, path: string[]): Record<string, any> {
   const result = clone(value);
+  if (!isSafePath(path)) return result;
   let target: Record<string, any> = result;
   for (const key of path.slice(0, -1)) {
-    if (!isMapping(target[key])) return result;
+    if (!Object.prototype.hasOwnProperty.call(target, key) || !isMapping(target[key])) return result;
     target = target[key];
   }
   delete target[path[path.length - 1]];
@@ -150,6 +161,7 @@ export class UixForgeEditor extends LitElement {
   @state() private _nativeGUIMode = true;
   @state() private _nativeGUIModeAvailable = true;
   @state() private _pendingFoundry?: FoundryOption;
+  @state() private _foundryDisabledPathsNotice?: UixForgeConfigPath[];
   private _foundryUpdateListener = () => this.requestUpdate();
 
   static styles = css`
@@ -233,6 +245,7 @@ export class UixForgeEditor extends LitElement {
     this._nativeGUIMode = true;
     this._nativeGUIModeAvailable = true;
     this._pendingFoundry = undefined;
+    this._foundryDisabledPathsNotice = undefined;
   }
 
   connectedCallback(): void {
@@ -392,11 +405,7 @@ export class UixForgeEditor extends LitElement {
     return config;
   }
 
-  /**
-   * A portable Foundry has only `forge` and `element` source. Resolve named
-   * Foundry inheritance (but not global Foundries), then flatten the local
-   * Native base and active overlay into its complete `element` mapping.
-   */
+  /** Resolve named Foundry inheritance into portable Foundry source. */
   private _exportFoundryConfig(): Record<string, any> {
     const coordinator = (window as any).uixCoordinator;
     let resolved;
@@ -417,13 +426,17 @@ export class UixForgeEditor extends LitElement {
     if (!resolved) return { forge: clone(this._config?.forge ?? {}), element: {} };
 
     const base = isMapping(resolved.elementBase) ? resolved.elementBase : {};
-    const element = isMapping(resolved.element) ? resolved.element : {};
+    const element = isMapping(resolved.element) ? clone(resolved.element) : {};
     const hasBase = resolved.hasElementBase ?? this._config?.element_base !== undefined;
+    // `element.type` is only an anchor in layered configuration. A standalone
+    // exported Foundry carries that type in element_base instead.
+    if (hasBase) delete element.type;
     return {
       forge: clone(isMapping(resolved.forge) ? resolved.forge : {}),
-      element: hasBase
-        ? composeLayeredElementConfig(base, element, this._disabledPaths())
-        : clone(element),
+      ...(hasBase ? { element_base: clone(base) } : {}),
+      // Exclude locally disabled overlay values without merging native source;
+      // native templates in element_base must remain authored source.
+      element: hasBase ? composeLayeredElementConfig({}, element, this._disabledPaths()) : element,
     };
   }
 
@@ -438,6 +451,26 @@ export class UixForgeEditor extends LitElement {
       // a previously disabled value during an unrelated local edit.
       return undefined;
     }
+  }
+
+  /**
+   * Disabled paths are meaningful only while the candidate's full resolved
+   * overlay provides them. Changing Foundry can otherwise leave a config that
+   * the runtime correctly rejects; drop only those orphaned paths and surface
+   * that explicit consequence in the Foundry panel.
+   */
+  private _withoutOrphanedDisabledPaths(config: UixForgeConfig): { config: UixForgeConfig; removed: UixForgeConfigPath[] } {
+    const disabled = config.element_disabled_paths ?? [];
+    if (!disabled.length) return { config, removed: [] };
+    const overlay = this._resolvedOverlaySource(config);
+    if (!overlay) return { config, removed: [] };
+    const retained = disabled.filter((path) => hasPath(overlay, path));
+    const removed = disabled.filter((path) => !hasPath(overlay, path));
+    if (!removed.length) return { config, removed };
+    const next = { ...config };
+    if (retained.length) next.element_disabled_paths = retained;
+    else delete next.element_disabled_paths;
+    return { config: next, removed };
   }
 
   /**
@@ -517,7 +550,9 @@ export class UixForgeEditor extends LitElement {
       const next = { ...this._config };
       delete next.foundry;
       this._pendingFoundry = undefined;
-      this._emit(next);
+      const pruned = this._withoutOrphanedDisabledPaths(next);
+      this._foundryDisabledPathsNotice = pruned.removed.length ? pruned.removed : undefined;
+      this._emit(pruned.config);
       return;
     }
     if (typeof name !== "string") return;
@@ -546,7 +581,9 @@ export class UixForgeEditor extends LitElement {
       };
     }
     this._pendingFoundry = undefined;
-    this._emit(next);
+    const pruned = this._withoutOrphanedDisabledPaths(next);
+    this._foundryDisabledPathsNotice = pruned.removed.length ? pruned.removed : undefined;
+    this._emit(pruned.config);
   }
 
   private _cancelFoundrySelection(): void {
@@ -1236,7 +1273,7 @@ export class UixForgeEditor extends LitElement {
     } else {
       path = value.split(".").map((part) => part.trim());
     }
-    if (!path.length || path.some((part) => !part) || path[0] === "type" || path[0] === "uix") return undefined;
+    if (!path.length || path.some((part) => !part) || !isSafePath(path) || path[0] === "type" || path[0] === "uix") return undefined;
     return path;
   }
 
@@ -1244,7 +1281,7 @@ export class UixForgeEditor extends LitElement {
     if (!this._config) return;
     const path = this._templatePath(event.detail?.value);
     if (!path) {
-      this._templateError = "Enter a dot-separated key path other than type or uix.";
+      this._templateError = "Enter a safe dot-separated key path other than type or uix.";
       return;
     }
     if (!this._pathCanBeAdded(path)) {
@@ -1565,9 +1602,15 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _renderSparks() {
-    const sparks = Array.isArray(this._forgeSource().sparks)
-      ? this._forgeSource().sparks.filter(isMapping)
-      : [];
+    const sourceSparks = this._forgeSource().sparks;
+    // Spark actions operate on source indexes. Do not filter malformed entries
+    // for display, otherwise a tab action could modify a different Spark.
+    if (Array.isArray(sourceSparks) && sourceSparks.some((spark) => !isMapping(spark))) {
+      return html`<ha-alert alert-type="warning">
+        This Spark list contains a non-mapping entry. Use Show code editor to correct it before editing Sparks visually.
+      </ha-alert>`;
+    }
+    const sparks = Array.isArray(sourceSparks) ? sourceSparks : [];
     const sparkPicker = html`<div class="template-picker"><ha-selector
       .hass=${this.hass}
       .selector=${{ select: { options: Object.keys(UIX_FORGE_SPARK_CLASSES).map((type) => ({ value: type, label: type })), mode: "dropdown" } }}
@@ -1690,6 +1733,12 @@ export class UixForgeEditor extends LitElement {
             @value-changed=${this._selectFoundry}
           ></ha-generic-picker>
         </div>
+        ${this._foundryDisabledPathsNotice ? html`
+          <ha-alert class="table-alert" alert-type="warning" dismissable @alert-dismissed-clicked=${() => { this._foundryDisabledPathsNotice = undefined; }}>
+            ${this._foundryDisabledPathsNotice.length === 1 ? "A disabled Element path" : "Disabled Element paths"}
+            no longer exist${this._foundryDisabledPathsNotice.length === 1 ? "s" : ""} in the selected Foundry and ${this._foundryDisabledPathsNotice.length === 1 ? "was" : "were"} re-enabled.
+          </ha-alert>
+        ` : nothing}
         ${resolvedFoundry ? html`
           <div class="editor-label">Resolved Foundry (mapping)</div>
           <div class="foundry-resolved-editor">
