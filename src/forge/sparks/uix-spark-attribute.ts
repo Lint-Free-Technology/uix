@@ -3,6 +3,7 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 
 export class UixForgeSparkAttribute extends UixForgeSparkBase {
   type = "attribute";
+  static readonly editorOptions = ["for", "attribute", "action", "value"];
 
   private selector: string = "";
   private attribute: string = "";

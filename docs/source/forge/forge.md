@@ -10,8 +10,237 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 - **Add sparks** — self-contained behaviors that augment the forged element.
 - **Apply UIX styles** to the forged element, exactly like any other element. Additionally any spark variables are made available in the `uixForge` template variable.
 
-!!! tip "Wrap in UIX Forge"
-    Look for the :bulb: icon in YAML code editors for card, badge, row, picture-element, card-feature to wrap an element's code in UIX Forge and get started.
+## Visual editor
+
+The Home Assistant card and badge pickers include **UIX Forge**. Creating it
+there opens the Forge visual editor with no preselected element type. Choose a
+Native element to create layered configuration: the wrapped element's source
+is in `element_base`, while values owned by Forge are in `element`. The initial
+configuration deliberately contains no placeholder element type.
+
+Until you choose an element type, Card and Badge Forge automatically use their
+built-in blank card or blank badge. This automatic type selection is not saved
+in the dashboard configuration.
+
+The editor has five transient tabs. **Native** edits `element_base` using the
+wrapped element's Home Assistant editor. **Forge** edits the outer `forge`
+mapping (with its `mold` locked to the current context). **Element** edits
+the Forge-owned `element` layer and its enablement. **Foundry** chooses a
+shared Foundry to merge with the local configuration. The final **Export** tab
+provides a Foundry YAML copy. Only the selected tab is
+available, so its ownership boundary applies to keyboard interaction as well
+as clicks. The selected tab is local UI state and is never saved.
+
+When a Foundry is selected, an information notice sits below these tabs and
+above the current panel to name the Foundry in use and direct you to the
+**Foundry** tab for its resolved configuration.
+
+When a Forge or Element template directly references `config.entity`, the
+editor also shows a shared **Global Forge entity (in use)** entity picker below
+that notice. It writes the outer Forge `entity` value, which is available to
+Forge templates without being passed to the wrapped element. Direct references
+in the selected Foundry are recognised too. References reached only through a
+macro cannot be inferred, so set the outer `entity` in YAML for that case.
+
+The Foundry picker shows each Foundry's resolved `forge.mold` and `element.type`
+(`none` when either is absent), on separate metadata lines. It marks a Foundry
+compatible when its mold is either absent or matches the Card/Badge editor
+context and, once a Native type is selected, its type is either absent or
+matches that Native type. A mismatched mold is shown in red, disabled, and
+listed last; it cannot be selected. A type mismatch is shown in red and
+requires confirmation. Confirming it clears the local Native configuration
+before selecting the Foundry; Forge-owned Element values remain in place.
+Foundries with an invalid, missing, or cyclic inheritance chain are omitted so
+they cannot prevent the picker from showing healthy Foundries. A Foundry with
+a templated or otherwise dynamic `element.type` is valid in YAML-only Forge,
+but is disabled in this visual picker because it cannot safely provide a
+Native type anchor. A Foundry which declares a non-string `element.type` is
+also disabled rather than being treated as though it had no type.
+Existing Forge YAML with a dynamic, malformed, mismatched, missing, or cyclic
+Foundry type anchor likewise remains in the full YAML editor until its
+configuration is valid for the Native editor.
+
+A Foundry may also include `element_base` for native, pass-through source such
+as templates evaluated by the wrapped element. This remains YAML-only in the
+visual editor: the picker does not select it and any configuration inheriting
+it stays in YAML mode so that native source is not altered.
+
+After selecting a Foundry, the tab shows its resolved `forge` and `element`
+mapping in a read-only YAML editor below the picker. This includes inherited
+named Foundries, but not global Foundries or the local card configuration. A
+Foundry-owned `element_base` is included for review. The code area is limited
+to 200px high while Home Assistant retains control of its toolbar, scrolling,
+and normal fullscreen expansion.
+
+When the selected Foundry has a concrete `element.type`, the editor uses it as
+the Native type and locks type changes. Clear or replace the Foundry to choose
+a different Native type. Dynamic types remain YAML-only and are never copied
+into the Native layer.
+
+Global Foundry type anchors are applied in the same way. An empty Native state
+can still open the picker to choose the required type, while an existing Native
+card is protected from incompatible type changes. Clearing or changing a
+Foundry is refused when it would expose an incompatible global type anchor.
+
+The **Export** tab displays copy-only YAML that can be pasted into a Foundry.
+It preserves a selected Foundry as `foundry: <name>` rather than flattening its
+inheritance, then includes the local Native `element_base` and active Element
+overlay. This preserves native templates exactly as authored. It does not
+evaluate templates, include global Foundries, or save a Foundry; the outer
+`entity` and disabled paths are excluded because they belong to the consuming
+card rather than a reusable Foundry. Only save `element_base` in a Foundry from
+YAML generated by this UI editor's Export tab; do not hand-author that
+editor-preserved source.
+
+The Export tab omits an empty `forge.sparks` list. The visual editor does not
+offer controls for clearing inherited Forge arrays such as Sparks, macros, or
+billets.
+
+The Forge tab can switch between **Show visual editor** and **Show code
+editor**. Code mode keeps the complete Forge YAML available. Visual mode has
+four tabs:
+
+- **General**, beginning with the context-locked mold, for `hidden`,
+  `grid_options.rows`, and `grid_options.columns`; each can be a template.
+  Literal numbers in the grid fields are saved as numbers, and literal `true`
+  or `false` in `hidden` are saved as booleans, while templates remain source
+  text. A whole-value YAML template for `grid_options` remains unchanged until
+  you explicitly replace it with a row or column value.
+  Its collapsed **Control** section contains `show_error`,
+  `template_nesting`, and boolean `delayed_hass`. Its separate collapsed **UIX
+  styling** section edits the contents of `forge.uix`.
+- **Billets** lists locally configured billet names. Add or edit a billet with
+  its name and one scalar value; use `~` for a literal-null placeholder. The
+  Forge code editor remains available for billet mappings and lists. When a
+  Foundry is selected, a second table shows its resolved billet names and
+  values.
+- **Macros** lists locally configured macro names. Its form edits the name,
+  whether the macro returns a value, parameters (including optional scalar
+  defaults), and template source. Numeric, boolean, and null parameter defaults
+  are preserved. Macros imported from `custom_templates` stay
+  in the Forge code editor so their import source is preserved. When a Foundry
+  is selected, a second table shows resolved macro calls and their return
+  status.
+- **Sparks**, where the top picker adds a registered Spark and each Spark has
+  its own tab. Within it, a second picker offers that Spark's supported options
+  and a source table for configured options. An option is edited as
+  template/code source, an object or list YAML source, or an explicit `null`
+  value. Newly added options show a dismissible notice explaining that they
+  start as `null` and can become a template source or object mapping. Replacing
+  an existing Spark source with an object mapping or `null` asks for
+  confirmation first.
+Each Spark declares its supported option names, not typed form fields, so a
+template remains source rather than being coerced by a selector. The Forge
+code editor remains the YAML-object editor for complete Spark configurations,
+including removing Sparks or editing complete Spark source.
+
+Forge and UIX styling YAML editors retain the text you are typing, including
+comments and temporarily invalid YAML, instead of reformatting it after every
+keystroke. Invalid Forge, UIX styling, or Native YAML blocks Home Assistant's
+outer **Save** action until it is corrected.
+
+Billet, Macro, and Spark option forms apply only when you choose **Apply** or
+**Apply & exit**. **Exit** asks for confirmation if a form has unapplied
+changes; removing a Billet, Macro, Element template, Spark option, or Spark
+also asks for confirmation. Changing a Forge, Spark, or outer editor tab with unapplied
+edits asks whether to continue and discard that local draft.
+
+If a Spark list contains a non-object entry, correct that list in the Forge
+code editor before returning to visual Spark editing.
+
+Apply & exit or Exit an open Spark option before switching to the Forge code editor.
+Removing the final locally configured Spark resumes any Sparks provided by the
+selected Foundry rather than clearing them.
+
+Most newly added Spark options begin as `null` so you can choose their source
+in the editor. Options that require a concrete value at runtime instead start
+with their valid default.
+
+Native includes an explicit **Choose/Change native element** action. Selecting
+an element immediately replaces the Native source and opens its normal Home
+Assistant editor. **Cancel** leaves the picker without selecting an element;
+Home Assistant's usual editor Cancel and dashboard undo can revert a selected
+element. Changing to a different element type is explicit and keeps Forge
+template values in place.
+The picker's incomplete **Manual** choice is not saved until a concrete element
+type has been selected, so it cannot create an invalid Native configuration.
+
+The Native editor toolbar has a **Show code editor**/**Show visual editor**
+mode switch on the left and **Change Element Type** on the right. The mode
+control is disabled when Home Assistant cannot provide a visual editor for the
+wrapped element.
+
+Native and Element each also include a collapsed **UIX styling** section. The
+Native panel edits `element_base.uix`; the Element panel edits `element.uix`.
+Every UIX styling editor accepts the contents of its mapping only, so do not
+include an outer `uix:` key.
+
+For Card Forges, Home Assistant's outer visibility and layout controls are
+blocked because they would write the outer card configuration. Use
+`forge.hidden` and `forge.grid_options` in the Forge tab instead.
+
+To bring an existing card into Forge, use Home Assistant's copy action on the
+ordinary card, create UIX Forge from the card picker, then choose **Paste
+configuration** in the wrapped Native card picker. The complete pasted card is
+stored as `element_base`, including card-owned templates and `uix`
+configuration. Add only the values Forge should own under the Forge Element
+tab.
+
+The Element tab starts with a searchable Native-path picker. It offers each
+available `element_base` path, including nested choices such as
+`tap_action.action`, plus custom dotted paths, except `uix`, which is edited
+in the dedicated UIX styling panel. Choosing a Native path copies
+its current source into `element` and adds it to the table. The table uses
+an Actions column: pencil **Edit**, on/off **Enable/Disable**, and cross
+**Remove** buttons, each with a tooltip. Editing is kept as a local draft, so
+incomplete source does not alter the preview.
+Custom paths start as an active `null` value. After adding one, the table names
+the new path and explains that its editor can become a template source or an
+object mapping.
+Its footer offers **Apply**, **Apply & exit**, and **Exit**. Apply writes a
+valid draft, activates its template if disabled, and keeps editing open; Apply
+& exit applies a changed draft and returns to the table, or simply returns when
+unchanged. Exit asks for confirmation when there are unapplied changes. Once
+you have applied, an info message points to the editor's undo/redo toolbar and
+Apply for correcting mistakes. Invalid YAML keeps the source editable but
+disables both apply actions until corrected.
+YAML source remains exactly as typed while you edit it; it is not reformatted
+after each keystroke.
+A string template uses Home Assistant's template selector and code editor, so
+enter bare Forge source such as `{{ states('light.kitchen') }}` without YAML
+quotes and use its built-in test control. To replace a scalar source, such as
+`tap_action: none`, with an object, choose **Convert to object mapping** and
+confirm the warning; it deliberately starts a new empty object rather than
+guessing how to reinterpret the scalar. **Set to null** is a separate explicit
+choice: it creates an active `null` replacement, which clears the matching
+Native/base value. It does not mean “use the base value”; use **Disable** or
+**Remove** for that. A null value can later become a template source or object
+mapping without losing any source. Mappings and other typed configuration
+values continue to use the YAML editor. An empty template source is a valid
+empty-string replacement; it is distinct from null and from removing the
+path. Disabling retains its source in `element` and writes its key path to
+`element_disabled_paths`; it is different from removing the value. A disabled
+parent suppresses its subtree but preserves each child's saved state. Arrays
+and a template that produces a structural value are edited as a single
+replacement value. The wrapped element's top-level `type` is not available as
+a template because layered `element.type` is invalid.
+Enable/Disable becomes available after a Native element is selected; this
+prevents the visual editor from creating disabled paths before there is a
+Native source to suppress. Editing another template preserves valid disabled
+paths inherited from a selected Foundry or global overlay.
+
+Existing direct non-layered Card and Badge Forges show a **Convert to layered
+editor** action. Conversion moves only `element.type` to
+`element_base.type`; every other source value remains a Forge-owned template
+value.
+Review templates which inspect `config.element.type` or treat
+`config.element` as the complete element source: layered templates use
+`config.element_base` for the Native layer and `config.element` for the
+Forge-owned overlay. Foundry-backed Forges, dynamic element types, other
+molds, and all full-configuration cases remain available through Home
+Assistant's YAML editor. Rows, picture elements, and card features remain
+YAML-authored: use the :bulb: button in their YAML editor to wrap an existing
+element in Forge.
 
 ## Basic structure
 
@@ -141,6 +370,17 @@ entities:
 !!! tip
     The blank card content div will be given a height of `var(--row-height, 56px)` when no other content has been applied via a spark, either as a sibling to or child of the div. However when there is a sibling to the div but it is empty, the height will be `0px`. IN all cases this height can be styled explicitly using `--uix-forge-blank-card-height` CSS var as per the `card_as_row` example.
 
+### Blank badge config
+
+When using the `badge` mold with no element type, UIX Forge automatically uses
+its built-in `uix-forge-blank-badge`. Set `element.icon` and/or `element.label` to supply
+its contents. An icon without a label renders as an icon-only badge. With
+neither value, the badge label displays **Empty uix-forge-blank-badge. Add
+element.icon, element.label or forge.sparks.** The label is removed when Sparks
+are configured. Sparks target an empty `div` in the badge's default slot, so
+their added content is displayed by the badge. Its automatically selected type
+is never saved in dashboard configuration.
+
 ## Layered configuration
 
 !!! info
@@ -186,9 +426,11 @@ element:
   entities: "{{ integration_entities('light') | list | tojson }}"
 ```
 
-### Disabled overrides
+### Disabled template values
 
 All `element` values are active by default. `element_disabled_paths` retains an element source value without applying it. Each path is a list of mapping keys so a key containing `.` remains unambiguous. Disabling a parent disables the whole subtree; its child selections remain stored and become active again if the parent path is removed from `element_disabled_paths`.
+
+Removing an Element template asks for confirmation before deleting its source.
 
 ```yaml
 element:
@@ -206,32 +448,46 @@ The example retains both template sources, but the rendered element uses its bas
 
 ### Foundries and template context
 
-Foundries may provide `element_base` and `element` fragments, but never `element_disabled_paths`. Global and named Foundries participate in the same resolution order:
+Foundries may provide `element` and `element_base` fragments, but never
+`element_disabled_paths`. Global and named Foundries participate in the same
+resolution order:
 
 ```text
 global → global_<mold> → inherited/named Foundry → local configuration
 ```
 
-Foundry and local `element_base` fragments form the resolved element-owned base. Foundry and local `element` fragments form the resolved Forge-owned overlay. `element_disabled_paths` belongs only to the local card and applies after that overlay resolves, allowing a card to suppress a Foundry-provided value without changing the Foundry.
+A Foundry may provide `element_base` as an element-owned pass-through base.
+It merges through Foundry inheritance before a local `element_base`, and its
+templates are evaluated by Home Assistant or the wrapped element rather than
+Forge. Foundry and local `element` fragments form the resolved Forge-owned
+overlay. `element_disabled_paths` belongs only to the local card and applies
+after that overlay resolves, allowing a card to suppress a Foundry-provided
+value without changing the Foundry.
 
-Any Forge whose resolved configuration contains `element_base` uses layered configuration.
+Any Forge with a local or Foundry-provided `element_base` uses layered
+configuration. A Foundry may use `element.type` as a reusable native-type
+anchor, provided local `element_base.type` is the same concrete string. Forge
+removes only that inherited matching type from the overlay; all other Foundry
+`element` fields remain overlays.
 
 ```yaml
 uix_foundries:
   kitchen_tile:
     forge:
       mold: card
-    element_base:
-      type: markdown
-      content: |
-        ## {{ states('sensor.room_label') }}
     element:
+      type: markdown
       title: "{{ config.entity }}"
 
-# A dashboard card can take both layers from the Foundry.
+# A dashboard card supplies its Native layer and retains the Foundry overlay.
 type: custom:uix-forge
 foundry: kitchen_tile
-entity: light.kitchen
+element_base:
+  type: markdown
+  content: |
+    ## {{ states('sensor.room_label') }}
+element:
+  entity: light.kitchen
 ```
 
 In Forge templates, `config.element_base` contains the resolved base and `config.element` contains the resolved overlay source before evaluation. Forge composes these layers into the forged element configuration. The `uix` mappings from both layers are merged as part of that composition; UIX Styling receives the merged `uix` configuration, and its templates follow the usual UIX Styling behavior.

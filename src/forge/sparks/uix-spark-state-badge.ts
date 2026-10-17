@@ -5,6 +5,7 @@ const STATE_BADGE_ID_ATTR = "data-uix-forge-state-badge-id";
 
 export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   type = "state-badge";
+  static readonly editorOptions = ["for", "after", "before", "entity", "override_icon", "override_image", "color", "state_color"];
 
   private after: string = "";
   private before: string = "";

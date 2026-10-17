@@ -242,6 +242,7 @@ interface HaCameraStreamElement extends HTMLElement {
  */
 export class UixForgeSparkBackground extends UixForgeSparkBase {
   type = "background";
+  static readonly editorOptions = ["for", "camera_entity", "image_entity", "video_url", "image_url", "background", "camera_zoom", "camera_pan_x", "camera_pan_y", "camera_position", "dissolve_target", "class", "opacity", "camera_stream_cache_ms"];
 
   // ── Configuration ──────────────────────────────────────────────────────────
   private _for: string = "element";
