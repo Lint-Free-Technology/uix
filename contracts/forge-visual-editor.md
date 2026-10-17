@@ -329,14 +329,19 @@ context-locked mold and is not editable in either mode.
 2. **Billets** lists local billet names with Edit and Remove actions. A billet
    form edits a name and one YAML scalar value; `~` represents the literal-null
    placeholder commonly used by Foundries. Mappings and lists remain available
-   only in the lossless Forge code editor. When a Foundry is selected, a second
-   read-only table shows its resolved billet names and values.
+   only in the lossless Forge code editor. String source is quoted in the form
+   to preserve YAML scalar type and content on Apply. When a Foundry is
+   selected, a second read-only table shows its resolved billet names and
+   values.
 3. **Macros** lists local macro names with Edit and Remove actions. Its form
    edits the macro name, `returns`, parameter names and optional scalar
    defaults, and template source. Imported `custom_templates` string macros and malformed
    macro mappings remain code-editor-only, so visual editing never discards
-   their source. When a Foundry is selected, a second read-only table shows
-   resolved macro signatures and whether each returns a value.
+   their source. An existing explicit `params: []` or `returns: false` remains
+   explicit after Apply, so it continues to override an inherited macro; fields
+   that were absent remain inherited until the user edits them. When a Foundry
+   is selected, a second read-only table shows resolved macro signatures and
+   whether each returns a value.
 4. **Sparks** provides one tab per configured Spark. Each registered Spark
    class declares only its supported option names. The tab begins with a picker
    of registered Spark types, which appends a new minimal `{ type }` Spark and
@@ -348,7 +353,9 @@ context-locked mold and is not editable in either mode.
    strings use a code editor, mappings and arrays use `ha-yaml-editor`, and
    `null` explicitly offers a template source or mapping. Like element
    Templates, the code-editor toolbar offers **Convert to object mapping** and
-   **Set to null**, while the YAML-editor toolbar offers **Set to null**. The full `sparks`
+   **Set to null**, while the YAML-editor toolbar offers **Set to null**. An
+   option whose runtime schema does not permit `null` does not offer that
+   action; users remove the option to resume its default. The full `sparks`
    YAML object remains available in Forge code mode for removing Spark entries
    or editing complete Spark source. Each configured Spark tab also has a
    destructive **Remove spark** button plus labelled **Move spark left** and
@@ -387,6 +394,11 @@ Continuing discards only the local draft before navigating; applied source is
 retained. Literal-null views have no redundant apply actions: choosing **Set to
 null** immediately saves that explicit override, then leaves only **Exit** with
 the null conversion actions.
+
+Adding or applying an Element path makes that path active and reconciles
+`element_disabled_paths` with the resulting resolved overlay. This removes a
+disabled ancestor that would mask the newly active value and prunes disabled
+descendants made invalid by replacing a mapping with a scalar, array, or null.
 Every **UIX styling** panel provides a mapping-only `ha-yaml-editor`, followed
 by a clear reminder that the field is the *contents* of that mapping and must
 not contain another `uix:` key. The Native tab's panel edits

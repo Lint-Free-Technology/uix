@@ -159,6 +159,36 @@ def test_forge_editor_has_separate_macro_and_billet_forms() -> None:
     assert 'this._confirmDestructive(`Remove ${name}`, "Remove")' in source
 
 
+def test_forge_editor_preserves_scalar_and_macro_override_source() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'typeof value === "string" ? JSON.stringify(value) : String(value)' in source
+    assert 'returnsExplicit: Object.prototype.hasOwnProperty.call(value ?? {}, "returns")' in source
+    assert 'paramsExplicit: Object.prototype.hasOwnProperty.call(value ?? {}, "params")' in source
+    assert '...(macro.paramsExplicit ? { params } : {})' in source
+    assert '...(macro.returnsExplicit ? { returns: macro.returns } : {})' in source
+
+
+def test_forge_editor_guards_non_nullable_spark_options_and_restores_tabs() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'tooltip: ["open"]' in source
+    assert 'if (!this._sparkOptionAllowsNull()) return;' in source
+    assert 'item.id !== "uix-forge-spark-set-null"' in source
+    assert 'import { live } from "lit/directives/live.js";' in source
+    assert '.active=${live(this._tab === "native")}' in source
+    assert '.active=${live(this._forgeUiTab === "general")}' in source
+    assert '.active=${live(index === selected)}' in source
+
+
+def test_forge_editor_reconciles_disabled_paths_when_adding_element_source() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'private _activeOverlayPath(path: string[], value: any)' in source
+    assert 'const next = this._activeOverlayPath(this._editingPath, this._templateDraft);' in source
+    assert 'const next = this._activeOverlayPath(path, nativeValue);' in source
+
+
 def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
     output = subprocess.check_output(
         [
@@ -367,6 +397,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const customRequire = (name) => {"
                 "  if (name === 'lit') return { css: () => '', html: () => ({}), LitElement, nothing: undefined };"
                 "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === 'lit/directives/live.js') return { live: (value) => value };"
                 "  if (name === 'js-yaml') return require('js-yaml');"
                 "  if (name === '../helpers/dom/ensure-element') return { ensureCustomElement: async () => {} };"
                 "  if (name === './sparks/uix-spark-controller') return { UIX_FORGE_SPARK_CLASSES: {} };"
@@ -570,7 +601,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
 def test_forge_editor_uses_text_export_tab() -> None:
     source = FORGE_EDITOR_TS.read_text()
 
-    assert '<ha-tab-group-tab slot="nav" panel="export" .active=${this._tab === "export"}>Export</ha-tab-group-tab>' in source
+    assert '<ha-tab-group-tab slot="nav" panel="export" .active=${live(this._tab === "export")}>Export</ha-tab-group-tab>' in source
 
 
 def test_forge_general_exposes_grid_rows_and_columns_as_template_fields() -> None:
