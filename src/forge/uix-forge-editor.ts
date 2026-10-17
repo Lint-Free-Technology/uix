@@ -13,7 +13,12 @@ import { UixForgeConfig, UixForgeConfigPath } from "./uix-forge-types";
 type EditorTab = "native" | "forge" | "templates" | "foundry" | "export";
 type VisualMold = "card" | "badge";
 type ForgeEditorMode = "ui" | "yaml";
-type ForgeUiTab = "general" | "macros-billets" | "sparks";
+type ForgeUiTab = "general" | "billets" | "macros" | "sparks";
+type ForgeEntryKind = "billet" | "macro";
+type ForgeEntryEditor = { kind: ForgeEntryKind; originalName?: string; unsupported?: string };
+type BilletDraft = { name: string; value: string };
+type MacroParamDraft = { name: string; default?: string };
+type MacroDraft = { name: string; returns: boolean; params: MacroParamDraft[]; template: string };
 type TemplateRow = {
   id: string;
   path: string[];
@@ -47,9 +52,34 @@ const TEMPLATE_FORM_SCHEMA = [{
   required: false,
   selector: { template: {} },
 }];
+const MACRO_TEMPLATE_FORM_SCHEMA = [{
+  name: "template",
+  required: false,
+  selector: { template: {} },
+}];
+const FORGE_ENTRY_NAME_SCHEMA = [{
+  name: "name",
+  required: true,
+  selector: { text: {} },
+}];
+const BILLET_VALUE_SCHEMA = [{
+  name: "value",
+  required: false,
+  selector: { text: {} },
+}];
+const MACRO_PARAMS_SELECTOR = {
+  object: {
+    multiple: true,
+    fields: {
+      name: { required: true, selector: { text: {} } },
+      default: { required: false, selector: { text: {} } },
+    },
+  },
+};
 const FORGE_GENERAL_SCHEMA = [
   { name: "hidden", selector: { template: {} } },
-  { name: "grid_options", selector: { object: {} } },
+  { name: "grid_rows", label: "Grid rows", selector: { template: {} } },
+  { name: "grid_columns", label: "Grid columns", selector: { template: {} } },
 ];
 const FORGE_CONTROL_SCHEMA = [
   { name: "show_error", selector: { boolean: {} } },
@@ -81,9 +111,9 @@ const clone = (value: any): any => {
 
 const pathKey = (path: string[]) => JSON.stringify(path);
 const isMapping = (value: any): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
+const isScalar = (value: any): boolean => value === null || ["string", "number", "boolean"].includes(typeof value);
 const isConcreteElementType = (value: any): value is string => typeof value === "string" && value.trim().length > 0 && !/[{%]|<<|>>/.test(value);
 const hasDisabledAncestor = (path: string[], disabled: UixForgeConfigPath[]) => disabled.some((candidate) => candidate.length < path.length && candidate.every((part, index) => part === path[index]));
-const isPathPrefix = (prefix: string[], path: string[]): boolean => prefix.length <= path.length && prefix.every((part, index) => part === path[index]);
 
 function hasPath(value: any, path: string[]): boolean {
   let current = value;
@@ -143,11 +173,12 @@ export class UixForgeEditor extends LitElement {
   @state() private _editingSparkOption?: { sparkIndex: number; key: string };
   @state() private _editingSparkCode = false;
   @state() private _sparkDraftError?: string;
-  @state() private _sparkBeforeEdit?: UixForgeConfig;
-  @state() private _previewingSpark = false;
   @state() private _sparkInfoOption?: { sparkIndex: number; key: string };
   private _sparkDraft: any;
   private _sparkDraftValid = true;
+  private _sparkAppliedDraft: any;
+  private _sparkAppliedDraftSet = false;
+  @state() private _sparkUpdated = false;
   private _sparkCodeParsesYaml = false;
   @state() private _templateError?: string;
   @state() private _templateInfoPath?: string[];
@@ -161,9 +192,14 @@ export class UixForgeEditor extends LitElement {
   private _templateDraft: any;
   private _templateDraftValid = true;
   @state() private _templateDraftError?: string;
-  @state() private _templateBeforeEdit?: UixForgeConfig;
-  @state() private _templateDisabledPaths?: UixForgeConfigPath[];
-  @state() private _previewingTemplate = false;
+  private _templateAppliedDraft: any;
+  private _templateAppliedDraftSet = false;
+  @state() private _templateUpdated = false;
+  @state() private _editingForgeEntry?: ForgeEntryEditor;
+  @state() private _forgeEntryError?: string;
+  @state() private _forgeEntryUpdated = false;
+  private _forgeEntryDraft?: BilletDraft | MacroDraft;
+  private _forgeEntryAppliedDraft: BilletDraft | MacroDraft | undefined;
   @state() private _pickingNative = false;
   @state() private _pickerError?: string;
   @state() private _nativeGUIMode = true;
@@ -221,7 +257,12 @@ export class UixForgeEditor extends LitElement {
   public setConfig(config: UixForgeConfig): void {
     // Home Assistant reflects local config-changed events through setConfig.
     // Keep the selected row and draft when that reflected source is unchanged.
-    const preservesLocalState = JSON.stringify(config) === JSON.stringify(this._config);
+    const preservesTemplateEditor = Boolean(
+      this._editingPath?.length
+      && this._templateAppliedDraftSet
+      && JSON.stringify(readPath(config.element, this._editingPath)) === JSON.stringify(this._templateAppliedDraft),
+    );
+    const preservesLocalState = preservesTemplateEditor || JSON.stringify(config) === JSON.stringify(this._config);
     this._config = clone(config);
     if (preservesLocalState) return;
     this._forgeValue = this._forgeSource();
@@ -235,8 +276,9 @@ export class UixForgeEditor extends LitElement {
     this._sparkDraft = undefined;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
-    this._sparkBeforeEdit = undefined;
-    this._previewingSpark = false;
+    this._sparkAppliedDraft = undefined;
+    this._sparkAppliedDraftSet = false;
+    this._sparkUpdated = false;
     this._sparkCodeParsesYaml = false;
     this._sparkInfoOption = undefined;
     this._templateInfoPath = undefined;
@@ -247,9 +289,14 @@ export class UixForgeEditor extends LitElement {
     this._templateDraft = undefined;
     this._templateDraftValid = true;
     this._templateDraftError = undefined;
-    this._templateBeforeEdit = undefined;
-    this._templateDisabledPaths = undefined;
-    this._previewingTemplate = false;
+    this._templateAppliedDraft = undefined;
+    this._templateAppliedDraftSet = false;
+    this._templateUpdated = false;
+    this._editingForgeEntry = undefined;
+    this._forgeEntryDraft = undefined;
+    this._forgeEntryAppliedDraft = undefined;
+    this._forgeEntryError = undefined;
+    this._forgeEntryUpdated = false;
     this._pickingNative = false;
     this._pickerError = undefined;
     this._nativeGUIMode = true;
@@ -270,9 +317,9 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _handleTabChanged(event: CustomEvent<{ name: EditorTab }>): void {
-    if (event.detail.name === "native" || event.detail.name === "forge" || event.detail.name === "templates" || event.detail.name === "foundry" || event.detail.name === "export") {
-      this._tab = event.detail.name;
-    }
+    const tab = event.detail.name;
+    if (tab !== "native" && tab !== "forge" && tab !== "templates" && tab !== "foundry" && tab !== "export") return;
+    void this._navigateWithUnappliedEdits(() => { this._tab = tab; });
   }
 
   private _mold(): VisualMold | undefined {
@@ -435,38 +482,27 @@ export class UixForgeEditor extends LitElement {
     return config;
   }
 
-  /** Resolve named Foundry inheritance into portable Foundry source. */
+  /** Copy authored local source into a portable Foundry definition. */
   private _exportFoundryConfig(): Record<string, any> {
-    const coordinator = (window as any).uixCoordinator;
-    let resolved;
-    try {
-      resolved = _resolveFoundryConfig(
-        this._config ?? {},
-        coordinator?.foundries,
-        coordinator?.ready,
-        new Set(),
-        false,
-      );
-    } catch {
-      // Keep the editor usable while configuration YAML refers to a broken
-      // Foundry. The Foundry/runtime diagnostic remains the authority for
-      // fixing that reference.
-      resolved = undefined;
-    }
-    if (!resolved) return { forge: clone(this._config?.forge ?? {}), element: {} };
+    const config = this._config;
+    if (!config) return { forge: {}, element: {} };
 
-    const base = isMapping(resolved.elementBase) ? resolved.elementBase : {};
-    const element = isMapping(resolved.element) ? clone(resolved.element) : {};
-    const hasBase = resolved.hasElementBase ?? this._config?.element_base !== undefined;
-    // `element.type` is only an anchor in layered configuration. A standalone
-    // exported Foundry carries that type in element_base instead.
-    if (hasBase) delete element.type;
+    const forge = clone(isMapping(config.forge) ? config.forge : {});
+    // Empty Spark lists are not meaningful output from the visual editor.
+    if (Array.isArray(forge.sparks) && forge.sparks.length === 0) {
+      delete forge.sparks;
+    }
+    const hasBase = isMapping(config.element_base);
+    const element = isMapping(config.element)
+      ? composeLayeredElementConfig({}, config.element, this._disabledPaths())
+      : {};
     return {
-      forge: clone(isMapping(resolved.forge) ? resolved.forge : {}),
-      ...(hasBase ? { element_base: clone(base) } : {}),
+      ...(typeof config.foundry === "string" && config.foundry ? { foundry: config.foundry } : {}),
+      forge,
+      ...(hasBase ? { element_base: clone(config.element_base) } : {}),
       // Exclude locally disabled overlay values without merging native source;
-      // native templates in element_base must remain authored source.
-      element: hasBase ? composeLayeredElementConfig({}, element, this._disabledPaths()) : element,
+      // disabled paths are per-instance and cannot be inherited by Foundries.
+      element,
     };
   }
 
@@ -574,11 +610,20 @@ export class UixForgeEditor extends LitElement {
     foundry,
   }));
 
-  private _renderFoundryPickerRow = (item: { foundry?: FoundryOption; primary: string }) => {
+  private _renderFoundryPickerRow = (
+    item: { foundry?: FoundryOption; primary: string },
+    index: number,
+  ) => {
     const foundry = item.foundry;
-    if (!foundry) return html`<ha-combo-box-item><span slot="headline">${item.primary}</span></ha-combo-box-item>`;
+    if (!foundry) {
+      return html`
+        <ha-combo-box-item .borderTop=${index > 0}>
+          <span slot="headline">${item.primary}</span>
+        </ha-combo-box-item>
+      `;
+    }
     return html`
-      <ha-combo-box-item type="button" .disabled=${!foundry.selectable}>
+      <ha-combo-box-item type="button" .borderTop=${index > 0} .disabled=${!foundry.selectable}>
         <span slot="headline">${foundry.name}</span>
         <span
           slot="supporting-text"
@@ -673,7 +718,11 @@ export class UixForgeEditor extends LitElement {
 
   private _setForgeEditorMode(): void {
     if (this._editingSparkOption) {
-      this._forgeError = "Save & Exit or Cancel the Spark option before showing the Forge code editor.";
+      this._forgeError = "Apply & exit or Exit the Spark option before showing the Forge code editor.";
+      return;
+    }
+    if (this._editingForgeEntry) {
+      this._forgeError = "Apply & exit or Exit the active Forge editor before showing the Forge code editor.";
       return;
     }
     this._forgeError = undefined;
@@ -682,9 +731,16 @@ export class UixForgeEditor extends LitElement {
 
   private _handleForgeUiTabChanged(event: CustomEvent<{ name: ForgeUiTab }>): void {
     const tab = event.detail.name;
-    if (tab === "general" || tab === "macros-billets" || tab === "sparks") {
-      this._forgeUiTab = tab;
+    if (tab === "general" || tab === "billets" || tab === "macros" || tab === "sparks") {
+      void this._navigateWithUnappliedEdits(() => { this._forgeUiTab = tab; });
     }
+  }
+
+  private _selectSparkTab(event: CustomEvent<{ name: string }>): void {
+    const index = Number(event.detail.name);
+    const sparks = this._forgeSource().sparks;
+    if (!Number.isInteger(index) || index < 0 || !Array.isArray(sparks) || index >= sparks.length) return;
+    void this._navigateWithUnappliedEdits(() => { this._selectedSpark = index; });
   }
 
   private _emitForgeSource(source: Record<string, any>): void {
@@ -695,7 +751,7 @@ export class UixForgeEditor extends LitElement {
     return schema.label ?? (schema.name ?? "").replace(/_/g, " ");
   }
 
-  private _setForgeGeneral(fields: readonly Record<string, any>[], event: CustomEvent): void {
+  private _setForgeFields(fields: readonly Record<string, any>[], event: CustomEvent): void {
     const data = event.detail?.value;
     if (!isMapping(data)) return;
     const forge = this._forgeSource();
@@ -706,15 +762,274 @@ export class UixForgeEditor extends LitElement {
     this._emitForgeSource(forge);
   }
 
-  private _setForgeMapping(key: "macros" | "billets", event: CustomEvent): void {
-    const { value, isValid, errorMsg } = event.detail ?? {};
-    if (!isValid || !isMapping(value)) {
-      this._forgeError = errorMsg || `${key} must be a YAML mapping.`;
+  private _setForgeGeneral(event: CustomEvent): void {
+    const data = event.detail?.value;
+    if (!isMapping(data)) return;
+    const forge = this._forgeSource();
+    if (data.hidden === undefined) delete forge.hidden;
+    else forge.hidden = clone(data.hidden);
+    const gridOptions = isMapping(forge.grid_options) ? clone(forge.grid_options) : {};
+    for (const [field, key] of [["grid_rows", "rows"], ["grid_columns", "columns"]] as const) {
+      if (data[field] === undefined) delete gridOptions[key];
+      else gridOptions[key] = this._gridOptionValue(data[field]);
+    }
+    if (Object.keys(gridOptions).length) forge.grid_options = gridOptions;
+    else delete forge.grid_options;
+    this._emitForgeSource(forge);
+  }
+
+  /** Store literal numeric grid values as numbers, without interpreting source templates. */
+  private _gridOptionValue(value: any): any {
+    if (typeof value !== "string" || /[{%]|<<|>>/.test(value)) return clone(value);
+    try {
+      const parsed = load(value);
+      return typeof parsed === "number" ? parsed : value;
+    } catch {
+      return value;
+    }
+  }
+
+  private _forgeEntryKey(kind: ForgeEntryKind): "billets" | "macros" {
+    return kind === "billet" ? "billets" : "macros";
+  }
+
+  private _forgeEntries(kind: ForgeEntryKind): Record<string, any> | undefined {
+    const value = this._forgeSource()[this._forgeEntryKey(kind)];
+    return value === undefined ? {} : isMapping(value) ? value : undefined;
+  }
+
+  private _scalarText(value: any): string {
+    return value === null ? "~" : String(value);
+  }
+
+  private _entryValueText(value: any): string {
+    if (isScalar(value)) return this._scalarText(value);
+    return JSON.stringify(value);
+  }
+
+  private _macroParams(value: any): MacroParamDraft[] {
+    if (!Array.isArray(value)) return [];
+    return value.reduce((params: MacroParamDraft[], param): MacroParamDraft[] => {
+      if (typeof param === "string") params.push({ name: param });
+      else if (isMapping(param) && typeof param.name === "string") {
+        params.push({ name: param.name, ...(typeof param.default === "string" ? { default: param.default } : {}) });
+      }
+      return params;
+    }, []);
+  }
+
+  private _openForgeEntryEditor(kind: ForgeEntryKind, name?: string): void {
+    const entries = this._forgeEntries(kind);
+    if (entries === undefined) {
+      this._forgeError = `${this._forgeEntryKey(kind)} must be a YAML mapping. Use Show code editor to correct it.`;
       return;
     }
+    const value = name === undefined ? undefined : entries[name];
+    let draft: BilletDraft | MacroDraft;
+    let unsupported: string | undefined;
+    if (kind === "billet") {
+      if (name !== undefined && !isScalar(value)) {
+        unsupported = "Only scalar billets can be edited visually. Use Show code editor to edit this billet.";
+      }
+      draft = { name: name ?? "", value: name === undefined ? "" : this._scalarText(value) };
+    } else if (name !== undefined && typeof value !== "object") {
+      unsupported = "Macros imported from custom_templates can only be edited in the Forge code editor.";
+      draft = { name, returns: false, params: [], template: "" };
+    } else if (name !== undefined && (!isMapping(value) || typeof value.template !== "string")) {
+      unsupported = "This macro is not a supported macro mapping. Use Show code editor to edit it.";
+      draft = { name, returns: false, params: [], template: "" };
+    } else {
+      draft = {
+        name: name ?? "",
+        returns: value?.returns === true,
+        params: this._macroParams(value?.params),
+        template: value?.template ?? "",
+      };
+    }
+    this._editingForgeEntry = { kind, ...(name === undefined ? {} : { originalName: name }), ...(unsupported ? { unsupported } : {}) };
+    this._forgeEntryDraft = clone(draft);
+    this._forgeEntryAppliedDraft = clone(draft);
     this._forgeError = undefined;
+    this._forgeEntryError = undefined;
+    this._forgeEntryUpdated = false;
+  }
+
+  private _setForgeEntryName(event: CustomEvent): void {
+    if (!this._forgeEntryDraft) return;
+    const name = event.detail?.value?.name;
+    if (typeof name === "string") this._forgeEntryDraft.name = name;
+  }
+
+  private _setMacroReturns(event: CustomEvent): void {
+    if (!this._forgeEntryDraft || !this._editingForgeEntry || this._editingForgeEntry.kind !== "macro") return;
+    (this._forgeEntryDraft as MacroDraft).returns = event.detail?.value === true;
+  }
+
+  private _setMacroParams(event: CustomEvent): void {
+    if (!this._forgeEntryDraft || !this._editingForgeEntry || this._editingForgeEntry.kind !== "macro") return;
+    const value = event.detail?.value;
+    (this._forgeEntryDraft as MacroDraft).params = Array.isArray(value)
+      ? value.filter(isMapping).map((param) => ({
+        name: typeof param.name === "string" ? param.name : "",
+        ...(typeof param.default === "string" ? { default: param.default } : {}),
+      }))
+      : [];
+    // The draft is deliberately non-reactive while a template editor is open,
+    // but an added/removed parameter needs an immediate refreshed summary.
+    this.requestUpdate();
+  }
+
+  private _setMacroTemplate(event: CustomEvent): void {
+    if (!this._forgeEntryDraft || !this._editingForgeEntry || this._editingForgeEntry.kind !== "macro") return;
+    const template = event.detail?.value?.template;
+    if (typeof template === "string") (this._forgeEntryDraft as MacroDraft).template = template;
+  }
+
+  private _isForgeEntryDirty(): boolean {
+    return JSON.stringify(this._forgeEntryDraft) !== JSON.stringify(this._forgeEntryAppliedDraft);
+  }
+
+  private _validForgeEntryName(name: string): boolean {
+    return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) && !UNSAFE_PATH_SEGMENTS.has(name);
+  }
+
+  private _applyForgeEntryDraft(): boolean {
+    const editor = this._editingForgeEntry;
+    const draft = this._forgeEntryDraft;
+    if (!editor || !draft || editor.unsupported) return false;
+    const name = draft.name.trim();
+    if (!this._validForgeEntryName(name)) {
+      this._forgeEntryError = "Names must start with a letter or underscore and contain only letters, numbers, and underscores.";
+      return false;
+    }
+    const entries = clone(this._forgeEntries(editor.kind) ?? {});
+    if (editor.originalName !== name && Object.prototype.hasOwnProperty.call(entries, name)) {
+      this._forgeEntryError = `A ${editor.kind} named ${name} already exists.`;
+      return false;
+    }
+    let value: any;
+    if (editor.kind === "billet") {
+      const source = (draft as BilletDraft).value;
+      if (source === "") value = "";
+      else {
+        try {
+          value = load(source);
+        } catch (error) {
+          this._forgeEntryError = error instanceof Error ? error.message : "Enter a valid YAML scalar.";
+          return false;
+        }
+      }
+      if (!isScalar(value)) {
+        this._forgeEntryError = "A billet value must be a YAML scalar. Use Show code editor for mappings and lists.";
+        return false;
+      }
+    } else {
+      const macro = draft as MacroDraft;
+      const seen = new Set<string>();
+      const params: any[] = [];
+      for (const param of macro.params) {
+        const paramName = param.name.trim();
+        if (!this._validForgeEntryName(paramName) || seen.has(paramName)) {
+          this._forgeEntryError = "Each parameter needs a unique name using letters, numbers, and underscores.";
+          return false;
+        }
+        seen.add(paramName);
+        params.push(param.default ? { name: paramName, default: param.default } : paramName);
+      }
+      value = {
+        template: macro.template,
+        ...(params.length ? { params } : {}),
+        ...(macro.returns ? { returns: true } : {}),
+      };
+    }
+    if (editor.originalName && editor.originalName !== name) delete entries[editor.originalName];
+    setOwn(entries, name, value);
     const forge = this._forgeSource();
-    forge[key] = clone(value);
+    forge[this._forgeEntryKey(editor.kind)] = entries;
+    this._editingForgeEntry = { ...editor, originalName: name };
+    this._forgeEntryDraft = { ...clone(draft), name };
+    this._forgeEntryAppliedDraft = clone(this._forgeEntryDraft);
+    this._forgeEntryError = undefined;
+    this._forgeEntryUpdated = true;
+    this._emitForgeSource(forge);
+    return true;
+  }
+
+  private _applyForgeEntryAndStay(): void {
+    this._applyForgeEntryDraft();
+  }
+
+  private _closeForgeEntryEditor(): void {
+    this._editingForgeEntry = undefined;
+    this._forgeEntryDraft = undefined;
+    this._forgeEntryAppliedDraft = undefined;
+    this._forgeEntryError = undefined;
+    this._forgeEntryUpdated = false;
+  }
+
+  private _applyForgeEntryAndExit(): void {
+    if (!this._isForgeEntryDirty() || this._applyForgeEntryDraft()) this._closeForgeEntryEditor();
+  }
+
+  private async _confirmDestructive(text: string, confirmText: string): Promise<boolean> {
+    try {
+      const helpers = await (window as any).loadCardHelpers();
+      return await helpers.showConfirmationDialog(this, {
+        title: "Are you sure?",
+        text,
+        confirmText,
+        destructive: true,
+      }) === true;
+    } catch {
+      return false;
+    }
+  }
+
+  private _hasUnappliedEdits(): boolean {
+    return Boolean(
+      this._editingPath && this._isTemplateDraftDirty()
+      || this._editingForgeEntry && this._isForgeEntryDirty()
+      || this._editingSparkOption && this._isSparkDraftDirty(),
+    );
+  }
+
+  private _discardUnappliedEdits(): void {
+    if (this._editingPath) {
+      this._templateInfoPath = undefined;
+      this._closeTemplateEditor();
+    }
+    if (this._editingForgeEntry) this._closeForgeEntryEditor();
+    if (this._editingSparkOption) this._closeSparkOptionEditor();
+  }
+
+  private async _navigateWithUnappliedEdits(navigate: () => void): Promise<void> {
+    if (!this._hasUnappliedEdits()) {
+      navigate();
+      return;
+    }
+    if (await this._confirmDestructive("Unapplied edits exist on this tab which will be lost.", "Continue")) {
+      this._discardUnappliedEdits();
+      navigate();
+      return;
+    }
+    // wa-tab-group has already selected its tab by the time it emits the
+    // event; restore the reactive selection when the user stays on this tab.
+    this.requestUpdate();
+  }
+
+  private async _exitForgeEntryEditor(): Promise<void> {
+    if (this._isForgeEntryDirty() && !await this._confirmDestructive("There are unapplied changes", "Exit")) return;
+    this._closeForgeEntryEditor();
+  }
+
+  private async _removeForgeEntry(kind: ForgeEntryKind, name: string): Promise<void> {
+    if (!await this._confirmDestructive(`Remove ${name}`, "Remove")) return;
+    const entries = clone(this._forgeEntries(kind) ?? {});
+    delete entries[name];
+    const forge = this._forgeSource();
+    const key = this._forgeEntryKey(kind);
+    if (Object.keys(entries).length) forge[key] = entries;
+    else delete forge[key];
     this._emitForgeSource(forge);
   }
 
@@ -750,7 +1065,7 @@ export class UixForgeEditor extends LitElement {
     return Array.isArray(sparks) && isMapping(sparks[index]) ? sparks[index] : undefined;
   }
 
-  private _applySparkDraft(preview = false): boolean {
+  private _applySparkDraft(): boolean {
     const editing = this._editingSparkOption;
     if (!editing || !this._sparkDraftValid) {
       if (!this._sparkDraftValid) this._sparkDraftError = "Correct the source before applying it.";
@@ -762,8 +1077,9 @@ export class UixForgeEditor extends LitElement {
     if (!isMapping(current)) return false;
     sparks[editing.sparkIndex] = { ...current, [editing.key]: clone(this._sparkDraft) };
     forge.sparks = sparks;
+    this._sparkAppliedDraft = clone(this._sparkDraft);
+    this._sparkAppliedDraftSet = true;
     this._emitForgeSource(forge);
-    void preview;
     return true;
   }
 
@@ -777,8 +1093,9 @@ export class UixForgeEditor extends LitElement {
     this._sparkDraft = clone(value);
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
-    this._sparkBeforeEdit = clone(this._config);
-    this._previewingSpark = false;
+    this._sparkAppliedDraft = clone(value);
+    this._sparkAppliedDraftSet = true;
+    this._sparkUpdated = false;
   }
 
   private _setSparkCodeDraft(event: CustomEvent): void {
@@ -819,40 +1136,31 @@ export class UixForgeEditor extends LitElement {
     this._sparkDraft = undefined;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
-    this._sparkBeforeEdit = undefined;
-    this._previewingSpark = false;
+    this._sparkAppliedDraft = undefined;
+    this._sparkAppliedDraftSet = false;
+    this._sparkUpdated = false;
     this._sparkCodeParsesYaml = false;
   }
 
-  private _cancelSparkOptionEditor(): void {
-    if (this._previewingSpark && this._sparkBeforeEdit && this._editingSparkOption) {
-      const { sparkIndex, key } = this._editingSparkOption;
-      const beforeSparks = this._sparkBeforeEdit.forge?.sparks;
-      const beforeSpark = Array.isArray(beforeSparks) ? beforeSparks[sparkIndex] : undefined;
-      const forge = this._forgeSource();
-      const sparks = Array.isArray(forge.sparks) ? clone(forge.sparks) : [];
-      if (isMapping(sparks[sparkIndex]) && isMapping(beforeSpark)) {
-        if (Object.prototype.hasOwnProperty.call(beforeSpark, key)) sparks[sparkIndex] = { ...sparks[sparkIndex], [key]: clone(beforeSpark[key]) };
-        else {
-          const { [key]: _removed, ...rest } = sparks[sparkIndex];
-          sparks[sparkIndex] = rest;
-        }
-        forge.sparks = sparks;
-        this._emitForgeSource(forge);
-      }
-    }
-    this._closeSparkOptionEditor();
+  private _isSparkDraftDirty(): boolean {
+    return !this._sparkAppliedDraftSet
+      || JSON.stringify(this._sparkDraft) !== JSON.stringify(this._sparkAppliedDraft);
   }
 
-  private _previewSparkOption(): void {
-    this._previewingSpark = this._applySparkDraft(true);
+  private _applySparkDraftAndStay(): void {
+    if (this._applySparkDraft()) this._sparkUpdated = true;
   }
 
-  private _saveSparkOption(): void {
-    if (this._applySparkDraft()) {
+  private _applySparkAndExit(): void {
+    if (!this._isSparkDraftDirty() || this._applySparkDraft()) {
       this._sparkInfoOption = undefined;
       this._closeSparkOptionEditor();
     }
+  }
+
+  private async _exitSparkOptionEditor(): Promise<void> {
+    if (this._isSparkDraftDirty() && !await this._confirmDestructive("There are unapplied changes", "Exit")) return;
+    this._closeSparkOptionEditor();
   }
 
   private _editSparkNullAsCode(): void {
@@ -879,6 +1187,7 @@ export class UixForgeEditor extends LitElement {
     this._sparkDraft = null;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
+    this._applySparkDraft();
     // The draft is intentionally non-reactive while the source editor owns
     // it. Switching to the literal-null view therefore needs an explicit
     // render even when the other reactive fields were already unchanged.
@@ -916,9 +1225,10 @@ export class UixForgeEditor extends LitElement {
     this._emitForgeSource(forge);
   }
 
-  private _removeSparkOption(sparkIndex: number, key: string): void {
+  private async _removeSparkOption(sparkIndex: number, key: string): Promise<void> {
     const spark = this._sparkAt(sparkIndex);
     if (!spark || !Object.prototype.hasOwnProperty.call(spark, key)) return;
+    if (!await this._confirmDestructive(`Remove ${key}`, "Remove")) return;
     const forge = this._forgeSource();
     const sparks = clone(forge.sparks);
     const { [key]: _removed, ...nextSpark } = spark;
@@ -928,9 +1238,12 @@ export class UixForgeEditor extends LitElement {
     this._emitForgeSource(forge);
   }
 
-  private _removeSpark(sparkIndex: number): void {
+  private async _removeSpark(sparkIndex: number): Promise<void> {
     const forge = this._forgeSource();
     if (!Array.isArray(forge.sparks) || sparkIndex < 0 || sparkIndex >= forge.sparks.length) return;
+    const spark = forge.sparks[sparkIndex];
+    const label = isMapping(spark) && typeof spark.type === "string" ? `${spark.type} spark` : "spark";
+    if (!await this._confirmDestructive(`Remove ${label}`, "Remove")) return;
     const sparks = clone(forge.sparks);
     sparks.splice(sparkIndex, 1);
     // An empty local array clears inherited Foundry Sparks. Removing the last
@@ -981,35 +1294,51 @@ export class UixForgeEditor extends LitElement {
     // editor while typing; a render would feed its parsed value back into the
     // editor and disturb the source and cursor. It shows its own live error.
     void errorMsg;
+    this._syncTemplateActionDisabledState();
   }
 
   private _setTemplateCodeDraft(event: CustomEvent): void {
     const value = event.detail?.value?.source;
-    const validityChanged = this._templateDraftValid !== (typeof value === "string");
     this._templateDraft = value;
     this._templateDraftValid = typeof value === "string";
-    // Code-mode button disabled state is the only live reactive affordance.
-    if (validityChanged) this.requestUpdate();
+    // Keep the text editor uncontrolled while typing. Updating the button
+    // properties directly avoids re-rendering its Lit-managed source.
+    this._syncTemplateActionDisabledState();
   }
 
-  private _applyTemplateDraft(preview = false): boolean {
+  private _isTemplateDraftDirty(): boolean {
+    return !this._templateAppliedDraftSet
+      || JSON.stringify(this._templateDraft) !== JSON.stringify(this._templateAppliedDraft);
+  }
+
+  private _syncTemplateActionDisabledState(): void {
+    const root = this.renderRoot;
+    if (!root) return;
+    const updateButton = root.querySelector("#template-update-button") as any;
+    const exitButton = root.querySelector("#template-exit-button") as any;
+    if (updateButton) updateButton.disabled = !this._templateDraftValid;
+    if (exitButton) exitButton.disabled = !this._templateDraftValid;
+  }
+
+  private _applyTemplateDraft(): boolean {
     if (!this._config || !this._editingPath?.length) return false;
     if (!this._templateDraftValid) {
       this._templateDraftError ??= "Correct the YAML before applying it.";
       return false;
     }
     const element = setPath(this._overlay(), this._editingPath, clone(this._templateDraft));
-    const savedDisabled = this._templateDisabledPaths ?? this._disabledPaths();
-    // Preview deliberately activates the edited source. A disabled ancestor
-    // suppresses the source too, so it must be omitted for this transient
-    // preview along with the source's own disabled path.
+    const savedDisabled = this._disabledPaths();
+    // Update makes the edited source active. An exact disabled path or a
+    // disabled ancestor would otherwise suppress the updated configuration.
     const next = { ...this._config, element };
     const resolvedOverlay = this._resolvedOverlaySource(next);
     const disabled = savedDisabled
-      .filter((path) => !preview || !path.every((segment, index) => this._editingPath![index] === segment))
+      .filter((path) => !path.every((segment, index) => this._editingPath![index] === segment))
       .filter((path) => !resolvedOverlay || hasPath(resolvedOverlay, path));
     next.element_disabled_paths = disabled;
     if (!disabled.length) delete next.element_disabled_paths;
+    this._templateAppliedDraft = clone(this._templateDraft);
+    this._templateAppliedDraftSet = true;
     this._emit(next);
     return true;
   }
@@ -1026,15 +1355,13 @@ export class UixForgeEditor extends LitElement {
     this._templateDraft = this._editingTemplateCode ? value : clone(value);
     this._templateDraftValid = true;
     this._templateDraftError = undefined;
-    this._templateBeforeEdit = clone(this._config);
-    this._templateDisabledPaths = this._disabledPaths();
-    this._previewingTemplate = false;
+    this._templateAppliedDraft = clone(value);
+    this._templateAppliedDraftSet = true;
+    this._templateUpdated = false;
   }
 
-  private _previewTemplateDraft(): void {
-    // Preserve an earlier successful preview if this later attempt is invalid;
-    // Cancel must still restore the pre-edit source in that case.
-    if (this._applyTemplateDraft(true)) this._previewingTemplate = true;
+  private _applyTemplateDraftAndStay(): void {
+    if (this._applyTemplateDraft()) this._templateUpdated = true;
   }
 
   private _closeTemplateEditor(): void {
@@ -1045,37 +1372,22 @@ export class UixForgeEditor extends LitElement {
     this._templateDraft = undefined;
     this._templateDraftValid = true;
     this._templateDraftError = undefined;
-    this._templateBeforeEdit = undefined;
-    this._templateDisabledPaths = undefined;
-    this._previewingTemplate = false;
+    this._templateAppliedDraft = undefined;
+    this._templateAppliedDraftSet = false;
+    this._templateUpdated = false;
   }
 
-  private _cancelTemplateEditor(): void {
-    if (this._previewingTemplate && this._templateBeforeEdit && this._editingPath) {
-      const path = this._editingPath;
-      const beforeElement = this._templateBeforeEdit.element;
-      if (isMapping(beforeElement) && hasPath(beforeElement, path)) {
-        const element = setPath(this._overlay(), path, clone(readPath(beforeElement, path)));
-        // A preview of a parent replacement prunes disabled descendants which
-        // no longer exist in the transient value. Restoring the parent must
-        // restore every disabled path that intersects this subtree.
-        const intersectsEditedPath = (candidate: string[]) => isPathPrefix(candidate, path) || isPathPrefix(path, candidate);
-        const currentDisabled = this._disabledPaths().filter((candidate) => !intersectsEditedPath(candidate));
-        const originalDisabled = (this._templateDisabledPaths ?? []).filter(intersectsEditedPath);
-        const disabled = [...currentDisabled, ...originalDisabled];
-        const next = { ...this._config, element, element_disabled_paths: disabled } as UixForgeConfig;
-        if (!disabled.length) delete next.element_disabled_paths;
-        this._emit(next);
-      }
-    }
-    this._closeTemplateEditor();
-  }
-
-  private _saveTemplateAndExit(): void {
-    if (this._applyTemplateDraft()) {
+  private _applyTemplateAndExit(): void {
+    if (!this._isTemplateDraftDirty() || this._applyTemplateDraft()) {
       this._templateInfoPath = undefined;
       this._closeTemplateEditor();
     }
+  }
+
+  private async _exitTemplateEditor(): Promise<void> {
+    if (this._isTemplateDraftDirty() && !await this._confirmDestructive("There are unapplied changes", "Exit")) return;
+    this._templateInfoPath = undefined;
+    this._closeTemplateEditor();
   }
 
   private _requestTemplateObjectConversion(): void {
@@ -1117,6 +1429,9 @@ export class UixForgeEditor extends LitElement {
     this._templateDraft = null;
     this._templateDraftValid = true;
     this._templateDraftError = undefined;
+    // Literal null is an explicit active override, not an editor source that
+    // needs a second Apply action. Persist it before entering the null view.
+    this._applyTemplateDraft();
   }
 
   private _editNullAsTemplateSource(): void {
@@ -1234,8 +1549,9 @@ export class UixForgeEditor extends LitElement {
     this._emit(next);
   }
 
-  private _removeTemplate(path: string[]): void {
+  private async _removeTemplate(path: string[]): Promise<void> {
     if (!this._config) return;
+    if (!await this._confirmDestructive(`Remove ${path.join(".")}`, "Remove")) return;
     const removed = path;
     const paths = this._disabledPaths().filter((path) => !removed.every((segment, index) => path[index] === segment));
     const next = { ...this._config, element: removePath(this._overlay(), removed), element_disabled_paths: paths };
@@ -1253,7 +1569,8 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _isBlankNativeElement(): boolean {
-    return this._config?.element_base?.type === "custom:uix-forge-blank-card";
+    return ["custom:uix-forge-blank-card", "custom:uix-forge-blank-badge"]
+      .includes(this._config?.element_base?.type);
   }
 
   private async _openNativePicker(): Promise<void> {
@@ -1541,10 +1858,27 @@ export class UixForgeEditor extends LitElement {
         `}
         ${this._templateDraftError ? html`<div class="error">${this._templateDraftError}</div>` : nothing}
         <div class="template-actions">
-          <ha-button appearance="plain" @click=${this._cancelTemplateEditor}>Cancel</ha-button>
-          <ha-button appearance="plain" .disabled=${this._editingTemplateCode && !this._templateDraftValid} @click=${this._previewTemplateDraft}>Preview</ha-button>
-          <ha-button appearance="plain" .disabled=${this._editingTemplateCode && !this._templateDraftValid} @click=${this._saveTemplateAndExit}>Save & Exit</ha-button>
+          ${this._templateDraft !== null ? html`
+            <ha-button
+              id="template-update-button"
+              appearance="plain"
+              .disabled=${!this._templateDraftValid}
+              @click=${this._applyTemplateDraftAndStay}
+            >Apply</ha-button>
+            <ha-button
+              id="template-exit-button"
+              appearance="plain"
+              .disabled=${!this._templateDraftValid}
+              @click=${this._applyTemplateAndExit}
+            >Apply & exit</ha-button>
+          ` : nothing}
+          <ha-button appearance="plain" @click=${this._exitTemplateEditor}>Exit</ha-button>
         </div>
+        ${this._templateUpdated && this._templateDraft !== null ? html`
+          <ha-alert class="editor-alert" alert-type="info">
+            Made a mistake? Use editor undo/redo toolbar buttons and Apply.
+          </ha-alert>
+        ` : nothing}
       `;
     }
     const rows = this._templateRows(this._overlay());
@@ -1596,12 +1930,17 @@ export class UixForgeEditor extends LitElement {
       if (forge[name] !== undefined) result[name] = forge[name];
       return result;
     }, {} as Record<string, any>);
+    const generalData = dataFor(FORGE_GENERAL_SCHEMA);
+    if (isMapping(forge.grid_options)) {
+      if (forge.grid_options.rows !== undefined) generalData.grid_rows = String(forge.grid_options.rows);
+      if (forge.grid_options.columns !== undefined) generalData.grid_columns = String(forge.grid_options.columns);
+    }
     return html`<div class="forge-mold">Context-locked mold: <code>${this._mold()}</code></div><ha-form
       .hass=${this.hass}
-      .data=${dataFor(FORGE_GENERAL_SCHEMA)}
+      .data=${generalData}
       .schema=${FORGE_GENERAL_SCHEMA}
       .computeLabel=${this._computeFormLabel}
-      @value-changed=${(event: CustomEvent) => this._setForgeGeneral(FORGE_GENERAL_SCHEMA, event)}
+      @value-changed=${this._setForgeGeneral}
     ></ha-form>
     <ha-expansion-panel outlined header="Control">
       <ha-form
@@ -1609,7 +1948,7 @@ export class UixForgeEditor extends LitElement {
         .data=${dataFor(FORGE_CONTROL_SCHEMA)}
         .schema=${FORGE_CONTROL_SCHEMA}
         .computeLabel=${this._computeFormLabel}
-        @value-changed=${(event: CustomEvent) => this._setForgeGeneral(FORGE_CONTROL_SCHEMA, event)}
+        @value-changed=${(event: CustomEvent) => this._setForgeFields(FORGE_CONTROL_SCHEMA, event)}
       ></ha-form>
     </ha-expansion-panel>
     <ha-expansion-panel outlined header="UIX styling">
@@ -1621,26 +1960,165 @@ export class UixForgeEditor extends LitElement {
     )}`;
   }
 
-  private _renderMacrosAndBillets() {
-    const forge = this._forgeSource();
+  private _forgeEntryColumns(kind: ForgeEntryKind) {
+    const label = kind === "billet" ? "Billet" : "Macro";
+    return {
+      name: {
+        title: label,
+        main: true,
+        minWidth: "0",
+        flex: 1,
+        template: (row: { name: string }) => html`<span style="font-family: var(--code-font-family, monospace)">${row.name}</span>`,
+      },
+      actions: {
+        title: html`<span style="display: block; text-align: center; width: 100%">Actions</span>`,
+        type: "flex" as const,
+        minWidth: "112px",
+        maxWidth: "112px",
+        flex: 0.001,
+        template: (row: { name: string }) => html`<div style="display: flex">
+          <ha-icon-button .label=${`Edit ${row.name}`} @click=${() => this._openForgeEntryEditor(kind, row.name)}><ha-icon icon="mdi:pencil"></ha-icon></ha-icon-button>
+          <ha-icon-button .label=${`Remove ${row.name}`} @click=${() => this._removeForgeEntry(kind, row.name)}><ha-icon icon="mdi:close"></ha-icon></ha-icon-button>
+        </div>`,
+      },
+    };
+  }
+
+  private _macroSignature(name: string, value: any): string {
+    const params = isMapping(value) && Array.isArray(value.params)
+      ? value.params.reduce((names: string[], param: any) => {
+        if (typeof param === "string") names.push(param);
+        else if (isMapping(param) && typeof param.name === "string") names.push(param.name);
+        return names;
+      }, [])
+      : [];
+    return `${name}(${params.join(", ")})`;
+  }
+
+  private _foundryBilletColumns() {
+    return {
+      name: { title: "Billet", main: true, minWidth: "0", flex: 1, template: (row: { name: string }) => html`<span style="font-family: var(--code-font-family, monospace)">${row.name}</span>` },
+      value: { title: "Value", minWidth: "0", flex: 1, template: (row: { value: any }) => html`<span style="font-family: var(--code-font-family, monospace)">${this._entryValueText(row.value)}</span>` },
+    };
+  }
+
+  private _foundryMacroColumns() {
+    return {
+      macro: { title: "Macro", main: true, minWidth: "0", flex: 1, template: (row: { name: string; value: any }) => html`<span style="font-family: var(--code-font-family, monospace)">${this._macroSignature(row.name, row.value)}</span>` },
+      returns: { title: html`<span style="display: block; text-align: center; width: 100%">Returns</span>`, type: "icon" as const, minWidth: "88px", maxWidth: "88px", flex: 0.001, template: (row: { value: any }) => isMapping(row.value) && row.value.returns === true ? html`<ha-icon icon="mdi:check"></ha-icon>` : nothing },
+    };
+  }
+
+  private _renderForgeEntryEditor() {
+    const editor = this._editingForgeEntry;
+    const draft = this._forgeEntryDraft;
+    if (!editor || !draft) return nothing;
+    const title = `${draft.name || `New ${editor.kind}`} (${editor.kind === "billet" ? "scalar" : "mapping"})`;
     return html`
-      <div class="editor-label">Macros (mapping)</div>
-      <ha-yaml-editor
-        aria-label="Forge macros YAML"
-        .value=${forge.macros ?? {}}
-        .autoUpdate=${true}
-        @value-changed=${(event: CustomEvent) => this._setForgeMapping("macros", event)}
-      ></ha-yaml-editor>
-      <div class="editor-label">Billets (mapping)</div>
-      <ha-yaml-editor
-        aria-label="Forge billets YAML"
-        .value=${forge.billets ?? {}}
-        .autoUpdate=${true}
-        @value-changed=${(event: CustomEvent) => this._setForgeMapping("billets", event)}
-      ></ha-yaml-editor>
+      <div class="editor-label">${title}</div>
+      ${editor.unsupported ? html`<ha-alert class="editor-alert" alert-type="warning">${editor.unsupported}</ha-alert>` : editor.kind === "billet" ? html`
+        <ha-form
+          .hass=${this.hass}
+          .data=${{ name: draft.name }}
+          .schema=${FORGE_ENTRY_NAME_SCHEMA}
+          .computeLabel=${() => "Name"}
+          @value-changed=${this._setForgeEntryName}
+        ></ha-form>
+        <ha-form
+          .hass=${this.hass}
+          .data=${{ value: (draft as BilletDraft).value }}
+          .schema=${BILLET_VALUE_SCHEMA}
+          .computeLabel=${() => "Value"}
+          @value-changed=${(event: CustomEvent) => {
+            const value = event.detail?.value?.value;
+            if (typeof value === "string") (this._forgeEntryDraft as BilletDraft).value = value;
+          }}
+        ></ha-form>
+      ` : html`
+        <ha-form
+          .hass=${this.hass}
+          .data=${{ name: draft.name }}
+          .schema=${FORGE_ENTRY_NAME_SCHEMA}
+          .computeLabel=${() => "Name"}
+          @value-changed=${this._setForgeEntryName}
+        ></ha-form>
+        <ha-selector
+          .hass=${this.hass}
+          .selector=${MACRO_PARAMS_SELECTOR}
+          .value=${(draft as MacroDraft).params}
+          label="Parameters"
+          @value-changed=${this._setMacroParams}
+        ></ha-selector>
+        <ha-selector
+          .hass=${this.hass}
+          .selector=${{ boolean: {} }}
+          .value=${(draft as MacroDraft).returns}
+          label="Returns"
+          @value-changed=${this._setMacroReturns}
+        ></ha-selector>
+        <ha-form
+          .hass=${this.hass}
+          .data=${{ template: (draft as MacroDraft).template }}
+          .schema=${MACRO_TEMPLATE_FORM_SCHEMA}
+          .computeLabel=${() => "Template"}
+          @value-changed=${this._setMacroTemplate}
+        ></ha-form>
+      `}
+      ${this._forgeEntryError ? html`<div class="error">${this._forgeEntryError}</div>` : nothing}
+      <div class="template-actions">
+        ${editor.unsupported ? nothing : html`
+          <ha-button appearance="plain" @click=${this._applyForgeEntryAndStay}>Apply</ha-button>
+          <ha-button appearance="plain" @click=${this._applyForgeEntryAndExit}>Apply & exit</ha-button>
+        `}
+        <ha-button appearance="plain" @click=${this._exitForgeEntryEditor}>Exit</ha-button>
+      </div>
+      ${this._forgeEntryUpdated && editor.kind === "macro" ? html`
+        <ha-alert class="editor-alert" alert-type="info">
+          Made a mistake? Use editor undo/redo toolbar buttons and Apply.
+        </ha-alert>
+      ` : nothing}
+    `;
+  }
+
+  private _renderForgeEntries(kind: ForgeEntryKind) {
+    if (this._editingForgeEntry?.kind === kind) return this._renderForgeEntryEditor();
+    const key = this._forgeEntryKey(kind);
+    const source = this._forgeSource()[key];
+    if (source !== undefined && !isMapping(source)) {
+      return html`<ha-alert alert-type="warning">${key} must be a mapping. Use Show code editor to correct it.</ha-alert>`;
+    }
+    const entries = isMapping(source) ? source : {};
+    const rows = Object.keys(entries).map((name) => ({ id: name, name, value: entries[name] }));
+    const foundry = this._resolvedSelectedFoundryConfig()?.forge?.[key];
+    const foundryRows = isMapping(foundry)
+      ? Object.keys(foundry).map((name) => ({ id: `foundry-${name}`, name, value: foundry[name] }))
+      : [];
+    const title = kind === "billet" ? "Billet" : "Macro";
+    const foundryTitle = kind === "billet" ? "Foundry billets" : "Foundry macros";
+    return html`
+      <ha-data-table
+        .columns=${this._forgeEntryColumns(kind)}
+        .data=${rows}
+        .id=${`uix-forge-${key}`}
+        .noDataText=${`No ${key} configured`}
+        .autoHeight=${true}
+      ></ha-data-table>
+      <div class="template-actions">
+        <ha-button appearance="plain" @click=${() => this._openForgeEntryEditor(kind)}>Add ${title.toLowerCase()}</ha-button>
+      </div>
+      ${this._config?.foundry ? html`
+        <div class="editor-label">${foundryTitle}</div>
+        <ha-data-table
+          .columns=${kind === "billet" ? this._foundryBilletColumns() : this._foundryMacroColumns()}
+          .data=${foundryRows}
+          .id=${`uix-forge-foundry-${key}`}
+          .noDataText=${`No ${foundryTitle.toLowerCase()} configured`}
+          .autoHeight=${true}
+        ></ha-data-table>
+      ` : nothing}
       ${this._renderHelpAlert(
         "https://uix.lf.technology/forge/forge/",
-        "Learn more about Forge macros and billets",
+        `Learn more about Forge ${key}`,
       )}
     `;
   }
@@ -1709,10 +2187,17 @@ export class UixForgeEditor extends LitElement {
       `}
       ${this._sparkDraftError ? html`<div class="error">${this._sparkDraftError}</div>` : nothing}
       <div class="template-actions">
-        <ha-button appearance="plain" @click=${this._cancelSparkOptionEditor}>Cancel</ha-button>
-        <ha-button appearance="plain" .disabled=${!this._sparkDraftValid} @click=${this._previewSparkOption}>Preview</ha-button>
-        <ha-button appearance="plain" .disabled=${!this._sparkDraftValid} @click=${this._saveSparkOption}>Save & Exit</ha-button>
+        ${this._sparkDraft !== null ? html`
+          <ha-button appearance="plain" .disabled=${!this._sparkDraftValid} @click=${this._applySparkDraftAndStay}>Apply</ha-button>
+          <ha-button appearance="plain" .disabled=${!this._sparkDraftValid} @click=${this._applySparkAndExit}>Apply & exit</ha-button>
+        ` : nothing}
+        <ha-button appearance="plain" @click=${this._exitSparkOptionEditor}>Exit</ha-button>
       </div>
+      ${this._sparkUpdated && this._sparkDraft !== null ? html`
+        <ha-alert class="editor-alert" alert-type="info">
+          Made a mistake? Use editor undo/redo toolbar buttons and Apply.
+        </ha-alert>
+      ` : nothing}
       ${spark ? this._renderHelpAlert(
         `https://uix.lf.technology/forge/sparks/${encodeURIComponent(String(spark.type))}/`,
         `Learn more about the ${spark.type} spark`,
@@ -1749,10 +2234,7 @@ export class UixForgeEditor extends LitElement {
     const rows = Object.keys(spark).filter((key) => key !== "type").map((key) => ({ id: key, key }));
     return html`
       ${sparkPicker}
-      <ha-tab-group class="forge-tab-group" @wa-tab-show=${(event: CustomEvent<{ name: string }>) => {
-        const index = Number(event.detail.name);
-        if (Number.isInteger(index) && index >= 0 && index < sparks.length) this._selectedSpark = index;
-      }}>
+      <ha-tab-group class="forge-tab-group" @wa-tab-show=${this._selectSparkTab}>
         ${sparks.map((entry, index) => html`<ha-tab-group-tab slot="nav" panel=${String(index)} .active=${index === selected}>${`${index + 1}: ${entry.type || "Spark"}`}</ha-tab-group-tab>`)}
       </ha-tab-group>
       <div class="template-picker">
@@ -1815,11 +2297,13 @@ export class UixForgeEditor extends LitElement {
     return html`
       <ha-tab-group class="forge-tab-group" @wa-tab-show=${this._handleForgeUiTabChanged}>
         <ha-tab-group-tab slot="nav" panel="general" .active=${this._forgeUiTab === "general"}>General</ha-tab-group-tab>
-        <ha-tab-group-tab slot="nav" panel="macros-billets" .active=${this._forgeUiTab === "macros-billets"}>Macros & billets</ha-tab-group-tab>
+        <ha-tab-group-tab slot="nav" panel="billets" .active=${this._forgeUiTab === "billets"}>Billets</ha-tab-group-tab>
+        <ha-tab-group-tab slot="nav" panel="macros" .active=${this._forgeUiTab === "macros"}>Macros</ha-tab-group-tab>
         <ha-tab-group-tab slot="nav" panel="sparks" .active=${this._forgeUiTab === "sparks"}>Sparks</ha-tab-group-tab>
       </ha-tab-group>
       ${this._forgeUiTab === "general" ? this._renderForgeGeneral() : nothing}
-      ${this._forgeUiTab === "macros-billets" ? this._renderMacrosAndBillets() : nothing}
+      ${this._forgeUiTab === "billets" ? this._renderForgeEntries("billet") : nothing}
+      ${this._forgeUiTab === "macros" ? this._renderForgeEntries("macro") : nothing}
       ${this._forgeUiTab === "sparks" ? this._renderSparks() : nothing}
     `;
   }
@@ -1991,9 +2475,7 @@ export class UixForgeEditor extends LitElement {
         <ha-tab-group-tab slot="nav" panel="forge" .active=${this._tab === "forge"}>Forge</ha-tab-group-tab>
         <ha-tab-group-tab slot="nav" panel="templates" .active=${this._tab === "templates"}>Element</ha-tab-group-tab>
         <ha-tab-group-tab slot="nav" panel="foundry" .active=${this._tab === "foundry"}>Foundry</ha-tab-group-tab>
-        <ha-tab-group-tab slot="nav" panel="export" .active=${this._tab === "export"} aria-label="Export" class="icon-only">
-          <ha-icon icon="mdi:export"></ha-icon>
-        </ha-tab-group-tab>
+        <ha-tab-group-tab slot="nav" panel="export" .active=${this._tab === "export"}>Export</ha-tab-group-tab>
       </ha-tab-group>
       ${this._config.foundry ? html`
         <ha-alert class="foundry-in-use-alert" alert-type="info">

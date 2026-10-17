@@ -454,6 +454,23 @@ export class UixForge extends LitElement {
     return document.createElement("uix-forge-editor");
   }
 
+  private _applyBlankElementType(elementConfig: Record<string, any>, forgeConfig: Record<string, any> = this.forgeConfig): void {
+    if (elementConfig.type) return;
+    if (this._mold.isCard()) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) elementConfig.clear = true;
+    } else if (this._mold.isBadge()) {
+      elementConfig.type = "custom:uix-forge-blank-badge";
+      if (Array.isArray(forgeConfig.sparks) && forgeConfig.sparks.length > 0) {
+        elementConfig.has_sparks = true;
+      }
+    }
+  }
+
+  private _builtInBlankBadgeConfig(): any {
+    return this.forgedElementConfig ?? { type: "custom:uix-forge-blank-badge" };
+  }
+
   private hasTemplateOrNestedTemplate(value: any): boolean {
     if (hasTemplate(value)) return true;
     if (typeof value === "string" && this._templateNestingPairs().some(({ open }) => value.includes(open))) return true;
@@ -792,12 +809,7 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
-      if (this._mold.isCard() && !elementConfig.type) {
-        elementConfig.type = "custom:uix-forge-blank-card";
-        if (this._mold.isCardBlankClear()) {
-          elementConfig.clear = true;
-        }
-      }
+      this._applyBlankElementType(elementConfig, forgeConfig);
     }
 
     if (this._layeredMode) {
@@ -952,12 +964,7 @@ export class UixForge extends LitElement {
         if (this.config?.entities !== undefined) {
           elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
         }
-        if (this._mold.isCard() && !elementConfig.type) {
-          elementConfig.type = "custom:uix-forge-blank-card";
-          if (this._mold.isCardBlankClear()) {
-            elementConfig.clear = true;
-          }
-        }
+        this._applyBlankElementType(elementConfig, forgeConfig);
       }
       this.forgeConfig = forgeConfig;
       if (this._layeredMode) {
@@ -1223,12 +1230,7 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
-      if (this._mold.isCard() && !elementConfig.type) {
-        elementConfig.type = "custom:uix-forge-blank-card";
-        if (this._mold.isCardBlankClear()) {
-          elementConfig.clear = true;
-        }
-      }
+      this._applyBlankElementType(elementConfig, forgeConfig);
     }
     if (this._layeredMode) {
       this._layeredElementBaseConfig = _cloneConfigValue(resolved.elementBase);
@@ -1297,7 +1299,7 @@ export class UixForge extends LitElement {
       this.refreshForge(["grid_options"]);
     }
     if (this._mold.isBadge()) {
-      this.forgedElement.config = this.forgedElementConfig;
+      this.forgedElement.config = this._builtInBlankBadgeConfig();
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       (this.forgedElement as HuiBadge).load();
       this._delayedHass && (this.forgedElement.hass = this.hass);
@@ -1370,11 +1372,9 @@ export class UixForge extends LitElement {
   private forgeElement() {
     if (this.forgedElement) return;
     if (!this.templatesReady) return;
-    // A Card or Badge Forge created in the visual picker can remain unresolved
-    // while its Native element or Foundry is chosen. A card receives the
-    // existing transient blank-card fallback; a badge has no equivalent
-    // element, so it deliberately has no preview until a type resolves.
-    if (this._mold.isBadge() && !this.forgedElementConfig?.type) return;
+    // A Card or Badge Forge with no element type automatically uses its
+    // built-in blank element. Its injected type belongs only to the forged
+    // runtime configuration and is never written to dashboard configuration.
     if (this._mold.isCard()) {
       this.forgedElement = document.createElement("hui-card") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
@@ -1387,7 +1387,7 @@ export class UixForge extends LitElement {
     }
     if (this._mold.isBadge()) {
       this.forgedElement = document.createElement("hui-badge") as LovelaceElement;
-      this.forgedElement.config = this.forgedElementConfig;
+      this.forgedElement.config = this._builtInBlankBadgeConfig();
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
@@ -1578,29 +1578,25 @@ export class UixForge extends LitElement {
   }
 }
 
-class UixForgeBadgePickerStub extends UixForge {
-  public static getStubConfig(): UixForgeConfig {
-    return forgeStubConfig("badge", "uix-forge-badge");
-  }
-}
-
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   if (!customElements.get(UIX_FORGE_TYPE)) {
     customElements.define(UIX_FORGE_TYPE, UixForge);
-    if (!customElements.get("uix-forge-badge")) {
-      customElements.define("uix-forge-badge", UixForgeBadgePickerStub);
-    }
-    (window as any).customCards = (window as any).customCards || [];
-    (window as any).customCards.push({
+  }
+
+  const customCards = ((window as any).customCards = (window as any).customCards || []);
+  if (!customCards.some((card) => card.type === UIX_FORGE_TYPE)) {
+    customCards.push({
       type: "uix-forge",
       name: "UIX Forge",
       preview: true,
       description: "UIX Forge allows you to forge templates into Home Assistant lovelace element configurations. Add Sparks to to get even more customisation",
     });
-    (window as any).customBadges = (window as any).customBadges || [];
-    (window as any).customBadges.push({
-      type: "uix-forge-badge",
+  }
+  const customBadges = ((window as any).customBadges = (window as any).customBadges || []);
+  if (!customBadges.some((badge) => badge.type === UIX_FORGE_TYPE)) {
+    customBadges.push({
+      type: UIX_FORGE_TYPE,
       name: "UIX Forge",
       preview: true,
       description: "UIX Forge allows you to forge templates into Home Assistant lovelace element configurations. Add Sparks to to get even more customisation",
