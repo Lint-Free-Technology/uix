@@ -1,5 +1,5 @@
 import { LitElement } from "lit";
-import { patch_element, patch_object } from "../helpers/patch_function";
+import { patch_element, patch_getter, patch_object } from "../helpers/patch_function";
 
 class ConfigBadgeElementPatch extends LitElement {
   _uixData?;
@@ -35,7 +35,11 @@ class ConfigBadgeElementPatch extends LitElement {
   }
 }
 
-@patch_element("hui-badge-element-editor")
+@patch_element("hui-badge-element-editor", (cls) => {
+  patch_getter(cls.prototype, "hasError", function (this: any, original) {
+    return original() || Boolean((this as any)._configElement?.hasError);
+  });
+})
 class HuiBadgeElementEditorPatch extends LitElement {
   _configElement?: ConfigBadgeElementPatch;
   value?: any;

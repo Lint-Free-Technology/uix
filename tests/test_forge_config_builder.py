@@ -189,6 +189,49 @@ def test_forge_editor_reconciles_disabled_paths_when_adding_element_source() -> 
     assert 'const next = this._activeOverlayPath(path, nativeValue);' in source
 
 
+def test_forge_editor_keeps_raw_yaml_and_propagates_structural_errors() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+    card_patch = CARD_EDITOR_PATCH_TS.read_text()
+    badge_patch = BADGE_EDITOR_PATCH_TS.read_text()
+
+    assert 'import { keyed } from "lit/directives/keyed.js";' in source
+    assert '.defaultValue=${this._forgeValue}' in source
+    assert '.autoUpdate=${false}' in source
+    assert 'keyed(`forge-${this._sourceRevision}`' in source
+    assert 'keyed(`${layer}-${this._sourceRevision}`' in source
+    assert 'public get hasError(): boolean' in source
+    assert 'this._forgeYamlInvalid || Boolean(this._uixStylingError)' in source
+    assert 'if (detail.error)' in source
+    assert 'patch_getter(cls.prototype, "hasError"' in card_patch
+    assert 'patch_getter(cls.prototype, "hasError"' in badge_patch
+
+
+def test_forge_editor_preserves_unrepresented_and_optional_source() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'this._templateDraft = value ?? "";' in source
+    assert 'template = template ?? ""' in source
+    assert 'value = value ?? ""' in source
+    assert 'private _hiddenOptionValue(value: any)' in source
+    assert 'if (value === "true") return true;' in source
+    assert 'if (isMapping(forge.grid_options) || hasGridEdit)' in source
+    assert 'forge.sparks !== undefined && !Array.isArray(forge.sparks)' in source
+    assert 'hasDefault?: boolean;' in source
+    assert 'param.hasDefault ? { name: paramName, default: param.default } : paramName' in source
+    assert 'if (!isConcreteElementType(candidate.type))' in source
+    assert 'this._reconcileDisabledPaths(next)' in source
+
+
+def test_forge_editor_confirms_destructive_spark_source_conversions() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'private _requestSparkObjectConversion(): void' in source
+    assert 'private _requestSparkNullConversion(): void' in source
+    assert 'action: () => this._requestSparkObjectConversion()' in source
+    assert 'action: () => this._requestSparkNullConversion()' in source
+    assert 'This discards the local source draft. Cancel keeps editing it.' in source
+
+
 def test_config_builder_strips_nested_marker_on_initial_assignment() -> None:
     output = subprocess.check_output(
         [
@@ -397,6 +440,7 @@ def test_forge_editor_foundry_selection_respects_native_compatibility() -> None:
                 "const customRequire = (name) => {"
                 "  if (name === 'lit') return { css: () => '', html: () => ({}), LitElement, nothing: undefined };"
                 "  if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                "  if (name === 'lit/directives/keyed.js') return { keyed: (_key, value) => value };"
                 "  if (name === 'lit/directives/live.js') return { live: (value) => value };"
                 "  if (name === 'js-yaml') return require('js-yaml');"
                 "  if (name === '../helpers/dom/ensure-element') return { ensureCustomElement: async () => {} };"

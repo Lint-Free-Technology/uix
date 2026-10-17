@@ -102,8 +102,10 @@ four tabs:
 
 - **General**, beginning with the context-locked mold, for `hidden`,
   `grid_options.rows`, and `grid_options.columns`; each can be a template.
-  Literal numbers in the grid fields are saved as numbers, while templates
-  remain source text.
+  Literal numbers in the grid fields are saved as numbers, and literal `true`
+  or `false` in `hidden` are saved as booleans, while templates remain source
+  text. A whole-value YAML template for `grid_options` remains unchanged until
+  you explicitly replace it with a row or column value.
   Its collapsed **Control** section contains `show_error`,
   `template_nesting`, and boolean `delayed_hass`. Its separate collapsed **UIX
   styling** section edits the contents of `forge.uix`.
@@ -114,7 +116,8 @@ four tabs:
   values.
 - **Macros** lists locally configured macro names. Its form edits the name,
   whether the macro returns a value, parameters (including optional scalar
-  defaults), and template source. Macros imported from `custom_templates` stay
+  defaults), and template source. Numeric, boolean, and null parameter defaults
+  are preserved. Macros imported from `custom_templates` stay
   in the Forge code editor so their import source is preserved. When a Foundry
   is selected, a second table shows resolved macro calls and their return
   status.
@@ -123,11 +126,18 @@ four tabs:
   and a source table for configured options. An option is edited as
   template/code source, an object or list YAML source, or an explicit `null`
   value. Newly added options show a dismissible notice explaining that they
-  start as `null` and can become a template source or object mapping.
+  start as `null` and can become a template source or object mapping. Replacing
+  an existing Spark source with an object mapping or `null` asks for
+  confirmation first.
 Each Spark declares its supported option names, not typed form fields, so a
 template remains source rather than being coerced by a selector. The Forge
 code editor remains the YAML-object editor for complete Spark configurations,
 including removing Sparks or editing complete Spark source.
+
+Forge and UIX styling YAML editors retain the text you are typing, including
+comments and temporarily invalid YAML, instead of reformatting it after every
+keystroke. Invalid Forge, UIX styling, or Native YAML blocks Home Assistant's
+outer **Save** action until it is corrected.
 
 Billet, Macro, and Spark option forms apply only when you choose **Apply** or
 **Apply & exit**. **Exit** asks for confirmation if a form has unapplied
@@ -152,6 +162,8 @@ Assistant editor. **Cancel** leaves the picker without selecting an element;
 Home Assistant's usual editor Cancel and dashboard undo can revert a selected
 element. Changing to a different element type is explicit and keeps Forge
 template values in place.
+The picker's incomplete **Manual** choice is not saved until a concrete element
+type has been selected, so it cannot create an invalid Native configuration.
 
 The Native editor toolbar has a **Show code editor**/**Show visual editor**
 mode switch on the left and **Change Element Type** on the right. The mode

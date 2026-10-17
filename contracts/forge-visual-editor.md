@@ -174,6 +174,9 @@ rendering and selecting an element immediately replaces
 leaves the picker without selecting an element. Home Assistant's usual editor
 Cancel and dashboard undo remain responsible for reverting an already selected
 element. A type change must never be a side effect of a Native editor event.
+The picker does not persist Home Assistant's incomplete **Manual** `{ type: "" }`
+selection: it remains open with an actionable error until a concrete type is
+selected, so the editor never emits an invalid layered Native base.
 
 Once an element is selected, the Native tab presents a toolbar around that
 editor. Its left control toggles the element editor between **Code** and
@@ -322,6 +325,10 @@ context-locked mold and is not editable in either mode.
    each using a template selector. The visual editor preserves any other
    existing `grid_options` keys supplied in YAML. A literal number in either
    grid selector is saved as a YAML number; template source remains a string.
+   Literal `true` and `false` in `hidden` are saved as booleans; Jinja source
+   remains a string. A whole-value non-mapping `grid_options` source cannot be
+   represented by its row/column controls, so it is retained unchanged until a
+   user explicitly supplies a row or column replacement.
    A collapsed **Control** expansion panel contains `show_error`,
    `template_nesting`, and boolean `delayed_hass`. A second collapsed **UIX styling**
    panel edits the contents of `forge.uix` as a mapping.
@@ -335,7 +342,8 @@ context-locked mold and is not editable in either mode.
    values.
 3. **Macros** lists local macro names with Edit and Remove actions. Its form
    edits the macro name, `returns`, parameter names and optional scalar
-   defaults, and template source. Imported `custom_templates` string macros and malformed
+   defaults, and template source. Scalar parameter defaults retain their
+   authored value type, including `0`, `false`, and `null`. Imported `custom_templates` string macros and malformed
    macro mappings remain code-editor-only, so visual editing never discards
    their source. An existing explicit `params: []` or `returns: false` remains
    explicit after Apply, so it continues to override an inherited macro; fields
@@ -355,7 +363,9 @@ context-locked mold and is not editable in either mode.
    Templates, the code-editor toolbar offers **Convert to object mapping** and
    **Set to null**, while the YAML-editor toolbar offers **Set to null**. An
    option whose runtime schema does not permit `null` does not offer that
-   action; users remove the option to resume its default. The full `sparks`
+   action; users remove the option to resume its default. Converting a non-null
+   Spark source to an object mapping or literal null first asks for
+   confirmation, retaining the raw draft on cancel. The full `sparks`
    YAML object remains available in Forge code mode for removing Spark entries
    or editing complete Spark source. Each configured Spark tab also has a
    destructive **Remove spark** button plus labelled **Move spark left** and
@@ -399,12 +409,24 @@ Adding or applying an Element path makes that path active and reconciles
 `element_disabled_paths` with the resulting resolved overlay. This removes a
 disabled ancestor that would mask the newly active value and prunes disabled
 descendants made invalid by replacing a mapping with a scalar, array, or null.
+Editing Element UIX styling likewise prunes only disabled paths that no longer
+resolve in the resulting full overlay, preserving valid local, Foundry, and
+global disabled paths.
 Every **UIX styling** panel provides a mapping-only `ha-yaml-editor`, followed
 by a clear reminder that the field is the *contents* of that mapping and must
 not contain another `uix:` key. The Native tab's panel edits
 `element_base.uix`, the Element tab's panel edits `element.uix`, and the
 General panel edits `forge.uix`. A non-mapping or invalid YAML diagnostic is
 rendered beside the affected panel; it is not confined to the Forge tab.
+
+Editable Forge and UIX styling YAML editors own their raw input text while the
+user types. Valid parsed changes update their owned configuration, but comments,
+formatting, and temporarily invalid source remain in the editor rather than
+being serialized back from the parsed value. An external configuration change
+deliberately resets the affected editor source. Invalid Forge, UIX styling, or
+embedded Native YAML is also exposed to the containing Home Assistant card or
+badge editor, blocking its Save action until it is corrected. The editor does
+not silently save the last valid configuration while invalid source is visible.
 
 Each visual Forge pane and UIX styling panel ends with a non-dismissible information help alert.
 Only those documentation-link alerts use a question-mark icon rather than Home

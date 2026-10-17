@@ -1,5 +1,6 @@
 import { css, html, LitElement, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
+import { keyed } from "lit/directives/keyed.js";
 import { live } from "lit/directives/live.js";
 import { load } from "js-yaml";
 import { ensureCustomElement } from "../helpers/dom/ensure-element";
@@ -18,7 +19,11 @@ type ForgeUiTab = "general" | "billets" | "macros" | "sparks";
 type ForgeEntryKind = "billet" | "macro";
 type ForgeEntryEditor = { kind: ForgeEntryKind; originalName?: string; unsupported?: string };
 type BilletDraft = { name: string; value: string };
-type MacroParamDraft = { name: string; default?: string };
+type MacroParamDraft = {
+  name: string;
+  default?: string | number | boolean | null;
+  hasDefault?: boolean;
+};
 type MacroDraft = {
   name: string;
   returns: boolean;
@@ -177,12 +182,17 @@ export class UixForgeEditor extends LitElement {
   @state() private _tab: EditorTab = "native";
   @state() private _forgeValue: Record<string, any> = {};
   @state() private _forgeError?: string;
+  @state() private _forgeYamlInvalid = false;
   @state() private _uixStylingError?: { layer: "forge" | "native" | "element"; message: string };
+  @state() private _nativeError?: string;
+  @state() private _sourceRevision = 0;
   @state() private _forgeEditorMode: ForgeEditorMode = "ui";
   @state() private _forgeUiTab: ForgeUiTab = "general";
   @state() private _selectedSpark = 0;
   @state() private _editingSparkOption?: { sparkIndex: number; key: string };
   @state() private _editingSparkCode = false;
+  @state() private _confirmSparkObjectConversion = false;
+  @state() private _confirmSparkNullConversion = false;
   @state() private _sparkDraftError?: string;
   @state() private _sparkInfoOption?: { sparkIndex: number; key: string };
   private _sparkDraft: any;
@@ -219,6 +229,12 @@ export class UixForgeEditor extends LitElement {
   @state() private _foundryDisabledPathsNotice?: UixForgeConfigPath[];
   @state() private _foundrySelectionError?: string;
   private _foundryUpdateListener = () => this.requestUpdate();
+
+  /** Read by the containing HA element editor's patched save guard. */
+  public get hasError(): boolean {
+    const nativeEditor = this.renderRoot?.querySelector("#native-element-editor") as any;
+    return this._forgeYamlInvalid || Boolean(this._uixStylingError) || Boolean(this._nativeError) || Boolean(nativeEditor?.hasError);
+  }
 
   static styles = css`
     :host { display: block; }
@@ -276,14 +292,19 @@ export class UixForgeEditor extends LitElement {
     const preservesLocalState = preservesTemplateEditor || JSON.stringify(config) === JSON.stringify(this._config);
     this._config = clone(config);
     if (preservesLocalState) return;
+    this._sourceRevision++;
     this._forgeValue = this._forgeSource();
     this._forgeError = this._templateError = undefined;
+    this._forgeYamlInvalid = false;
     this._uixStylingError = undefined;
+    this._nativeError = undefined;
     this._forgeEditorMode = "ui";
     this._forgeUiTab = "general";
     this._selectedSpark = 0;
     this._editingSparkOption = undefined;
     this._editingSparkCode = false;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = false;
     this._sparkDraft = undefined;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
@@ -330,6 +351,10 @@ export class UixForgeEditor extends LitElement {
   private _handleTabChanged(event: CustomEvent<{ name: EditorTab }>): void {
     const tab = event.detail.name;
     if (tab !== "native" && tab !== "forge" && tab !== "templates" && tab !== "foundry" && tab !== "export") return;
+    if (tab !== this._tab && this.hasError) {
+      this.requestUpdate();
+      return;
+    }
     void this._navigateWithUnappliedEdits(() => { this._tab = tab; });
   }
 
@@ -405,6 +430,19 @@ export class UixForgeEditor extends LitElement {
     this._config = clone(next);
     this._forgeValue = this._forgeSource();
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: clone(next) }, bubbles: true, composed: true }));
+  }
+
+  /** Ask the containing HA editor to re-evaluate its Save button. */
+  private _notifyValidityChanged(): void {
+    // The element editor owns `hasError`, while the dialog owns the Save
+    // button. Both are shadow hosts above this embedded editor.
+    let current: any = this;
+    for (let level = 0; level < 3; level++) {
+      const host = (current.getRootNode?.() as ShadowRoot | undefined)?.host as any;
+      if (!host) break;
+      host.requestUpdate?.();
+      current = host;
+    }
   }
 
   private _foundryOptions(): FoundryOption[] {
@@ -714,20 +752,30 @@ export class UixForgeEditor extends LitElement {
   }
 
   private _setForgeValue(event: CustomEvent): void {
-    const { value, isValid, errorMsg } = event.detail;
+    const { value, isValid, errorMsg } = event.detail ?? {};
     if (!isValid) {
       this._forgeError = errorMsg;
+      this._forgeYamlInvalid = true;
+      this._notifyValidityChanged();
       return;
     }
     if (!isMapping(value)) {
       this._forgeError = "Expected a YAML mapping.";
+      this._forgeYamlInvalid = true;
+      this._notifyValidityChanged();
       return;
     }
     this._forgeError = undefined;
+    this._forgeYamlInvalid = false;
+    this._notifyValidityChanged();
     if (this._config) this._emit({ ...this._config, forge: { ...value, mold: this._mold() } });
   }
 
   private _setForgeEditorMode(): void {
+    if (this._forgeYamlInvalid || this._uixStylingError) {
+      this._forgeError = "Correct the invalid Forge source before changing editor mode.";
+      return;
+    }
     if (this._editingSparkOption) {
       this._forgeError = "Apply & exit or Exit the Spark option before showing the Forge code editor.";
       return;
@@ -743,6 +791,10 @@ export class UixForgeEditor extends LitElement {
   private _handleForgeUiTabChanged(event: CustomEvent<{ name: ForgeUiTab }>): void {
     const tab = event.detail.name;
     if (tab === "general" || tab === "billets" || tab === "macros" || tab === "sparks") {
+      if (tab !== this._forgeUiTab && this.hasError) {
+        this.requestUpdate();
+        return;
+      }
       void this._navigateWithUnappliedEdits(() => { this._forgeUiTab = tab; });
     }
   }
@@ -778,14 +830,17 @@ export class UixForgeEditor extends LitElement {
     if (!isMapping(data)) return;
     const forge = this._forgeSource();
     if (data.hidden === undefined) delete forge.hidden;
-    else forge.hidden = clone(data.hidden);
-    const gridOptions = isMapping(forge.grid_options) ? clone(forge.grid_options) : {};
-    for (const [field, key] of [["grid_rows", "rows"], ["grid_columns", "columns"]] as const) {
-      if (data[field] === undefined) delete gridOptions[key];
-      else gridOptions[key] = this._gridOptionValue(data[field]);
+    else forge.hidden = this._hiddenOptionValue(data.hidden);
+    const hasGridEdit = data.grid_rows !== undefined || data.grid_columns !== undefined;
+    if (isMapping(forge.grid_options) || hasGridEdit) {
+      const gridOptions = isMapping(forge.grid_options) ? clone(forge.grid_options) : {};
+      for (const [field, key] of [["grid_rows", "rows"], ["grid_columns", "columns"]] as const) {
+        if (data[field] === undefined) delete gridOptions[key];
+        else gridOptions[key] = this._gridOptionValue(data[field]);
+      }
+      if (Object.keys(gridOptions).length) forge.grid_options = gridOptions;
+      else delete forge.grid_options;
     }
-    if (Object.keys(gridOptions).length) forge.grid_options = gridOptions;
-    else delete forge.grid_options;
     this._emitForgeSource(forge);
   }
 
@@ -798,6 +853,13 @@ export class UixForgeEditor extends LitElement {
     } catch {
       return value;
     }
+  }
+
+  /** Store literal boolean Hidden source as a boolean, not a truthy string. */
+  private _hiddenOptionValue(value: any): any {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return clone(value);
   }
 
   private _forgeEntryKey(kind: ForgeEntryKind): "billets" | "macros" {
@@ -825,10 +887,27 @@ export class UixForgeEditor extends LitElement {
     return value.reduce((params: MacroParamDraft[], param): MacroParamDraft[] => {
       if (typeof param === "string") params.push({ name: param });
       else if (isMapping(param) && typeof param.name === "string") {
-        params.push({ name: param.name, ...(typeof param.default === "string" ? { default: param.default } : {}) });
+        const hasDefault = Object.prototype.hasOwnProperty.call(param, "default");
+        if (hasDefault && !isScalar(param.default)) return params;
+        params.push({ name: param.name, ...(hasDefault ? { default: param.default, hasDefault: true } : {}) });
       }
       return params;
     }, []);
+  }
+
+  private _macroParamSelectorValue(params: MacroParamDraft[]): Record<string, any>[] {
+    return params.map((param) => ({
+      name: param.name,
+      ...(param.hasDefault ? { default: param.default } : {}),
+    }));
+  }
+
+  private _hasSupportedMacroParams(value: any): boolean {
+    return !Array.isArray(value) || value.every((param) => (
+      typeof param === "string"
+      || (isMapping(param) && typeof param.name === "string"
+        && (!Object.prototype.hasOwnProperty.call(param, "default") || isScalar(param.default)))
+    ));
   }
 
   private _openForgeEntryEditor(kind: ForgeEntryKind, name?: string): void {
@@ -848,7 +927,7 @@ export class UixForgeEditor extends LitElement {
     } else if (name !== undefined && typeof value !== "object") {
       unsupported = "Macros imported from custom_templates can only be edited in the Forge code editor.";
       draft = { name, returns: false, returnsExplicit: false, params: [], paramsExplicit: false, template: "" };
-    } else if (name !== undefined && (!isMapping(value) || typeof value.template !== "string")) {
+    } else if (name !== undefined && (!isMapping(value) || typeof value.template !== "string" || !this._hasSupportedMacroParams(value.params))) {
       unsupported = "This macro is not a supported macro mapping. Use Show code editor to edit it.";
       draft = { name, returns: false, returnsExplicit: false, params: [], paramsExplicit: false, template: "" };
     } else {
@@ -887,10 +966,13 @@ export class UixForgeEditor extends LitElement {
     const value = event.detail?.value;
     const draft = this._forgeEntryDraft as MacroDraft;
     draft.params = Array.isArray(value)
-      ? value.filter(isMapping).map((param) => ({
-        name: typeof param.name === "string" ? param.name : "",
-        ...(typeof param.default === "string" ? { default: param.default } : {}),
-      }))
+      ? value.filter(isMapping).map((param) => {
+        const hasDefault = Object.prototype.hasOwnProperty.call(param, "default") && param.default !== undefined;
+        return {
+          name: typeof param.name === "string" ? param.name : "",
+          ...(hasDefault ? { default: param.default, hasDefault: true } : {}),
+        };
+      })
       : [];
     draft.paramsExplicit = true;
     // The draft is deliberately non-reactive while a template editor is open,
@@ -901,7 +983,7 @@ export class UixForgeEditor extends LitElement {
   private _setMacroTemplate(event: CustomEvent): void {
     if (!this._forgeEntryDraft || !this._editingForgeEntry || this._editingForgeEntry.kind !== "macro") return;
     const template = event.detail?.value?.template;
-    if (typeof template === "string") (this._forgeEntryDraft as MacroDraft).template = template;
+    if (template === undefined || typeof template === "string") (this._forgeEntryDraft as MacroDraft).template = template ?? "";
   }
 
   private _isForgeEntryDirty(): boolean {
@@ -953,7 +1035,7 @@ export class UixForgeEditor extends LitElement {
           return false;
         }
         seen.add(paramName);
-        params.push(param.default ? { name: paramName, default: param.default } : paramName);
+        params.push(param.hasDefault ? { name: paramName, default: param.default } : paramName);
       }
       value = {
         template: macro.template,
@@ -1062,15 +1144,18 @@ export class UixForgeEditor extends LitElement {
     const { value, isValid, errorMsg } = event.detail ?? {};
     if (!isValid || !isMapping(value)) {
       this._uixStylingError = { layer, message: errorMsg || "UIX styling must be a YAML mapping." };
+      this._notifyValidityChanged();
       return;
     }
     if (this._uixStylingError?.layer === layer) this._uixStylingError = undefined;
+    this._notifyValidityChanged();
     const source = this._uixSource(layer);
     source.uix = clone(value);
     if (layer === "forge") {
       this._emitForgeSource(source);
     } else if (this._config) {
-      this._emit({ ...this._config, [layer === "native" ? "element_base" : "element"]: source });
+      const next = { ...this._config, [layer === "native" ? "element_base" : "element"]: source };
+      this._emit(layer === "element" ? this._reconcileDisabledPaths(next) : next);
     }
   }
 
@@ -1108,6 +1193,8 @@ export class UixForgeEditor extends LitElement {
     const value = spark[key];
     this._editingSparkOption = { sparkIndex, key };
     this._editingSparkCode = !isMapping(value) && !Array.isArray(value) && value !== null;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = false;
     this._sparkCodeParsesYaml = typeof value !== "string";
     this._sparkDraft = clone(value);
     this._sparkDraftValid = true;
@@ -1152,6 +1239,8 @@ export class UixForgeEditor extends LitElement {
   private _closeSparkOptionEditor(): void {
     this._editingSparkOption = undefined;
     this._editingSparkCode = false;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = false;
     this._sparkDraft = undefined;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
@@ -1192,6 +1281,8 @@ export class UixForgeEditor extends LitElement {
   private _convertSparkToObject(): void {
     this._editingSparkCode = false;
     this._sparkCodeParsesYaml = false;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = false;
     this._sparkDraft = {};
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
@@ -1204,6 +1295,8 @@ export class UixForgeEditor extends LitElement {
     if (!this._sparkOptionAllowsNull()) return;
     this._editingSparkCode = false;
     this._sparkCodeParsesYaml = false;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = false;
     this._sparkDraft = null;
     this._sparkDraftValid = true;
     this._sparkDraftError = undefined;
@@ -1212,6 +1305,25 @@ export class UixForgeEditor extends LitElement {
     // it. Switching to the literal-null view therefore needs an explicit
     // render even when the other reactive fields were already unchanged.
     this.requestUpdate();
+  }
+
+  private _requestSparkObjectConversion(): void {
+    this._confirmSparkNullConversion = false;
+    this._confirmSparkObjectConversion = true;
+  }
+
+  private _requestSparkNullConversion(): void {
+    if (!this._sparkOptionAllowsNull()) return;
+    this._confirmSparkObjectConversion = false;
+    this._confirmSparkNullConversion = true;
+  }
+
+  private _cancelSparkObjectConversion(): void {
+    this._confirmSparkObjectConversion = false;
+  }
+
+  private _cancelSparkNullConversion(): void {
+    this._confirmSparkNullConversion = false;
   }
 
   private _sparkEditorLabel(): string {
@@ -1244,6 +1356,10 @@ export class UixForgeEditor extends LitElement {
     const type = event.detail?.value;
     if (typeof type !== "string" || !UIX_FORGE_SPARK_CLASSES[type]) return;
     const forge = this._forgeSource();
+    if (forge.sparks !== undefined && !Array.isArray(forge.sparks)) {
+      this._forgeError = "Sparks must be a YAML list. Use Show code editor to correct it.";
+      return;
+    }
     const sparks = Array.isArray(forge.sparks) ? clone(forge.sparks) : [];
     sparks.push({ type });
     forge.sparks = sparks;
@@ -1325,8 +1441,8 @@ export class UixForgeEditor extends LitElement {
 
   private _setTemplateCodeDraft(event: CustomEvent): void {
     const value = event.detail?.value?.source;
-    this._templateDraft = value;
-    this._templateDraftValid = typeof value === "string";
+    this._templateDraft = value ?? "";
+    this._templateDraftValid = typeof this._templateDraft === "string";
     // Keep the text editor uncontrolled while typing. Updating the button
     // properties directly avoids re-rendering its Lit-managed source.
     this._syncTemplateActionDisabledState();
@@ -1367,12 +1483,14 @@ export class UixForgeEditor extends LitElement {
       ...this._config,
       element: setPath(this._overlay(), path, clone(value)),
     };
+    return this._reconcileDisabledPaths(next, path);
+  }
+
+  /** Remove only disabled paths no longer available in the resolved overlay. */
+  private _reconcileDisabledPaths(next: UixForgeConfig, activePath?: string[]): UixForgeConfig {
     const resolvedOverlay = this._resolvedOverlaySource(next);
-    // Activating a value must also activate any disabled ancestor. Replacing a
-    // parent can make disabled descendants invalid, so prune against the full
-    // resolved overlay rather than just the local source.
     const disabled = this._disabledPaths()
-      .filter((candidate) => !candidate.every((segment, index) => path[index] === segment))
+      .filter((candidate) => !activePath || !candidate.every((segment, index) => activePath[index] === segment))
       .filter((candidate) => !resolvedOverlay || hasPath(resolvedOverlay, candidate));
     if (disabled.length) next.element_disabled_paths = disabled;
     else delete next.element_disabled_paths;
@@ -1551,14 +1669,14 @@ export class UixForgeEditor extends LitElement {
         id: "uix-forge-spark-convert-object-mapping",
         label: "Convert to object mapping",
         path: CODE_BLOCK_BRACES_PATH,
-        action: () => this._convertSparkToObject(),
+        action: () => this._requestSparkObjectConversion(),
       },
     ];
     if (this._sparkOptionAllowsNull()) items.push({
         id: "uix-forge-spark-set-null",
         label: "Set to null",
         path: NULL_PATH,
-        action: () => this._setSparkNull(),
+        action: () => this._requestSparkNullConversion(),
       });
     return items;
   }
@@ -1576,7 +1694,7 @@ export class UixForgeEditor extends LitElement {
       id: "uix-forge-spark-set-null",
       label: "Set to null",
       path: NULL_PATH,
-      action: () => this._setSparkNull(),
+      action: () => this._requestSparkNullConversion(),
     }]);
   }
 
@@ -1626,6 +1744,10 @@ export class UixForgeEditor extends LitElement {
 
   private _stageNativeCandidate = (candidate: unknown): void => {
     if (!isMapping(candidate) || typeof candidate.type !== "string" || !this._config) return;
+    if (!isConcreteElementType(candidate.type)) {
+      this._pickerError = "Choose an element type before continuing. Manual configuration can be completed in the Home Assistant YAML editor after selecting a concrete type.";
+      return;
+    }
     const inheritedAnchor = this._resolvedFoundryElementAnchor();
     if (inheritedAnchor.hasType && !isConcreteElementType(inheritedAnchor.type)) {
       this._pickerError = "The inherited Foundry element type is invalid or dynamic and can only be edited in YAML.";
@@ -1662,6 +1784,13 @@ export class UixForgeEditor extends LitElement {
     event.stopPropagation();
     if (this._tab !== "native" || !this._config) return;
     const detail = (event as CustomEvent).detail ?? {}; const element_base = detail.config ?? detail.value;
+    if (detail.error) {
+      this._nativeError = String(detail.error);
+      this._notifyValidityChanged();
+      return;
+    }
+    this._nativeError = undefined;
+    this._notifyValidityChanged();
     if (!isMapping(element_base) || typeof element_base.type !== "string") return;
     // Type changes are allowed only through the transactional element picker so
     // retaining the Forge overlay is always a deliberate choice.
@@ -1972,6 +2101,7 @@ export class UixForgeEditor extends LitElement {
       return result;
     }, {} as Record<string, any>);
     const generalData = dataFor(FORGE_GENERAL_SCHEMA);
+    if (typeof forge.hidden === "boolean") generalData.hidden = String(forge.hidden);
     if (isMapping(forge.grid_options)) {
       if (forge.grid_options.rows !== undefined) generalData.grid_rows = String(forge.grid_options.rows);
       if (forge.grid_options.columns !== undefined) generalData.grid_columns = String(forge.grid_options.columns);
@@ -2072,7 +2202,7 @@ export class UixForgeEditor extends LitElement {
           .computeLabel=${() => "Value"}
           @value-changed=${(event: CustomEvent) => {
             const value = event.detail?.value?.value;
-            if (typeof value === "string") (this._forgeEntryDraft as BilletDraft).value = value;
+            if (value === undefined || typeof value === "string") (this._forgeEntryDraft as BilletDraft).value = value ?? "";
           }}
         ></ha-form>
       ` : html`
@@ -2086,7 +2216,7 @@ export class UixForgeEditor extends LitElement {
         <ha-selector
           .hass=${this.hass}
           .selector=${MACRO_PARAMS_SELECTOR}
-          .value=${(draft as MacroDraft).params}
+          .value=${this._macroParamSelectorValue((draft as MacroDraft).params)}
           label="Parameters"
           @value-changed=${this._setMacroParams}
         ></ha-selector>
@@ -2194,6 +2324,28 @@ export class UixForgeEditor extends LitElement {
     };
   }
 
+  private _renderSparkConversionConfirmation() {
+    if (this._confirmSparkObjectConversion) return html`
+      <ha-alert class="editor-alert" alert-type="warning">
+        <div class="alert-question">Convert this ${this._sparkEditorLabel()} source to an object mapping?</div>
+        <div>This discards the local source draft. Cancel keeps editing it.</div>
+        <div class="template-actions">
+          <ha-button appearance="plain" @click=${this._cancelSparkObjectConversion}>Cancel</ha-button>
+          <ha-button appearance="plain" @click=${this._convertSparkToObject}>Convert to object mapping</ha-button>
+        </div>
+      </ha-alert>`;
+    if (this._confirmSparkNullConversion) return html`
+      <ha-alert class="editor-alert" alert-type="warning">
+        <div class="alert-question">Replace this ${this._sparkEditorLabel()} source with a literal null?</div>
+        <div>This discards the local source draft. Cancel keeps editing it.</div>
+        <div class="template-actions">
+          <ha-button appearance="plain" @click=${this._cancelSparkNullConversion}>Cancel</ha-button>
+          <ha-button appearance="plain" @click=${this._setSparkNull}>Set to null</ha-button>
+        </div>
+      </ha-alert>`;
+    return nothing;
+  }
+
   private _renderSparkOptionEditor() {
     const spark = this._editingSparkOption
       ? this._sparkAt(this._editingSparkOption.sparkIndex)
@@ -2226,6 +2378,7 @@ export class UixForgeEditor extends LitElement {
           @value-changed=${this._setSparkYamlDraft}
         ></ha-yaml-editor>
       `}
+      ${this._renderSparkConversionConfirmation()}
       ${this._sparkDraftError ? html`<div class="error">${this._sparkDraftError}</div>` : nothing}
       <div class="template-actions">
         ${this._sparkDraft !== null ? html`
@@ -2248,6 +2401,11 @@ export class UixForgeEditor extends LitElement {
 
   private _renderSparks() {
     const sourceSparks = this._forgeSource().sparks;
+    if (sourceSparks !== undefined && !Array.isArray(sourceSparks)) {
+      return html`<ha-alert alert-type="warning">
+        Sparks must be a YAML list. Use Show code editor to correct it before editing Sparks visually.
+      </ha-alert>`;
+    }
     // Spark actions operate on source indexes. Do not filter malformed entries
     // for display, otherwise a tab action could modify a different Spark.
     if (Array.isArray(sourceSparks) && sourceSparks.some((spark) => !isMapping(spark))) {
@@ -2315,12 +2473,14 @@ export class UixForgeEditor extends LitElement {
         : "the Forge-owned Element layer";
     return html`
       <div class="editor-label">UIX styling (mapping)</div>
-      <ha-yaml-editor
-        aria-label=${`${appliesTo} UIX Styling YAML`}
-        .value=${this._uixSource(layer).uix ?? {}}
-        .autoUpdate=${true}
-        @value-changed=${(event: CustomEvent) => this._setUixStyling(layer, event)}
-      ></ha-yaml-editor>
+      ${keyed(`${layer}-${this._sourceRevision}`, html`
+        <ha-yaml-editor
+          aria-label=${`${appliesTo} UIX Styling YAML`}
+          .defaultValue=${this._uixSource(layer).uix ?? {}}
+          .autoUpdate=${false}
+          @value-changed=${(event: CustomEvent) => this._setUixStyling(layer, event)}
+        ></ha-yaml-editor>
+      `)}
       <ha-alert class="help-alert" alert-type="info">
         UIX Styling here applies to ${appliesTo}. Do not include a <code>uix:</code> key.
       </ha-alert>
@@ -2357,7 +2517,14 @@ export class UixForgeEditor extends LitElement {
         </div>
         ${this._forgeEditorMode === "ui" ? this._renderForgeUi() : html`
           <div class="editor-label">Forge (mapping)</div>
-          <ha-yaml-editor aria-label="Forge behavior YAML" .value=${this._forgeValue} .autoUpdate=${true} @value-changed=${this._setForgeValue}></ha-yaml-editor>
+          ${keyed(`forge-${this._sourceRevision}`, html`
+            <ha-yaml-editor
+              aria-label="Forge behavior YAML"
+              .defaultValue=${this._forgeValue}
+              .autoUpdate=${false}
+              @value-changed=${this._setForgeValue}
+            ></ha-yaml-editor>
+          `)}
         `}
         ${this._forgeError ? html`<div class="error">${this._forgeError}</div>` : nothing}
       </div>

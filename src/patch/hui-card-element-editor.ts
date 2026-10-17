@@ -1,5 +1,5 @@
 import { LitElement } from "lit";
-import { patch_element, patch_object } from "../helpers/patch_function";
+import { patch_element, patch_getter, patch_object } from "../helpers/patch_function";
 
 class ConfigCardElementPatch extends LitElement {
   _uixData?;
@@ -57,7 +57,11 @@ class ConfigCardElementPatch extends LitElement {
   }
 }
 
-@patch_element("hui-card-element-editor")
+@patch_element("hui-card-element-editor", (cls) => {
+  patch_getter(cls.prototype, "hasError", function (this: any, original) {
+    return original() || Boolean((this as any)._configElement?.hasError);
+  });
+})
 class HuiCardElementEditorPatch extends LitElement {
   _configElement?: ConfigCardElementPatch;
   value?: any;
