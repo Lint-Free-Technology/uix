@@ -159,6 +159,18 @@ def test_forge_editor_has_separate_macro_and_billet_forms() -> None:
     assert 'this._confirmDestructive(`Remove ${name}`, "Remove")' in source
 
 
+def test_forge_editor_billet_name_picker_offers_selected_foundry_billets() -> None:
+    source = FORGE_EDITOR_TS.read_text()
+
+    assert 'private _billetNameOptions(currentName?: string)' in source
+    assert 'this._resolvedSelectedFoundryConfig()?.forge?.billets' in source
+    assert 'custom_value: true, mode: "dropdown"' in source
+    assert 'options: this._billetNameOptions(draft.name)' in source
+    assert 'const name = event.detail?.value?.name ?? event.detail?.value;' in source
+    assert 'this._forgeEntryDraft.name = name;\n      this.requestUpdate();' in source
+    assert '<ha-form class="forge-entry-value"' in source
+
+
 def test_forge_editor_preserves_scalar_and_macro_override_source() -> None:
     source = FORGE_EDITOR_TS.read_text()
 

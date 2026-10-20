@@ -264,6 +264,7 @@ export class UixForgeEditor extends LitElement {
     .conversion-alert { display: block; margin: 16px 0; }
     .alert-question { margin-bottom: 8px; font-weight: 500; }
     .editor-label { margin: 8px 0; font-weight: 500; }
+    .forge-entry-value { display: block; margin-top: 16px; }
     .forge-mold { margin-bottom: 16px; font-weight: 500; }
     .picker-actions { display: flex; gap: 8px; margin-bottom: 12px; }
     .native-toolbar { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; }
@@ -871,6 +872,16 @@ export class UixForgeEditor extends LitElement {
     return value === undefined ? {} : isMapping(value) ? value : undefined;
   }
 
+  /** Names supplied by the selected Foundry are convenient local overrides. */
+  private _billetNameOptions(currentName?: string): { value: string; label: string }[] {
+    const foundryBillets = this._resolvedSelectedFoundryConfig()?.forge?.billets;
+    const names = isMapping(foundryBillets) ? Object.keys(foundryBillets) : [];
+    if (currentName) names.push(currentName);
+    return [...new Set(names)]
+      .sort((first, second) => first.localeCompare(second))
+      .map((name) => ({ value: name, label: name }));
+  }
+
   private _scalarText(value: any): string {
     // This source is parsed as YAML again when the Billet is applied. Quote
     // strings to retain their type (and sources such as #fff) on round-trip.
@@ -950,8 +961,11 @@ export class UixForgeEditor extends LitElement {
 
   private _setForgeEntryName(event: CustomEvent): void {
     if (!this._forgeEntryDraft) return;
-    const name = event.detail?.value?.name;
-    if (typeof name === "string") this._forgeEntryDraft.name = name;
+    const name = event.detail?.value?.name ?? event.detail?.value;
+    if (typeof name === "string") {
+      this._forgeEntryDraft.name = name;
+      this.requestUpdate();
+    }
   }
 
   private _setMacroReturns(event: CustomEvent): void {
@@ -2188,14 +2202,14 @@ export class UixForgeEditor extends LitElement {
     return html`
       <div class="editor-label">${title}</div>
       ${editor.unsupported ? html`<ha-alert class="editor-alert" alert-type="warning">${editor.unsupported}</ha-alert>` : editor.kind === "billet" ? html`
-        <ha-form
+        <ha-selector
           .hass=${this.hass}
-          .data=${{ name: draft.name }}
-          .schema=${FORGE_ENTRY_NAME_SCHEMA}
-          .computeLabel=${() => "Name"}
+          .selector=${{ select: { options: this._billetNameOptions(draft.name), custom_value: true, mode: "dropdown" } }}
+          .value=${draft.name}
+          label="Name"
           @value-changed=${this._setForgeEntryName}
-        ></ha-form>
-        <ha-form
+        ></ha-selector>
+        <ha-form class="forge-entry-value"
           .hass=${this.hass}
           .data=${{ value: (draft as BilletDraft).value }}
           .schema=${BILLET_VALUE_SCHEMA}

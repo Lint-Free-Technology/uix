@@ -333,13 +333,15 @@ context-locked mold and is not editable in either mode.
    `template_nesting`, and boolean `delayed_hass`. A second collapsed **UIX styling**
    panel edits the contents of `forge.uix` as a mapping.
 
-2. **Billets** lists local billet names with Edit and Remove actions. A billet
-   form edits a name and one YAML scalar value; `~` represents the literal-null
-   placeholder commonly used by Foundries. Mappings and lists remain available
-   only in the lossless Forge code editor. String source is quoted in the form
-   to preserve YAML scalar type and content on Apply. When a Foundry is
-   selected, a second read-only table shows its resolved billet names and
-   values.
+2. **Billets** lists local billet names with Edit and Remove actions. Its name
+   picker offers resolved billet names from the selected Foundry, so a local
+   value can conveniently override one, while still accepting a custom name.
+   A billet form edits that name and one YAML scalar value; `~` represents the
+   literal-null placeholder commonly used by Foundries. Mappings and lists
+   remain available only in the lossless Forge code editor. String source is
+   quoted in the form to preserve YAML scalar type and content on Apply. When
+   a Foundry is selected, a second read-only table shows its resolved billet
+   names and values.
 3. **Macros** lists local macro names with Edit and Remove actions. Its form
    edits the macro name, `returns`, parameter names and optional scalar
    defaults, and template source. Scalar parameter defaults retain their

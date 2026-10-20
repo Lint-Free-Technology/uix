@@ -112,11 +112,12 @@ four tabs:
   Its collapsed **Control** section contains `show_error`,
   `template_nesting`, and boolean `delayed_hass`. Its separate collapsed **UIX
   styling** section edits the contents of `forge.uix`.
-- **Billets** lists locally configured billet names. Add or edit a billet with
-  its name and one scalar value; use `~` for a literal-null placeholder. The
-  Forge code editor remains available for billet mappings and lists. When a
-  Foundry is selected, a second table shows its resolved billet names and
-  values.
+- **Billets** lists locally configured billet names. When a Foundry is
+  selected, the name picker offers its resolved billet names so you can quickly
+  override one; you can still enter a custom name. Each billet has one scalar
+  value; use `~` for a literal-null placeholder. The Forge code editor remains
+  available for billet mappings and lists. A second table shows the Foundry's
+  resolved billet names and values.
 - **Macros** lists locally configured macro names. Its form edits the name,
   whether the macro returns a value, parameters (including optional scalar
   defaults), and template source. Numeric, boolean, and null parameter defaults
