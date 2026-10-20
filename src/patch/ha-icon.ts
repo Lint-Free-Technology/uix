@@ -153,6 +153,7 @@ const bindUix = async (el) => {
         const icon = iconRef.deref();
         if (!icon?.isConnected) {
           uix.removeEventListener("uix-styles-update", onUpdate);
+          icon?._boundUix?.delete(uix);
           return;
         }
 
