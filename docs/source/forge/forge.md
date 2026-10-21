@@ -12,6 +12,9 @@ UIX Forge (`custom:uix-forge`) is a custom Lovelace element that combines templa
 
 ## Visual editor — Cards and Badges
 
+!!! info
+    UIX Forge Visual editor available in 9.0.0-beta.2
+
 You can use the Forge visual editor for Cards and Badges. Choose the Home Assistant card or badge you want to use, edit it with its normal Home Assistant editor, then add Forge templates, Sparks, UIX styling, and Foundries around it. You can start without choosing an element too, which is useful for a blank Forge that will only use Sparks.
 
 Until you choose an element type, Card and Badge Forge automatically use their built-in blank card or blank badge. This automatic type selection is not saved in the dashboard configuration.
