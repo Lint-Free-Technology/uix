@@ -148,18 +148,27 @@ const bindUix = async (el) => {
     for (const uix of newUix) {
       if (el._boundUix.has(uix)) continue;
 
-      uix.addEventListener("uix-styles-update", async () => {
+      const iconRef = new (globalThis as any).WeakRef(el);
+      const onUpdate = async () => {
+        const icon = iconRef.deref();
+        if (!icon?.isConnected) {
+          uix.removeEventListener("uix-styles-update", onUpdate);
+          icon?._boundUix?.delete(uix);
+          return;
+        }
+
         // Coalesce rapid style-update events to a single update per frame
-        if (el._uixIconPending) return;
-        el._uixIconPending = true;
+        if (icon._uixIconPending) return;
+        icon._uixIconPending = true;
         try {
           await uix.updateComplete;
           await nextAnimationFrame();
-          updateIcon(el);
+          updateIcon(icon);
         } finally {
-          el._uixIconPending = false;
+          icon._uixIconPending = false;
         }
-      });
+      };
+      uix.addEventListener("uix-styles-update", onUpdate);
       el._boundUix.add(uix);
     }
   } finally {
