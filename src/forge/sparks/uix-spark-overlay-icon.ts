@@ -295,7 +295,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     const stateObj = this._entity ? hass?.states?.[this._entity] : undefined;
 
     if (this._entity) {
-      iconEl.hass = hass;
       if (stateObj) {
         iconEl.stateObj = this._value
           ? { ...stateObj, state: this._value }
