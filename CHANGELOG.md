@@ -1,3 +1,10 @@
+## [9.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.1...v9.0.0-beta.2) (2026-10-21)
+
+
+### ⭐ New Features
+
+* Add UIX Forge UI editor for card and badge elements ([#666](https://github.com/Lint-Free-Technology/uix/issues/666)) ([50f9729](https://github.com/Lint-Free-Technology/uix/commit/50f9729f4a99073dcc0db32d0ad46b7db5749861))
+
 ## [9.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.0...v9.0.0-beta.1) (2026-10-21)
 
 
