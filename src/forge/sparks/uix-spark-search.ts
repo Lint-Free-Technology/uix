@@ -41,6 +41,7 @@ interface AppliedElementChange {
  */
 export class UixForgeSparkSearch extends UixForgeSparkBase {
   type = "search";
+  static readonly editorOptions = ["for", "query", "text", "actions"];
 
   private _for: string = "";
   private _query: string = "";

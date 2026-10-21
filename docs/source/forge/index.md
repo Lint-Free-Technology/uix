@@ -2,15 +2,24 @@
 title: UIX Forge
 description: Learn about UIX Forge, a powerful custom element that combines templates, sparks, and UIX styling.
 ---
-UIX Forge forges Home Assistant elements with templates in its element configuration and additional augmentation through [UIX Forge Sparks](./sparks/). Its [layered configuration](./forge.md#layered-configuration) mode also lets a wrapped element retain its own template fields while Forge templates a separate overlay.
+UIX Forge lets you use templates anywhere in a Home Assistant element's
+configuration, then add behaviours with [UIX Forge Sparks](./sparks/) and
+style the result with UIX. It can also keep templates that belong to the
+wrapped card or badge—such as Markdown content or native visibility—so Home
+Assistant evaluates them normally.
 
-Forge supports the card, badge, row, picture-element, section, footer, and card-feature molds. Cross-context molds allow embedding one element type in a different parent context, such as a card used as a row inside an entities card — see [Cross-context molds](./forge.md#cross-context-molds). Layered configuration is available for every mold.
+In YAML, put the wrapped element's own configuration in
+[`element_base`](./forge.md#keep-the-elements-configuration-in-element_base)
+when it needs to be passed through unchanged, and put the values Forge should
+change in `element`.
+
+Forge supports the card, badge, row, picture-element, section, footer, and card-feature molds. Cross-context molds allow embedding one element type in a different parent context, such as a card used as a row inside an entities card — see [Cross-context molds](./forge.md#cross-context-molds). The `element_base`/`element` layout works with every mold.
 
 See [Forge](./forge.md) for complete forge config reference.
 
 ## Foundries
 
-A **foundry** is a reusable UIX Forge configuration that lets you define `forge`, `element`, `element_base`, and `uix` fragments once and share them across many cards. A resolved `element_base` selects layered configuration; `element_disabled_paths` remains local to the consuming Forge.
+A **foundry** is a reusable UIX Forge configuration: save `forge`, `element`, and `element_base` blocks once, then reuse them across many cards. A Foundry `element_base` is editor-preserved source. Save it from the Forge editor's Export YAML and retain it when editing the Foundry, so that Native configuration remains available for future visual-editor support. `element_disabled_paths` remains local to each Forge that uses the Foundry.
 
 See [Foundries](./foundries.md) for a full guide including merge behaviour, nested foundries, and management via the integration options.
 

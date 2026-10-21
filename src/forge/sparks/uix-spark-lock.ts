@@ -5,6 +5,7 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 /** Forge wrapper for the shared lock overlay. */
 export class UixForgeSparkLock extends UixForgeSparkBase {
   type = "lock";
+  static readonly editorOptions = ["for", "entity", "locks", "permissive", "code_dialog", "action", "icon_locked", "icon_unlocked", "icon_locked_color", "icon_unlocked_color", "icon_size", "icon_position", "duration", "unlocked_action"];
 
   private targetSelector = "";
   private entity = "";

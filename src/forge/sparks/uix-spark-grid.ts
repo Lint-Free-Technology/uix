@@ -137,6 +137,7 @@ const GRID_INLINE_PROPS = [
  */
 export class UixForgeSparkGrid extends UixForgeSparkBase {
   type = "grid";
+  static readonly editorOptions = ["for", "columns", "rows", "areas", "elements", "gap", "column_gap", "row_gap", "auto_columns", "auto_rows", "auto_flow", "justify_content", "align_content", "justify_items", "align_items", "place_content", "place_items", "media_queries"];
 
   /** Unique ID used to scope injected CSS when the style-element path is used. */
   private readonly _id: string;

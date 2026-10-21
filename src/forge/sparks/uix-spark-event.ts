@@ -2,6 +2,7 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 
 export class UixForgeSparkDomEvents extends UixForgeSparkBase {
   type = "event";
+  static readonly editorOptions = ["forge_id", "other_forge_ids"];
 
   private uixForgeMyId: string | null = null;
   private uixForgeOthersIds: string[] | null = null;

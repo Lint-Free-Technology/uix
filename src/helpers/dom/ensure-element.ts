@@ -15,6 +15,12 @@ export async function ensureCustomElement(selector: string, timeoutMs = DEFAULT_
     case "ha-adaptive-popover":
       resolver = ensureHaAdaptivePopover();
       break;
+    case "hui-card-picker":
+      resolver = ensureHuiCardPicker();
+      break;
+    case "hui-badge-picker":
+      resolver = ensureHuiBadgePicker();
+      break;
     default:
       resolver = Promise.reject(new Error(`No UIX load sequence defined for selector: ${selector}.`));
   }
@@ -106,4 +112,92 @@ export async function ensureHaForm(): Promise<CustomElementConstructor> {
   }
   await card.constructor.getConfigElement();
   return customElements.whenDefined("ha-form");
+}
+
+/**
+ * `hui-card-picker` is lazy-loaded by Home Assistant. Loading the Lovelace
+ * route and asking a vertical-stack card for its editor follows Home
+ * Assistant's own import path for the picker.
+ */
+export async function ensureHuiCardPicker(): Promise<CustomElementConstructor> {
+  await customElements.whenDefined("partial-panel-resolver");
+  const resolver: any = document.createElement("partial-panel-resolver");
+  const routes = resolver._getRoutes?.([
+    { component_name: "lovelace", url_path: "uix-forge-picker" },
+  ]);
+  await routes?.routes?.["uix-forge-picker"]?.load?.();
+
+  const helpers = await (window as any).loadCardHelpers?.();
+  if (!helpers) {
+    throw new Error("Failed to load card helpers.");
+  }
+
+  // Home Assistant's vertical-stack editor imports hui-card-picker.
+  const stack = await helpers.createCardElement?.({
+    type: "vertical-stack",
+    cards: [],
+  });
+  if (!stack) {
+    throw new Error("Failed to create vertical stack card.");
+  }
+
+  await customElements.whenDefined("hui-vertical-stack-card");
+  await stack.constructor.getConfigElement?.();
+  return customElements.whenDefined("hui-card-picker");
+}
+
+/**
+ * Home Assistant loads the badge picker only with its create-badge dialog.
+ * Ask the active view to prepare that dialog, intercept the dialog event, and
+ * run its own lazy import without ever opening a second dialog for the user.
+ */
+export async function ensureHuiBadgePicker(): Promise<CustomElementConstructor> {
+  await customElements.whenDefined("partial-panel-resolver");
+  const resolver: any = document.createElement("partial-panel-resolver");
+  const routes = resolver._getRoutes?.([
+    { component_name: "lovelace", url_path: "uix-forge-picker" },
+  ]);
+  await routes?.routes?.["uix-forge-picker"]?.load?.();
+
+  const view = findShadowDescendant(document, "hui-view") as any;
+  const layout = view?._layoutElement;
+  if (!view || !layout) {
+    throw new Error("Failed to find the active Lovelace view for the badge picker.");
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Timed out loading the Home Assistant badge picker."));
+    }, DEFAULT_TIMEOUT_MS);
+
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      view.removeEventListener("show-dialog", handleShowDialog);
+    };
+
+    const handleShowDialog = (event: Event) => {
+      const dialog = event as CustomEvent<{ dialogTag?: string; dialogImport?: () => Promise<unknown> }>;
+      if (dialog.detail?.dialogTag !== "hui-dialog-create-badge") return;
+      event.stopImmediatePropagation();
+      cleanup();
+      Promise.resolve(dialog.detail.dialogImport?.()).then(() => resolve(), reject);
+    };
+
+    view.addEventListener("show-dialog", handleShowDialog);
+    layout.dispatchEvent(new CustomEvent("ll-create-badge", { bubbles: true, composed: true }));
+  });
+
+  return customElements.whenDefined("hui-badge-picker");
+}
+
+function findShadowDescendant(root: ParentNode, selector: string): Element | null {
+  const direct = root.querySelector(selector);
+  if (direct) return direct;
+  for (const element of Array.from(root.querySelectorAll("*"))) {
+    if (!element.shadowRoot) continue;
+    const found = findShadowDescendant(element.shadowRoot, selector);
+    if (found) return found;
+  }
+  return null;
 }

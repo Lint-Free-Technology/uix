@@ -216,7 +216,11 @@ type ResolvedForgeConfig = {
   forge: any;
   element: any;
   elementBase: any;
+  /** True when a local or Foundry-owned Native base is present. */
   hasElementBase: boolean;
+  /** A concrete element type inherited from a Foundry, before local merging. */
+  foundryElementType: any;
+  hasFoundryElementType: boolean;
 };
 
 export function _resolveFoundryConfig(
@@ -253,21 +257,35 @@ export function _resolveFoundryConfig(
     // Recursively resolve the foundry's own base (if it also references another foundry).
     const baseResolved = foundryData.foundry
       ? _resolveFoundryConfig({ foundry: foundryData.foundry }, foundries, ready, nextVisited, false)
-      : { forge: {}, element: {}, elementBase: {}, hasElementBase: false };
+      : {
+        forge: {},
+        element: {},
+        elementBase: {},
+        hasElementBase: false,
+        foundryElementType: undefined,
+        hasFoundryElementType: false,
+      };
     if (baseResolved === null) return null;
 
     // foundryData overrides base, local config overrides foundry
     const foundryForge = _mergeFoundryConfig(baseResolved.forge, foundryData.forge);
     const foundryElement = _mergeFoundryConfig(baseResolved.element, foundryData.element);
+    // A Foundry Native base is passed through to the wrapped element. In
+    // particular, its native templates must not become Forge templates.
     const foundryElementBase = _mergeFoundryConfig(baseResolved.elementBase, foundryData.element_base);
+    const foundryHasElementBase = baseResolved.hasElementBase
+      || Object.prototype.hasOwnProperty.call(foundryData, "element_base");
+    const foundryDefinesElementType = _isPlainObject(foundryData.element)
+      && Object.prototype.hasOwnProperty.call(foundryData.element, "type");
     result = {
       forge: _mergeFoundryConfig(foundryForge, config.forge),
       element: _mergeFoundryConfig(foundryElement, config.element),
       elementBase: _mergeFoundryConfig(foundryElementBase, config.element_base),
-      hasElementBase:
-        baseResolved.hasElementBase ||
-        Object.prototype.hasOwnProperty.call(foundryData, "element_base") ||
-        Object.prototype.hasOwnProperty.call(config, "element_base"),
+      hasElementBase: foundryHasElementBase || Object.prototype.hasOwnProperty.call(config, "element_base"),
+      foundryElementType: foundryDefinesElementType
+        ? foundryData.element.type
+        : baseResolved.foundryElementType,
+      hasFoundryElementType: foundryDefinesElementType || baseResolved.hasFoundryElementType,
     };
   } else {
     result = {
@@ -275,6 +293,8 @@ export function _resolveFoundryConfig(
       element: config.element ?? {},
       elementBase: config.element_base ?? {},
       hasElementBase: Object.prototype.hasOwnProperty.call(config, "element_base"),
+      foundryElementType: undefined,
+      hasFoundryElementType: false,
     };
   }
 
@@ -288,6 +308,8 @@ export function _resolveFoundryConfig(
     let inheritedElement = {};
     let inheritedElementBase = {};
     let inheritedHasElementBase = false;
+    let inheritedFoundryElementType: any;
+    let inheritedHasFoundryElementType = false;
 
     if (globalFoundry && foundryName !== "global") {
       const globalResolved = _resolveFoundryConfig({ foundry: "global" }, foundries, ready, currentVisited, false);
@@ -296,6 +318,10 @@ export function _resolveFoundryConfig(
       inheritedElement = _mergeFoundryConfig(inheritedElement, globalResolved.element);
       inheritedElementBase = _mergeFoundryConfig(inheritedElementBase, globalResolved.elementBase);
       inheritedHasElementBase = inheritedHasElementBase || globalResolved.hasElementBase;
+      if (globalResolved.hasFoundryElementType) {
+        inheritedFoundryElementType = globalResolved.foundryElementType;
+        inheritedHasFoundryElementType = true;
+      }
     }
 
     if (globalMoldFoundry && foundryName !== `global_${moldType}`) {
@@ -305,6 +331,10 @@ export function _resolveFoundryConfig(
       inheritedElement = _mergeFoundryConfig(inheritedElement, globalMoldResolved.element);
       inheritedElementBase = _mergeFoundryConfig(inheritedElementBase, globalMoldResolved.elementBase);
       inheritedHasElementBase = inheritedHasElementBase || globalMoldResolved.hasElementBase;
+      if (globalMoldResolved.hasFoundryElementType) {
+        inheritedFoundryElementType = globalMoldResolved.foundryElementType;
+        inheritedHasFoundryElementType = true;
+      }
     }
 
     result = {
@@ -312,10 +342,56 @@ export function _resolveFoundryConfig(
       element: _mergeFoundryConfig(inheritedElement, result.element),
       elementBase: _mergeFoundryConfig(inheritedElementBase, result.elementBase),
       hasElementBase: inheritedHasElementBase || result.hasElementBase,
+      foundryElementType: result.hasFoundryElementType
+        ? result.foundryElementType
+        : inheritedFoundryElementType,
+      hasFoundryElementType: result.hasFoundryElementType || inheritedHasFoundryElementType,
     };
   }
 
   return result;
+}
+
+/**
+ * Resolve only the fields needed to decide whether a named Foundry can be
+ * selected by a contextual visual editor. This follows nested Foundry
+ * inheritance but deliberately excludes global Foundries and local config.
+ */
+export function _resolveFoundryAnchor(
+  foundryName: string,
+  foundries?: Record<string, any>,
+  ready = true
+): { mold?: string; type?: string; hasInvalidElementType?: boolean; hasFoundryElementBase?: boolean } | null {
+  const resolved = _resolveFoundryConfig(
+    { foundry: foundryName },
+    foundries,
+    ready,
+    new Set(),
+    false
+  );
+  if (resolved === null) return null;
+  const hasElementType = _isPlainObject(resolved.element)
+    && Object.prototype.hasOwnProperty.call(resolved.element, "type");
+  const elementType = hasElementType ? resolved.element.type : undefined;
+  return {
+    mold: typeof resolved.forge?.mold === "string" ? resolved.forge.mold : undefined,
+    type: typeof elementType === "string" ? elementType : undefined,
+    hasInvalidElementType: hasElementType && typeof elementType !== "string" ? true : undefined,
+    hasFoundryElementBase: resolved.hasElementBase || undefined,
+  };
+}
+
+function forgeStubConfig(
+  mold: "card" | "badge",
+  customType: string = UIX_FORGE_TYPE
+): UixForgeConfig {
+  return {
+    type: `custom:${customType}`,
+    forge: { mold },
+    // The visual editor may receive a native element or a Foundry next. Do not
+    // persist a placeholder type: it would conflict with a Foundry's type
+    // anchor before the user has selected a real wrapped element.
+  };
 }
 
 export class UixForge extends LitElement {
@@ -371,9 +447,28 @@ export class UixForge extends LitElement {
   }
 
   public static getStubConfig(): UixForgeConfig {
-    return {
-      type: `custom:${UIX_FORGE_TYPE}`,
-    };
+    return forgeStubConfig("card");
+  }
+
+  public static async getConfigElement(): Promise<HTMLElement> {
+    return document.createElement("uix-forge-editor");
+  }
+
+  private _applyBlankElementType(elementConfig: Record<string, any>, forgeConfig: Record<string, any> = this.forgeConfig): void {
+    if (elementConfig.type) return;
+    if (this._mold.isCard()) {
+      elementConfig.type = "custom:uix-forge-blank-card";
+      if (this._mold.isCardBlankClear()) elementConfig.clear = true;
+    } else if (this._mold.isBadge()) {
+      elementConfig.type = "custom:uix-forge-blank-badge";
+      if (Array.isArray(forgeConfig.sparks) && forgeConfig.sparks.length > 0) {
+        elementConfig.has_sparks = true;
+      }
+    }
+  }
+
+  private _builtInBlankBadgeConfig(): any {
+    return this.forgedElementConfig ?? { type: "custom:uix-forge-blank-badge" };
   }
 
   private hasTemplateOrNestedTemplate(value: any): boolean {
@@ -505,6 +600,38 @@ export class UixForge extends LitElement {
     return true;
   }
 
+  /**
+   * A Foundry may declare its reusable type in `element`. A UI-backed
+   * consumer repeats that concrete type in its local element_base as the
+   * Native editor anchor. The inherited type is not a Forge override and must
+   * therefore be removed before normal layered-overlay validation.
+   */
+  private _prepareLayeredOverlay(
+    resolvedElement: any,
+    resolvedElementBase: any,
+    hasElementBase: boolean,
+    foundryElementType: any,
+    hasFoundryElementType: boolean
+  ): any {
+    const overlay = _cloneConfigValue(resolvedElement);
+    if (!hasElementBase || !hasFoundryElementType) return overlay;
+
+    if (typeof foundryElementType !== "string" || /[{%]|<<|>>/.test(foundryElementType)) {
+      throw new Error("uix-forge: foundry element.type must be a concrete string when element_base is set");
+    }
+    if (!_isPlainObject(resolvedElementBase) || resolvedElementBase.type !== foundryElementType) {
+      throw new Error("uix-forge: foundry element.type must match element_base.type");
+    }
+    if (_isPlainObject(this.config?.element) && Object.prototype.hasOwnProperty.call(this.config.element, "type")) {
+      throw new Error("uix-forge: local layered element cannot override a Foundry type");
+    }
+    if (!_isPlainObject(overlay) || overlay.type !== foundryElementType) {
+      throw new Error("uix-forge: foundry element.type was overridden before layered composition");
+    }
+    delete overlay.type;
+    return overlay;
+  }
+
   private _collectLayeredTemplatePaths(value: any, path: string[] = [], paths = new Set<string>()): Set<string> {
     if (typeof value === "string" && this.hasTemplateOrNestedTemplate(value)) {
       paths.add(_layeredPathKey(path));
@@ -600,15 +727,22 @@ export class UixForge extends LitElement {
 
     this._resolvedUix = resolved.forge?.uix;
 
-    this._applyResolvedConfig(resolved.forge, resolved.element, resolved.elementBase, resolved.hasElementBase);
+    this._applyResolvedConfig(resolved);
   }
 
-  private _applyResolvedConfig(
-    resolvedForge: any,
-    resolvedElement: any,
-    resolvedElementBase: any,
-    hasElementBase: boolean
-  ) {
+  private _setResolvedLayeredState(resolved: ResolvedForgeConfig): void {
+    this._layeredElementOverlaySource = this._prepareLayeredOverlay(
+      resolved.element,
+      resolved.elementBase,
+      resolved.hasElementBase,
+      resolved.foundryElementType,
+      resolved.hasFoundryElementType,
+    );
+    this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
+  }
+
+  private _applyResolvedConfig(resolved: ResolvedForgeConfig) {
+    const { forge: resolvedForge, element: resolvedElement, elementBase: resolvedElementBase, hasElementBase } = resolved;
     if (!resolvedForge || Object.keys(resolvedForge).length === 0) {
       throw new Error("uix-forge: forge config is required (not provided locally or via foundry)");
     }
@@ -616,9 +750,9 @@ export class UixForge extends LitElement {
     if (!resolvedForge.mold || !UIX_FORGE_FORGE_MOLDS.includes(resolvedForge.mold)) {
       throw new Error(`uix-forge: only forge molds of ${UIX_FORGE_FORGE_MOLDS.join(", ")} are supported at this time`);
     }
-    this._layeredElementOverlaySource = _cloneConfigValue(resolvedElement);
-    this._layeredMode = this._validateLayeredConfig(resolvedElementBase, hasElementBase);
-    if (!this._layeredMode && (!resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold)) {
+    this._setResolvedLayeredState(resolved);
+    const allowsUnresolvedVisualElement = resolvedForge.mold === "card" || resolvedForge.mold === "badge";
+    if (!this._layeredMode && (!resolvedElement || Object.keys(resolvedElement).length === 0) && !UIX_FORGE_MOLDS_WITH_BLANKS.includes(resolvedForge.mold) && !allowsUnresolvedVisualElement) {
       throw new Error("uix-forge: element config is required (not provided locally or via foundry)");
     }
     if (resolvedForge.macros && typeof resolvedForge.macros !== "object") {
@@ -637,11 +771,14 @@ export class UixForge extends LitElement {
     if (resolvedForge.template_nesting && resolvedForge.template_nesting.length !== 4) {
       throw new Error("uix-forge: forge template_nesting must be four characters");
     }
+    if (resolvedForge.delayed_hass !== undefined && typeof resolvedForge.delayed_hass !== "boolean") {
+      throw new Error("uix-forge: forge delayed_hass must be a boolean");
+    }
     this._mold = new UIX_FORGE_MOLD_CLASSES[resolvedForge.mold](this);
     this._macros = resolvedForge.macros;
     this._billets = resolvedForge.billets;
     this._showError = resolvedForge.show_error || false;
-    this._delayedHass = resolvedForge.delayed_hass || false;
+    this._delayedHass = resolvedForge.delayed_hass === true;
 
     this._templateNestingOpen = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(0, 2) : UIX_FORGE_NESTED_TEMPLATE_OPEN;
     this._templateNestingClose = resolvedForge.template_nesting ? resolvedForge.template_nesting.slice(2) : UIX_FORGE_NESTED_TEMPLATE_CLOSE;
@@ -672,12 +809,7 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
-      if (this._mold.isCard() && !elementConfig.type) {
-        elementConfig.type = "custom:uix-forge-blank-card";
-        if (this._mold.isCardBlankClear()) {
-          elementConfig.clear = true;
-        }
-      }
+      this._applyBlankElementType(elementConfig, forgeConfig);
     }
 
     if (this._layeredMode) {
@@ -809,8 +941,7 @@ export class UixForge extends LitElement {
       const resolved = this._resolveFoundry({ ...this.config });
       if (!resolved) return;
       this._resolvedUix = resolved.forge?.uix;
-      this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
-      this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
+      this._setResolvedLayeredState(resolved);
       const forgeConfig = { ...resolved.forge };
       delete forgeConfig.type;
       delete forgeConfig.mold;
@@ -833,12 +964,7 @@ export class UixForge extends LitElement {
         if (this.config?.entities !== undefined) {
           elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
         }
-        if (this._mold.isCard() && !elementConfig.type) {
-          elementConfig.type = "custom:uix-forge-blank-card";
-          if (this._mold.isCardBlankClear()) {
-            elementConfig.clear = true;
-          }
-        }
+        this._applyBlankElementType(elementConfig, forgeConfig);
       }
       this.forgeConfig = forgeConfig;
       if (this._layeredMode) {
@@ -894,7 +1020,7 @@ export class UixForge extends LitElement {
       if (!resolved) return;
       this._resolvedUix = resolved.forge?.uix;
       try {
-        this._applyResolvedConfig(resolved.forge, resolved.element, resolved.elementBase, resolved.hasElementBase);
+        this._applyResolvedConfig(resolved);
       } catch (err) {
         console.error("UIX Forge: Error applying foundry config:", err);
       }
@@ -1067,8 +1193,7 @@ export class UixForge extends LitElement {
         return;
       }
       this._resolvedUix = resolved.forge?.uix;
-      this._layeredElementOverlaySource = _cloneConfigValue(resolved.element);
-      this._layeredMode = this._validateLayeredConfig(resolved.elementBase, resolved.hasElementBase);
+      this._setResolvedLayeredState(resolved);
     } catch (err) {
       this.cancelTemplateRefresh();
       this._refreshForgeTemplatesInFlight = false;
@@ -1105,12 +1230,7 @@ export class UixForge extends LitElement {
       if (this.config?.entities !== undefined) {
         elementConfig.entities = [...this.config.entities, ...(elementConfig.entities ?? [])];
       }
-      if (this._mold.isCard() && !elementConfig.type) {
-        elementConfig.type = "custom:uix-forge-blank-card";
-        if (this._mold.isCardBlankClear()) {
-          elementConfig.clear = true;
-        }
-      }
+      this._applyBlankElementType(elementConfig, forgeConfig);
     }
     if (this._layeredMode) {
       this._layeredElementBaseConfig = _cloneConfigValue(resolved.elementBase);
@@ -1179,7 +1299,7 @@ export class UixForge extends LitElement {
       this.refreshForge(["grid_options"]);
     }
     if (this._mold.isBadge()) {
-      this.forgedElement.config = this.forgedElementConfig;
+      this.forgedElement.config = this._builtInBlankBadgeConfig();
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       (this.forgedElement as HuiBadge).load();
       this._delayedHass && (this.forgedElement.hass = this.hass);
@@ -1252,6 +1372,9 @@ export class UixForge extends LitElement {
   private forgeElement() {
     if (this.forgedElement) return;
     if (!this.templatesReady) return;
+    // A Card or Badge Forge with no element type automatically uses its
+    // built-in blank element. Its injected type belongs only to the forged
+    // runtime configuration and is never written to dashboard configuration.
     if (this._mold.isCard()) {
       this.forgedElement = document.createElement("hui-card") as LovelaceElement;
       this.forgedElement.config = this.forgedElementConfig;
@@ -1264,7 +1387,7 @@ export class UixForge extends LitElement {
     }
     if (this._mold.isBadge()) {
       this.forgedElement = document.createElement("hui-badge") as LovelaceElement;
-      this.forgedElement.config = this.forgedElementConfig;
+      this.forgedElement.config = this._builtInBlankBadgeConfig();
       !this._delayedHass && (this.forgedElement.hass = this.hass);
       this.forgedElement.preview = this._mold.isPreview();
       (this.forgedElement as HuiBadge).load();
@@ -1459,16 +1582,21 @@ window.addEventListener("uix-bootstrap", async (ev: Event) => {
   ev.stopPropagation();
   if (!customElements.get(UIX_FORGE_TYPE)) {
     customElements.define(UIX_FORGE_TYPE, UixForge);
-    (window as any).customCards = (window as any).customCards || [];
-    (window as any).customCards.push({
+  }
+
+  const customCards = ((window as any).customCards = (window as any).customCards || []);
+  if (!customCards.some((card) => card.type === UIX_FORGE_TYPE)) {
+    customCards.push({
       type: "uix-forge",
       name: "UIX Forge",
       preview: true,
       description: "UIX Forge allows you to forge templates into Home Assistant lovelace element configurations. Add Sparks to to get even more customisation",
     });
-    (window as any).customBadges = (window as any).customBadges || [];
-    (window as any).customBadges.push({
-      type: "uix-forge",
+  }
+  const customBadges = ((window as any).customBadges = (window as any).customBadges || []);
+  if (!customBadges.some((badge) => badge.type === UIX_FORGE_TYPE)) {
+    customBadges.push({
+      type: UIX_FORGE_TYPE,
       name: "UIX Forge",
       preview: true,
       description: "UIX Forge allows you to forge templates into Home Assistant lovelace element configurations. Add Sparks to to get even more customisation",
