@@ -110,7 +110,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
 
   private _updateElement(badgeEl: any) {
     const hass = this.controller.forge.hass;
-    badgeEl.hass = hass;
 
     if (this.entity && hass?.states?.[this.entity]) {
       badgeEl.stateObj = hass.states[this.entity];
