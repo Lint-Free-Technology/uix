@@ -178,7 +178,7 @@ const bindUix = async (el) => {
   // Find uix elements created later, increased interval
   if (el.uix_retries < 5) {
     el.uix_retries++;
-    window.setTimeout(() => bindUix(el), 250 * el.uix_retries);
+    window.setTimeout(bindUix, 250 * el.uix_retries, el);
   }
 };
 
