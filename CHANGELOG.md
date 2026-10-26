@@ -1,3 +1,10 @@
+## [9.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.2...v9.0.0-beta.3) (2026-10-26)
+
+
+### 🐞 Bug Fixes
+
+* **beta:** Update fix for Resource leak in icon styling patch. ([#681](https://github.com/Lint-Free-Technology/uix/issues/681)) ([0bc1c7e](https://github.com/Lint-Free-Technology/uix/commit/0bc1c7e71cf8bb1fa8b75748ada063f99b52aac0)), closes [#673](https://github.com/Lint-Free-Technology/uix/issues/673)
+
 ## [9.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.1...v9.0.0-beta.2) (2026-10-21)
 
 
