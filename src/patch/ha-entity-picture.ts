@@ -192,8 +192,10 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       }
       break;
     case "hui-entity-badge":
+      const config = el.config ?? el._config;
+      const imageOverride = config?.show_icon && config?.show_entity_picture ? imageUrl : null;
       const haBadge = el.shadowRoot?.querySelector("ha-badge");
-      if (haBadge && imageUrl) {
+      if (haBadge && imageOverride) {
         let imageEL = el.shadowRoot?.querySelector("img.uix-image");
         if (!imageEL) {
           imageEL = document.createElement("img");
@@ -202,7 +204,7 @@ const applyImage = (el: any, imageUrl: string | null): void => {
           imageEL.setAttribute("aria-hidden", "");
           haBadge.append(imageEL);
         }
-        imageEL.src = imageUrl;
+        imageEL.src = imageOverride;
 
         let style = el.shadowRoot?.querySelector("#uix-image");
         if (!style) {
