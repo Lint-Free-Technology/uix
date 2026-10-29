@@ -1,3 +1,12 @@
+## [9.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.4...v9.0.0-beta.5) (2026-10-29)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater.**
+
+### ⚙️ Miscellaneous
+
+* **beta:** Update UIX Forge visual editor conversion text. ([a0d8191](https://github.com/Lint-Free-Technology/uix/commit/a0d819164804faf11aa3c168a676cb29a16ba004))
+
 ## [9.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.3...v9.0.0-beta.4) (2026-10-29)
 
 
