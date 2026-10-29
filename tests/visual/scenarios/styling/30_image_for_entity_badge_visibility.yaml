@@ -1,0 +1,39 @@
+id: image_for_entity_badge_visibility
+description: "Entity badge image overrides respect Home Assistant visibility settings"
+view_path: image-for-entity-badge-visibility
+
+theme: uix-image-for-entity-theme
+
+dashboard:
+  views:
+    - type: sections
+      title: Entity badge image visibility.
+      badges:
+        - type: entity
+          entity: person.james_bond_007
+          show_icon: false
+          show_entity_picture: true
+        - type: entity
+          entity: person.james_bond_007
+          show_icon: true
+          show_entity_picture: false
+        - type: entity
+          entity: person.james_bond_007
+          show_icon: true
+          show_entity_picture: true
+
+assertions:
+  - type: element_absent
+    root: hui-badge:nth-of-type(1) hui-entity-badge
+    selector: img.uix-image
+  - type: element_absent
+    root: hui-badge:nth-of-type(2) hui-entity-badge
+    selector: img.uix-image
+  - type: element_present
+    root: hui-badge:nth-of-type(3) hui-entity-badge
+    selector: img.uix-image
+  - type: object_property_text_ends_with
+    root: hui-badge:nth-of-type(3) hui-entity-badge
+    selector: img.uix-image
+    property: src
+    expected: "question_mark_cropped.jpg"
