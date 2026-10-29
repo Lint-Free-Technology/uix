@@ -585,8 +585,9 @@ matching Home Assistant's normal template form behavior.
 The visual editor does not silently reinterpret non-layered Forge
 configurations.
 When it receives a direct, local non-layered Forge using `card` or `badge`, it
-presents a **Convert to layered editor** action and keeps YAML editing
-available until the user chooses it.
+presents only a **Convert to visual editor** action and keeps YAML editing
+available until the user chooses it. It does not also show the visual-editor
+unavailable panel because the configuration is eligible for conversion.
 
 For a convertible configuration, conversion is intentionally small and
 source-preserving. Move only the inner card `type` from `element` to
@@ -629,14 +630,12 @@ move a value to the Native layer by recreating it there with the card editor,
 then removing or disabling the overriding Forge value.
 
 Layered templates deliberately see `config.element` as the overlay and
-`config.element_base` as the base. Consequently, conversion changes the
-meaning of a Forge template that inspects `config.element.type` or treats
-`config.element` as the entire non-layered element source. Before committing
-the conversion, the editor must state this transition and show the affected
-source. It may identify direct `config.element.type` references as a helpful
-warning, but it must not rewrite templates automatically: indirect references
-and arbitrary Jinja make that unsafe. Users must change an affected reference
-to `config.element_base.type` or remain on non-layered YAML.
+`config.element_base` as the base. Conversion therefore removes the wrapped
+type from `config.element`. If the direct local source contains the literal
+`config.element.type`, the editor warns that it must become
+`config.element_base.type`. It does not show a generic template warning or
+rewrite templates automatically: indirect references and arbitrary Jinja make
+that unsafe. Users with an indirect reference can update it in YAML if needed.
 
 Conversion is available only when all of the following are true:
 
@@ -718,9 +717,9 @@ outside the UI scope.
 - Existing non-layered Forge YAML remains valid and unchanged unless the user
   explicitly converts it.
 - Migration moves only `element.type`; all other source values retain their
-  Forge ownership and source text. The editor clearly warns that templates
-  which need the card type or the complete pre-conversion `config.element` must be
-  reviewed for the layered template context.
+  Forge ownership and source text. The editor warns only when it detects a
+  direct `config.element.type` reference, which must use
+  `config.element_base.type` after conversion.
 - A Tile card, a custom card such as Bubble Card, and a badge can use their
   own context-appropriate editor inside a layered Forge.
 - Copying an ordinary card, creating UIX Forge, and pasting into its wrapped
