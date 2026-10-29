@@ -2102,10 +2102,10 @@ export class UixForgeEditor extends LitElement {
   private _renderConversion() {
     if (!this._isConvertible()) return nothing;
     const typeReferences = JSON.stringify(this._config?.element).includes("config.element.type");
-    return html`<ha-alert class="conversion-alert" alert-type="warning" title="Convert to layered editor">
+    return html`<ha-alert class="conversion-alert" alert-type="warning" title="Convert to visual editor">
       <p>Conversion moves only <code>element.type</code> to Native <code>element_base.type</code>. Every other value remains a Forge-owned template value.</p>
-      <p>${typeReferences ? "This source directly references config.element.type. In layered mode review it and use config.element_base.type when it needs the wrapped type." : "Review templates that depend on the complete pre-conversion config.element; the editor never rewrites templates automatically."}</p>
-      <ha-button @click=${this._convert}>Convert to layered editor</ha-button></ha-alert>`;
+      ${typeReferences ? html`<p>This source directly references <code>config.element.type</code>. After conversion, use <code>config.element_base.type</code> for the wrapped type.</p>` : nothing}
+      <ha-button @click=${this._convert}>Convert to visual editor</ha-button></ha-alert>`;
   }
 
   private _renderForgeGeneral() {
@@ -2690,7 +2690,10 @@ export class UixForgeEditor extends LitElement {
 
   protected render() {
     if (!this._config) return nothing;
-    if (!this._isDirectVisualConfig()) return html`${this._renderConversion()}<div class="section"><h3>Forge visual editor unavailable</h3><p>Visual editing supports Card and Badge Forges with a selected Native element or no element type. Use Home Assistant's YAML editor for rows, other molds, dynamic types, Foundry Native bases, or invalid layered source.</p></div>`;
+    if (!this._isDirectVisualConfig()) {
+      if (this._isConvertible()) return this._renderConversion();
+      return html`<div class="section"><h3>Forge visual editor unavailable</h3><p>Visual editing supports Card and Badge Forges with a selected Native element or no element type. Use Home Assistant's YAML editor for rows, other molds, dynamic types, Foundry Native bases, or invalid layered source.</p></div>`;
+    }
     return html`
       <ha-tab-group @wa-tab-show=${this._handleTabChanged}>
         <ha-tab-group-tab slot="nav" panel="native" .active=${live(this._tab === "native")}>Native</ha-tab-group-tab>

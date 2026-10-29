@@ -83,7 +83,7 @@ A string template uses Home Assistant's template selector and code editor, so en
 
 Enable/Disable becomes available after a Native element is selected; this prevents the visual editor from creating disabled paths before there is a Native source to suppress. Editing another template preserves valid disabled paths inherited from a selected Foundry or global configuration.
 
-Existing direct Card and Badge Forges can be converted for visual editing. Conversion moves only `element.type` to `element_base.type`; every other source value remains available for Forge to render.
+Existing direct Card and Badge Forges can use **Convert to visual editor**. That migration moves only `element.type` to `element_base.type`; every other source value remains available for Forge to render.
 
 When the editor saves, it keeps the selected card or badge configuration in `element_base` and the values you add on the Element tab in `element`. You only need to care about that layout when moving to YAML, debugging a configuration, or reusing it in a Foundry.
 
