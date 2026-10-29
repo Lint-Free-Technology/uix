@@ -191,7 +191,6 @@ async function _resolveMediaSourceUrl(hass: any, url: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 interface HaCameraStreamElement extends HTMLElement {
-  hass: unknown;
   stateObj: unknown;
   muted: boolean;
   controls: boolean;
@@ -478,16 +477,13 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
       // Container already exists — update camera state, transform, and opacity.
       this._containerEl.style.opacity = this._opacity !== "" ? this._opacity : "";
       if (bgType === "camera" && this._streamEl) {
-        // Only re-assign hass/stateObj when the hass object itself changed
-        // (i.e. a genuine HA state update).  Setting hass on ha-camera-stream
-        // triggers stream re-negotiation; doing it on every config change
-        // (e.g. camera_zoom edit) causes unnecessary disconnects.
-        // When changedProperties is absent (connectedCallback) we always set.
+        // Only update stateObj when the hass object itself changed (i.e. a
+        // genuine HA state update). When changedProperties is absent
+        // (connectedCallback), always update it.
         const hassChanged = !changedProperties || changedProperties.has("hass");
         if (hassChanged) {
           const hass = this.controller.forge.hass;
           if (hass) {
-            this._streamEl.hass = hass;
             this._streamEl.stateObj = hass.states[this._cameraEntity];
           }
         }
@@ -648,13 +644,10 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._activeBgKey = bgKey;
 
     if (bgType === "camera" && this._streamEl) {
-      // Set hass and stateObj AFTER the container is in the DOM.  This matches
-      // the pattern in view-background.ts and ensures ha-camera-stream is
-      // connected when stream negotiation begins, which prevents the loading
-      // spinner from getting stuck.
+      // Set stateObj after the container is in the DOM so ha-camera-stream can
+      // receive its Home Assistant contexts before it requests capabilities.
       const hass = this.controller.forge.hass;
       if (hass) {
-        this._streamEl.hass = hass;
         this._streamEl.stateObj = hass.states[this._cameraEntity];
       }
       const spinner = this._addSpinner(container);
@@ -749,10 +742,9 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     container.style.setProperty("align-items", alignItems);
     container.style.setProperty("justify-content", justifyContent);
 
-    // hass and stateObj are set by _buildContainer AFTER the container is
-    // inserted into the DOM — setting stateObj before hass triggers
-    // ha-camera-stream.willUpdate → _getCapabilities which reads this.hass
-    // and throws if it is not yet assigned.
+    // stateObj is set by _buildContainer after the container is inserted into
+    // the DOM so ha-camera-stream can receive its Home Assistant contexts
+    // before requesting capabilities.
     container.appendChild(streamEl);
     this._streamEl = streamEl;
   }
