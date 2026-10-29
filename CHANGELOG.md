@@ -1,3 +1,17 @@
+## [9.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.3...v9.0.0-beta.4) (2026-10-29)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### 🐞 Bug Fixes
+
+* Update --uix-image... image override for entity-badge to align with Home Assistant  2026.11.0 ([#683](https://github.com/Lint-Free-Technology/uix/issues/683)) ([da3da26](https://github.com/Lint-Free-Technology/uix/commit/da3da26f92c36ad7d9eb3ddcf930b8a6337a4763))
+* use frontend contexts for Forge visuals ([957d577](https://github.com/Lint-Free-Technology/uix/commit/957d5778233ea6460c7e5e460cbd2870e2f5e88d))
+
+### ⚙️ Miscellaneous
+
+* Update home-assistant/webawesome compatibility to 3.14.0-ha.0 ([e990dba](https://github.com/Lint-Free-Technology/uix/commit/e990dbaf9175ef43ad910416cb030005dfaa2484))
+
 ## [9.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.2...v9.0.0-beta.3) (2026-10-26)
 
 
