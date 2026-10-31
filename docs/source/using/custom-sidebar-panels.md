@@ -3,6 +3,9 @@ description: Create UIX sidebar links that redirect to any Home Assistant page.
 ---
 # Custom sidebar panels
 
+!!! info
+    Custom sidebar panel redirect’s available in 9.0.0-beta.6
+
 UIX can add custom entries to the Home Assistant sidebar that redirect directly to another Home Assistant page. This is useful for frequently used pages that are normally nested under Settings or another panel.
 
 Open **Settings** > **Devices & services** > **UI eXtension** > **Configure**, then select **Manage custom sidebar panels**. Add a panel by choosing its icon, entering its title, and selecting its target with the navigation selector.
