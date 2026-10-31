@@ -39,6 +39,10 @@ export class UIXCustomSidebarPanel extends HTMLElement {
   }
 }
 
+if (!customElements.get(CUSTOM_SIDEBAR_PANEL_COMPONENT)) {
+  customElements.define(CUSTOM_SIDEBAR_PANEL_COMPONENT, UIXCustomSidebarPanel);
+}
+
 (async () => {
   // See explanation in uix.ts.
   while (customElements.get("home-assistant") === undefined) {
