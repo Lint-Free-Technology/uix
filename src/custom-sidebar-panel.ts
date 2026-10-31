@@ -29,7 +29,7 @@ export class UIXCustomSidebarPanel extends HTMLElement {
       return;
     }
 
-    history.replaceState(null, "", target);
+    history.replaceState(history.state, "", target);
     const event = new Event("location-changed", {
       bubbles: true,
       composed: true,
@@ -37,10 +37,6 @@ export class UIXCustomSidebarPanel extends HTMLElement {
     event.detail = { replace: true };
     this.dispatchEvent(event);
   }
-}
-
-if (!customElements.get(CUSTOM_SIDEBAR_PANEL_COMPONENT)) {
-  customElements.define(CUSTOM_SIDEBAR_PANEL_COMPONENT, UIXCustomSidebarPanel);
 }
 
 (async () => {
