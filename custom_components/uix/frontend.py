@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from .const import (
     DATA_FRONTEND_ASSET_SNAPSHOT,
     DOMAIN,
+    FRONTEND_SCRIPT_CUSTOM_SIDEBAR_PANEL,
     FRONTEND_SCRIPT_FRAME,
     FRONTEND_SCRIPT_URL,
 )
@@ -26,6 +27,7 @@ class FrontendAssetSnapshot:
     version: str
     script_path: str
     frame_path: str
+    custom_sidebar_panel_path: str
 
     def cleanup(self) -> None:
         """Remove the temporary asset snapshot."""
@@ -42,9 +44,14 @@ def _create_frontend_asset_snapshot(hass: HomeAssistant) -> FrontendAssetSnapsho
         version = get_version(hass)
         script_path = snapshot_directory / FRONTEND_SCRIPT_URL
         frame_path = snapshot_directory / FRONTEND_SCRIPT_FRAME
+        custom_sidebar_panel_path = snapshot_directory / FRONTEND_SCRIPT_CUSTOM_SIDEBAR_PANEL
         for source_path, destination_path in (
             (source_directory / FRONTEND_SCRIPT_URL, script_path),
             (source_directory / FRONTEND_SCRIPT_FRAME, frame_path),
+            (
+                source_directory / FRONTEND_SCRIPT_CUSTOM_SIDEBAR_PANEL,
+                custom_sidebar_panel_path,
+            ),
         ):
             copyfile(source_path, destination_path)
 
@@ -65,6 +72,7 @@ def _create_frontend_asset_snapshot(hass: HomeAssistant) -> FrontendAssetSnapsho
         version=version,
         script_path=str(script_path),
         frame_path=str(frame_path),
+        custom_sidebar_panel_path=str(custom_sidebar_panel_path),
     )
 
 
@@ -100,7 +108,12 @@ async def async_register_static_path(hass: HomeAssistant) -> None:
                     f"/{DOMAIN}/{FRONTEND_SCRIPT_FRAME}",
                     snapshot.frame_path,
                     True,
-                ), 
+                ),
+                StaticPathConfig(
+                    f"/{DOMAIN}/{FRONTEND_SCRIPT_CUSTOM_SIDEBAR_PANEL}",
+                    snapshot.custom_sidebar_panel_path,
+                    True,
+                ),
             ]
         )   
     except RuntimeError:

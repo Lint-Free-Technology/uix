@@ -20,6 +20,7 @@
                     "foundry_file_menu": "Manage foundry files",
                     "broker_settings": "Configure Broker",
                     "broker_file_menu": "Manage Broker files",
+                    "custom_sidebar_panel_menu": "Manage custom sidebar panels",
                     "performance_settings": "Performance settings",
                     "experimental_settings": "Experimental settings"
                 }
@@ -40,6 +41,15 @@
                     "register_foundry_file": "Register a foundry file",
                     "deregister_foundry_file": "Deregister a foundry file",
                     "reload_foundry_files": "Reload foundry files"
+                }
+            },
+            "custom_sidebar_panel_menu": {
+                "title": "Custom Sidebar Panels",
+                "description": "Create sidebar links that redirect to any Home Assistant page.\n\n**Configured panels:**\n{panels_list}",
+                "menu_options": {
+                    "add_custom_sidebar_panel": "Add a custom sidebar panel",
+                    "edit_custom_sidebar_panel": "Edit a custom sidebar panel",
+                    "delete_custom_sidebar_panel": "Delete a custom sidebar panel"
                 }
             },
             "performance_settings": {
@@ -145,16 +155,51 @@
                 "data": {
                     "file_path": "File to deregister"
                 }
+            },
+            "add_custom_sidebar_panel": {
+                "title": "Add a Custom Sidebar Panel",
+                "description": "Choose the icon and title to display in the sidebar, then choose the page the panel should open.",
+                "data": {
+                    "icon": "Icon",
+                    "require_admin": "Admin required",
+                    "title": "Title",
+                    "target": "Target"
+                }
+            },
+            "edit_custom_sidebar_panel": {
+                "title": "Edit a Custom Sidebar Panel",
+                "description": "Select the custom sidebar panel to edit.",
+                "data": {
+                    "panel_id": "Custom sidebar panel"
+                }
+            },
+            "edit_custom_sidebar_panel_config": {
+                "title": "Edit Custom Sidebar Panel \"{name}\"",
+                "description": "Update the icon, title, or target page for this custom sidebar panel.",
+                "data": {
+                    "icon": "Icon",
+                    "require_admin": "Admin required",
+                    "title": "Title",
+                    "target": "Target"
+                }
+            },
+            "delete_custom_sidebar_panel": {
+                "title": "Delete a Custom Sidebar Panel",
+                "data": {
+                    "panel_id": "Custom sidebar panel"
+                }
             }
         },
         "abort": {
             "no_foundries": "No UI foundries are configured yet. Add one first.",
             "no_foundry_files": "No foundry files are registered yet. Register one first.",
+            "no_custom_sidebar_panels": "No custom sidebar panels are configured yet. Add one first.",
             "no_broker_files": "No Broker files are registered yet. Register one first."
         },
         "error": {
             "invalid_config": "The configuration must be a YAML mapping.",
             "invalid_broker_config": "The configuration must be an object containing a 'uix_broker' list.",
+            "invalid_custom_sidebar_panel": "Enter an icon and title, and select a Home Assistant page as the target.",
             "file_already_added": "This file path is already registered.",
             "file_not_found": "The file was not found. Check the path and try again.",
             "file_parse_error": "The file could not be parsed as YAML. Check the file for syntax errors.",

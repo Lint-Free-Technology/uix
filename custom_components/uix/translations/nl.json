@@ -20,6 +20,7 @@
                     "foundry_file_menu": "Foundry‑bestanden beheren",
                     "broker_settings": "Broker configureren",
                     "broker_file_menu": "Broker-bestanden beheren",
+                    "custom_sidebar_panel_menu": "Aangepaste zijbalkpanelen beheren",
                     "performance_settings": "Prestatie‑instellingen",
                     "experimental_settings": "Experimentele instellingen"
                 }
@@ -40,6 +41,15 @@
                     "register_foundry_file": "Foundry‑bestand registreren",
                     "deregister_foundry_file": "Foundry‑bestand deregistreren",
                     "reload_foundry_files": "Foundry‑bestanden herladen"
+                }
+            },
+            "custom_sidebar_panel_menu": {
+                "title": "Aangepaste zijbalkpanelen",
+                "description": "Maak zijbalkkoppelingen die doorsturen naar elke Home Assistant-pagina.\n\n**Geconfigureerde panelen:**\n{panels_list}",
+                "menu_options": {
+                    "add_custom_sidebar_panel": "Aangepast zijbalkpaneel toevoegen",
+                    "edit_custom_sidebar_panel": "Aangepast zijbalkpaneel bewerken",
+                    "delete_custom_sidebar_panel": "Aangepast zijbalkpaneel verwijderen"
                 }
             },
             "performance_settings": {
@@ -145,11 +155,45 @@
                 "data": {
                     "file_path": "Bestand om te deregistreren"
                 }
+            },
+            "add_custom_sidebar_panel": {
+                "title": "Aangepast zijbalkpaneel toevoegen",
+                "description": "Kies het icoon en de titel voor de zijbalk en selecteer vervolgens de pagina die het paneel moet openen.",
+                "data": {
+                    "icon": "Icoon",
+                    "require_admin": "Beheerder vereist",
+                    "title": "Titel",
+                    "target": "Doel"
+                }
+            },
+            "edit_custom_sidebar_panel": {
+                "title": "Aangepast zijbalkpaneel bewerken",
+                "description": "Selecteer het aangepaste zijbalkpaneel dat je wilt bewerken.",
+                "data": {
+                    "panel_id": "Aangepast zijbalkpaneel"
+                }
+            },
+            "edit_custom_sidebar_panel_config": {
+                "title": "Aangepast zijbalkpaneel \"{name}\" bewerken",
+                "description": "Werk het icoon, de titel, de doelpagina of de beheerdersbeperking voor dit aangepaste zijbalkpaneel bij.",
+                "data": {
+                    "icon": "Icoon",
+                    "require_admin": "Beheerder vereist",
+                    "title": "Titel",
+                    "target": "Doel"
+                }
+            },
+            "delete_custom_sidebar_panel": {
+                "title": "Aangepast zijbalkpaneel verwijderen",
+                "data": {
+                    "panel_id": "Aangepast zijbalkpaneel"
+                }
             }
         },
         "abort": {
             "no_foundries": "Er zijn nog geen UI‑foundries geconfigureerd. Voeg er eerst één toe.",
             "no_foundry_files": "Er zijn nog geen foundry‑bestanden geregistreerd. Registreer er eerst één.",
+            "no_custom_sidebar_panels": "Er zijn nog geen aangepaste zijbalkpanelen geconfigureerd. Voeg er eerst één toe.",
             "no_broker_files": "Er zijn nog geen Broker-bestanden geregistreerd. Registreer er eerst één."
         },
         "error": {
@@ -161,6 +205,7 @@
             "file_missing_key": "Het bestand moet een top‑level 'uix_foundries'‑key hebben.",
             "file_invalid_foundries": "De 'uix_foundries'‑key moet een YAML‑mapping zijn van foundry‑namen naar configuraties.",
             "invalid_broker_config": "De configuratie moet een object met een lijst 'uix_broker' bevatten.",
+            "invalid_custom_sidebar_panel": "Voer een icoon en titel in en selecteer een Home Assistant-pagina als doel.",
             "broker_file_already_added": "Dit Broker-bestandspad is al geregistreerd.",
             "broker_file_not_found": "Het Broker-bestand is niet gevonden. Controleer het pad en probeer opnieuw.",
             "broker_file_parse_error": "Het Broker-bestand kon niet als YAML worden geparseerd. Controleer het bestand op syntaxfouten.",

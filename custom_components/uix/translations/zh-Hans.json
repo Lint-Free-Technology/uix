@@ -20,6 +20,7 @@
                     "foundry_file_menu": "管理 Foundry 文件",
                     "broker_settings": "配置 Broker",
                     "broker_file_menu": "管理 Broker 文件",
+                    "custom_sidebar_panel_menu": "管理自定义侧边栏面板",
                     "performance_settings": "性能设置",
                     "experimental_settings": "实验性设置"
                 }
@@ -40,6 +41,15 @@
                     "register_foundry_file": "注册 Foundry 文件",
                     "deregister_foundry_file": "注销 Foundry 文件",
                     "reload_foundry_files": "重新加载 Foundry 文件"
+                }
+            },
+            "custom_sidebar_panel_menu": {
+                "title": "自定义侧边栏面板",
+                "description": "创建会重定向到任意 Home Assistant 页面的侧边栏链接。\n\n**已配置的面板：**\n{panels_list}",
+                "menu_options": {
+                    "add_custom_sidebar_panel": "添加自定义侧边栏面板",
+                    "edit_custom_sidebar_panel": "编辑自定义侧边栏面板",
+                    "delete_custom_sidebar_panel": "删除自定义侧边栏面板"
                 }
             },
             "performance_settings": {
@@ -145,11 +155,45 @@
                 "data": {
                     "file_path": "要注销的文件"
                 }
+            },
+            "add_custom_sidebar_panel": {
+                "title": "添加自定义侧边栏面板",
+                "description": "选择要在侧边栏显示的图标和标题，然后选择此面板要打开的页面。",
+                "data": {
+                    "icon": "图标",
+                    "require_admin": "需要管理员权限",
+                    "title": "标题",
+                    "target": "目标"
+                }
+            },
+            "edit_custom_sidebar_panel": {
+                "title": "编辑自定义侧边栏面板",
+                "description": "选择要编辑的自定义侧边栏面板。",
+                "data": {
+                    "panel_id": "自定义侧边栏面板"
+                }
+            },
+            "edit_custom_sidebar_panel_config": {
+                "title": "编辑自定义侧边栏面板 \"{name}\"",
+                "description": "更新此自定义侧边栏面板的图标、标题、目标页面或管理员限制。",
+                "data": {
+                    "icon": "图标",
+                    "require_admin": "需要管理员权限",
+                    "title": "标题",
+                    "target": "目标"
+                }
+            },
+            "delete_custom_sidebar_panel": {
+                "title": "删除自定义侧边栏面板",
+                "data": {
+                    "panel_id": "自定义侧边栏面板"
+                }
             }
         },
         "abort": {
             "no_foundries": "尚未配置任何 UI Foundry。请先添加一个。",
             "no_foundry_files": "尚未注册任何 Foundry 文件。请先注册一个。",
+            "no_custom_sidebar_panels": "尚未配置任何自定义侧边栏面板。请先添加一个。",
             "no_broker_files": "尚未注册任何 Broker 文件。请先注册一个。"
         },
         "error": {
@@ -161,6 +205,7 @@
             "file_missing_key": "文件必须包含顶级键 'uix_foundries'。",
             "file_invalid_foundries": "'uix_foundries' 键的内容必须是 Foundry 名称到配置的 YAML 映射。",
             "invalid_broker_config": "配置必须是包含 'uix_broker' 列表的对象。",
+            "invalid_custom_sidebar_panel": "请输入图标和标题，并选择一个 Home Assistant 页面作为目标。",
             "broker_file_already_added": "该 Broker 文件路径已注册。",
             "broker_file_not_found": "找不到 Broker 文件。请检查路径并重试。",
             "broker_file_parse_error": "无法将 Broker 文件解析为 YAML。请检查文件的语法错误。",
