@@ -183,7 +183,9 @@ jobs:
             custom_components/uix/uix.js \
             custom_components/uix/uix.js.gz \
             custom_components/uix/uixFrame.js \
-            custom_components/uix/uixFrame.js.gz
+            custom_components/uix/uixFrame.js.gz \
+            custom_components/uix/uixCustomSidebarPanel.js \
+            custom_components/uix/uixCustomSidebarPanel.js.gz
           git diff --cached --quiet && {
             echo 'The release did not change any tracked files.' >&2
             exit 1
