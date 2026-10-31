@@ -1,3 +1,12 @@
+## [9.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.5...v9.0.0-beta.6) (2026-10-31)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* add custom sidebar panel item redirects ([#688](https://github.com/Lint-Free-Technology/uix/issues/688)) ([964f440](https://github.com/Lint-Free-Technology/uix/commit/964f4402b6f263a5deac53327b825a85cb3e3e72))
+
 ## [9.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.4...v9.0.0-beta.5) (2026-10-29)
 
 
