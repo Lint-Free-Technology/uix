@@ -2,12 +2,14 @@ export const CUSTOM_SIDEBAR_PANEL_COMPONENT = "uix-custom-sidebar-panel";
 
 interface PanelInfo {
   config?: {
+    open_in_new_tab?: boolean;
     target?: string;
   };
 }
 
 export class UIXCustomSidebarPanel extends HTMLElement {
   private _panel?: PanelInfo;
+  private _openedTarget?: string;
 
   connectedCallback(): void {
     this._navigate();
@@ -20,12 +22,35 @@ export class UIXCustomSidebarPanel extends HTMLElement {
 
   private _navigate(): void {
     const target = this._panel?.config?.target;
-    if (
-      !target ||
-      !target.startsWith("/") ||
-      target.startsWith("//") ||
-      !this.isConnected
-    ) {
+    if (!target || !this.isConnected) {
+      return;
+    }
+
+    const isInternalTarget = target.startsWith("/") && !target.startsWith("//");
+    if (!isInternalTarget) {
+      try {
+        const url = new URL(target);
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
+
+    if (this._panel?.config?.open_in_new_tab) {
+      if (this._openedTarget === target) {
+        return;
+      }
+
+      this._openedTarget = target;
+      window.open(target, "_blank", "noopener,noreferrer");
+      history.back();
+      return;
+    }
+
+    if (!isInternalTarget) {
+      window.location.replace(target);
       return;
     }
 

@@ -45,7 +45,7 @@
             },
             "custom_sidebar_panel_menu": {
                 "title": "Aangepaste zijbalkpanelen",
-                "description": "Maak zijbalkkoppelingen die doorsturen naar elke Home Assistant-pagina.\n\n**Geconfigureerde panelen:**\n{panels_list}",
+                "description": "Maak zijbalkkoppelingen naar Home Assistant-pagina's of websites.\n\n**Geconfigureerde panelen:**\n{panels_list}",
                 "menu_options": {
                     "add_custom_sidebar_panel": "Aangepast zijbalkpaneel toevoegen",
                     "edit_custom_sidebar_panel": "Aangepast zijbalkpaneel bewerken",
@@ -158,9 +158,10 @@
             },
             "add_custom_sidebar_panel": {
                 "title": "Aangepast zijbalkpaneel toevoegen",
-                "description": "Kies het icoon en de titel voor de zijbalk en selecteer vervolgens de pagina die het paneel moet openen.",
+                "description": "Kies het icoon en de titel voor de zijbalk en voer vervolgens een Home Assistant-pad of website-URL in.",
                 "data": {
                     "icon": "Icoon",
+                    "open_in_new_tab": "Openen in nieuw tabblad",
                     "require_admin": "Beheerder vereist",
                     "title": "Titel",
                     "target": "Doel"
@@ -175,9 +176,10 @@
             },
             "edit_custom_sidebar_panel_config": {
                 "title": "Aangepast zijbalkpaneel \"{name}\" bewerken",
-                "description": "Werk het icoon, de titel, de doelpagina of de beheerdersbeperking voor dit aangepaste zijbalkpaneel bij.",
+                "description": "Werk dit aangepaste zijbalkpaneel bij.",
                 "data": {
                     "icon": "Icoon",
+                    "open_in_new_tab": "Openen in nieuw tabblad",
                     "require_admin": "Beheerder vereist",
                     "title": "Titel",
                     "target": "Doel"
@@ -205,7 +207,7 @@
             "file_missing_key": "Het bestand moet een top‑level 'uix_foundries'‑key hebben.",
             "file_invalid_foundries": "De 'uix_foundries'‑key moet een YAML‑mapping zijn van foundry‑namen naar configuraties.",
             "invalid_broker_config": "De configuratie moet een object met een lijst 'uix_broker' bevatten.",
-            "invalid_custom_sidebar_panel": "Voer een icoon en titel in en selecteer een Home Assistant-pagina als doel.",
+            "invalid_custom_sidebar_panel": "Voer een icoon en titel in en gebruik een Home Assistant-pad of absolute http- of https-URL als doel.",
             "broker_file_already_added": "Dit Broker-bestandspad is al geregistreerd.",
             "broker_file_not_found": "Het Broker-bestand is niet gevonden. Controleer het pad en probeer opnieuw.",
             "broker_file_parse_error": "Het Broker-bestand kon niet als YAML worden geparseerd. Controleer het bestand op syntaxfouten.",

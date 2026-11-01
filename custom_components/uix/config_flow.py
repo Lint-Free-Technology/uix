@@ -4,7 +4,6 @@ from uuid import uuid4
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     BooleanSelector,
     IconSelector,
@@ -12,9 +11,7 @@ from homeassistant.helpers.selector import (
     NumberSelectorConfig,
     NumberSelectorMode,
     ObjectSelector,
-    Selector,
     TextSelector,
-    make_selector_config_schema,
 )
 
 from .checks import (
@@ -40,6 +37,7 @@ from .const import (
     CONF_DISABLE_ICON_STYLING,
     CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
     CONF_CUSTOM_SIDEBAR_PANEL_ICON,
+    CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB,
     CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN,
     CONF_CUSTOM_SIDEBAR_PANEL_TARGET,
     CONF_CUSTOM_SIDEBAR_PANEL_TITLE,
@@ -47,19 +45,11 @@ from .const import (
     CUSTOM_SIDEBAR_PANEL_PATH_PREFIX,
     EVENT_FOUNDRIES_UPDATED,
 )
-from .custom_sidebar_panel import get_custom_sidebar_panels
+from .custom_sidebar_panel import (
+    _is_valid_custom_sidebar_panel_target,
+    get_custom_sidebar_panels,
+)
 from .helpers import validate_broker_file, validate_foundry_file
-
-
-class NavigationSelector(Selector[dict[str, Any]]):
-    """Expose the frontend navigation selector until Core provides one."""
-
-    selector_type = "navigation"
-    CONFIG_SCHEMA = make_selector_config_schema()
-
-    def __call__(self, data: Any) -> str:
-        """Validate the selected navigation path."""
-        return cv.string(data)
 
 
 class UixConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -156,25 +146,27 @@ class UixOptionsFlow(OptionsFlow):
     ) -> dict[str, Any] | None:
         """Validate and normalize custom sidebar panel form input."""
         icon = user_input[CONF_CUSTOM_SIDEBAR_PANEL_ICON]
+        open_in_new_tab = user_input[CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB]
         require_admin = user_input[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN]
         title = user_input[CONF_CUSTOM_SIDEBAR_PANEL_TITLE].strip()
         target = user_input[CONF_CUSTOM_SIDEBAR_PANEL_TARGET]
         if not isinstance(icon, str) or not icon:
             errors[CONF_CUSTOM_SIDEBAR_PANEL_ICON] = "invalid_custom_sidebar_panel"
+        if not isinstance(open_in_new_tab, bool):
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB] = (
+                "invalid_custom_sidebar_panel"
+            )
         if not isinstance(require_admin, bool):
             errors[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN] = "invalid_custom_sidebar_panel"
         if not title:
             errors[CONF_CUSTOM_SIDEBAR_PANEL_TITLE] = "invalid_custom_sidebar_panel"
-        if (
-            not isinstance(target, str)
-            or not target.startswith("/")
-            or target.startswith("//")
-        ):
+        if not _is_valid_custom_sidebar_panel_target(target):
             errors[CONF_CUSTOM_SIDEBAR_PANEL_TARGET] = "invalid_custom_sidebar_panel"
         if errors:
             return None
         return {
             CONF_CUSTOM_SIDEBAR_PANEL_ICON: icon,
+            CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB: open_in_new_tab,
             CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN: require_admin,
             CONF_CUSTOM_SIDEBAR_PANEL_TARGET: target,
             CONF_CUSTOM_SIDEBAR_PANEL_TITLE: title,
@@ -185,6 +177,9 @@ class UixOptionsFlow(OptionsFlow):
     ) -> vol.Schema:
         """Build the create or edit form schema for a sidebar redirect panel."""
         icon = vol.Required(CONF_CUSTOM_SIDEBAR_PANEL_ICON)
+        open_in_new_tab = vol.Required(
+            CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB, default=False
+        )
         require_admin = vol.Required(
             CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN, default=False
         )
@@ -194,6 +189,10 @@ class UixOptionsFlow(OptionsFlow):
             icon = vol.Required(
                 CONF_CUSTOM_SIDEBAR_PANEL_ICON,
                 default=panel[CONF_CUSTOM_SIDEBAR_PANEL_ICON],
+            )
+            open_in_new_tab = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB,
+                default=panel.get(CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB, False),
             )
             require_admin = vol.Required(
                 CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN,
@@ -210,9 +209,10 @@ class UixOptionsFlow(OptionsFlow):
         return vol.Schema(
             {
                 icon: IconSelector(),
+                open_in_new_tab: BooleanSelector(),
                 require_admin: BooleanSelector(),
                 title: TextSelector(),
-                target: NavigationSelector(),
+                target: TextSelector(),
             }
         )
 

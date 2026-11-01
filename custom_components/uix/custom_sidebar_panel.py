@@ -2,12 +2,14 @@
 
 from collections.abc import Mapping
 from typing import Any
+from urllib.parse import urlsplit
 
 from homeassistant.components import frontend
 from homeassistant.core import HomeAssistant
 
 from .const import (
     CONF_CUSTOM_SIDEBAR_PANEL_ICON,
+    CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB,
     CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN,
     CONF_CUSTOM_SIDEBAR_PANEL_TARGET,
     CONF_CUSTOM_SIDEBAR_PANEL_TITLE,
@@ -19,6 +21,31 @@ from .const import (
     FRONTEND_SCRIPT_CUSTOM_SIDEBAR_PANEL,
 )
 from .frontend import async_get_frontend_asset_snapshot
+
+
+def _is_valid_custom_sidebar_panel_target(target: Any) -> bool:
+    """Return whether a sidebar panel target is an internal path or web URL."""
+    if (
+        not isinstance(target, str)
+        or not target
+        or any(char.isspace() for char in target)
+    ):
+        return False
+
+    if target.startswith("/"):
+        return not target.startswith("//")
+
+    try:
+        url = urlsplit(target)
+        port = url.port
+    except ValueError:
+        return False
+
+    return (
+        url.scheme in {"http", "https"}
+        and bool(url.hostname)
+        and (port is None or 0 <= port <= 65535)
+    )
 
 
 def get_custom_sidebar_panels(options: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -41,16 +68,20 @@ def get_custom_sidebar_panels(options: Mapping[str, Any]) -> dict[str, dict[str,
                     CONF_CUSTOM_SIDEBAR_PANEL_TITLE,
                 )
             )
-            or panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET].startswith("//")
+            or not _is_valid_custom_sidebar_panel_target(
+                panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET]
+            )
         ):
             continue
 
+        open_in_new_tab = panel.get(CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB, False)
         require_admin = panel.get(CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN, False)
-        if not isinstance(require_admin, bool):
+        if not isinstance(open_in_new_tab, bool) or not isinstance(require_admin, bool):
             continue
 
         valid_panels[panel_id] = {
             CONF_CUSTOM_SIDEBAR_PANEL_ICON: panel[CONF_CUSTOM_SIDEBAR_PANEL_ICON],
+            CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB: open_in_new_tab,
             CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN: require_admin,
             CONF_CUSTOM_SIDEBAR_PANEL_TARGET: panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET],
             CONF_CUSTOM_SIDEBAR_PANEL_TITLE: panel[CONF_CUSTOM_SIDEBAR_PANEL_TITLE],
@@ -80,6 +111,9 @@ async def async_sync_custom_sidebar_panels(
             sidebar_icon=panel[CONF_CUSTOM_SIDEBAR_PANEL_ICON],
             require_admin=panel[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN],
             config={
+                CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB: panel[
+                    CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB
+                ],
                 CONF_CUSTOM_SIDEBAR_PANEL_TARGET: panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET],
                 "_panel_custom": {
                     "name": CUSTOM_SIDEBAR_PANEL_COMPONENT,
