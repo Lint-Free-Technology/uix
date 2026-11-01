@@ -220,6 +220,7 @@ jobs:
         uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label-template: ${{ steps.version.outputs.prerelease == 'true' && 'released on @dev' || 'released' }}
           comment-template: |
             Release {release_link} addresses this.
 
@@ -228,5 +229,6 @@ jobs:
         uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label-template: ${{ steps.recovery.outputs.prerelease == 'true' && 'released on @dev' || 'released' }}
           comment-template: |
             Release {release_link} addresses this.
