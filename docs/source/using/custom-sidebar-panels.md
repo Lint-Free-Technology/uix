@@ -16,6 +16,9 @@ Targets can be either a Home Assistant navigation path beginning with `/`, such 
 
 Enable **Open in new tab** to open the target in a separate tab. The current Home Assistant tab returns to the page you were viewing. If the browser blocks the new tab, UIX opens the target in the current tab instead. Leave it disabled to open an external website in the current tab; Home Assistant navigation paths continue to use in-app navigation.
 
+!!! note "New-tab availability"
+    Opening an external target in a new tab is subject to the browser's popup-blocking policy. UIX attempts to open the tab when the sidebar panel is selected, but cannot guarantee that the browser will permit it. When blocked, UIX opens the target in the current tab instead.
+
 Each panel has a stable internal URL managed by UIX, so you can change its title, icon, and target without recreating it. Deleting a panel immediately removes its sidebar entry.
 
 !!! tip "Sidebar order"
