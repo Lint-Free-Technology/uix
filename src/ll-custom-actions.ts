@@ -303,6 +303,11 @@ export class Actions {
     const hasCard = Object.prototype.hasOwnProperty.call(data, "card");
     const dismissible = data.dismissible ?? data.dismissable ?? true;
     const target = data.target === undefined ? source : data.target;
+    const timeout = data.timeout ?? 0;
+    if (!Number.isInteger(timeout) || timeout < 0 || timeout > 2_147_483_647) {
+      console.error("UIX: popover timeout must be an integer from 0 to 2147483647 milliseconds:", data.timeout);
+      return;
+    }
     if (hasContent && hasCard) {
       console.error("UIX: popover accepts either content or card, not both:", data);
       return;
@@ -384,7 +389,24 @@ export class Actions {
     if (data.subtitle_position != null) {
       popover.setAttribute("header-subtitle-position", data.subtitle_position);
     }
-    popover.addEventListener("closed", () => popover.remove(), { once: true });
+    let timeoutId: number | undefined;
+    const startTimeout = (event: Event) => {
+      if (event.target !== popover) return;
+      popover.removeEventListener("opened", startTimeout);
+      timeoutId = window.setTimeout(() => {
+        timeoutId = undefined;
+        if (popover.isConnected) popover.open = false;
+      }, timeout);
+    };
+    const onClosed = (event: Event) => {
+      if (event.target !== popover) return;
+      window.clearTimeout(timeoutId);
+      popover.removeEventListener("opened", startTimeout);
+      popover.removeEventListener("closed", onClosed);
+      popover.remove();
+    };
+    popover.addEventListener("closed", onClosed);
+    if (timeout > 0) popover.addEventListener("opened", startTimeout);
 
     if (hasContent) {
       popover.innerHTML = String(data.content ?? "");

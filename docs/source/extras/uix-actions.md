@@ -169,6 +169,7 @@ button and removes itself after it is closed.
 | | `subtitle` | - | Sets the popover `headerSubtitle`. |
 | | `subtitle_position` | `below` | Sets the `header-subtitle-position` attribute. Accepted values are `above` and `below`. |
 | | `width` | `small` | Sets the popover width. Accepted values are `small`, `large`, and `full`. |
+| | `timeout` | `0` | Automatically closes the popover after this many milliseconds from opening. Omit or set to `0` to disable. Must be an integer from `0` to `2147483647`. |
 | | `without_header` | `false` | When `true`, hides the header and its close button. The popover can still be closed with <kbd>Escape</kbd> unless `dismissible` is `false`. |
 | | `dismissible` | `true` | Allows the close button, <kbd>Escape</kbd>, and outside dismissal. Set to `false` to require a footer button. `dismissable` is accepted as an alias. |
 | | `content` | - | HTML content to place inside the popover. Cannot be used with `card`. |
@@ -190,6 +191,27 @@ button with an action closes the popover after that action runs; an action-less
 button closes it on click.
 
 When the popover card contains a UIX Forge [form spark](../forge/sparks/form.md), its current form values are appended to the action data for both footer buttons. The form spark may omit its own Submit and Clear buttons in this layout.
+
+Use `timeout` for temporary controls on a wall dashboard, for example
+`timeout: 20000` to close after 20 seconds. Each popover has its own timer,
+which starts when the popover opens and is cancelled if it closes early.
+Interaction does not reset the timer. The timer also closes popovers with
+`dismissible: false`; it does not run footer button actions or submit forms.
+
+```yaml
+type: button
+name: Quick controls
+tap_action:
+  action: fire-dom-event
+  uix:
+    action: popover
+    data:
+      title: Bed light
+      timeout: 20000
+      card:
+        type: tile
+        entity: light.bed_light
+```
 
 Set `target: none` to show the same content as a centered adaptive dialog
 instead of anchoring it to the action source. An integration or custom caller
