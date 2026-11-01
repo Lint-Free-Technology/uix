@@ -11,7 +11,6 @@ description: Learn all about using UI eXtension to style elements in your Home A
 - :white_square_button: [Styling section backgrounds](./section-backgrounds.md)
 - :film_frames: [View backgrounds (camera, video, image)](./view-backgrounds.md)
 - :abacus: [Styling custom panels](./custom-panels.md)
-- :material-link-variant: [Custom sidebar panels](./custom-sidebar-panels.md)
 - :material-application-cog: [Styling app and ingress panels](./apps.md)
 - :clipboard: [Templates](./templates.md)
 - :art: [Themes](./themes.md)

@@ -76,7 +76,6 @@ nav:
           - using/section-backgrounds.md
           - using/view-backgrounds.md
           - using/custom-panels.md
-          - using/custom-sidebar-panels.md
           - using/apps.md
           - using/templates.md
           - using/themes.md
@@ -127,6 +126,7 @@ nav:
   - UIX Extras:
       - extras/index.md
       - extras/uix-actions.md
+      - extras/custom-sidebar-panels.md
       - extras/frontend-states-throttling.md
       - extras/dialog-styling-delay.md
       - extras/hash-template-variable-updates.md
