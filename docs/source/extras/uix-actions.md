@@ -181,22 +181,11 @@ button and removes itself after it is closed.
 | | `buttons.primary` | - | Button placed at the footer's primary end. Defaults to `variant: brand` and `appearance: accent`. |
 | | `buttons.secondary` | - | Button placed before the primary button. Defaults to `variant: neutral` and `appearance: filled`. |
 
-`buttons.primary` and `buttons.secondary` use the same button settings as a
-[Forge button spark](../forge/sparks/button.md), except placement settings are
-not used. Set `label`, `icon`, `start_icon`, `end_icon`, `entity`, `size`,
-`variant`, `appearance`, and any of `tap_action`, `hold_action`, or
-`double_tap_action` as needed. Footer positions are logical: primary is on the
-right in left-to-right layouts and on the left in right-to-left layouts. A
-button with an action closes the popover after that action runs; an action-less
-button closes it on click.
+`buttons.primary` and `buttons.secondary` use the same button settings as a [Forge button spark](../forge/sparks/button.md), except placement settings are. not used. Set `label`, `icon`, `start_icon`, `end_icon`, `entity`, `size`, `variant`, `appearance`, and any of `tap_action`, `hold_action`, or `double_tap_action` as needed. Footer positions are logical: primary is on the right in left-to-right layouts and on the left in right-to-left layouts. A button with an action closes the popover after that action runs; an action-less button closes it on click.
 
 When the popover card contains a UIX Forge [form spark](../forge/sparks/form.md), its current form values are appended to the action data for both footer buttons. The form spark may omit its own Submit and Clear buttons in this layout.
 
-Use `timeout` for temporary controls on a wall dashboard, for example
-`timeout: 20000` to close after 20 seconds. Each popover has its own timer,
-which starts when the popover opens and is cancelled if it closes early.
-Interaction does not reset the timer. The timer also closes popovers with
-`dismissible: false`; it does not run footer button actions or submit forms.
+Use `timeout` for temporary controls on a wall dashboard, for example `timeout: 20000` to close after 20 seconds. Each popover has its own timer, which starts when the popover opens and is cancelled if it closes early. Interaction does not reset the timer. The timer also closes popovers with `dismissible: false`; it does not run footer button actions or submit forms.
 
 ```yaml
 type: button
@@ -213,23 +202,11 @@ tap_action:
         entity: light.bed_light
 ```
 
-Set `target: none` to show the same content as a centered adaptive dialog
-instead of anchoring it to the action source. An integration or custom caller
-may instead provide an actual DOM element as `target` to choose a different
-anchor.
+Set `target: none` to show the same content as a centered adaptive dialog instead of anchoring it to the action source. An integration or custom caller may instead provide an actual DOM element as `target` to choose a different anchor.
 
-Each `icons` entry uses Home Assistant's native round icon button. It must set
-`icon`; use `label` to provide its accessible name. It supports `entity`,
-`color`, and `tap_action`, `hold_action`, or `double_tap_action`. Header icons
-do not close the popover, which makes them suitable for actions such as opening
-settings or help.
+Each `icons` entry uses Home Assistant's native round icon button. It must set `icon`; use `label` to provide its accessible name. It supports `entity`, `color`, and `tap_action`, `hold_action`, or `double_tap_action`. Header icons do not close the popover, which makes them suitable for actions such as opening settings or help.
 
-Use `style` for direct properties on the popover and `uix` to style its header,
-footer, or other internals using the usual UIX DOM navigation. The action data
-is available to UIX templates as `config`. A card rendered with `card` receives
-the `uix-popover-card` class. Style `.uix-popover-card` directly to set CSS
-custom properties on the card host without crossing a shadow root; use
-`".uix-popover-card $"` for rules inside the card's shadow root.
+Use `style` for direct properties on the popover and `uix` to style its header, footer, or other internals using the usual UIX DOM navigation. The action data is available to UIX templates as `config`. A card rendered with `card` receives the `uix-popover-card` class. Style `.uix-popover-card` directly to set CSS custom properties on the card host without crossing a shadow root; use `".uix-popover-card $"` for rules inside the card's shadow root.
 
 For example, show HTML content in a popover when a button is selected:
 
