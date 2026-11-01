@@ -45,7 +45,7 @@
             },
             "custom_sidebar_panel_menu": {
                 "title": "Custom Sidebar Panels",
-                "description": "Create sidebar links that redirect to any Home Assistant page.\n\n**Configured panels:**\n{panels_list}",
+                "description": "Create sidebar links to Home Assistant pages or websites.\n\n**Configured panels:**\n{panels_list}",
                 "menu_options": {
                     "add_custom_sidebar_panel": "Add a custom sidebar panel",
                     "edit_custom_sidebar_panel": "Edit a custom sidebar panel",
@@ -158,9 +158,10 @@
             },
             "add_custom_sidebar_panel": {
                 "title": "Add a Custom Sidebar Panel",
-                "description": "Choose the icon and title to display in the sidebar, then choose the page the panel should open.",
+                "description": "Choose the icon and title to display in the sidebar, then enter a Home Assistant path or website URL.",
                 "data": {
                     "icon": "Icon",
+                    "open_in_new_tab": "Open in new tab",
                     "require_admin": "Admin required",
                     "title": "Title",
                     "target": "Target"
@@ -175,9 +176,10 @@
             },
             "edit_custom_sidebar_panel_config": {
                 "title": "Edit Custom Sidebar Panel \"{name}\"",
-                "description": "Update the icon, title, or target page for this custom sidebar panel.",
+                "description": "Update this custom sidebar panel.",
                 "data": {
                     "icon": "Icon",
+                    "open_in_new_tab": "Open in new tab",
                     "require_admin": "Admin required",
                     "title": "Title",
                     "target": "Target"
@@ -199,7 +201,7 @@
         "error": {
             "invalid_config": "The configuration must be a YAML mapping.",
             "invalid_broker_config": "The configuration must be an object containing a 'uix_broker' list.",
-            "invalid_custom_sidebar_panel": "Enter an icon and title, and select a Home Assistant page as the target.",
+            "invalid_custom_sidebar_panel": "Enter an icon and title, and use a Home Assistant path or absolute http or https URL as the target.",
             "file_already_added": "This file path is already registered.",
             "file_not_found": "The file was not found. Check the path and try again.",
             "file_parse_error": "The file could not be parsed as YAML. Check the file for syntax errors.",
