@@ -33,7 +33,7 @@ def _is_valid_custom_sidebar_panel_target(target: Any) -> bool:
         return False
 
     if target.startswith("/"):
-        return not target.startswith("//")
+        return not target.startswith("//") and "\\" not in target
 
     try:
         url = urlsplit(target)

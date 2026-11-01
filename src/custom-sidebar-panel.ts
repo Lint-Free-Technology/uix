@@ -26,7 +26,10 @@ export class UIXCustomSidebarPanel extends HTMLElement {
       return;
     }
 
-    const isInternalTarget = target.startsWith("/") && !target.startsWith("//");
+    const isInternalTarget =
+      target.startsWith("/") &&
+      !target.startsWith("//") &&
+      !target.includes("\\");
     if (!isInternalTarget) {
       try {
         const url = new URL(target);
@@ -43,12 +46,26 @@ export class UIXCustomSidebarPanel extends HTMLElement {
         return;
       }
 
+      const newTab = window.open("about:blank", "_blank");
+      if (!newTab) {
+        this._navigateInCurrentTab(target, isInternalTarget);
+        return;
+      }
+
       this._openedTarget = target;
-      window.open(target, "_blank", "noopener,noreferrer");
+      newTab.opener = null;
+      newTab.location.replace(target);
       history.back();
       return;
     }
 
+    this._navigateInCurrentTab(target, isInternalTarget);
+  }
+
+  private _navigateInCurrentTab(
+    target: string,
+    isInternalTarget: boolean,
+  ): void {
     if (!isInternalTarget) {
       window.location.replace(target);
       return;

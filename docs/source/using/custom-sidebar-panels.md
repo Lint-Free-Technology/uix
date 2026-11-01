@@ -14,7 +14,7 @@ Enable **Admin required** to restrict the sidebar panel to administrator account
 
 Targets can be either a Home Assistant navigation path beginning with `/`, such as `/config/dashboard`, or an absolute `http` or `https` URL. Other URL schemes are not accepted.
 
-Enable **Open in new tab** to open the target in a separate tab. The current Home Assistant tab returns to the page you were viewing. Leave it disabled to open an external website in the current tab; Home Assistant navigation paths continue to use in-app navigation.
+Enable **Open in new tab** to open the target in a separate tab. The current Home Assistant tab returns to the page you were viewing. If the browser blocks the new tab, UIX opens the target in the current tab instead. Leave it disabled to open an external website in the current tab; Home Assistant navigation paths continue to use in-app navigation.
 
 Each panel has a stable internal URL managed by UIX, so you can change its title, icon, and target without recreating it. Deleting a panel immediately removes its sidebar entry.
 
