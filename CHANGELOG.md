@@ -1,3 +1,12 @@
+## [9.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.6...v9.0.0-beta.7) (2026-11-01)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* add optional popover auto-close timeout ([#689](https://github.com/Lint-Free-Technology/uix/issues/689)) ([f769f06](https://github.com/Lint-Free-Technology/uix/commit/f769f06a18367ffe4ddd4712c2d602c2c1d99852))
+
 ## [9.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.5...v9.0.0-beta.6) (2026-10-31)
 
 
