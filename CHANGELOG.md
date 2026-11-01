@@ -1,3 +1,12 @@
+## [9.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.7...v9.0.0-beta.8) (2026-11-01)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* Support external links and open in new tab for custom sidebar items ([#690](https://github.com/Lint-Free-Technology/uix/issues/690)) ([2782a71](https://github.com/Lint-Free-Technology/uix/commit/2782a7135f3ca7cba62c44292571f8998b40ab1e))
+
 ## [9.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.6...v9.0.0-beta.7) (2026-11-01)
 
 
