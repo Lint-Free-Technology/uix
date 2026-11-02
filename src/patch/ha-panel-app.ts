@@ -13,8 +13,11 @@ export function appPanelSlug(panel: any): string | undefined {
   const configuredSlug = panel.panel?.config?.addon || panel.panel?.config?.slug;
   if (configuredSlug) return configuredSlug;
 
-  const [panelType, slug] = panel.route?.path?.split("/").filter(Boolean) || [];
-  return panelType === "app" ? slug : undefined;
+  const [firstSegment, secondSegment] = panel.route?.path?.split("/").filter(Boolean) || [];
+  // Home Assistant has used both `/app/<slug>` and `/<slug>` routes for
+  // generic app panels. Preserve the former while accepting the current
+  // direct route used when no panel config is supplied.
+  return firstSegment === "app" ? secondSegment : firstSegment;
 }
 
 /*
