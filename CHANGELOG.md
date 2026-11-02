@@ -1,3 +1,12 @@
+## [9.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.8...v9.0.0-beta.9) (2026-11-02)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### 🐞 Bug Fixes
+
+* UIX styling of App ingress panel frames missed when panel route.path does not start with app. e.g. Tailscale ([f43afab](https://github.com/Lint-Free-Technology/uix/commit/f43afab88af09d223a7e7ebcd7639945edf5f682))
+
 ## [9.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.7...v9.0.0-beta.8) (2026-11-01)
 
 
