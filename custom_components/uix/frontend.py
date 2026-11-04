@@ -35,7 +35,7 @@ class FrontendAssetSnapshot:
 
 
 def _create_frontend_asset_snapshot(hass: HomeAssistant) -> FrontendAssetSnapshot:
-    """Copy frontend assets to a temporary directory outside HACS' control."""
+    """Copy frontend assets to a temporary directory outside Marketplace' control."""
     directory = TemporaryDirectory(prefix=f"{DOMAIN}-frontend-")
     source_directory = Path(hass.config.path(f"custom_components/{DOMAIN}"))
     snapshot_directory = Path(directory.name)
