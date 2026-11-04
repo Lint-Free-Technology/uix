@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import uuid4
 
 import voluptuous as vol
 
@@ -6,10 +7,12 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResu
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     BooleanSelector,
+    IconSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
     ObjectSelector,
+    TextSelector,
 )
 
 from .checks import (
@@ -34,9 +37,21 @@ from .const import (
     CONF_DISABLE_HASH_TEMPLATE_VARIABLE,
     CONF_DISABLE_ICON_STYLING,
     CONF_DISABLE_ENTITY_PICTURE_IMAGE_OVERRIDE,
+    CONF_CUSTOM_SIDEBAR_PANEL_ICON,
+    CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB,
+    CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN,
+    CONF_CUSTOM_SIDEBAR_PANEL_TARGET,
+    CONF_CUSTOM_SIDEBAR_PANEL_TITLE,
+    CONF_CUSTOM_SIDEBAR_PANELS,
+    CUSTOM_SIDEBAR_PANEL_PATH_PREFIX,
     EVENT_FOUNDRIES_UPDATED,
 )
+from .custom_sidebar_panel import (
+    _is_valid_custom_sidebar_panel_target,
+    get_custom_sidebar_panels,
+)
 from .helpers import validate_broker_file, validate_foundry_file
+
 
 class UixConfigFlow(ConfigFlow, domain=DOMAIN):
 
@@ -92,7 +107,9 @@ class UixOptionsFlow(OptionsFlow):
         self._broker_files: list[str] = list(
             config_entry.options.get(CONF_UIX_BROKER_FILES, [])
         )
+        self._custom_sidebar_panels = get_custom_sidebar_panels(config_entry.options)
         self._foundry_name: str | None = None
+        self._custom_sidebar_panel_id: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -105,12 +122,224 @@ class UixOptionsFlow(OptionsFlow):
                 "foundry_file_menu",
                 "broker_settings",
                 "broker_file_menu",
+                "custom_sidebar_panel_menu",
                 "performance_settings",
                 "experimental_settings",
             ],
             description_placeholders={
                 "foundries_docs_link": "[Foundries documentation](https://uix.lf.technology/forge/foundries)",
             },
+        )
+
+    def _custom_sidebar_panel_choices(self) -> dict[str, str]:
+        """Return panel IDs mapped to human-readable choice labels."""
+        return {
+            panel_id: (
+                f"{panel[CONF_CUSTOM_SIDEBAR_PANEL_TITLE]} "
+                f"→ {panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET]}"
+            )
+            for panel_id, panel in self._custom_sidebar_panels.items()
+        }
+
+    @staticmethod
+    def _validate_custom_sidebar_panel(
+        user_input: dict[str, Any], errors: dict[str, str]
+    ) -> dict[str, Any] | None:
+        """Validate and normalize custom sidebar panel form input."""
+        icon = user_input[CONF_CUSTOM_SIDEBAR_PANEL_ICON]
+        open_in_new_tab = user_input[CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB]
+        require_admin = user_input[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN]
+        title = user_input[CONF_CUSTOM_SIDEBAR_PANEL_TITLE].strip()
+        target = user_input[CONF_CUSTOM_SIDEBAR_PANEL_TARGET]
+        if not isinstance(icon, str) or not icon:
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_ICON] = "invalid_custom_sidebar_panel"
+        if not isinstance(open_in_new_tab, bool):
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB] = (
+                "invalid_custom_sidebar_panel"
+            )
+        if not isinstance(require_admin, bool):
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN] = "invalid_custom_sidebar_panel"
+        if not title:
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_TITLE] = "invalid_custom_sidebar_panel"
+        if not _is_valid_custom_sidebar_panel_target(target):
+            errors[CONF_CUSTOM_SIDEBAR_PANEL_TARGET] = "invalid_custom_sidebar_panel"
+        if errors:
+            return None
+        return {
+            CONF_CUSTOM_SIDEBAR_PANEL_ICON: icon,
+            CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB: open_in_new_tab,
+            CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN: require_admin,
+            CONF_CUSTOM_SIDEBAR_PANEL_TARGET: target,
+            CONF_CUSTOM_SIDEBAR_PANEL_TITLE: title,
+        }
+
+    def _custom_sidebar_panel_schema(
+        self, panel: dict[str, Any] | None = None
+    ) -> vol.Schema:
+        """Build the create or edit form schema for a sidebar redirect panel."""
+        icon = vol.Required(CONF_CUSTOM_SIDEBAR_PANEL_ICON)
+        open_in_new_tab = vol.Required(
+            CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB, default=False
+        )
+        require_admin = vol.Required(
+            CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN, default=False
+        )
+        title = vol.Required(CONF_CUSTOM_SIDEBAR_PANEL_TITLE)
+        target = vol.Required(CONF_CUSTOM_SIDEBAR_PANEL_TARGET, default="/")
+        if panel is not None:
+            icon = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_ICON,
+                default=panel[CONF_CUSTOM_SIDEBAR_PANEL_ICON],
+            )
+            open_in_new_tab = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB,
+                default=panel.get(CONF_CUSTOM_SIDEBAR_PANEL_OPEN_IN_NEW_TAB, False),
+            )
+            require_admin = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN,
+                default=panel[CONF_CUSTOM_SIDEBAR_PANEL_REQUIRE_ADMIN],
+            )
+            title = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_TITLE,
+                default=panel[CONF_CUSTOM_SIDEBAR_PANEL_TITLE],
+            )
+            target = vol.Required(
+                CONF_CUSTOM_SIDEBAR_PANEL_TARGET,
+                default=panel[CONF_CUSTOM_SIDEBAR_PANEL_TARGET],
+            )
+        return vol.Schema(
+            {
+                icon: IconSelector(),
+                open_in_new_tab: BooleanSelector(),
+                require_admin: BooleanSelector(),
+                title: TextSelector(),
+                target: TextSelector(),
+            }
+        )
+
+    async def async_step_custom_sidebar_panel_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the custom sidebar panel management menu."""
+        panels_list = "\n".join(
+            f"- {label}" for label in self._custom_sidebar_panel_choices().values()
+        ) or "_None_"
+        return self.async_show_menu(
+            step_id="custom_sidebar_panel_menu",
+            menu_options=[
+                "add_custom_sidebar_panel",
+                "edit_custom_sidebar_panel",
+                "delete_custom_sidebar_panel",
+            ],
+            description_placeholders={"panels_list": panels_list},
+        )
+
+    async def async_step_add_custom_sidebar_panel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Create a custom sidebar redirect panel."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            panel = self._validate_custom_sidebar_panel(user_input, errors)
+            if panel is not None:
+                panel_id = f"{CUSTOM_SIDEBAR_PANEL_PATH_PREFIX}{uuid4().hex}"
+                self._custom_sidebar_panels[panel_id] = panel
+                return self.async_create_entry(
+                    title="",
+                    data={
+                        **self._config_entry.options,
+                        CONF_CUSTOM_SIDEBAR_PANELS: self._custom_sidebar_panels,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="add_custom_sidebar_panel",
+            data_schema=self._custom_sidebar_panel_schema(),
+            errors=errors,
+        )
+
+    async def async_step_edit_custom_sidebar_panel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select a custom sidebar redirect panel to edit."""
+        if not self._custom_sidebar_panels:
+            return self.async_abort(reason="no_custom_sidebar_panels")
+
+        if user_input is not None:
+            self._custom_sidebar_panel_id = user_input["panel_id"]
+            return await self.async_step_edit_custom_sidebar_panel_config()
+
+        return self.async_show_form(
+            step_id="edit_custom_sidebar_panel",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("panel_id"): vol.In(
+                        self._custom_sidebar_panel_choices()
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_edit_custom_sidebar_panel_config(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Update a custom sidebar redirect panel."""
+        errors: dict[str, str] = {}
+        panel_id = self._custom_sidebar_panel_id
+        if panel_id not in self._custom_sidebar_panels:
+            return self.async_abort(reason="no_custom_sidebar_panels")
+
+        if user_input is not None:
+            panel = self._validate_custom_sidebar_panel(user_input, errors)
+            if panel is not None:
+                self._custom_sidebar_panels[panel_id] = panel
+                return self.async_create_entry(
+                    title="",
+                    data={
+                        **self._config_entry.options,
+                        CONF_CUSTOM_SIDEBAR_PANELS: self._custom_sidebar_panels,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="edit_custom_sidebar_panel_config",
+            data_schema=self._custom_sidebar_panel_schema(
+                self._custom_sidebar_panels[panel_id]
+            ),
+            description_placeholders={
+                "name": self._custom_sidebar_panels[panel_id][
+                    CONF_CUSTOM_SIDEBAR_PANEL_TITLE
+                ]
+            },
+            errors=errors,
+        )
+
+    async def async_step_delete_custom_sidebar_panel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Delete a custom sidebar redirect panel."""
+        if not self._custom_sidebar_panels:
+            return self.async_abort(reason="no_custom_sidebar_panels")
+
+        if user_input is not None:
+            self._custom_sidebar_panels.pop(user_input["panel_id"], None)
+            return self.async_create_entry(
+                title="",
+                data={
+                    **self._config_entry.options,
+                    CONF_CUSTOM_SIDEBAR_PANELS: self._custom_sidebar_panels,
+                },
+            )
+
+        return self.async_show_form(
+            step_id="delete_custom_sidebar_panel",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("panel_id"): vol.In(
+                        self._custom_sidebar_panel_choices()
+                    ),
+                }
+            ),
         )
 
     async def async_step_foundry_menu(

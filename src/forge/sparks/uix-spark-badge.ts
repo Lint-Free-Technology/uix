@@ -12,6 +12,7 @@ const BADGE_ID_ATTR = "data-uix-forge-badge-id";
 
 export class UixForgeSparkBadge extends UixForgeSparkBase {
   type = "badge";
+  static readonly editorOptions = ["for", "after", "before", "content", "variant", "appearance", "pill", "attention", "placement", "start_icon", "end_icon", "style"];
 
   private after = "";
   private before = "";

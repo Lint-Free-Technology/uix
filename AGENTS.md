@@ -15,6 +15,19 @@ tests/
 
 docs/
 
+### Markdown style
+
+Write each prose paragraph on one physical line, with one blank line between paragraphs. Do not manually wrap prose lines; keep line breaks for Markdown structure such as headings, lists, tables, blockquotes, admonitions, and code blocks.
+
+## Contracts
+
+`contracts/` contains internal behavioural contracts for features that
+need a durable, reviewable definition. Before changing behaviour covered by a
+contract, read the relevant contract and update it in the same change when the
+behaviour changes.
+
+- Forge layered configuration → `contracts/forge-layered-configuration.md`
+
 ## External documentation translations
 
 - The English documentation in this repository is canonical. Do not add or

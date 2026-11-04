@@ -13,6 +13,7 @@ export { getEntityDefaultTileIconAction };
 
 export class UixForgeSparkTileIcon extends UixForgeSparkBase {
   type = "tile-icon";
+  static readonly editorOptions = ["for", "after", "before", "icon", "icon_path", "image_url", "entity", "color", "tap_action", "hold_action", "double_tap_action"];
 
   private after: string = "";
   private before: string = "";

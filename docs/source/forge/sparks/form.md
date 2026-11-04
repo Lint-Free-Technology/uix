@@ -5,9 +5,6 @@ icon: material/form-select
 
 # :material-form-select: Form spark
 
-!!! info
-    form spark available in 8.4.0-beta.7
-
 The `form` spark embeds Home Assistant's `<ha-form>` component in a forged element. Its `schema` uses the standard Home Assistant form schema: each field has a unique `name`, optional `label` and `default`, and a Home Assistant `selector`.
 
 Use the optional `submit` and `clear` buttons to run Home Assistant actions. The current form values are merged into the action's `data`; a form value takes precedence when it has the same key as static action data.

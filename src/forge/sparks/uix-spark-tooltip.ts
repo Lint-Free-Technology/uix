@@ -13,6 +13,7 @@ import { UixForgeSparkBase } from "./uix-spark-base";
 
 export class UixForgeSparkTooltip extends UixForgeSparkBase {
   type = "tooltip";
+  static readonly editorOptions = ["for", "content", "placement", "skidding", "distance", "show_delay", "hide_delay", "without_arrow", "trigger", "open"];
 
   private for: string = "";
   private content: string = "";

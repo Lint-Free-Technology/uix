@@ -1,0 +1,121 @@
+id: forge_layered_elements
+description: "Layered Forge renders a card, badge, and entities row with native templates and a Forge overlay"
+view_path: forge-layered-elements
+
+setup:
+  - type: ha_service
+    domain: light
+    service: turn_on
+    data:
+      entity_id: light.bed_light
+      brightness: 181
+      color_temp_kelvin: 2631
+
+cards:
+  - type: custom:uix-forge
+    entity: light.bed_light
+    forge:
+      mold: card
+    element_base:
+      type: markdown
+      content: |
+        ## Native template: {{ states('light.bed_light') }}
+      uix:
+        style:
+          .: |
+            :host {
+              --ha-card-border-width: 2px;
+              --ha-card-border-color: teal;
+            }
+    element:
+      title: "Forge overlay: {{ config.entity }}"
+      uix:
+        style:
+          ha-card: |
+            ha-card {
+              background: rgb(240, 253, 250);
+            }
+
+  - type: entities
+    title: Layered entities row
+    entities:
+      - type: custom:uix-forge
+        entity: light.bed_light
+        forge:
+          mold: row
+        element_base:
+          type: custom:template-entity-row
+          entity: light.bed_light
+          state: "Native state: {{ states('light.bed_light') }}"
+        element:
+          name: "Forge row: {{ config.entity }}"
+
+  - type: custom:badge-horizontal-container-card
+    badges:
+      - type: custom:uix-forge
+        entity: light.bed_light
+        forge:
+          mold: badge
+        element_base:
+          type: custom:mushroom-template-badge
+          entity: light.bed_light
+          icon: mdi:lightbulb
+          color: "{{ 'amber' if is_state('light.bed_light', 'on') else 'grey' }}"
+          content: "Native badge: {{ states('light.bed_light') }}"
+        element:
+          content: "Forge badge: {{ config.entity }}"
+
+assertions:
+  - type: element_present
+    root: "ha-sortable div.container div.card:nth-of-type(1) uix-forge"
+    selector: hui-markdown-card
+
+  - type: text_equals
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(1) uix-forge"
+      - hui-markdown-card
+      - ha-markdown
+    selector: ha-markdown-element h2
+    expected: "Native template: on"
+
+  - type: css_property
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(1) uix-forge"
+      - hui-markdown-card
+    selector: ha-card
+    property: borderTopColor
+    expected: "rgb(0, 128, 128)"
+
+  - type: css_property
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(1) uix-forge"
+      - hui-markdown-card
+    selector: ha-card
+    property: backgroundColor
+    expected: "rgb(240, 253, 250)"
+
+  - type: text_equals
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(2) hui-entities-card"
+      - "#states div uix-forge"
+      - template-entity-row
+    selector: "#wrapper .info"
+    expected: "Forge row: light.bed_light"
+
+  - type: text_equals
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(2) hui-entities-card"
+      - "#states div uix-forge"
+      - template-entity-row
+    selector: "#wrapper .state"
+    expected: "Native state: on"
+
+  - type: element_present
+    root:
+      - "ha-sortable div.container div.card:nth-of-type(3) badge-horizontal-container-card"
+      - "hui-badge uix-forge"
+    selector: mushroom-template-badge
+
+  - type: snapshot
+    name: "73_forge_layered_elements"
+    threshold: 0.02

@@ -50,7 +50,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
@@ -89,13 +89,13 @@ jobs:
           RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
         run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
 
-      - name: Preserve legacy major feature scope
+      - name: Force major releases for breaking changes
         id: legacy_major
         if: ${{ !inputs.recover_release }}
         run: |
           PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
           RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
-          if git log --format=%s "$RANGE" | grep -Eq '^feat\(major\)(!)?: '; then
+          if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: |^[[:alnum:]][[:alnum:]_-]*(\([^)]+\))?!: |^BREAKING[ -]CHANGE:'; then
             echo 'force_bump=major' >> "$GITHUB_OUTPUT"
           fi
 
@@ -183,7 +183,9 @@ jobs:
             custom_components/uix/uix.js \
             custom_components/uix/uix.js.gz \
             custom_components/uix/uixFrame.js \
-            custom_components/uix/uixFrame.js.gz
+            custom_components/uix/uixFrame.js.gz \
+            custom_components/uix/uixCustomSidebarPanel.js \
+            custom_components/uix/uixCustomSidebarPanel.js.gz
           git diff --cached --quiet && {
             echo 'The release did not change any tracked files.' >&2
             exit 1
@@ -214,17 +216,19 @@ jobs:
           make_latest: ${{ steps.recovery.outputs.prerelease == 'true' && 'false' || 'true' }}
 
       - name: Notify linked issues and pull requests
-        if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' && steps.version.outputs.prerelease != 'true' }}
+        if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' }}
         uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label-template: ${{ steps.version.outputs.prerelease == 'true' && 'released on @dev' || 'released' }}
           comment-template: |
             Release {release_link} addresses this.
 
       - name: Notify linked issues and pull requests for recovered release
-        if: ${{ !inputs.dry_run && inputs.recover_release && steps.recovery.outputs.prerelease != 'true' }}
+        if: ${{ !inputs.dry_run && inputs.recover_release }}
         uses: apexskier/github-release-commenter@e7813a9625eabd79a875b4bc4046cfcae377ab34 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label-template: ${{ steps.recovery.outputs.prerelease == 'true' && 'released on @dev' || 'released' }}
           comment-template: |
             Release {release_link} addresses this.

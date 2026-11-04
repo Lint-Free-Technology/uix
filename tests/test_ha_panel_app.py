@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PANEL_APP_TS_PATH = REPO_ROOT / "src" / "patch" / "ha-panel-app.ts"
 
 
-def test_generic_app_panel_uses_its_slug_for_deep_routes() -> None:
+def test_generic_app_panel_uses_its_slug_for_legacy_and_direct_routes() -> None:
     output = subprocess.check_output(
         [
             "node",
@@ -29,7 +29,10 @@ def test_generic_app_panel_uses_its_slug_for_deep_routes() -> None:
                 "  throw new Error(`Unexpected module import: ${name}`);"
                 "};"
                 "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
-                "process.stdout.write(moduleObj.exports.appPanelSlug({ route: { path: '/app/core_music_assistant/albums' } }));"
+                "process.stdout.write(JSON.stringify(["
+                "  moduleObj.exports.appPanelSlug({ route: { path: '/app/core_music_assistant/albums' } }),"
+                "  moduleObj.exports.appPanelSlug({ route: { prefix: '/app', path: '/a0d7b954_tailscale' } })"
+                "]));"
             ),
             str(PANEL_APP_TS_PATH),
         ],
@@ -37,7 +40,7 @@ def test_generic_app_panel_uses_its_slug_for_deep_routes() -> None:
         text=True,
     )
 
-    assert output == "core_music_assistant"
+    assert json.loads(output) == ["core_music_assistant", "a0d7b954_tailscale"]
 
 
 def test_active_app_panel_is_configured_when_frame_styling_becomes_available() -> None:

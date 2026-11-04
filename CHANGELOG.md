@@ -1,3 +1,103 @@
+## [9.0.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.8...v9.0.0-beta.9) (2026-11-02)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### 🐞 Bug Fixes
+
+* UIX styling of App ingress panel frames missed when panel route.path does not start with app. e.g. Tailscale ([f43afab](https://github.com/Lint-Free-Technology/uix/commit/f43afab88af09d223a7e7ebcd7639945edf5f682))
+
+## [9.0.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.7...v9.0.0-beta.8) (2026-11-01)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* Support external links and open in new tab for custom sidebar items ([#690](https://github.com/Lint-Free-Technology/uix/issues/690)) ([2782a71](https://github.com/Lint-Free-Technology/uix/commit/2782a7135f3ca7cba62c44292571f8998b40ab1e))
+
+## [9.0.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.6...v9.0.0-beta.7) (2026-11-01)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* add optional popover auto-close timeout ([#689](https://github.com/Lint-Free-Technology/uix/issues/689)) ([f769f06](https://github.com/Lint-Free-Technology/uix/commit/f769f06a18367ffe4ddd4712c2d602c2c1d99852))
+
+## [9.0.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.5...v9.0.0-beta.6) (2026-10-31)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### ⭐ New Features
+
+* add custom sidebar panel item redirects ([#688](https://github.com/Lint-Free-Technology/uix/issues/688)) ([964f440](https://github.com/Lint-Free-Technology/uix/commit/964f4402b6f263a5deac53327b825a85cb3e3e72))
+
+## [9.0.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.4...v9.0.0-beta.5) (2026-10-29)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater.**
+
+### ⚙️ Miscellaneous
+
+* **beta:** Update UIX Forge visual editor conversion text. ([a0d8191](https://github.com/Lint-Free-Technology/uix/commit/a0d819164804faf11aa3c168a676cb29a16ba004))
+
+## [9.0.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.3...v9.0.0-beta.4) (2026-10-29)
+
+
+**Requires Home Assistant 2026.11.0b0 or greater**
+
+### 🐞 Bug Fixes
+
+* Update --uix-image... image override for entity-badge to align with Home Assistant  2026.11.0 ([#683](https://github.com/Lint-Free-Technology/uix/issues/683)) ([da3da26](https://github.com/Lint-Free-Technology/uix/commit/da3da26f92c36ad7d9eb3ddcf930b8a6337a4763))
+* use frontend contexts for Forge visuals ([957d577](https://github.com/Lint-Free-Technology/uix/commit/957d5778233ea6460c7e5e460cbd2870e2f5e88d))
+
+### ⚙️ Miscellaneous
+
+* Update home-assistant/webawesome compatibility to 3.14.0-ha.0 ([e990dba](https://github.com/Lint-Free-Technology/uix/commit/e990dbaf9175ef43ad910416cb030005dfaa2484))
+
+## [9.0.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.2...v9.0.0-beta.3) (2026-10-26)
+
+
+### 🐞 Bug Fixes
+
+* **beta:** Update fix for Resource leak in icon styling patch. ([#681](https://github.com/Lint-Free-Technology/uix/issues/681)) ([0bc1c7e](https://github.com/Lint-Free-Technology/uix/commit/0bc1c7e71cf8bb1fa8b75748ada063f99b52aac0)), closes [#673](https://github.com/Lint-Free-Technology/uix/issues/673)
+
+## [9.0.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.1...v9.0.0-beta.2) (2026-10-21)
+
+
+### ⭐ New Features
+
+* Add UIX Forge UI editor for card and badge elements ([#666](https://github.com/Lint-Free-Technology/uix/issues/666)) ([50f9729](https://github.com/Lint-Free-Technology/uix/commit/50f9729f4a99073dcc0db32d0ad46b7db5749861))
+
+## [9.0.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0-beta.0...v9.0.0-beta.1) (2026-10-21)
+
+
+### 🐞 Bug Fixes
+
+* Resource leak in icon styling patch ([#674](https://github.com/Lint-Free-Technology/uix/issues/674)) ([6b683f0](https://github.com/Lint-Free-Technology/uix/commit/6b683f09e30253d1452b0f79b9e67aa3c9f29391)), closes [#673](https://github.com/Lint-Free-Technology/uix/issues/673)
+
+## [9.0.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.1...v9.0.0-beta.0) (2026-10-09)
+
+### ⭐ New Features
+
+* Add layered config to Forge which allows for `element_base` which is fully owned by the element and can include the element's native templates eliminating need for nested templates in such scenarios. ([#658](https://github.com/Lint-Free-Technology/uix/issues/658)) ([22f8d93](https://github.com/Lint-Free-Technology/uix/commit/22f8d93f01318b0d2c590b39732d40e012d49a11))
+
+### [8.4.1-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v8.4.1-beta.0...v8.4.1-beta.1) (2026-10-09)
+
+
+### 🐞 Bug Fixes
+
+* **forge:** Guard async Forge render paths with template generation. Fixes possible rendering of raw config to element with unpredictable results and errors. ([#661](https://github.com/Lint-Free-Technology/uix/issues/661)) ([b77ef49](https://github.com/Lint-Free-Technology/uix/commit/b77ef49e24e3c3fb479baa26c800807992a57ec3))
+
+### [8.4.1-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v8.4.1-beta.0) (2026-10-09)
+
+
+### ⚙️ Miscellaneous
+
+* Serve Frontend JavaScript asset bundles from temp snapshot. Allows upgrade of UIX with deferred restart. ([#660](https://github.com/Lint-Free-Technology/uix/issues/660)) ([c800e60](https://github.com/Lint-Free-Technology/uix/commit/c800e607f23dde55e54b5e0e769de4a6b7464390))
+
 ## [8.4.0](https://github.com/Lint-Free-Technology/uix/compare/v8.3.1...v8.4.0) (2026-10-07)
 
 

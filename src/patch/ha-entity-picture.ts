@@ -192,15 +192,31 @@ const applyImage = (el: any, imageUrl: string | null): void => {
       }
       break;
     case "hui-entity-badge":
-      if (!imageUrl && el._uix_replaced_image === undefined) return;
-      if (el._uix_replaced_image && imageUrl === el._uix_replaced_image) return;
-      const previousReplacedImage = el._uix_replaced_image;
-      if (imageUrl) {
-        el._uix_replaced_image = imageUrl;
-      } else if (el._uix_replaced_image !== undefined) {
-        el._uix_replaced_image = undefined;
+      const config = el.config ?? el._config;
+      const imageOverride = config?.show_icon && config?.show_entity_picture ? imageUrl : null;
+      const haBadge = el.shadowRoot?.querySelector("ha-badge");
+      if (haBadge && imageOverride) {
+        let imageEL = el.shadowRoot?.querySelector("img.uix-image");
+        if (!imageEL) {
+          imageEL = document.createElement("img");
+          imageEL.classList.add("uix-image");
+          imageEL.setAttribute("slot", "icon");
+          imageEL.setAttribute("aria-hidden", "");
+          haBadge.append(imageEL);
+        }
+        imageEL.src = imageOverride;
+
+        let style = el.shadowRoot?.querySelector("#uix-image");
+        if (!style) {
+          style = document.createElement("style");
+          style.id = "uix-image";
+          style.textContent = "ha-badge > img:not(.uix-image), ha-badge > ha-state-icon { display: none !important; }";
+          el.shadowRoot?.prepend(style);
+        }
+      } else if (haBadge) {
+        el.shadowRoot?.querySelector("img.uix-image")?.remove();
+        el.shadowRoot?.querySelector("#uix-image")?.remove();
       }
-      el.requestUpdate("_uix_replaced_image", previousReplacedImage);
       break;
   }
 };
@@ -404,20 +420,12 @@ class HaPersonBadgePatch extends ModdedElement {
 class HuiEntityBadgePatch extends ModdedElement {
   uix_image_retries = 0;
   _bindUixDebounce: ReturnType<typeof setTimeout> | undefined = undefined;
-  _uix_replaced_image;
   updated(_orig, ...args) {
     _orig?.(...args);
-    if (args[0]?.has("_uix_replaced_image")) return;
     if ((window as any).uixCoordinator?.disableEntityPictureImageOverride) return;
     this.uix_image_retries = 0;
     clearTimeout(this._bindUixDebounce);
     this._bindUixDebounce = setTimeout(() => bindUix(this), UIX_PATCH_DEBOUNCE_MS);
-  }
-  _getImageUrl(_orig, ...args) {
-    if (this._uix_replaced_image) {
-      return this._uix_replaced_image;
-    }
-    return _orig?.(...args);
   }
 }
 

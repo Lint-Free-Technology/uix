@@ -18,6 +18,8 @@ export const UIX_FORGE_ALLOWED_CONFIG_KEYS = [
   "foundry", 
   "forge", 
   "element", 
+  "element_base",
+  "element_disabled_paths",
   "disabled",
   "row_span",
   "column_span",
@@ -124,6 +126,8 @@ export interface UixForgeConfig {
   foundry?: string;
   forge?: UixForgeForge;
   element?: UixForgeElement;
+  element_base?: UixForgeElement;
+  element_disabled_paths?: UixForgeConfigPath[];
   disabled?: boolean;
   state_color?: boolean;
   color?: string;
@@ -134,6 +138,7 @@ export interface UixForgeConfig {
 export class UixForgeConfigBuilder {
   _config: {};
   _templateBindings: Map<string, { callback: (res: string) => void }>;
+  _opaquePaths: Set<string>;
   _resolveReady: (value?: void | PromiseLike<void>) => void;
   _readyPromise: Promise<void>;
   refreshCallback?: (path: UixForgeConfigPath) => void;
@@ -142,6 +147,7 @@ export class UixForgeConfigBuilder {
   constructor(refreshCallback: (path: UixForgeConfigPath) => void, nestedTemplateOpen?: string | string[]) {
     this._config = {};
     this._templateBindings = new Map();
+    this._opaquePaths = new Set();
     this.ready = false;
     this.refreshCallback = refreshCallback;
     if (Array.isArray(nestedTemplateOpen)) {
@@ -191,6 +197,7 @@ export class UixForgeConfigBuilder {
 
   set config(config: any) {
     this._config = this._stripNestedTemplateMarker(config);
+    this._opaquePaths.clear();
     this.ready = false;
     this.checkReady();
   };
@@ -218,8 +225,10 @@ export class UixForgeConfigBuilder {
   }
 
   private checkReady() {
-    const _checkReady = (value, nestingOpen: string[]) => {
+    const _checkReady = (value, nestingOpen: string[], path: string[] = []) => {
       for (const key of Object.keys(value)) {
+        const childPath = [...path, key];
+        if (this._opaquePaths.has(JSON.stringify(childPath))) continue;
         if (key === "uix") continue;
         const val = value[key];
         // If template is marked to be ignored, we consider it ready.
@@ -236,7 +245,7 @@ export class UixForgeConfigBuilder {
         if (hasTemplate(val) || (typeof val === "string" && nestingOpen.some((open) => val.includes(open)))) return false;
         if (val === undefined || val === null) continue;
         if (typeof val === "object") {
-          if (!_checkReady(val, nestingOpen)) return false;
+          if (!_checkReady(val, nestingOpen, childPath)) return false;
         }
         if (val === UIX_FORGE_DEFAULT_TEMPLATE_VALUE) return false;
       }
@@ -247,8 +256,14 @@ export class UixForgeConfigBuilder {
     }
   }
 
-  set nested(update: { keys: string[]; value: any }) {
-    const { keys, value } = update;
+  set nested(update: { keys: string[]; value: any; opaque?: boolean }) {
+    const { keys, value, opaque = false } = update;
+    const pathKey = JSON.stringify(keys);
+    if (opaque) {
+      this._opaquePaths.add(pathKey);
+    } else {
+      this._opaquePaths.delete(pathKey);
+    }
     let current = { ...this._config };
     let updated = current;
     

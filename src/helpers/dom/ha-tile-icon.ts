@@ -57,7 +57,6 @@ export function updateHaTileIcon(tileIcon: HTMLElement, config: UixTileIconConfi
     const stateObj = hass?.states?.[entity];
     if (stateObj) {
       stateIcon.stateObj = stateObj;
-      stateIcon.hass = hass;
       const color = computeTileIconStateColor(stateObj, config.color);
       if (color) tileIcon.style.setProperty("--tile-icon-color", color);
       stateIcon.icon = config.icon || undefined;

@@ -25,6 +25,7 @@ interface MediaSourceResolveResult {
 
 export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
   type = "overlay-icon";
+  static readonly editorOptions = ["for", "icon", "image_url", "entity", "value", "color", "icon_color", "icon_position", "icon_size", "icon_background", "state_color"];
 
   private _for: string = "";
   private _icon: string = "";
@@ -294,7 +295,6 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     const stateObj = this._entity ? hass?.states?.[this._entity] : undefined;
 
     if (this._entity) {
-      iconEl.hass = hass;
       if (stateObj) {
         iconEl.stateObj = this._value
           ? { ...stateObj, state: this._value }
@@ -392,4 +392,3 @@ export class UixForgeSparkOverlayIcon extends UixForgeSparkBase {
     }
   }
 }
-

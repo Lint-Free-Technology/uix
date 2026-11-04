@@ -13,6 +13,10 @@ from .frontend import (
     async_remove_frontend_script_resource
 )
 from .connection import async_setup_connection
+from .custom_sidebar_panel import (
+    async_remove_custom_sidebar_panels,
+    async_sync_custom_sidebar_panels,
+)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -22,6 +26,7 @@ async def _async_initialize_integration(
 ) -> bool:
     """Initialize the integration."""
     await async_register_frontend_script_resource(hass, FRONTEND_SCRIPT_URL)
+    await async_sync_custom_sidebar_panels(hass, config_entry.options)
 
     return True
 
@@ -29,6 +34,7 @@ async def _async_cleanup_integration(
     hass: HomeAssistant,
 ) -> bool:
     """Cleanup the integration."""
+    async_remove_custom_sidebar_panels(hass)
     await async_remove_frontend_script_resource(hass)
 
     return True
@@ -45,6 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Fire the foundries updated event when integration options change."""
+    await async_sync_custom_sidebar_panels(hass, entry.options)
     hass.bus.async_fire(EVENT_FOUNDRIES_UPDATED, {})
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

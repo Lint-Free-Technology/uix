@@ -7,7 +7,8 @@ from homeassistant.components.websocket_api import (
 from homeassistant.components import websocket_api
 import voluptuous as vol
 
-from .helpers import check_all_broker_files, get_all_broker_configs, get_version, resolve_foundries, get_all_foundries, validate_broker_file, validate_foundry_file, check_all_foundry_files
+from .helpers import check_all_broker_files, get_all_broker_configs, resolve_foundries, get_all_foundries, validate_broker_file, validate_foundry_file, check_all_foundry_files
+from .frontend import async_get_frontend_asset_snapshot
 from .const import (
     CONF_ALWAYS_PATCH_HA_CARD,
     CONF_STYLE_CUSTOM_PANELS,
@@ -43,7 +44,8 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_connection(hass: HomeAssistant) -> None:
-    version = await hass.async_add_executor_job(get_version, hass)
+    snapshot = await async_get_frontend_asset_snapshot(hass)
+    version = snapshot.version
 
     @websocket_api.websocket_command(
         {

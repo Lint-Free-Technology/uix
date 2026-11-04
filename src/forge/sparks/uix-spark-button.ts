@@ -5,6 +5,7 @@ import { createHaButton, dispatchHaButtonAction, HA_BUTTON_CSS, updateHaButton }
 const WRAPPER_ID_ATTR = "data-uix-forge-button-id";
 export class UixForgeSparkButton extends UixForgeSparkBase {
   type = "button";
+  static readonly editorOptions = ["for", "after", "before", "entity", "label", "icon", "start_icon", "end_icon", "color", "size", "variant", "appearance", "tap_action", "hold_action", "double_tap_action"];
 
   private after: string = "";
   private before: string = "";

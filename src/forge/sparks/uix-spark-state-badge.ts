@@ -5,6 +5,7 @@ const STATE_BADGE_ID_ATTR = "data-uix-forge-state-badge-id";
 
 export class UixForgeSparkStateBadge extends UixForgeSparkBase {
   type = "state-badge";
+  static readonly editorOptions = ["for", "after", "before", "entity", "override_icon", "override_image", "color", "state_color"];
 
   private after: string = "";
   private before: string = "";
@@ -109,7 +110,6 @@ export class UixForgeSparkStateBadge extends UixForgeSparkBase {
 
   private _updateElement(badgeEl: any) {
     const hass = this.controller.forge.hass;
-    badgeEl.hass = hass;
 
     if (this.entity && hass?.states?.[this.entity]) {
       badgeEl.stateObj = hass.states[this.entity];

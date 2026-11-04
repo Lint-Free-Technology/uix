@@ -59,4 +59,26 @@ export default [
       }),
     ],
   },
+  {
+    input: "src/custom-sidebar-panel.ts",
+    output: {
+      file: "custom_components/uix/uixCustomSidebarPanel.js",
+      format: "es",
+    },
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      esbuild({
+        minify: !dev,
+        target: 'es2017',
+        tsconfig: './tsconfig.json'
+      }),
+      babel({
+        presets: [["@babel/preset-env", { modules: false }, "@babel/preset-typescript"]],
+        babelHelpers: "bundled",
+        extensions: [".js", ".jsx", ".ts", ".tsx"]
+      }),
+    ],
+  },
 ];

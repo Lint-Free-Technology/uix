@@ -10,6 +10,7 @@ interface UixForgeSparkThemeConfig {
 
 export class UixForgeSparkTheme extends UixForgeSparkBase {
   type = "theme";
+  static readonly editorOptions = ["for", "theme"];
 
   private _for: string = "";
   private _theme: string = "";
