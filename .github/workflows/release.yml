@@ -89,13 +89,29 @@ jobs:
           RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
         run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
 
-      - name: Force major releases for breaking changes
+      - name: Force major releases for breaking changes and final major prereleases
         id: legacy_major
         if: ${{ !inputs.recover_release }}
         run: |
+          FORCE_MAJOR=false
+          LATEST_STABLE_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
+          LATEST_PRERELEASE_TAG="$(git tag --merged HEAD --list 'v*-*' --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-[0-9A-Za-z.-]+$' | head -1)"
+          if [ -n "$LATEST_STABLE_TAG" ] && [ -n "$LATEST_PRERELEASE_TAG" ]; then
+            STABLE_MAJOR="${LATEST_STABLE_TAG#v}"
+            STABLE_MAJOR="${STABLE_MAJOR%%.*}"
+            PRERELEASE_MAJOR="${LATEST_PRERELEASE_TAG#v}"
+            PRERELEASE_MAJOR="${PRERELEASE_MAJOR%%.*}"
+            if [ "$PRERELEASE_MAJOR" -gt "$STABLE_MAJOR" ]; then
+              FORCE_MAJOR=true
+            fi
+          fi
+
           PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
           RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
           if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: |^[[:alnum:]][[:alnum:]_-]*(\([^)]+\))?!: |^BREAKING[ -]CHANGE:'; then
+            FORCE_MAJOR=true
+          fi
+          if [ "$FORCE_MAJOR" = true ]; then
             echo 'force_bump=major' >> "$GITHUB_OUTPUT"
           fi
 
