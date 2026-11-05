@@ -25,7 +25,6 @@ docs/source/assets/page-assets/forge/sparks/attribute-replace-template-manually-
 # Using - custom panels. Panel examples are from integrations not loaded by test harness
 
 docs/source/assets/page-assets/using/custom-panel-browser-mod.png
-docs/source/assets/page-assets/using/custom-panel-hacs.png
 
 # Broker
 

@@ -156,9 +156,6 @@ tap_action:
 
 ## `popover` - show an anchored Home Assistant popover
 
-!!! info
-    `timeout` added in 9.0.0-beta.7
-
 Shows a Home Assistant adaptive popover anchored to the element that triggered
 the `ll-custom` action. It includes Home Assistant's standard accessible close
 button and removes itself after it is closed.

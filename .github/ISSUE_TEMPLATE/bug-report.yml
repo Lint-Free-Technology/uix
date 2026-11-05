@@ -19,7 +19,7 @@ body:
       label: My UIX installation method
       multiple: false
       options:
-        - HACS
+        - Marketplace
         - Manual
     validations:
       required: true

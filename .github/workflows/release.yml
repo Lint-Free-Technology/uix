@@ -8,17 +8,6 @@ on:
         required: false
         type: boolean
         default: false
-      force_bump:
-        description: "When previewing, force this bump when no commit requests a release"
-        required: false
-        type: choice
-        options:
-          - none
-          - prerelease
-          - patch
-          - minor
-          - major
-        default: none
       release_note_banner:
         description: "Release-note banner (optional; shown in bold at the top)"
         required: false
@@ -89,16 +78,6 @@ jobs:
           RELEASE_VERSION: ${{ steps.recovery.outputs.version }}
         run: node scripts/read-release-notes.mjs >> "$GITHUB_OUTPUT"
 
-      - name: Force major releases for breaking changes
-        id: legacy_major
-        if: ${{ !inputs.recover_release }}
-        run: |
-          PREVIOUS_TAG="$(git tag --merged HEAD --list 'v*' --sort=-version:refname | head -1)"
-          RANGE="${PREVIOUS_TAG:+$PREVIOUS_TAG..}HEAD"
-          if git log --format=%B "$RANGE" | grep -Eq '^feat\(major\)(!)?: |^[[:alnum:]][[:alnum:]_-]*(\([^)]+\))?!: |^BREAKING[ -]CHANGE:'; then
-            echo 'force_bump=major' >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Calculate release
         id: version
         if: ${{ !inputs.recover_release }}
@@ -111,10 +90,7 @@ jobs:
           default_bump: false
           default_prerelease_bump: false
           fetch_all_tags: true
-          force_bump: ${{ steps.legacy_major.outputs.force_bump || inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
-          force_prerelease_bump: ${{ steps.legacy_major.outputs.force_bump || inputs.dry_run && inputs.force_bump != 'none' && inputs.force_bump || '' }}
           custom_release_rules: >-
-            feat:minor:⭐ New Features,fix:patch:🐞 Bug Fixes,revert:patch:🐞 Bug Fixes,
             perf:minor:⚡ Performance Improvements,docs:patch:📔 Documentation,
             deps:patch:📦 Dependency Upgrades,refactor:patch:⚙️ Miscellaneous,
             style:patch:⚙️ Miscellaneous

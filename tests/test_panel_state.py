@@ -20,13 +20,13 @@ def test_custom_panel_internal_route_matches_its_browser_root_path() -> None:
                 "const source = fs.readFileSync(process.argv[1], 'utf8');"
                 "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs' });"
                 "const panel = {"
-                "  panel: { component_name: 'custom', title: 'HACS' },"
-                "  route: { prefix: '/hacs', path: 'dashboard' },"
+                "  panel: { component_name: 'custom', title: 'Generic' },"
+                "  route: { prefix: '/generic', path: 'dashboard' },"
                 "  narrow: true,"
                 "  hass: { themes: { theme: 'UIX Test' } }"
                 "};"
                 "global.window = {"
-                "  location: { pathname: '/hacs', hash: '' },"
+                "  location: { pathname: '/generic', hash: '' },"
                 "  addEventListener: () => {},"
                 "};"
                 "global.location = global.window.location;"
@@ -50,6 +50,6 @@ def test_custom_panel_internal_route_matches_its_browser_root_path() -> None:
 
     result = json.loads(output)
     assert result["unresolved"] is False
-    assert result["state"]["panel"]["fullUrlPath"] == "hacs/dashboard"
-    assert result["state"]["panel"]["panelUrlPath"] == "hacs"
+    assert result["state"]["panel"]["fullUrlPath"] == "generic/dashboard"
+    assert result["state"]["panel"]["panelUrlPath"] == "generic"
     assert result["state"]["panel"]["viewUrlPath"] == "dashboard"
