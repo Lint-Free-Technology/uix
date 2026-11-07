@@ -41,7 +41,7 @@ export class UIXCustomSidebarPanel extends HTMLElement {
       }
     }
 
-    if (this._panel?.config?.open_in_new_tab) {
+    if (this._shouldOpenInNewTab(isInternalTarget)) {
       if (this._openedTarget === target) {
         return;
       }
@@ -60,6 +60,26 @@ export class UIXCustomSidebarPanel extends HTMLElement {
     }
 
     this._navigateInCurrentTab(target, isInternalTarget);
+  }
+
+  private _shouldOpenInNewTab(isInternalTarget: boolean): boolean {
+    return (
+      isInternalTarget &&
+      this._panel?.config?.open_in_new_tab === true &&
+      window.matchMedia("(pointer: fine)").matches &&
+      !this._isCompanionApp()
+    );
+  }
+
+  private _isCompanionApp(): boolean {
+    const companionWindow = window as Window & {
+      externalApp?: unknown;
+      webkit?: { messageHandlers?: { externalBus?: unknown } };
+    };
+    return (
+      companionWindow.externalApp !== undefined ||
+      companionWindow.webkit?.messageHandlers?.externalBus !== undefined
+    );
   }
 
   private _navigateInCurrentTab(
