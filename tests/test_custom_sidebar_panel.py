@@ -32,13 +32,18 @@ def test_new_tab_is_limited_to_desktop_browser_internal_paths() -> None:
                 "const moduleObj = { exports: {} };"
                 "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
                 "const { UIXCustomSidebarPanel } = moduleObj.exports;"
-                "const run = ({ target, desktop, companion }) => {"
+                "const run = ({ target, mobile = false, iPad = false, companion = false }) => {"
                 "  const opened = []; const current = []; const historyActions = [];"
+                "  Object.defineProperty(global, 'navigator', { value: {"
+                "    userAgent: mobile ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0)',"
+                "    platform: iPad ? 'MacIntel' : mobile ? 'iPhone' : 'MacIntel',"
+                "    maxTouchPoints: iPad ? 5 : 0,"
+                "    userAgentData: { mobile }"
+                "  }, configurable: true });"
                 "  global.window = {"
-                "    matchMedia: () => ({ matches: desktop }),"
                 "    open: () => { const tab = { location: { replace: (url) => opened.push(url) } }; return tab; },"
                 "    location: { replace: (url) => current.push(url) },"
-                "    externalApp: companion ? {} : undefined"
+                "    externalAppV2: companion ? {} : undefined"
                 "  };"
                 "  global.history = {"
                 "    replaceState: (_state, _title, url) => historyActions.push(['replace', url]),"
@@ -50,10 +55,11 @@ def test_new_tab_is_limited_to_desktop_browser_internal_paths() -> None:
                 "  return { opened, current, historyActions, events: panel.events };"
                 "};"
                 "process.stdout.write(JSON.stringify({"
-                "  desktopInternal: run({ target: '/developer-tools/state', desktop: true, companion: false }),"
-                "  companionInternal: run({ target: '/developer-tools/state', desktop: true, companion: true }),"
-                "  desktopExternal: run({ target: 'https://example.com', desktop: true, companion: false }),"
-                "  mobileInternal: run({ target: '/developer-tools/state', desktop: false, companion: false })"
+                "  desktopInternal: run({ target: '/developer-tools/state' }),"
+                "  companionInternal: run({ target: '/developer-tools/state', companion: true }),"
+                "  desktopExternal: run({ target: 'https://example.com' }),"
+                "  mobileInternal: run({ target: '/developer-tools/state', mobile: true }),"
+                "  iPadInternal: run({ target: '/developer-tools/state', iPad: true })"
                 "}));"
             ),
             str(CUSTOM_SIDEBAR_PANEL_TS_PATH),
@@ -82,6 +88,12 @@ def test_new_tab_is_limited_to_desktop_browser_internal_paths() -> None:
             "events": [],
         },
         "mobileInternal": {
+            "opened": [],
+            "current": [],
+            "historyActions": [["replace", "/developer-tools/state"]],
+            "events": ["location-changed"],
+        },
+        "iPadInternal": {
             "opened": [],
             "current": [],
             "historyActions": [["replace", "/developer-tools/state"]],

@@ -66,18 +66,39 @@ export class UIXCustomSidebarPanel extends HTMLElement {
     return (
       isInternalTarget &&
       this._panel?.config?.open_in_new_tab === true &&
-      window.matchMedia("(pointer: fine)").matches &&
+      this._isDesktopBrowser() &&
       !this._isCompanionApp()
+    );
+  }
+
+  private _isDesktopBrowser(): boolean {
+    const isIPadDesktopMode =
+      navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+    if (isIPadDesktopMode) {
+      return false;
+    }
+
+    const navigatorWithUserAgentData = navigator as Navigator & {
+      userAgentData?: { mobile?: boolean };
+    };
+    if (navigatorWithUserAgentData.userAgentData?.mobile === true) {
+      return false;
+    }
+
+    return !/Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile/i.test(
+      navigator.userAgent,
     );
   }
 
   private _isCompanionApp(): boolean {
     const companionWindow = window as Window & {
       externalApp?: unknown;
+      externalAppV2?: unknown;
       webkit?: { messageHandlers?: { externalBus?: unknown } };
     };
     return (
       companionWindow.externalApp !== undefined ||
+      companionWindow.externalAppV2 !== undefined ||
       companionWindow.webkit?.messageHandlers?.externalBus !== undefined
     );
   }
