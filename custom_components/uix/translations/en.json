@@ -161,10 +161,13 @@
                 "description": "Choose the icon and title to display in the sidebar, then enter a Home Assistant path or website URL.",
                 "data": {
                     "icon": "Icon",
-                    "open_in_new_tab": "Open in new tab",
+                    "open_in_new_tab": "Open in new tab (desktop only)",
                     "require_admin": "Admin required",
                     "title": "Title",
                     "target": "Target"
+                },
+                "data_description": {
+                    "open_in_new_tab": "Opens a Home Assistant path in a new desktop browser tab. It is ignored in the Companion app and for website URLs."
                 }
             },
             "edit_custom_sidebar_panel": {
@@ -179,10 +182,13 @@
                 "description": "Update this custom sidebar panel.",
                 "data": {
                     "icon": "Icon",
-                    "open_in_new_tab": "Open in new tab",
+                    "open_in_new_tab": "Open in new tab (desktop only)",
                     "require_admin": "Admin required",
                     "title": "Title",
                     "target": "Target"
+                },
+                "data_description": {
+                    "open_in_new_tab": "Opens a Home Assistant path in a new desktop browser tab. It is ignored in the Companion app and for website URLs."
                 }
             },
             "delete_custom_sidebar_panel": {

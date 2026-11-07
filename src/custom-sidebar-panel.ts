@@ -41,7 +41,7 @@ export class UIXCustomSidebarPanel extends HTMLElement {
       }
     }
 
-    if (this._panel?.config?.open_in_new_tab) {
+    if (this._shouldOpenInNewTab(isInternalTarget)) {
       if (this._openedTarget === target) {
         return;
       }
@@ -60,6 +60,47 @@ export class UIXCustomSidebarPanel extends HTMLElement {
     }
 
     this._navigateInCurrentTab(target, isInternalTarget);
+  }
+
+  private _shouldOpenInNewTab(isInternalTarget: boolean): boolean {
+    return (
+      isInternalTarget &&
+      this._panel?.config?.open_in_new_tab === true &&
+      this._isDesktopBrowser() &&
+      !this._isCompanionApp()
+    );
+  }
+
+  private _isDesktopBrowser(): boolean {
+    const isIPadDesktopMode =
+      navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+    if (isIPadDesktopMode) {
+      return false;
+    }
+
+    const navigatorWithUserAgentData = navigator as Navigator & {
+      userAgentData?: { mobile?: boolean };
+    };
+    if (navigatorWithUserAgentData.userAgentData?.mobile === true) {
+      return false;
+    }
+
+    return !/Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile/i.test(
+      navigator.userAgent,
+    );
+  }
+
+  private _isCompanionApp(): boolean {
+    const companionWindow = window as Window & {
+      externalApp?: unknown;
+      externalAppV2?: unknown;
+      webkit?: { messageHandlers?: { externalBus?: unknown } };
+    };
+    return (
+      companionWindow.externalApp !== undefined ||
+      companionWindow.externalAppV2 !== undefined ||
+      companionWindow.webkit?.messageHandlers?.externalBus !== undefined
+    );
   }
 
   private _navigateInCurrentTab(
