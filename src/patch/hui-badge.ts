@@ -1,5 +1,9 @@
 import { patch_element } from "../helpers/patch_function";
 import { ModdedElement, apply_uix } from "../helpers/apply_uix";
+import {
+  applyElementConfigDefaults,
+  registerElementConfigRebuild,
+} from "../helpers/element-config";
 
 const EXCLUDED_BADGES = [
   "entity-filter",
@@ -9,6 +13,21 @@ const EXCLUDED_BADGES = [
 class HuiBadgePatch extends ModdedElement {
   _element: ModdedElement;
   config;
+  _uixElementConfigSource;
+  _uixElementConfigRefresh = false;
+
+  _applyElementConfigDefaults() {
+    this._uixElementConfigSource ??= this.config;
+    registerElementConfigRebuild(this, (host: any) => {
+      host._uixElementConfigRefresh = true;
+      if (host._element) host._updateElement();
+      else host._loadElement();
+    });
+    if (this.config === this._uixElementConfigSource || this._uixElementConfigRefresh) {
+      this.config = applyElementConfigDefaults("badge", this._uixElementConfigSource);
+      this._uixElementConfigRefresh = false;
+    }
+  }
 
   async _add_uix() {
     if (!this._element) return;
@@ -27,12 +46,14 @@ class HuiBadgePatch extends ModdedElement {
     this._uix = this._element._uix;
   }
 
-  _loadElement(_orig, ...args) {
+  _loadElement(_orig?, ...args) {
+    this._applyElementConfigDefaults();
     _orig?.(...args);
     this._add_uix();
   }
 
-  _updateElement(_orig, ...args) {
+  _updateElement(_orig?, ...args) {
+    this._applyElementConfigDefaults();
     _orig?.(...args);
     this._add_uix();
   }

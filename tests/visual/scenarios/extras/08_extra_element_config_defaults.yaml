@@ -1,0 +1,226 @@
+id: extra_element_config_defaults
+description: "Static element configuration defaults are scoped by UIX type and apply to every supported dashboard boundary"
+view_path: extra-element-config-defaults
+
+dashboard:
+  views:
+    - type: sections
+      title: Element configuration defaults
+      path: extra-element-config-defaults
+      badges:
+        - type: entity
+          entity: sensor.carbon_dioxide_battery
+          show_name: true
+          name: [{ type: device }, { type: entity }]
+        - type: entity
+          entity: sensor.carbon_dioxide_battery
+          show_name: true
+      sections:
+        - type: grid
+          cards:
+            - type: heading
+              heading: Kitchen
+              badges:
+                - type: entity
+                  entity: sensor.carbon_dioxide_battery
+                  show_name: true
+                  name: [{ type: device }, { type: entity }]
+                - type: entity
+                  entity: sensor.carbon_dioxide_battery
+                  show_name: true
+            - type: tile
+              entity: sensor.carbon_dioxide_battery
+              name: [{ type: device }, { type: entity }]
+            - type: tile
+              entity: sensor.carbon_dioxide_battery
+            - type: entities
+              entities:
+                - entity: sensor.carbon_dioxide_battery
+                  name: [{ type: device }, { type: entity }]
+                - sensor.carbon_dioxide_battery
+            - type: picture-elements
+              image: /local/media/kitchen.jpg
+              elements:
+                - type: state-label
+                  entity: sensor.carbon_dioxide_battery
+                  name: [{ type: device }, { type: entity }]
+                  style:
+                    top: 50%
+                    left: 50%
+                - type: state-label
+                  entity: sensor.carbon_dioxide_battery
+                  style:
+                    top: 60%
+                    left: 50%
+
+setup:
+  - type: set_element_config
+    rules:
+      - uix_type: card
+        element_type: tile
+        config_key: name
+        value: { type: entity }
+      - uix_type: badge
+        element_type: entity
+        config_key: name
+        value: { type: entity }
+      - uix_type: heading-badge
+        element_type: entity
+        config_key: name
+        value: { type: entity }
+      - uix_type: row
+        element_type: entity
+        config_key: name
+        value: { type: entity }
+      - uix_type: element
+        element_type: state-label
+        config_key: name
+        value: { type: entity }
+  - type: wait
+    ms: 500
+
+interactions:
+  - type: assert
+    assertions:
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        occurrence: 1
+        property: _config.name.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        property: config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        property: config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        occurrence: 1
+        property: config.name.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        property: config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        property: config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        occurrence: 1
+        property: config.name.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        occurrence: 1
+        property: _config.name.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        occurrence: 1
+        property: _config.name.type
+        expected: entity
+  - type: snapshot
+    name: "75a_element_config_defaults_configured"
+    threshold: 0.02
+  - type: set_element_config
+    rules: []
+  - type: wait
+    ms: 500
+  - type: assert
+    assertions:
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-tile-card
+        occurrence: 1
+        property: _config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        property: config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        property: config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-badge
+        occurrence: 1
+        property: config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        property: config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        property: config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-heading-badge
+        occurrence: 1
+        property: config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-sensor-entity-row
+        occurrence: 1
+        property: _config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        property: _config.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        property: _config.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-state-label-element
+        occurrence: 1
+        property: _config.name
+        expected: undefined
+  - type: snapshot
+    name: "75b_element_config_defaults_cleared"
+    threshold: 0.02
