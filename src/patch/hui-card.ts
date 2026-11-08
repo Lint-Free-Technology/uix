@@ -19,7 +19,7 @@ class HuiCardPatch extends ModdedElement {
   _uixElementConfigSource;
   _uixElementConfigGenerated;
 
-  _applyElementConfigDefaults(config = this.config) {
+  _applyElementConfigDefaults(_orig?, config = this.config) {
     if (config && config !== this._uixElementConfigGenerated) {
       this._uixElementConfigSource = config;
     }
