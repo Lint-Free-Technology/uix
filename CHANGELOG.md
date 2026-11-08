@@ -1,3 +1,11 @@
+## [9.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.1...v9.1.0-beta.2) (2026-11-08)
+
+
+### ⭐ New Features
+
+* Add glance uix_type to element configuration defaults to allow to set defaults for glance ([#705](https://github.com/Lint-Free-Technology/uix/issues/705)) ([0c09117](https://github.com/Lint-Free-Technology/uix/commit/0c09117ef5af41c0eeb81831e13183bfb7f3d6a0))
+* Allow dotted paths for config_key for element config defaults ([#706](https://github.com/Lint-Free-Technology/uix/issues/706)) ([e28976f](https://github.com/Lint-Free-Technology/uix/commit/e28976f96db019e009c4c604e80c0885c1b3ea67))
+
 ## [9.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.0...v9.1.0-beta.1) (2026-11-08)
 
 
