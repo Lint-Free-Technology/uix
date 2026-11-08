@@ -24,7 +24,8 @@ def test_element_config_defaults_are_scoped_and_preserve_source() -> None:
                 "  { uix_type: 'glance', element_type: 'entity', config_key: 'name', value: { type: 'entity' } },"
                 "  { uix_type: 'glance', element_type: 'entity', config_key: 'tap_action', value: { action: 'more-info' } },"
                 "  { uix_type: 'badge', element_type: 'entity', config_key: 'name', value: { type: 'device' } },"
-                "  { uix_type: 'card', element_type: 'tile', config_key: 'name', value: { type: 'entity' } }"
+                "  { uix_type: 'card', element_type: 'tile', config_key: 'name', value: { type: 'entity' } },"
+                "  { uix_type: 'row', element_type: 'custom:fold-entity-row', config_key: 'group_config.name', value: { type: 'entity' } }"
                 "] }, addEventListener: () => {}, removeEventListener: () => {} };"
                 "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
                 "const { applyElementConfigDefaults, applyEntityRowConfigDefaults, applyGlanceCardConfigDefaults } = moduleObj.exports;"
@@ -35,8 +36,13 @@ def test_element_config_defaults_are_scoped_and_preserve_source() -> None:
                 "const explicit = applyElementConfigDefaults('row', { entity: 'sensor.kitchen_temperature', name: null }, 'entity');"
                 "const glanceSource = { type: 'glance', entities: ['sensor.kitchen_temperature', { entity: 'sensor.kitchen_temperature', name: 'Kitchen', tap_action: null }] };"
                 "const glance = applyGlanceCardConfigDefaults(glanceSource);"
+                "const foldSource = { type: 'custom:fold-entity-row', group_config: { secondary_info: 'last_changed' } };"
+                "const fold = applyElementConfigDefaults('row', foldSource);"
+                "const explicitFold = applyElementConfigDefaults('row', { type: 'custom:fold-entity-row', group_config: { name: null } });"
+                "const blockedFold = applyElementConfigDefaults('row', { type: 'custom:fold-entity-row', group_config: null });"
+                "const arrayFold = applyElementConfigDefaults('row', { type: 'custom:fold-entity-row', group_config: [] });"
                 "const unmatched = applyElementConfigDefaults('element', { type: 'state-label' });"
-                "process.stdout.write(JSON.stringify({ sourceConfig, card, badge, row, explicit, glanceSource, glance, sameUnmatched: unmatched.type === 'state-label' }));"
+                "process.stdout.write(JSON.stringify({ sourceConfig, card, badge, row, explicit, glanceSource, glance, foldSource, fold, explicitFold, blockedFold, arrayFold, sameUnmatched: unmatched.type === 'state-label' }));"
             ),
             str(ELEMENT_CONFIG_TS_PATH),
         ],
@@ -72,4 +78,15 @@ def test_element_config_defaults_are_scoped_and_preserve_source() -> None:
             "tap_action": None,
         },
     ]
+    assert result["foldSource"] == {
+        "type": "custom:fold-entity-row",
+        "group_config": {"secondary_info": "last_changed"},
+    }
+    assert result["fold"]["group_config"] == {
+        "secondary_info": "last_changed",
+        "name": {"type": "entity"},
+    }
+    assert result["explicitFold"]["group_config"] == {"name": None}
+    assert result["blockedFold"]["group_config"] is None
+    assert result["arrayFold"]["group_config"] == []
     assert result["sameUnmatched"] is True

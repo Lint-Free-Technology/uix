@@ -60,7 +60,8 @@ from .helpers import validate_broker_file, validate_foundry_file
 
 
 ELEMENT_CONFIG_UIX_TYPES = frozenset({"card", "badge", "heading-badge", "row", "glance", "element"})
-ELEMENT_CONFIG_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
+ELEMENT_CONFIG_PATH_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*(?:\.[A-Za-z_][A-Za-z0-9_-]*)*$")
+UNSAFE_ELEMENT_CONFIG_PATH_SEGMENTS = frozenset({"__proto__", "constructor", "prototype"})
 TEMPLATE_TOKENS = ("{{", "}}", "{%", "%}", "{#", "#}")
 
 ELEMENT_CONFIG_TYPE_SELECTOR = SelectSelector(
@@ -94,7 +95,7 @@ ELEMENT_CONFIG_SELECTOR = ObjectSelector(
                 "selector": TextSelector(),
             },
             "config_key": {
-                "label": "Configuration key to set default value",
+                "label": "Configuration key or object path to set default value",
                 "required": True,
                 "selector": TextSelector(),
             },
@@ -128,7 +129,7 @@ def _is_static_element_config_value(value: Any) -> bool:
 def _valid_element_config_rules(value: Any) -> bool:
     if not isinstance(value, list):
         return False
-    seen: set[tuple[str, str, str]] = set()
+    seen: dict[tuple[str, str], set[str]] = {}
     for rule in value:
         if not isinstance(rule, dict):
             return False
@@ -141,16 +142,22 @@ def _valid_element_config_rules(value: Any) -> bool:
             or not isinstance(element_type, str)
             or not element_type
             or not isinstance(config_key, str)
-            or not ELEMENT_CONFIG_KEY_RE.fullmatch(config_key)
-            or config_key in {"__proto__", "constructor", "prototype"}
+            or not ELEMENT_CONFIG_PATH_RE.fullmatch(config_key)
+            or any(segment in UNSAFE_ELEMENT_CONFIG_PATH_SEGMENTS for segment in config_key.split("."))
             or "value" not in rule
             or not _is_static_element_config_value(rule["value"])
         ):
             return False
-        key = (uix_type, element_type, config_key)
-        if key in seen:
+        target = (uix_type, element_type)
+        paths = seen.setdefault(target, set())
+        if any(
+            config_key == path
+            or config_key.startswith(f"{path}.")
+            or path.startswith(f"{config_key}.")
+            for path in paths
+        ):
             return False
-        seen.add(key)
+        paths.add(config_key)
     return True
 
 
