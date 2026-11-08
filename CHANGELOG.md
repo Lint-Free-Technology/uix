@@ -1,3 +1,10 @@
+## [9.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.0...v9.1.0-beta.1) (2026-11-08)
+
+
+### ⭐ New Features
+
+* add dashboard element configuration defaults ([#704](https://github.com/Lint-Free-Technology/uix/issues/704)) ([930ba26](https://github.com/Lint-Free-Technology/uix/commit/930ba263e43a3b61285c8a22e4f74df1cbcf10e3))
+
 ## [9.1.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0...v9.1.0-beta.0) (2026-11-07)
 
 
