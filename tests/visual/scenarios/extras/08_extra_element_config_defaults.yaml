@@ -76,10 +76,9 @@ setup:
         element_type: state-label
         config_key: name
         value: { type: entity }
+interactions:
   - type: wait
     ms: 500
-
-interactions:
   - type: assert
     assertions:
       - type: shadow_dom_host_property_text_equals

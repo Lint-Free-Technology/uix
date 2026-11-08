@@ -17,11 +17,19 @@ class HuiCardPatch extends ModdedElement {
   _element: ModdedElement;
   config;
   _uixElementConfigSource;
+  _uixElementConfigGenerated;
 
-  setConfig(_orig, config, ...args) {
-    this._uixElementConfigSource = config;
-    registerElementConfigRebuild(this, (host: any) => host.setConfig(host._uixElementConfigSource));
-    _orig?.(applyElementConfigDefaults("card", config), ...args);
+  _applyElementConfigDefaults(config = this.config) {
+    if (config && config !== this._uixElementConfigGenerated) {
+      this._uixElementConfigSource = config;
+    }
+    registerElementConfigRebuild(this, (host: any) => {
+      if (host._element) host._updateElement(host._uixElementConfigSource);
+      else host.load();
+    });
+    const generatedConfig = applyElementConfigDefaults("card", this._uixElementConfigSource);
+    this._uixElementConfigGenerated = generatedConfig;
+    return generatedConfig;
   }
 
   async _add_uix() {
@@ -51,8 +59,13 @@ class HuiCardPatch extends ModdedElement {
     );
   }
 
-  _loadElement(_orig, ...args) {
-    _orig?.(...args);
+  _loadElement(_orig, config, ...args) {
+    _orig?.(this._applyElementConfigDefaults(config ?? this.config), ...args);
+    this._add_uix();
+  }
+
+  _updateElement(_orig, config, ...args) {
+    _orig?.(this._applyElementConfigDefaults(config ?? this.config), ...args);
     this._add_uix();
   }
 }
