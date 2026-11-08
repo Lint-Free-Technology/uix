@@ -3,6 +3,7 @@ export const ELEMENT_CONFIG_UIX_TYPES = [
   "badge",
   "heading-badge",
   "row",
+  "glance",
   "element",
 ] as const;
 
@@ -84,21 +85,53 @@ export function applyElementConfigDefaults(
   return result;
 }
 
-/**
- * Entity rows may be represented as a compact entity-id string. Only expand
- * that shorthand when a matching row/entity default exists.
- */
-export function applyEntityRowConfigDefaults(config: any): any {
+/** Expand entity shorthand only when a matching boundary default exists. */
+function applyEntityConfigDefaults(
+  uixType: "row" | "glance",
+  config: any,
+): any {
   if (!hasElementConfigDefaults()) return config;
   if (typeof config === "string") {
     const expanded = { entity: config };
-    const result = applyElementConfigDefaults("row", expanded, "entity");
+    const result = applyElementConfigDefaults(uixType, expanded, "entity");
     return result === expanded ? config : result;
   }
   const implicitType = config && typeof config === "object" && "entity" in config && typeof config.type !== "string"
     ? "entity"
     : undefined;
-  return applyElementConfigDefaults("row", config, implicitType);
+  return applyElementConfigDefaults(uixType, config, implicitType);
+}
+
+/**
+ * Entity rows may be represented as a compact entity-id string. Only expand
+ * that shorthand when a matching row/entity default exists.
+ */
+export function applyEntityRowConfigDefaults(config: any): any {
+  return applyEntityConfigDefaults("row", config);
+}
+
+/** Apply defaults to one Glance entity before Home Assistant renders it. */
+export function applyGlanceEntityConfigDefaults(config: any): any {
+  return applyEntityConfigDefaults("glance", config);
+}
+
+/**
+ * Add defaults to Glance's nested entity configs while retaining the original
+ * card config and entity array whenever no matching default applies.
+ */
+export function applyGlanceCardConfigDefaults(config: any): any {
+  if (!hasElementConfigDefaults()) return config;
+  if (!config || !Array.isArray(config.entities)) return config;
+
+  let entities = config.entities;
+  for (let i = 0; i < config.entities.length; i++) {
+    const entity = applyGlanceEntityConfigDefaults(config.entities[i]);
+    if (entity !== config.entities[i]) {
+      if (entities === config.entities) entities = [...config.entities];
+      entities[i] = entity;
+    }
+  }
+  return entities === config.entities ? config : { ...config, entities };
 }
 
 interface ElementConfigRebuildRegistration {

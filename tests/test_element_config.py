@@ -21,18 +21,22 @@ def test_element_config_defaults_are_scoped_and_preserve_source() -> None:
                 "const moduleObj = { exports: {} };"
                 "global.window = { uixCoordinator: { elementConfig: ["
                 "  { uix_type: 'row', element_type: 'entity', config_key: 'name', value: { type: 'entity' } },"
+                "  { uix_type: 'glance', element_type: 'entity', config_key: 'name', value: { type: 'entity' } },"
+                "  { uix_type: 'glance', element_type: 'entity', config_key: 'tap_action', value: { action: 'more-info' } },"
                 "  { uix_type: 'badge', element_type: 'entity', config_key: 'name', value: { type: 'device' } },"
                 "  { uix_type: 'card', element_type: 'tile', config_key: 'name', value: { type: 'entity' } }"
                 "] }, addEventListener: () => {}, removeEventListener: () => {} };"
                 "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
-                "const { applyElementConfigDefaults, applyEntityRowConfigDefaults } = moduleObj.exports;"
+                "const { applyElementConfigDefaults, applyEntityRowConfigDefaults, applyGlanceCardConfigDefaults } = moduleObj.exports;"
                 "const sourceConfig = { type: 'tile', entity: 'sensor.kitchen_temperature' };"
                 "const card = applyElementConfigDefaults('card', sourceConfig);"
                 "const badge = applyElementConfigDefaults('badge', { type: 'entity', entity: 'sensor.kitchen_temperature' });"
                 "const row = applyEntityRowConfigDefaults('sensor.kitchen_temperature');"
                 "const explicit = applyElementConfigDefaults('row', { entity: 'sensor.kitchen_temperature', name: null }, 'entity');"
+                "const glanceSource = { type: 'glance', entities: ['sensor.kitchen_temperature', { entity: 'sensor.kitchen_temperature', name: 'Kitchen', tap_action: null }] };"
+                "const glance = applyGlanceCardConfigDefaults(glanceSource);"
                 "const unmatched = applyElementConfigDefaults('element', { type: 'state-label' });"
-                "process.stdout.write(JSON.stringify({ sourceConfig, card, badge, row, explicit, sameUnmatched: unmatched.type === 'state-label' }));"
+                "process.stdout.write(JSON.stringify({ sourceConfig, card, badge, row, explicit, glanceSource, glance, sameUnmatched: unmatched.type === 'state-label' }));"
             ),
             str(ELEMENT_CONFIG_TS_PATH),
         ],
@@ -49,4 +53,23 @@ def test_element_config_defaults_are_scoped_and_preserve_source() -> None:
         "name": {"type": "entity"},
     }
     assert result["explicit"]["name"] is None
+    assert result["glanceSource"] == {
+        "type": "glance",
+        "entities": [
+            "sensor.kitchen_temperature",
+            {"entity": "sensor.kitchen_temperature", "name": "Kitchen", "tap_action": None},
+        ],
+    }
+    assert result["glance"]["entities"] == [
+        {
+            "entity": "sensor.kitchen_temperature",
+            "name": {"type": "entity"},
+            "tap_action": {"action": "more-info"},
+        },
+        {
+            "entity": "sensor.kitchen_temperature",
+            "name": "Kitchen",
+            "tap_action": None,
+        },
+    ]
     assert result["sameUnmatched"] is True

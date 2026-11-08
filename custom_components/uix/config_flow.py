@@ -59,7 +59,7 @@ from .custom_sidebar_panel import (
 from .helpers import validate_broker_file, validate_foundry_file
 
 
-ELEMENT_CONFIG_UIX_TYPES = frozenset({"card", "badge", "heading-badge", "row", "element"})
+ELEMENT_CONFIG_UIX_TYPES = frozenset({"card", "badge", "heading-badge", "row", "glance", "element"})
 ELEMENT_CONFIG_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 TEMPLATE_TOKENS = ("{{", "}}", "{%", "%}", "{#", "#}")
 
@@ -70,6 +70,7 @@ ELEMENT_CONFIG_TYPE_SELECTOR = SelectSelector(
             {"value": "badge", "label": "Badge"},
             {"value": "heading-badge", "label": "Heading badge"},
             {"value": "row", "label": "Entity row"},
+            {"value": "glance", "label": "Glance entity"},
             {"value": "element", "label": "Picture element"},
         ],
         mode=SelectSelectorMode.DROPDOWN,

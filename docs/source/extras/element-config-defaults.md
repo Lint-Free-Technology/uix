@@ -27,7 +27,7 @@ Each rule has four keys:
 
 | Key | Description |
 | --- | --- |
-| `uix_type` | The UIX boundary: `card`, `badge`, `heading-badge`, `row`, or `element`. |
+| `uix_type` | The UIX boundary: `card`, `badge`, `heading-badge`, `row`, `glance`, or `element`. |
 | `element_type` | The Home Assistant config `type` to match, such as `tile` or `entity`. |
 | `config_key` | A missing top-level key to add. Nested paths are not supported. |
 | `value` | The static value to use. |
@@ -44,6 +44,10 @@ element_config:
     element_type: entity
     config_key: name
     value: { type: entity }
+  - uix_type: glance
+    element_type: entity
+    config_key: name
+    value: { type: entity }
   - uix_type: badge
     element_type: entity
     config_key: name
@@ -54,8 +58,8 @@ element_config:
 
 UIX only adds a value when the key is absent. Any explicit value, including `null`, `false`, an empty string, an empty list, or an empty map, wins over the global default.
 
-Entity rows support both the normal mapping form and Home Assistant's compact string form. For a matching `row`/`entity` rule, `- sensor.kitchen_temperature` is temporarily passed to Home Assistant as an entity-row mapping with the configured value. The dashboard source remains the compact string.
+Entity rows and Glance entities support both the normal mapping form and Home Assistant's compact string form. For a matching `row`/`entity` or `glance`/`entity` rule, `- sensor.kitchen_temperature` is temporarily passed to Home Assistant as an entity mapping with the configured value. The dashboard source remains the compact string.
 
-Values are static. UIX does not process Jinja templates, UIX templates, macros, or billets in an element configuration default. Rules apply to direct card, badge, heading-badge, entities-card row, and picture-element configuration boundaries, including matching native elements rendered by UIX Forge. Dialogs, card features, map markers, and nested configuration paths are not included.
+Values are static. UIX does not process Jinja templates, UIX templates, macros, or billets in an element configuration default. Rules apply to direct card, badge, heading-badge, entities-card row, Glance entity, and picture-element configuration boundaries, including matching native elements rendered by UIX Forge. Glance entities are the supported nested configuration exception; other nested paths, dialogs, card features, and map markers are not included.
 
 Changes apply to connected dashboards when the UIX configuration update arrives. UIX rebuilds only the affected configuration boundary from its original dashboard config; it does not save generated values into your dashboard.
