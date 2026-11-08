@@ -1,3 +1,10 @@
+## [9.1.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0...v9.1.0-beta.0) (2026-11-07)
+
+
+### ⭐ New Features
+
+* limit custom sidebar tabs to desktop ([#702](https://github.com/Lint-Free-Technology/uix/issues/702)) ([1d53592](https://github.com/Lint-Free-Technology/uix/commit/1d53592b241ec8666b34d67056671bb37d1c2a1f))
+
 ## [9.0.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v9.0.0) (2026-11-04)
 
 
