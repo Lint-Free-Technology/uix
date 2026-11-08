@@ -12,17 +12,22 @@ class HuiBadgePatch extends ModdedElement {
   _element: ModdedElement;
   config;
   _uixElementConfigSource;
+  _uixElementConfigGenerated;
   _uixElementConfigRefresh = false;
 
   _applyElementConfigDefaults() {
-    this._uixElementConfigSource ??= this.config;
+    if (this.config !== this._uixElementConfigGenerated) {
+      this._uixElementConfigSource = this.config;
+    }
     registerElementConfigRebuild(this, (host: any) => {
       host._uixElementConfigRefresh = true;
       if (host._element) host._updateElement();
       else host._loadElement();
     });
     if (this.config === this._uixElementConfigSource || this._uixElementConfigRefresh) {
-      this.config = applyElementConfigDefaults("heading-badge", this._uixElementConfigSource);
+      const generatedConfig = applyElementConfigDefaults("heading-badge", this._uixElementConfigSource);
+      this._uixElementConfigGenerated = generatedConfig;
+      this.config = generatedConfig;
       this._uixElementConfigRefresh = false;
     }
   }

@@ -135,7 +135,8 @@ def _valid_element_config_rules(value: Any) -> bool:
         element_type = rule.get("element_type")
         config_key = rule.get("config_key")
         if (
-            uix_type not in ELEMENT_CONFIG_UIX_TYPES
+            not isinstance(uix_type, str)
+            or uix_type not in ELEMENT_CONFIG_UIX_TYPES
             or not isinstance(element_type, str)
             or not element_type
             or not isinstance(config_key, str)
