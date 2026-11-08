@@ -52,6 +52,16 @@ dashboard:
                   style:
                     top: 60%
                     left: 50%
+        - type: grid
+          cards:
+            - type: heading
+              heading: Glance entities
+            - type: glance
+              title: Kitchen
+              entities:
+                - entity: sensor.carbon_dioxide_battery
+                  name: [{ type: device }, { type: entity }]
+                - sensor.carbon_dioxide_battery
 
 setup:
   - type: set_element_config
@@ -69,6 +79,10 @@ setup:
         config_key: name
         value: { type: entity }
       - uix_type: row
+        element_type: entity
+        config_key: name
+        value: { type: entity }
+      - uix_type: glance
         element_type: entity
         config_key: name
         value: { type: entity }
@@ -146,6 +160,18 @@ interactions:
         occurrence: 1
         property: _config.name.type
         expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.0.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.0.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.1.name.type
+        expected: entity
   - type: snapshot
     name: "75a_element_config_defaults_configured"
     threshold: 0.02
@@ -219,6 +245,18 @@ interactions:
         selector: hui-state-label-element
         occurrence: 1
         property: _config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.0.name.0.type
+        expected: device
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.0.name.1.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: hui-glance-card
+        property: _configEntities.1.name
         expected: undefined
   - type: snapshot
     name: "75b_element_config_defaults_cleared"
