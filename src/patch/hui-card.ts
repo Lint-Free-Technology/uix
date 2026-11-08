@@ -2,6 +2,10 @@ import { patch_element } from "../helpers/patch_function";
 
 import { apply_uix } from "../helpers/apply_uix";
 import { ModdedElement } from "../helpers/apply_uix";
+import {
+  applyElementConfigDefaults,
+  registerElementConfigRebuild,
+} from "../helpers/element-config";
 
 const EXCLUDED_CARDS = [
   "conditional",
@@ -12,6 +16,21 @@ class HuiCardPatch extends ModdedElement {
   _uix = [];
   _element: ModdedElement;
   config;
+  _uixElementConfigSource;
+  _uixElementConfigGenerated;
+
+  _applyElementConfigDefaults(_orig?, config = this.config) {
+    if (config && config !== this._uixElementConfigGenerated) {
+      this._uixElementConfigSource = config;
+    }
+    registerElementConfigRebuild(this, (host: any) => {
+      if (host._element) host._updateElement(host._uixElementConfigSource);
+      else host.load();
+    });
+    const generatedConfig = applyElementConfigDefaults("card", this._uixElementConfigSource);
+    this._uixElementConfigGenerated = generatedConfig;
+    return generatedConfig;
+  }
 
   async _add_uix() {
     if (!this._element) return;
@@ -40,8 +59,13 @@ class HuiCardPatch extends ModdedElement {
     );
   }
 
-  _loadElement(_orig, ...args) {
-    _orig?.(...args);
+  _loadElement(_orig, config, ...args) {
+    _orig?.(this._applyElementConfigDefaults(config ?? this.config), ...args);
+    this._add_uix();
+  }
+
+  _updateElement(_orig, config, ...args) {
+    _orig?.(this._applyElementConfigDefaults(config ?? this.config), ...args);
     this._add_uix();
   }
 }

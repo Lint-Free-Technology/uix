@@ -28,6 +28,7 @@ from .const import (
     WS_RELOAD_BROKER_FILES,
     WS_CHECK_BROKER_FILES,
     CONF_FOUNDRIES,
+    CONF_ELEMENT_CONFIG,
     CONF_UIX_BROKER,
     CONF_UIX_BROKER_FILES,
     CONF_FOUNDRY_FILES,
@@ -77,6 +78,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                     disable_entity_picture_image_override = False
                     always_patch_ha_card = False
                     style_frame_panels = False
+                    element_config: list[dict] = []
                     uix_broker: list[dict] = []
                     uix_broker_files: list[str] = []
                     if entries:
@@ -93,6 +95,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                             CONF_STYLE_FRAME_PANELS,
                             entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False),
                         )
+                        element_config = list(entries[0].options.get(CONF_ELEMENT_CONFIG, []))
                         uix_broker = list(entries[0].options.get(CONF_UIX_BROKER, []))
                         uix_broker_files = list(entries[0].options.get(CONF_UIX_BROKER_FILES, []))
                     send_update({
@@ -106,6 +109,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                         CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
                         CONF_STYLE_FRAME_PANELS: style_frame_panels,
                         CONF_STYLE_CUSTOM_PANELS: style_frame_panels,
+                        CONF_ELEMENT_CONFIG: element_config,
                         CONF_UIX_BROKER: await hass.async_add_executor_job(
                             get_all_broker_configs, hass, uix_broker, uix_broker_files
                         ),
@@ -134,6 +138,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
         disable_entity_picture_image_override = False
         always_patch_ha_card = False
         style_frame_panels = False
+        element_config: list[dict] = []
         uix_broker: list[dict] = []
         uix_broker_files: list[str] = []
         if entries:
@@ -150,6 +155,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
                 CONF_STYLE_FRAME_PANELS,
                 entries[0].options.get(CONF_STYLE_CUSTOM_PANELS, False),
             )
+            element_config = list(entries[0].options.get(CONF_ELEMENT_CONFIG, []))
             uix_broker = list(entries[0].options.get(CONF_UIX_BROKER, []))
             uix_broker_files = list(entries[0].options.get(CONF_UIX_BROKER_FILES, []))
         send_update({
@@ -163,6 +169,7 @@ async def async_setup_connection(hass: HomeAssistant) -> None:
             CONF_ALWAYS_PATCH_HA_CARD: always_patch_ha_card,
             CONF_STYLE_FRAME_PANELS: style_frame_panels,
             CONF_STYLE_CUSTOM_PANELS: style_frame_panels,
+            CONF_ELEMENT_CONFIG: element_config,
             CONF_UIX_BROKER: await hass.async_add_executor_job(
                 get_all_broker_configs, hass, uix_broker, uix_broker_files
             ),

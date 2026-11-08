@@ -11,9 +11,6 @@ Enable **Admin required** to restrict the sidebar panel to administrator account
 
 Targets can be either a Home Assistant navigation path beginning with `/`, such as `/config/dashboard`, or an absolute `http` or `https` URL. Other URL schemes are not accepted.
 
-!!! info
-    Open in new tab (desktop only) available in 9.1.0-beta.0
-
 Enable **Open in new tab (desktop only)** to open a Home Assistant navigation path in a separate tab on desktop browsers. The current Home Assistant tab returns to the page you were viewing. In the Companion app, UIX instead navigates to the path within the app. Website URLs never use this option because they cannot open inside the Companion app.
 
 !!! note "New-tab availability"

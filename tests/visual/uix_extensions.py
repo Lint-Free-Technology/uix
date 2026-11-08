@@ -97,6 +97,7 @@ set_theme_file
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -104,6 +105,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 from ha_testcontainer.visual.scenario_runner import (
     _write_config_file,
+    register_assertion_type,
     register_interaction_type,
 )
 
@@ -491,6 +493,84 @@ def _webhook(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -
         json=payload,
     ).raise_for_status()
 
+
+def _set_element_config(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Make static element-config rules available before dashboard construction."""
+    if page is None:
+        raise ValueError("set_element_config interaction requires a browser page")
+    rules = interaction["rules"]
+    if not page.evaluate("Boolean(window.uixCoordinator)"):
+        rules_json = json.dumps(rules)
+        page.add_init_script(
+            f"""
+            (() => {{
+              const rules = {rules_json};
+              window.addEventListener("uix-bootstrap", () => {{
+                queueMicrotask(() => {{
+                  const coordinator = window.uixCoordinator;
+                  coordinator?.addEventListener("uix-config-update", () => {{
+                    coordinator._data = coordinator._data || {{}};
+                    coordinator._data.element_config = rules;
+                    window.dispatchEvent(new Event("uix-element-config-update"));
+                  }}, {{ once: true }});
+                }});
+              }}, {{ once: true }});
+            }})();
+            """
+        )
+        return
+    page.evaluate(
+        """(rules) => {
+          window.uixCoordinator._data = window.uixCoordinator._data || {};
+          window.uixCoordinator._data.element_config = rules;
+          window.dispatchEvent(new Event("uix-element-config-update"));
+        }""",
+        rules,
+    )
+
+
+def _shadow_dom_host_property_text_equals(page: "Page | None", assertion: dict[str, Any]) -> None:
+    """Assert a nested property on a host found across open shadow roots."""
+    if page is None:
+        raise ValueError("shadow_dom_host_property_text_equals requires a browser page")
+    result = page.evaluate(
+        """({ selector, property, occurrence = 0 }) => {
+          const matches = [];
+          const collect = (root) => {
+            matches.push(...root.querySelectorAll(selector));
+            for (const child of root.querySelectorAll("*")) {
+              if (child.shadowRoot) collect(child.shadowRoot);
+            }
+          };
+          collect(document);
+          const element = matches[occurrence];
+          if (!element) {
+            const tags = new Set();
+            const collectTags = (root) => {
+              for (const child of root.querySelectorAll("*")) {
+                if (child.localName.includes("badge")) tags.add(child.localName);
+                if (child.shadowRoot) collectTags(child.shadowRoot);
+              }
+            };
+            collectTags(document);
+            return { error: `Element ${occurrence + 1} not found: ${selector}; badge tags: ${[...tags].join(", ") || "none"}` };
+          }
+          const value = property.split(".").reduce((current, key) => current?.[key], element);
+          return { value: value == null ? String(value) : String(value) };
+        }""",
+        {
+            "selector": assertion["selector"],
+            "property": assertion["property"],
+            "occurrence": assertion.get("occurrence", 0),
+        },
+    )
+    if "error" in result:
+        raise AssertionError(result["error"])
+    assert result["value"] == str(assertion["expected"]), (
+        f"Property {assertion['property']!r} on {assertion['selector']!r}: "
+        f"expected {assertion['expected']!r}, got {result['value']!r}"
+    )
+
 # ---------------------------------------------------------------------------
 # Registration — executed at import time
 # ---------------------------------------------------------------------------
@@ -506,3 +586,5 @@ register_interaction_type("reload_broker_files", _reload_broker_files)
 register_interaction_type("set_theme_file", _set_theme_file)
 register_interaction_type("mock_history", _mock_history)
 register_interaction_type("webhook", _webhook)
+register_interaction_type("set_element_config", _set_element_config)
+register_assertion_type("shadow_dom_host_property_text_equals", _shadow_dom_host_property_text_equals)
