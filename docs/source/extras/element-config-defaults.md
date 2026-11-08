@@ -56,6 +56,6 @@ UIX only adds a value when the key is absent. Any explicit value, including `nul
 
 Entity rows support both the normal mapping form and Home Assistant's compact string form. For a matching `row`/`entity` rule, `- sensor.kitchen_temperature` is temporarily passed to Home Assistant as an entity-row mapping with the configured value. The dashboard source remains the compact string.
 
-Values are static. UIX does not process Jinja templates, UIX templates, macros, or billets in an element configuration default. Rules apply to direct card, badge, heading-badge, entities-card row, and picture-element configuration boundaries. UIX Forge internals, dialogs, card features, map markers, and nested configuration paths are not included.
+Values are static. UIX does not process Jinja templates, UIX templates, macros, or billets in an element configuration default. Rules apply to direct card, badge, heading-badge, entities-card row, and picture-element configuration boundaries, including matching native elements rendered by UIX Forge. Dialogs, card features, map markers, and nested configuration paths are not included.
 
 Changes apply to connected dashboards when the UIX configuration update arrives. UIX rebuilds only the affected configuration boundary from its original dashboard config; it does not save generated values into your dashboard.
