@@ -17,8 +17,18 @@ export interface ElementConfigRule {
 }
 
 const hasOwn = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
-const isSafeConfigKey = (key: string): boolean => (
-  /^[A-Za-z_][A-Za-z0-9_-]*$/.test(key) && !["__proto__", "constructor", "prototype"].includes(key)
+const CONFIG_PATH_SEGMENT_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+const UNSAFE_CONFIG_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
+
+function configPath(configKey: string): string[] | undefined {
+  const path = configKey.split(".");
+  return path.every((segment) => (
+    CONFIG_PATH_SEGMENT_RE.test(segment) && !UNSAFE_CONFIG_PATH_SEGMENTS.has(segment)
+  )) ? path : undefined;
+}
+
+const isConfigMap = (value: any): value is Record<string, any> => (
+  Boolean(value) && typeof value === "object" && !Array.isArray(value)
 );
 
 function cloneStaticValue(value: any): any {
@@ -38,7 +48,7 @@ function isRule(value: any): value is ElementConfigRule {
     ELEMENT_CONFIG_UIX_TYPES.includes(value.uix_type) &&
     typeof value.element_type === "string" &&
     typeof value.config_key === "string" &&
-    isSafeConfigKey(value.config_key)
+    Boolean(configPath(value.config_key))
   );
 }
 
@@ -56,14 +66,54 @@ export function elementConfigRules(): ElementConfigRule[] {
   if (!Array.isArray(rules) || !rules.length) return [];
   if (rules === cachedRulesSource) return cachedRules;
   cachedRulesSource = rules;
-  cachedRules = rules.filter(isRule);
+  const pathsByTarget = new Map<string, string[]>();
+  cachedRules = rules.filter((rule): rule is ElementConfigRule => {
+    if (!isRule(rule)) return false;
+    const target = `${rule.uix_type}\u0000${rule.element_type}`;
+    const paths = pathsByTarget.get(target) ?? [];
+    if (paths.some((path) => (
+      rule.config_key === path
+      || rule.config_key.startsWith(`${path}.`)
+      || path.startsWith(`${rule.config_key}.`)
+    ))) return false;
+    paths.push(rule.config_key);
+    pathsByTarget.set(target, paths);
+    return true;
+  });
   return cachedRules;
+}
+
+function buildDefaultConfigPath(path: string[], value: unknown): Record<string, any> {
+  const [segment, ...remaining] = path;
+  return {
+    [segment]: remaining.length ? buildDefaultConfigPath(remaining, value) : cloneStaticValue(value),
+  };
+}
+
+/**
+ * Add one missing default at a safe object path. Existing leaf values and
+ * non-object intermediate values are explicit configuration and always win.
+ */
+function addDefaultAtConfigPath(config: Record<string, any>, path: string[], value: unknown): Record<string, any> {
+  const [segment, ...remaining] = path;
+  if (!remaining.length) {
+    return hasOwn(config, segment) ? config : { ...config, [segment]: cloneStaticValue(value) };
+  }
+
+  if (!hasOwn(config, segment)) {
+    return { ...config, ...buildDefaultConfigPath(path, value) };
+  }
+
+  const child = config[segment];
+  if (!isConfigMap(child)) return config;
+  const updatedChild = addDefaultAtConfigPath(child, remaining, value);
+  return updatedChild === child ? config : { ...config, [segment]: updatedChild };
 }
 
 /**
  * Add static global defaults to a native Lovelace config without ever changing
- * the dashboard-owned source object. An explicit key, including null or false,
- * always wins over a global default.
+ * the dashboard-owned source object. An explicit key or path value, including
+ * null or false, always wins over a global default.
  */
 export function applyElementConfigDefaults(
   uixType: ElementConfigUixType,
@@ -78,9 +128,10 @@ export function applyElementConfigDefaults(
 
   let result = config;
   for (const rule of elementConfigRules()) {
-    if (rule.uix_type !== uixType || rule.element_type !== elementType || hasOwn(result, rule.config_key)) continue;
-    if (result === config) result = { ...config };
-    result[rule.config_key] = cloneStaticValue(rule.value);
+    if (rule.uix_type !== uixType || rule.element_type !== elementType) continue;
+    const path = configPath(rule.config_key);
+    if (!path) continue;
+    result = addDefaultAtConfigPath(result, path, rule.value);
   }
   return result;
 }

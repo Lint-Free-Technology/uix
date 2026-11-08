@@ -23,6 +23,10 @@
   asset: template-entity-row.js
   filename: template-entity-row.js
 
+- repo: Lint-Free-Technology/lovelace-fold-entity-row
+  asset: fold-entity-row.js
+  filename: fold-entity-row.js
+
 - repo: MelleD/lovelace-expander-card
   asset: expander-card.js
   filename: expander-card.js

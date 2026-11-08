@@ -38,6 +38,15 @@ dashboard:
                 - entity: sensor.carbon_dioxide_battery
                   name: [{ type: device }, { type: entity }]
                 - sensor.carbon_dioxide_battery
+                - type: custom:fold-entity-row
+                  open: true
+                  head:
+                    type: section
+                    label: Path defaults
+                  group_config:
+                    secondary_info: last_changed
+                  entities:
+                    - sensor.carbon_dioxide_battery
             - type: picture-elements
               image: /local/media/kitchen.jpg
               elements:
@@ -81,6 +90,10 @@ setup:
       - uix_type: row
         element_type: entity
         config_key: name
+        value: { type: entity }
+      - uix_type: row
+        element_type: custom:fold-entity-row
+        config_key: group_config.name
         value: { type: entity }
       - uix_type: glance
         element_type: entity
@@ -146,6 +159,14 @@ interactions:
         selector: hui-sensor-entity-row
         occurrence: 1
         property: _config.name.type
+        expected: entity
+      - type: shadow_dom_host_property_text_equals
+        selector: fold-entity-row
+        property: _config.group_config.secondary_info
+        expected: last_changed
+      - type: shadow_dom_host_property_text_equals
+        selector: fold-entity-row
+        property: _config.group_config.name.type
         expected: entity
       - type: shadow_dom_host_property_text_equals
         selector: hui-state-label-element
@@ -232,6 +253,14 @@ interactions:
         selector: hui-sensor-entity-row
         occurrence: 1
         property: _config.name
+        expected: undefined
+      - type: shadow_dom_host_property_text_equals
+        selector: fold-entity-row
+        property: _config.group_config.secondary_info
+        expected: last_changed
+      - type: shadow_dom_host_property_text_equals
+        selector: fold-entity-row
+        property: _config.group_config.name
         expected: undefined
       - type: shadow_dom_host_property_text_equals
         selector: hui-state-label-element
