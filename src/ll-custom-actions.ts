@@ -34,6 +34,11 @@ class UixPopoverDialog extends HTMLElement {
 
   closeDialog() {
     const { popover, dismissible } = this.params;
+    if (!popover.isConnected) {
+      // Direct removal skips the native close event and its cleanup.
+      popover.dispatchEvent(new Event("closed"));
+      return true;
+    }
     if (popover.open && !dismissible) {
       const { history } = window;
       // Back already consumed the dialog entry. Home Assistant keeps this

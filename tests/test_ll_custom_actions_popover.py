@@ -329,3 +329,27 @@ def test_rejected_back_restores_dialog_history_for_nested_popover(
         "restored": {"dialog": inner_tag},
     }
     assert page.evaluate("popovers.map(popover => popover.open)") == [True, True]
+
+
+def test_dialog_manager_releases_disconnected_nondismissible_popover(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ title: 'Outer' })")
+    page.evaluate("""openPopover({
+      title: 'Inner', dismissible: false, timeout: 10000,
+      buttons: { primary: { label: 'Close' } },
+    })""")
+    inner_tag = page.evaluate("dialogs[1].localName")
+    page.evaluate("popovers[1].remove()")
+    page.evaluate("history.replaceState({ opensDialog: true }, '')")
+
+    assert page.evaluate("dialogs[1].closeDialog()") is True
+    assert page.evaluate("dialogs.length") == 1
+    assert page.evaluate("popovers[0].open") is True
+    assert page.evaluate("popovers[1].openChanges") == [True]
+    assert page.evaluate("pendingTimers.size") == 0
+    assert page.evaluate("history.state") == {"opensDialog": True}
+
+    page.evaluate("openPopover({ title: 'Replacement' })")
+    assert page.evaluate("dialogs[1].localName") == inner_tag
