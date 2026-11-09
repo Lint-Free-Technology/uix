@@ -1,3 +1,10 @@
+## [9.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.2...v9.1.0-beta.3) (2026-11-09)
+
+
+### ⭐ New Features
+
+* Add UIX contexts and first context being entity_name to adjust entity name display in any context ([#707](https://github.com/Lint-Free-Technology/uix/issues/707)) ([602a017](https://github.com/Lint-Free-Technology/uix/commit/602a017124bf52d370c800080065bf9d13783891))
+
 ## [9.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.1...v9.1.0-beta.2) (2026-11-08)
 
 
