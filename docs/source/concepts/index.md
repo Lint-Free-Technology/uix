@@ -9,3 +9,4 @@ UI eXtension does its magic by patching various functions of HTML elements used 
 
 - [DOM navigation](dom.md)
 - [UIX application](application.md)
+- [UIX contexts](context.md)

@@ -1,5 +1,6 @@
 import { LitElement } from "lit";
 import { Uix } from "../uix";
+import { applyDirectContext, applyThemeContext } from "../context/uix-context";
 
 export class ModdedElement extends LitElement {
   _uix: Uix[] = [];
@@ -47,6 +48,7 @@ export interface UixConfig {
   prepend?: boolean;
   macros?: Record<string, MacroConfig | string>;
   billets?: BilletConfig;
+  context?: unknown;
 }
 
 export type BilletConfig = Record<string, any>;
@@ -413,6 +415,8 @@ export async function apply_uix(
 
   if (!element) return;
 
+  applyDirectContext(element, uix_config?.context);
+
   // Wait for target element to exist
   if (element.localName?.includes("-"))
     await customElements.whenDefined(element.localName);
@@ -461,6 +465,12 @@ export async function apply_uix(
     uix.billets = uix_config?.billets ?? {};
     uix.theme = uix_config?.theme;
     uix.styles = uix_config?.style ?? "";
+    const refreshThemeContext = () => void applyThemeContext(element, uix);
+    if (!(uix as any)._uixContextThemeListener) {
+      (uix as any)._uixContextThemeListener = true;
+      uix.addEventListener("uix-theme-update", refreshThemeContext);
+    }
+    refreshThemeContext();
     uix.dispatchEvent(new CustomEvent("uix-applied", { detail: { uix_node: uix }, bubbles: true, composed: true }));
   }, 1);
 
