@@ -1,10 +1,10 @@
 import { load, YAML11_SCHEMA, YAMLException } from 'js-yaml'
 
-export const yaml2json = async (key, yaml) => {
+export const yaml2json = async (key, yaml, allowArray = false) => {
   try {
     const parsed = load(yaml, { schema: YAML11_SCHEMA });
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("Expected YAML document root to be a mapping");
+    if (!parsed || typeof parsed !== "object" || (!allowArray && Array.isArray(parsed))) {
+      throw new Error(`Expected YAML document root to be a ${allowArray ? "mapping or list" : "mapping"}`);
     }
     return parsed;
   } catch (error: unknown) {

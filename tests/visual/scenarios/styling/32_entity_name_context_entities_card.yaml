@@ -1,0 +1,33 @@
+id: entity_name_context_entities_card
+description: "A direct entity-name context applies to a folded entities-card row"
+
+view_path: entity-name-context-entities-card
+
+card:
+  type: entities
+  entities:
+    - type: custom:fold-entity-row
+      open: true
+      head:
+        type: section
+        label: Test
+      group_config:
+        secondary_info: last_changed
+      entities:
+        - sensor.sun_next_dusk
+  uix:
+    context:
+      entity_name:
+        rules:
+          - when:
+              request: default
+            use: [entity]
+
+assertions:
+  - type: element_present
+    root: hui-entities-card
+    selector: uix-node
+
+  - type: snapshot
+    name: "77_entity_name_context_entities_card"
+    threshold: 0.02

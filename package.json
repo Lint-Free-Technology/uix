@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@home-assistant/webawesome": "3.14.0-ha.2",
+    "@lit/context": "^1.1.6",
     "@watchable/unpromise": "^1.0.2",
     "color-name": "^2.1.1",
     "js-yaml": "^5.5.0",

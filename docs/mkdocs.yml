@@ -84,6 +84,7 @@ nav:
           - concepts/index.md
           - concepts/dom.md
           - concepts/application.md
+          - concepts/context.md
       - Debugging:
           - debugging/index.md
           - debugging/cards.md

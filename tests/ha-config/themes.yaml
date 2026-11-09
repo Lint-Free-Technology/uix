@@ -258,6 +258,20 @@ uix-test-custom-card:
       color: orange;
     }
 
+uix-test-entity-name-context:
+  uix-theme: uix-test-entity-name-context
+  uix-card-context-yaml: |
+    - anchor: "&context-probe-card"
+      entity_name:
+        rules:
+          - when:
+              request:
+                - type: text
+                  text: Original name
+            use:
+              - type: text
+                text: Theme context name
+
 uix-theme-css-vars-template:
   uix-theme: uix-theme-css-vars-template
 

@@ -186,6 +186,10 @@ red-theme:
 !!! tip "Theme variables MUST be strings"
     While the value of the `uix-<thing>-yaml` variable is actually yaml, as far as the theme is concerned it MUST be a string, which in turn contains more strings.
 
+## Context bindings
+
+`uix-<thing>-context-yaml` holds structured UIX context bindings rather than CSS. The value must be a YAML list and can be used on any UIX target; see [UIX contexts](../concepts/context.md) for anchors, entity-name rules, and examples.
+
 ## Local theme override with `uix.theme`
 
 You can force one styled card/row/badge/element to use a different Home Assistant theme than the currently active global theme. `uix.theme` takes precedence over inherited/current theme for that UIX node.
