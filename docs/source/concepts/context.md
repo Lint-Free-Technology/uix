@@ -3,6 +3,9 @@ description: Learn how UIX contexts apply structured, scoped behavior to Home As
 ---
 # UIX contexts
 
+!!! info
+    UIX Contexts and Entity-name context available in 9.0.0-beta.3
+
 UIX contexts apply structured behaviour to a UIX host and everything below it. They are a way to make a UI area aware of where it appears without adding selection rules to every consumer.
 
 ## Defining a context
