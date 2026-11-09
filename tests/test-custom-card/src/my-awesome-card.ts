@@ -77,7 +77,7 @@ class ContextProbeCard extends LitElement {
         uix.applyToElement(
           this,
           "card",
-          this._config.uix,
+          this._config.uix ?? (this._config.context_probe ? { context: this._config.context_probe } : undefined),
           { config: this._config },
           true,
           "type-custom-context-probe-card"

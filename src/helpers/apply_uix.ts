@@ -367,7 +367,8 @@ export async function apply_uix_compatible(
       uix_config?.theme ??
       uix_config?.class ??
       uix_config?.debug ??
-      uix_config?.macros) === undefined
+      uix_config?.macros ??
+      uix_config?.context) === undefined
   ) {
     // Old style call with object styles
     uix_config = { style: uix_config as UixStyle };

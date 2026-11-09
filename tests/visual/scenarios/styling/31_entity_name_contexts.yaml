@@ -10,18 +10,17 @@ cards:
     title: "Theme context"
   - type: custom:context-probe-card
     title: "Direct card context"
-    uix:
-      context:
-        entity_name:
-          rules:
-            - when:
-                - request: default
-                - request:
-                    - type: text
-                      text: Original name
-              use:
-                - type: text
-                  text: Direct context name
+    context_probe:
+      entity_name:
+        rules:
+          - when:
+              - request: default
+              - request:
+                  - type: text
+                    text: Original name
+            use:
+              - type: text
+                text: Direct context name
 
 assertions:
   - type: shadow_dom_host_property_text_equals
