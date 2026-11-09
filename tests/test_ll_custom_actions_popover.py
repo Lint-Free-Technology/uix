@@ -287,5 +287,45 @@ def test_dialog_manager_respects_nondismissible_popover(popover_page: Page) -> N
     page.evaluate("""openPopover({
       dismissible: false, buttons: { primary: { label: 'Close' } },
     })""")
+    page.evaluate("history.replaceState({ dialog: dialogs[0].localName }, '')")
+    history_length = page.evaluate("history.length")
     assert page.evaluate("dialogs[0].closeDialog()") is False
     assert page.evaluate("popovers[0].open") is True
+    assert page.evaluate("history.length") == history_length
+
+
+def test_dialog_manager_allows_navigation_while_nondismissible_popover_closes(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("""openPopover({
+      dismissible: false, buttons: { primary: { label: 'Close' } },
+    })""")
+    page.evaluate("popovers[0].open = false")
+    assert page.evaluate("dialogs[0].closeDialog()") is True
+
+
+def test_rejected_back_restores_dialog_history_for_nested_popover(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ title: 'Outer' })")
+    page.evaluate("""openPopover({
+      title: 'Inner', dismissible: false, buttons: { primary: { label: 'Close' } },
+    })""")
+    inner_tag = page.evaluate("dialogs[1].localName")
+    result = page.evaluate("""() => new Promise(resolve => {
+      history.replaceState({ opensDialog: true }, '');
+      history.pushState({ dialog: dialogs[1].localName }, '');
+      window.addEventListener('popstate', event => {
+        const closed = dialogs[1].closeDialog();
+        resolve({ closed, consumed: event.state, restored: history.state });
+      }, { once: true });
+      history.back();
+    })""")
+    assert result == {
+        "closed": False,
+        "consumed": {"opensDialog": True},
+        "restored": {"dialog": inner_tag},
+    }
+    assert page.evaluate("popovers.map(popover => popover.open)") == [True, True]

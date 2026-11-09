@@ -33,8 +33,17 @@ class UixPopoverDialog extends HTMLElement {
   }
 
   closeDialog() {
-    if (!this.params.dismissible) return false;
-    this.params.popover.open = false;
+    const { popover, dismissible } = this.params;
+    if (popover.open && !dismissible) {
+      const { history } = window;
+      // Back already consumed the dialog entry. Home Assistant keeps this
+      // dialog on its stack when it refuses to close.
+      if (history.state?.opensDialog && !history.state.dialog) {
+        history.pushState({ dialog: this.localName }, "");
+      }
+      return false;
+    }
+    popover.open = false;
     return true;
   }
 
