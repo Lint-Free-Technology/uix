@@ -32,6 +32,7 @@ type CompiledContext = {
 
 type UixContextScope = {
   direct?: CompiledContext;
+  directOwnerType?: string;
   theme?: CompiledContext;
   themeAnchor?: string;
   themeBindingIndex?: number;
@@ -335,6 +336,12 @@ function updateFormattersContext(host: HTMLElement, scope: UixContextScope, hass
       context: FORMATTERS_CONTEXT,
       initialValue: value,
     });
+    // Lit invokes hostConnected() when a controller is added to an already
+    // connected host. Plain patched elements need that announcement explicitly
+    // so their existing consumers can re-request hassFormatters.
+    if (host.isConnected && typeof (host as any).addController !== "function") {
+      scope.formattersProvider.hostConnected();
+    }
     return;
   }
   scope.formattersProvider.setValue(value, force);
@@ -544,14 +551,21 @@ export function inspectUixContext(element: Element) {
 (window as any).uix_context_inspect = inspectUixContext;
 
 /** Apply direct element config synchronously, before its UIX node is attached. */
-export function applyDirectContext(host: HTMLElement, value: unknown): void {
+export function applyDirectContext(host: HTMLElement, value: unknown, ownerType: string): void {
   const existing = contextScopes.get(host);
-  // Several compatibility patches can apply UIX to the same host. An
-  // application without a uix config must not erase a direct context that an
-  // earlier, config-owning application established.
-  if (value === undefined) return;
+  if (value === undefined) {
+    // Several compatibility patches can apply UIX to the same host. Only the
+    // target type that established a direct context may clear it on rebuild.
+    if (!existing?.direct || existing.directOwnerType !== ownerType) return;
+    existing.direct = undefined;
+    existing.directOwnerType = undefined;
+    existing.debugMatches?.clear();
+    if (existing.facadeInstalled) updateFormattersContext(host, existing, (host as any).hass, true);
+    return;
+  }
   const scope = existing ?? getScope(host);
   scope.direct = compileContext(value);
+  scope.directOwnerType = ownerType;
   scope.debugMatches?.clear();
   installHassFacade(host, scope);
   if (scope.facadeInstalled) updateFormattersContext(host, scope, (host as any).hass, true);

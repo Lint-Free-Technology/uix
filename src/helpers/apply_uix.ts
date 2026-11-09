@@ -416,7 +416,7 @@ export async function apply_uix(
 
   if (!element) return;
 
-  applyDirectContext(element, uix_config?.context);
+  applyDirectContext(element, uix_config?.context, type);
 
   // Wait for target element to exist
   if (element.localName?.includes("-"))
