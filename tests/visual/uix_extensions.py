@@ -97,7 +97,6 @@ set_theme_file
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -494,41 +493,6 @@ def _webhook(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -
     ).raise_for_status()
 
 
-def _set_element_config(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
-    """Make static element-config rules available before dashboard construction."""
-    if page is None:
-        raise ValueError("set_element_config interaction requires a browser page")
-    rules = interaction["rules"]
-    if not page.evaluate("Boolean(window.uixCoordinator)"):
-        rules_json = json.dumps(rules)
-        page.add_init_script(
-            f"""
-            (() => {{
-              const rules = {rules_json};
-              window.addEventListener("uix-bootstrap", () => {{
-                queueMicrotask(() => {{
-                  const coordinator = window.uixCoordinator;
-                  coordinator?.addEventListener("uix-config-update", () => {{
-                    coordinator._data = coordinator._data || {{}};
-                    coordinator._data.element_config = rules;
-                    window.dispatchEvent(new Event("uix-element-config-update"));
-                  }}, {{ once: true }});
-                }});
-              }}, {{ once: true }});
-            }})();
-            """
-        )
-        return
-    page.evaluate(
-        """(rules) => {
-          window.uixCoordinator._data = window.uixCoordinator._data || {};
-          window.uixCoordinator._data.element_config = rules;
-          window.dispatchEvent(new Event("uix-element-config-update"));
-        }""",
-        rules,
-    )
-
-
 def _shadow_dom_host_property_text_equals(page: "Page | None", assertion: dict[str, Any]) -> None:
     """Assert a nested property on a host found across open shadow roots."""
     if page is None:
@@ -586,5 +550,4 @@ register_interaction_type("reload_broker_files", _reload_broker_files)
 register_interaction_type("set_theme_file", _set_theme_file)
 register_interaction_type("mock_history", _mock_history)
 register_interaction_type("webhook", _webhook)
-register_interaction_type("set_element_config", _set_element_config)
 register_assertion_type("shadow_dom_host_property_text_equals", _shadow_dom_host_property_text_equals)

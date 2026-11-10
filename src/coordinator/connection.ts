@@ -18,7 +18,6 @@ export const ConnectionMixin = (SuperClass) => {
     private _disableEntityPictureImageOverrideOverride: boolean | null = null;
     private _alwaysPatchHaCardOverride: boolean | null = null;
     private _styleCustomPanelsOverride: boolean | null = null;
-    private _elementConfigSignature = "";
 
     public connectionPromise = new Promise((resolve) => {
       this._connectionResolve = resolve;
@@ -123,9 +122,6 @@ export const ConnectionMixin = (SuperClass) => {
 
     private update_config(cfg) {
       // Future update handling can be added here, for now just update config and fire event
-      const elementConfigSignature = JSON.stringify(cfg.element_config ?? []);
-      const elementConfigChanged = elementConfigSignature !== this._elementConfigSignature;
-      this._elementConfigSignature = elementConfigSignature;
       this._data = cfg;
       this.LOG("Receive:", cfg);
 
@@ -150,9 +146,6 @@ export const ConnectionMixin = (SuperClass) => {
       }
 
       this.fireBrowserEvent("uix-config-update");
-      if (elementConfigChanged) {
-        this.fireWindowEvent("uix-element-config-update");
-      }
 
       // future update handling can be added here
       // if (update) this.sendUpdate({});
@@ -248,15 +241,6 @@ export const ConnectionMixin = (SuperClass) => {
 
     get broker(): Record<string, any>[] {
       return this._broker;
-    }
-
-    get elementConfig(): Record<string, any>[] {
-      const config = this._data?.element_config;
-      return Array.isArray(config) ? config : [];
-    }
-
-    get hasElementConfig(): boolean {
-      return Array.isArray(this._data?.element_config) && this._data.element_config.length > 0;
     }
 
     get hassThrottleEnable(): boolean {

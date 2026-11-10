@@ -14,7 +14,6 @@ WS_LOG = f"{DOMAIN}/log"
 
 CONF_FOUNDRIES = "foundries"
 CONF_UIX_BROKER = "uix_broker"
-CONF_ELEMENT_CONFIG = "element_config"
 CONF_UIX_BROKER_FILES = "uix_broker_files"
 CONF_FOUNDRY_FILES = "foundry_files"
 CONF_CUSTOM_SIDEBAR_PANELS = "custom_sidebar_panels"
