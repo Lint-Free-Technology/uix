@@ -10,3 +10,4 @@ Smart lights, many have a lot of them and adding them all to a dashboard means t
 
 For this guide we will use the mushroom light card (which is smaller to start with) and use it control a light, a scene or button and a dimmable light.
 The standard card looks like this and changes based on whether the light is on or off, we will mimic that behaviour:
+![Alt text](_posts/assets/screenshots/2026-11-11-standard_light_card.png)
