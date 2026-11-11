@@ -10,4 +10,40 @@ Smart lights, many have a lot of them and adding them all to a dashboard means t
 
 For this guide we will use the mushroom light card (which is smaller to start with) and use it control a light, a scene or button and a dimmable light.
 The standard card looks like this and changes based on whether the light is on or off, we will mimic that behaviour:
-![Alt text](assets/screenshots/2026-11-11-standard_light_card.png)
+![Alt text](assets/screenshots/2026-11-11-standard_light_card_dimmable.png)
+
+We start by removing the border and setting the background to the primary background so the card blends in with the dashboard by adding this to our theme:
+```
+ha-card {
+  --ha-card-border-width: 0px;
+  --ha-card-background: --primary-background-color;
+}
+```
+This will apply to all cards, not only our minimalist light card, we will see later how styling can be applied to specific card classes only.
+
+Next, we choose the horizontal lay-out which brings the slider next to the icon and remove both primary and secondary info (the name is no longer readable anyway unless we give the card a lot of horizontal space and the state is obvious from the color change). To bring the name of the light back we add a CSS element to the slider and the card YAML now looks like this:
+```
+type: custom:mushroom-light-card
+entity: light.light_table
+name:
+  type: entity
+show_brightness_control: true
+primary_info: none
+secondary_info: none
+layout: horizontal
+uix:
+  style: |
+      mushroom-light-brightness-control:after {
+        content: "Light table";
+        position: relative;
+        display: flex;
+        justify-content: center;
+        color: var(--primary-text-color);
+        font-weight: 500;
+        top: -28px;
+        width: 100%;
+        height: 16px;
+        font-size: 12px;
+        pointer-events: none;
+      }
+```
