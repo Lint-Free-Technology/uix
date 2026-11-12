@@ -39,6 +39,10 @@ interface _StreamCacheEntry {
   timer: ReturnType<typeof setTimeout>;
 }
 
+interface StatePreservingMoveParent {
+  moveBefore?: (movedNode: Node, referenceNode: Node | null) => void;
+}
+
 /**
  * Off-screen holder that keeps cached `ha-camera-stream` elements *connected*
  * to the DOM while they are between uses.  Staying connected ensures the
@@ -74,6 +78,23 @@ function _getParkingHolder(): HTMLDivElement {
  */
 const _streamElementCache = new Map<string, _StreamCacheEntry>();
 
+/**
+ * Move a cached stream without running its disconnect/connect lifecycle where
+ * the browser supports state-preserving DOM moves.  Home Assistant restarts
+ * streams on reconnect, so appendChild would otherwise defeat this cache.
+ */
+function _moveStreamEl(
+  parent: HTMLElement,
+  el: HaCameraStreamElement
+): void {
+  const moveBefore = (parent as StatePreservingMoveParent).moveBefore;
+  if (el.isConnected && parent.isConnected && moveBefore) {
+    moveBefore.call(parent, el, null);
+    return;
+  }
+  parent.appendChild(el);
+}
+
 function _cacheStreamEl(
   entityId: string,
   w: number,
@@ -98,16 +119,12 @@ function _cacheStreamEl(
   }
 
   // Park the element connected inside a sized wrapper so ha-camera-stream
-  // keeps its internal stream alive while waiting for the next reuse.
-  // The wrapper is inserted into the parking holder BEFORE el is moved into
-  // it so that the transfer is a single connected→connected DOM move.  A
-  // direct move fires disconnectedCallback + connectedCallback synchronously
-  // in one operation; any async updates scheduled inside disconnectedCallback
-  // therefore see the element already in its new parent when they run.
+  // keeps its internal stream alive while waiting for the next reuse.  The
+  // wrapper is inserted first, allowing a state-preserving connected move.
   const wrapper = document.createElement("div") as HTMLDivElement;
   wrapper.style.cssText = `width:${w}px;height:${h}px;overflow:hidden;`;
   _getParkingHolder().appendChild(wrapper);
-  wrapper.appendChild(el);
+  _moveStreamEl(wrapper, el);
 
   const timer = setTimeout(() => {
     const entry = _streamElementCache.get(key);
@@ -131,12 +148,8 @@ function _popCachedStreamEl(
   if (!entry) return null;
   clearTimeout(entry.timer);
   _streamElementCache.delete(key);
-  // Do NOT call entry.el.remove() — leave el connected in its parking wrapper
-  // so the caller can perform a direct DOM move (container.appendChild(el))
-  // without an intermediate disconnected state.  A direct move fires
-  // disconnectedCallback + connectedCallback synchronously in one operation,
-  // so any async updates scheduled by disconnectedCallback already see the
-  // element connected to its new parent when they execute.
+  // Do NOT call entry.el.remove() — leave it connected in its parking wrapper
+  // so the caller can use a state-preserving move into the live container.
   // Schedule the now-empty wrapper for removal in the next microtask.
   const wrapper = entry.wrapper;
   Promise.resolve().then(() => wrapper.remove());
@@ -389,10 +402,8 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
         // container has already been detached (offsetWidth/Height would be 0).
         const w = this._containerEl.offsetWidth || this._lastKnownW;
         const h = this._containerEl.offsetHeight || this._lastKnownH;
-        // Move directly from container to parking wrapper — do NOT call
-        // this._streamEl.remove() first.  _cacheStreamEl inserts the wrapper
-        // into the parking holder before moving el into it, so the transfer is
-        // a single connected→connected DOM move with no mid-air disconnect.
+        // Move directly from container to the connected parking wrapper — do
+        // not call this._streamEl.remove() first.
         _cacheStreamEl(this._activeBgKey, w, h, this._streamEl, this._cameraCacheMs);
         this._streamEl = null;
       }
@@ -597,14 +608,11 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     this._targetAdapter?.applyStyles(container);
 
     // Insert the container into the DOM BEFORE building content.  This is
-    // required for the camera case: _buildCameraContent calls
-    // container.appendChild(streamEl) to move the cached stream element from
-    // its off-screen parking wrapper into the container.  If the container is
-    // not yet in the DOM at that point, streamEl leaves a connected parent and
-    // enters a disconnected one — triggering ha-camera-stream.disconnectedCallback
-    // which invalidates the auth token and produces a 403 on the next poster
-    // fetch.  By inserting first we guarantee the transfer is always
-    // connected → connected.
+    // required for the camera case: _buildCameraContent moves a cached stream
+    // from its off-screen parking wrapper into the container.  If the
+    // container is not yet in the DOM, the stream would enter a disconnected
+    // parent and trigger ha-camera-stream.disconnectedCallback.  Inserting it
+    // first allows a state-preserving connected move where supported.
     // When an adapter is present, it may redirect insertion into the element's
     // shadow root (e.g. for ha-card) so the container participates in the
     // correct stacking context.
@@ -745,7 +753,7 @@ export class UixForgeSparkBackground extends UixForgeSparkBase {
     // stateObj is set by _buildContainer after the container is inserted into
     // the DOM so ha-camera-stream can receive its Home Assistant contexts
     // before requesting capabilities.
-    container.appendChild(streamEl);
+    _moveStreamEl(container, streamEl);
     this._streamEl = streamEl;
   }
 
