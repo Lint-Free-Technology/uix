@@ -1,7 +1,5 @@
 from typing import Any
 from uuid import uuid4
-import math
-import re
 
 import voluptuous as vol
 
@@ -14,9 +12,6 @@ from homeassistant.helpers.selector import (
     NumberSelectorConfig,
     NumberSelectorMode,
     ObjectSelector,
-    SelectSelector,
-    SelectSelectorConfig,
-    SelectSelectorMode,
     TextSelector,
 )
 
@@ -32,7 +27,6 @@ from .const import (
     NAME, 
     CARD_MOD_FRONTEND_SCRIPT_URL,
     CONF_FOUNDRIES,
-    CONF_ELEMENT_CONFIG,
     CONF_UIX_BROKER,
     CONF_UIX_BROKER_FILES,
     CONF_FOUNDRY_FILES,
@@ -57,108 +51,6 @@ from .custom_sidebar_panel import (
     get_custom_sidebar_panels,
 )
 from .helpers import validate_broker_file, validate_foundry_file
-
-
-ELEMENT_CONFIG_UIX_TYPES = frozenset({"card", "badge", "heading-badge", "row", "glance", "element"})
-ELEMENT_CONFIG_PATH_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*(?:\.[A-Za-z_][A-Za-z0-9_-]*)*$")
-UNSAFE_ELEMENT_CONFIG_PATH_SEGMENTS = frozenset({"__proto__", "constructor", "prototype"})
-TEMPLATE_TOKENS = ("{{", "}}", "{%", "%}", "{#", "#}")
-
-ELEMENT_CONFIG_TYPE_SELECTOR = SelectSelector(
-    SelectSelectorConfig(
-        options=[
-            {"value": "card", "label": "Card"},
-            {"value": "badge", "label": "Badge"},
-            {"value": "heading-badge", "label": "Heading badge"},
-            {"value": "row", "label": "Entity row"},
-            {"value": "glance", "label": "Glance entity"},
-            {"value": "element", "label": "Picture element"},
-        ],
-        mode=SelectSelectorMode.DROPDOWN,
-    )
-)
-
-ELEMENT_CONFIG_SELECTOR = ObjectSelector(
-    {
-        "multiple": True,
-        "label_field": "uix_type",
-        "description_field": "element_type",
-        "fields": {
-            "uix_type": {
-                "label": "UIX element type",
-                "required": True,
-                "selector": ELEMENT_CONFIG_TYPE_SELECTOR,
-            },
-            "element_type": {
-                "label": "Element type (card type, badge type etc.)",
-                "required": True,
-                "selector": TextSelector(),
-            },
-            "config_key": {
-                "label": "Configuration key or object path to set default value",
-                "required": True,
-                "selector": TextSelector(),
-            },
-            "value": {
-                "label": "Default value",
-                "required": True,
-                "selector": ObjectSelector(),
-            },
-        },
-    }
-)
-
-
-def _is_static_element_config_value(value: Any) -> bool:
-    if value is None or isinstance(value, (bool, int)):
-        return True
-    if isinstance(value, float):
-        return math.isfinite(value)
-    if isinstance(value, str):
-        return not any(token in value for token in TEMPLATE_TOKENS)
-    if isinstance(value, list):
-        return all(_is_static_element_config_value(item) for item in value)
-    if isinstance(value, dict):
-        return all(
-            isinstance(key, str) and _is_static_element_config_value(child)
-            for key, child in value.items()
-        )
-    return False
-
-
-def _valid_element_config_rules(value: Any) -> bool:
-    if not isinstance(value, list):
-        return False
-    seen: dict[tuple[str, str], set[str]] = {}
-    for rule in value:
-        if not isinstance(rule, dict):
-            return False
-        uix_type = rule.get("uix_type")
-        element_type = rule.get("element_type")
-        config_key = rule.get("config_key")
-        if (
-            not isinstance(uix_type, str)
-            or uix_type not in ELEMENT_CONFIG_UIX_TYPES
-            or not isinstance(element_type, str)
-            or not element_type
-            or not isinstance(config_key, str)
-            or not ELEMENT_CONFIG_PATH_RE.fullmatch(config_key)
-            or any(segment in UNSAFE_ELEMENT_CONFIG_PATH_SEGMENTS for segment in config_key.split("."))
-            or "value" not in rule
-            or not _is_static_element_config_value(rule["value"])
-        ):
-            return False
-        target = (uix_type, element_type)
-        paths = seen.setdefault(target, set())
-        if any(
-            config_key == path
-            or config_key.startswith(f"{path}.")
-            or path.startswith(f"{config_key}.")
-            for path in paths
-        ):
-            return False
-        paths.add(config_key)
-    return True
 
 
 class UixConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -228,7 +120,6 @@ class UixOptionsFlow(OptionsFlow):
             menu_options=[
                 "foundry_menu",
                 "foundry_file_menu",
-                "element_config",
                 "broker_settings",
                 "broker_file_menu",
                 "custom_sidebar_panel_menu",
@@ -589,76 +480,6 @@ class UixOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_UIX_BROKER,
                         default={CONF_UIX_BROKER: self._config_entry.options.get(CONF_UIX_BROKER, [])},
-                    ): ObjectSelector(),
-                }
-            ),
-            errors=errors,
-        )
-
-    async def async_step_element_config(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Choose an editor for static Lovelace element defaults."""
-        return self.async_show_menu(
-            step_id="element_config",
-            menu_options=["element_config_ui", "element_config_yaml"],
-        )
-
-    def _async_create_element_config_entry(self, rules: list[dict[str, Any]]) -> ConfigFlowResult:
-        """Save validated static Lovelace element defaults."""
-        return self.async_create_entry(
-            title="",
-            data={
-                **self._config_entry.options,
-                CONF_ELEMENT_CONFIG: rules,
-            },
-        )
-
-    async def async_step_element_config_ui(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Configure static Lovelace element defaults with form fields."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            rules = user_input[CONF_ELEMENT_CONFIG]
-            if not _valid_element_config_rules(rules):
-                errors[CONF_ELEMENT_CONFIG] = "invalid_element_config"
-            else:
-                return self._async_create_element_config_entry(rules)
-
-        return self.async_show_form(
-            step_id="element_config_ui",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_ELEMENT_CONFIG,
-                        default=self._config_entry.options.get(CONF_ELEMENT_CONFIG, []),
-                    ): ELEMENT_CONFIG_SELECTOR,
-                }
-            ),
-            errors=errors,
-        )
-
-    async def async_step_element_config_yaml(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Configure static Lovelace element defaults with YAML."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            config = user_input[CONF_ELEMENT_CONFIG]
-            rules = config.get(CONF_ELEMENT_CONFIG) if isinstance(config, dict) else None
-            if not _valid_element_config_rules(rules):
-                errors[CONF_ELEMENT_CONFIG] = "invalid_element_config"
-            else:
-                return self._async_create_element_config_entry(rules)
-
-        return self.async_show_form(
-            step_id="element_config_yaml",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_ELEMENT_CONFIG,
-                        default={CONF_ELEMENT_CONFIG: self._config_entry.options.get(CONF_ELEMENT_CONFIG, [])},
                     ): ObjectSelector(),
                 }
             ),

@@ -128,7 +128,6 @@ nav:
       - extras/index.md
       - extras/uix-actions.md
       - extras/custom-sidebar-panels.md
-      - extras/element-config-defaults.md
       - extras/frontend-states-throttling.md
       - extras/dialog-styling-delay.md
       - extras/hash-template-variable-updates.md

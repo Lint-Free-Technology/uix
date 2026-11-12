@@ -18,7 +18,6 @@
                 "menu_options": {
                     "foundry_menu": "Manage UI foundries",
                     "foundry_file_menu": "Manage foundry files",
-                    "element_config": "Configure element defaults",
                     "broker_settings": "Configure Broker",
                     "broker_file_menu": "Manage Broker files",
                     "custom_sidebar_panel_menu": "Manage custom sidebar panels",
@@ -90,28 +89,6 @@
                 "description": "Enter the canonical UIX Broker object, with its interactions under the `uix_broker` key.",
                 "data": {
                     "uix_broker": "Broker configuration"
-                }
-            },
-            "element_config": {
-                "title": "Element Configuration Defaults",
-                "description": "Choose a form editor or YAML editor. Both edit the same element defaults.",
-                "menu_options": {
-                    "element_config_ui": "Configure using UI",
-                    "element_config_yaml": "Configure using YAML"
-                }
-            },
-            "element_config_ui": {
-                "title": "Element Configuration Defaults",
-                "description": "Add defaults for missing configuration keys on dashboard elements. You can add more than one default to the same kind of element. Templates are not supported.",
-                "data": {
-                    "element_config": "Element defaults"
-                }
-            },
-            "element_config_yaml": {
-                "title": "Element Configuration Defaults",
-                "description": "Paste an `element_config` mapping. It uses the same defaults as the form editor; templates are not supported.",
-                "data": {
-                    "element_config": "Element defaults"
                 }
             },
             "broker_file_menu": {
@@ -230,7 +207,6 @@
         "error": {
             "invalid_config": "The configuration must be a YAML mapping.",
             "invalid_broker_config": "The configuration must be an object containing a 'uix_broker' list.",
-            "invalid_element_config": "Each default must be a unique static rule with a valid element type and configuration key.",
             "invalid_custom_sidebar_panel": "Enter an icon and title, and use a Home Assistant path or absolute http or https URL as the target.",
             "file_already_added": "This file path is already registered.",
             "file_not_found": "The file was not found. Check the path and try again.",

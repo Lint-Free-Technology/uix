@@ -1,9 +1,5 @@
 import { ModdedElement, apply_uix} from "../helpers/apply_uix";
 import { patch_element, patch_object } from "../helpers/patch_function";
-import {
-  applyGlanceCardConfigDefaults,
-  registerElementConfigRebuild,
-} from "../helpers/element-config";
 
 /*
 Patch the hui-glance-card specifically in order to handle individual styling of each item
@@ -31,17 +27,6 @@ state-badge {
 
 @patch_element("hui-glance-card")
 class HuiGlanceCardPatch extends ModdedElement {
-  _uixElementConfigSource;
-
-  // Home Assistant expands Glance's compact entity strings in setConfig(),
-  // before it renders each div.entity. Apply defaults first so both rendering
-  // and the config passed to apply_uix() use the generated entity config.
-  setConfig(_orig, config, ...args) {
-    this._uixElementConfigSource = config;
-    registerElementConfigRebuild(this, (host: any) => host.setConfig(host._uixElementConfigSource));
-    _orig?.(applyGlanceCardConfigDefaults(config), ...args);
-  }
-
   // hui-glance-card has a renderEntity method, but the return from that is too messy
   // Instead find every icon after render in the updated method.
   updated(_orig, ...args) {
