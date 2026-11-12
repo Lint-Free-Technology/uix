@@ -1,3 +1,15 @@
+## [9.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.3...v9.1.0-beta.4) (2026-11-12)
+
+
+**IMPORTANT: Element configuraton defaults now removed from 9.1.0-beta. Use entity_name context.**
+
+### 🐞 Bug Fixes
+
+* close UIX popovers on browser Back ([#709](https://github.com/Lint-Free-Technology/uix/issues/709)) ([2e15c65](https://github.com/Lint-Free-Technology/uix/commit/2e15c65539aa5adb417945149faf315586bb2efd))
+
+* remove element configuration defaults ([2c099a1](https://github.com/Lint-Free-Technology/uix/commit/2c099a1d69f8d20b9d8bb73694e9aea6b4afa39b)), closes [#704](https://github.com/Lint-Free-Technology/uix/issues/704) [#705](https://github.com/Lint-Free-Technology/uix/issues/705) [#706](https://github.com/Lint-Free-Technology/uix/issues/706) [#707](https://github.com/Lint-Free-Technology/uix/issues/707)
+* remove element configuration defaults ([#712](https://github.com/Lint-Free-Technology/uix/issues/712)) ([df5f4d6](https://github.com/Lint-Free-Technology/uix/commit/df5f4d67ecbd36c37fca96f4bb2df5d0e14dc16c)), closes [#704](https://github.com/Lint-Free-Technology/uix/issues/704) [#705](https://github.com/Lint-Free-Technology/uix/issues/705) [#706](https://github.com/Lint-Free-Technology/uix/issues/706) [#707](https://github.com/Lint-Free-Technology/uix/issues/707)
+
 ## [9.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.2...v9.1.0-beta.3) (2026-11-09)
 
 
