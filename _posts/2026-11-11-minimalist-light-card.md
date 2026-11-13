@@ -10,7 +10,7 @@ Smart lights, many have a lot of them and adding them all to a dashboard means t
 
 For this guide we will use the mushroom light card (which is smaller to start with) and use it to control a dimmable light.
 The screenshot shows a standard light card, a standard mushroom light card, a horizontal layout mushroom light card, a horizontal layout mushroom light card without any info / name and the minimalist light card we want to create:
-![Alt text](assets/screenshots/various_light_cards.png)
+![Alt text](assets/screenshots/various-light-cards.png)
 
 We start by removing the border and setting the background to the primary background so the card blends in with the dashboard by adding this to our theme:
 ```
