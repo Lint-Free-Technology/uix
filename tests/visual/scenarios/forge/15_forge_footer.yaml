@@ -1,5 +1,5 @@
 id: forge_footer
-description: "UIX Forge with mold footer renders a fixed-position hui-view-footer element"
+description: "UIX Forge footer refreshes configured position and width template values"
 view_path: forge-footer
 
 setup:
@@ -15,9 +15,19 @@ card:
   type: "custom:uix-forge"
   forge:
     mold: footer
+    bottom: "{{ '100px' if is_state('light.bed_light', 'on') else '200px' }}"
+    max_width: "{{ 400 if is_state('light.bed_light', 'on') else 300 }}"
   element:
     type: tile
     entity: "light.bed_light"
+
+interactions:
+  - type: ha_service
+    domain: light
+    service: turn_off
+    entity_id: light.bed_light
+  - type: wait
+    ms: 2000
 
 assertions:
   - type: element_present
@@ -29,3 +39,15 @@ assertions:
     selector: "hui-view-footer"
     property: position
     expected: "fixed"
+
+  - type: css_property
+    root: "uix-forge"
+    selector: "hui-view-footer"
+    property: bottom
+    expected: "200px"
+
+  - type: css_property
+    root: "uix-forge"
+    selector: "hui-view-footer"
+    property: maxWidth
+    expected: "300px"
