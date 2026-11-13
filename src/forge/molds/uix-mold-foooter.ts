@@ -62,7 +62,7 @@ export class UixForgeMoldFooter extends UixForgeMoldBase {
           position: fixed;
           left: 0;
           right: 0;
-          bottom: var(--uix-forge-footer-bottom, var(--ha-space-2));
+          bottom: ${this.forge.forgeConfig.bottom ?? "var(--uix-forge-footer-bottom, var(--ha-space-2))"};
           padding: var(--uix-forge-footer-padding, 0 var(--ha-space-2));
           max-width: ${this.forge.forgeConfig.max_width ?? "600"}px;
           margin: 0 auto;

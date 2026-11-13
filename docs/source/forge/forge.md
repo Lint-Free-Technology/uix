@@ -971,17 +971,19 @@ When editing the dashboard in UI mode, the footer is surrounded by a red dashed 
 !!! note
     The footer element `<hui-view-footer>` is given the CSS position `fixed` rather than the standard `sticky` of a section footer. This is required as `sticky` is only relative to parent element, so the forged footer can only 'break out' to be a footer using `fixed` position. This will give a lightly different appearance in that the footer will be centered to the window and not just the dashboard area. Use asymmetrical padding via `--uix-forge-footer-padding` to adjust if required.
 
-The following forge config key controls the maximum width of the footer:
+The following forge config keys control the footer position and maximum width:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
 | `max_width` | string | | `600` | Maximum width of the footer in pixels. |
+| `bottom` | string | Yes | `var(--uix-forge-footer-bottom, var(--ha-space-2))` | CSS `bottom` value for the footer. Set this when the initial position matters, for example `calc(100vh - 100px)`. |
 
 ```yaml
 type: custom:uix-forge
 forge:
   mold: footer
   max_width: 400
+  bottom: calc(100vh - 100px)
 element:
   type: tile
   entity: light.bed_light
@@ -992,7 +994,7 @@ The following CSS variables can be set on the forge element or any ancestor to c
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `--uix-forge-footer-border-width` | `1px` | Border width of the forged card within the footer. |
-| `--uix-forge-footer-bottom` | `var(--ha-space-2)` | Distance from the bottom of the viewport. |
+| `--uix-forge-footer-bottom` | `var(--ha-space-2)` | Distance from the bottom of the viewport when `forge.bottom` is not set. |
 | `--uix-forge-footer-padding` | `0 var(--ha-space-2)` | Padding applied to the footer container. |
 
 ### Visibility

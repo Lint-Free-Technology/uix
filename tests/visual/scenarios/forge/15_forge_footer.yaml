@@ -15,6 +15,7 @@ card:
   type: "custom:uix-forge"
   forge:
     mold: footer
+    bottom: 100px
   element:
     type: tile
     entity: "light.bed_light"
@@ -29,3 +30,9 @@ assertions:
     selector: "hui-view-footer"
     property: position
     expected: "fixed"
+
+  - type: css_property
+    root: "uix-forge"
+    selector: "hui-view-footer"
+    property: bottom
+    expected: "100px"
