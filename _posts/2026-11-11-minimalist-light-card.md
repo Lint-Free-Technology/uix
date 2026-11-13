@@ -8,9 +8,9 @@ tags:
 ---
 Smart lights, many have a lot of them and adding them all to a dashboard means they take up a lot of screen real estate. In this step-by-step guide we will create a minimalist light card and **move all styling into themes**.
 
-For this guide we will use the mushroom light card (which is smaller to start with) and use it to control a light, a scene or button and a dimmable light.
-The standard card looks like this and changes based on whether the light is on or off, we will mimic that behaviour:
-![Alt text](assets/screenshots/2026-11-11-standard_light_card_dimmable.png)
+For this guide we will use the mushroom light card (which is smaller to start with) and use it to control a dimmable light.
+The screenshot shows a standard light card, a standard mushroom light card, a horizontal layout mushroom light card, a horizontal layout mushroom light card without any info / name and the minimalist light card we want to create:
+![Alt text](_posts/assets/screenshots/various_light_cards.png)
 
 We start by removing the border and setting the background to the primary background so the card blends in with the dashboard by adding this to our theme:
 ```
