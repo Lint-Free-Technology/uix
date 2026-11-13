@@ -975,7 +975,7 @@ The following forge config keys control the footer position and maximum width:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `max_width` | string | | `600` | Maximum width of the footer in pixels. |
+| `max_width` | string | Yes | `600` | Maximum width of the footer in pixels. |
 | `bottom` | string | Yes | `var(--uix-forge-footer-bottom, var(--ha-space-2))` | CSS `bottom` value for the footer. Set this when the initial position matters, for example `calc(100vh - 100px)`. |
 
 ```yaml
