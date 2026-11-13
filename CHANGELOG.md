@@ -1,3 +1,10 @@
+## [9.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.4...v9.1.0-beta.5) (2026-11-13)
+
+
+### ⭐ New Features
+
+* **forge:** Add `bottom` config option to `mold: footer`. Allows bottom setting to be applied directly rather than waiting for async UIX Styling. ([#716](https://github.com/Lint-Free-Technology/uix/issues/716)) ([f905e70](https://github.com/Lint-Free-Technology/uix/commit/f905e7036d7d15b007c75fca2a7e7965a5ec3f18)), closes [#703](https://github.com/Lint-Free-Technology/uix/issues/703)
+
 ## [9.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.3...v9.1.0-beta.4) (2026-11-12)
 
 
