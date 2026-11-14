@@ -15,11 +15,13 @@ For this guide we will use the mushroom light card (which is smaller to start wi
 We can achieve this using uix styling at card level, which looks like below. The various styling blocks are needed for (in order):
 - changing the background and 3D effect of the circle around the icon
 - setting the colors of the brightness slider, its radius and 3D effect
-- removing the card border, card background and shifting the icon to where the border used to be
-- removing the default grey background as we are setting a 3D outline effect on the slider 
+- removing the card border, card background and shifting the icon to where the left border used to be
+- removing the default grey background which is no longer needed as we are setting a 3D outline effect on the slider 
 - changing the icon and its color
-- position the slider and allow it expand to where the border used to be
+- position the slider and allow it to expand to where the right border used to be
 - create a new CSS element with the name of the entity centred inside the slider
+
+Note the templates in the uix section use **config.entity**, this is used to mimic the standard color changing behaviour depending on whether the light is on or off (and to retrieve the friendly name of the entity). Using config.entity means the entity needs to be changed only at the entity: key and code can easily be copied to another card. Note also we can refer to CSS variables such as **--primary-text-color** and we can get a different shade of a color with the **rgb function**.
 
 ```
 type: custom:mushroom-light-card
@@ -94,8 +96,6 @@ uix:
         pointer-events: none;
       }
 ```
-
-Note the templates in the uix section use **config.entity**, this is used to mimic the standard color changing behaviour depending on whether the light is on or off (and to retrieve the friendly name of the entity). Using config.entity means the entity needs to be changed only at the entity: key and code can easily be copied to another card. Note also we can refer to CSS variables such as **--primary-text-color** and we can get a different shade of a color with the **rgb function**.
 
 We can achieve the same with a theme, as per below:
 - create a variable MainThemeColor for the base color (this will be used extensively in other styling elements)
@@ -188,4 +188,43 @@ We can achieve the same with a theme, as per below:
             box-shadow: var(--mythemeboxshadow-if-isOn) !important;
           }
 
+```
+
+Now we can remove ALL of the styling at card level and only need to set the CSS class. The example below shows two minimalist light cards and how to modify the gap and reduce the row height from the standard 56px.
+
+```
+type: grid
+columns: 1
+square: false
+uix:
+  style: |
+    #root { 
+      gap: 0px !important;
+      grid-auto-rows: 52px !important;
+    }
+cards:
+  - type: custom:mushroom-light-card
+    entity: light.light_living_room
+    name:
+      type: entity
+    show_brightness_control: true
+    primary_info: none
+    secondary_info: none
+    layout: horizontal
+    icon_color: transparent
+    uix:
+      class: minimalist-light-card-with-slider
+  - type: custom:mushroom-light-card
+    entity: light.light_living_room
+    name:
+      type: entity
+    show_brightness_control: true
+    primary_info: none
+    secondary_info: none
+    layout: horizontal
+    icon_color: transparent
+    grid_options:
+      columns: 6
+    uix:
+      class: minimalist-light-card-with-slider
 ```
