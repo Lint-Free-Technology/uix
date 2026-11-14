@@ -102,7 +102,7 @@ We can achieve the same with a theme, as per below:
 - create variables for shades of the  MainThemeColor, used to style different elements of our light card
 - create variables for the icons and their color, change to MDI icons if you only have those on your system
 - All elements under uix-card-yaml: will apply to the CSS class minimalist-light-card-with-slider, this ensures the styling is applied only to light cards with this CSS class (for example in case you also have normal light cards in your dashboard)
-- There are three main blocks below, each block starts with the **host element path selector**, followed by the name of our **CSS class** and optional elements to pierce the shadow DOM and target the host / card, the shape-icon or the slider.
+- Next there are three blocks, each one starts with the **host element path selector**, followed by the name of our **CSS class** and optional elements to pierce the shadow DOM and target the host / card, the shape-icon or the slider.
 - The main block:
   - creates a variable lightisOn at host level using **config.entity** to dynamically style elements. This is used for the icon but also to create two more variables for the background and box-shadow which can be accessed in lower DOM levels, in this case to dynamically style the shape icon and the slider.
   - at ha-card level, removes the border and align left to where the border used to be
