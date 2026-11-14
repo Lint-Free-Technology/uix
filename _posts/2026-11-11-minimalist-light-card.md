@@ -98,6 +98,7 @@ uix:
 ```
 
 We can achieve the same with a theme, as per below:
+- Begin with creating variables for the various colors and other styling elements we will use later, by grouping them at the beginning, even when used only once it is much easier to modify the theme later on
 - create a variable MainThemeColor for the base color (this will be used extensively in other styling elements)
 - create variables for shades of the  MainThemeColor, used to style different elements of our light card
 - create variables for the icons and their color, change to MDI icons if you only have those on your system
