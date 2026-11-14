@@ -8,7 +8,7 @@ tags:
 ---
 Smart lights, everybody has a lot of them and adding them all to a dashboard means they take up a lot of screen real estate. In this step-by-step guide we will create a minimalist light card and **move ALL of its styling into themes**. See [tile-card-inline-feature-switch](https://uix-guides.lf.technology/forge/2026/04/11/tile-card-inline-feature-switch.html) to learn how to add additional controls (such as color control) to cards, and see [getting-shadowy-with-themes-host-element-selector](https://uix-guides.lf.technology/elements/2026/03/29/getting-shadowy-with-themes-host-element-selector.html) for another example on how to use the host element selector.
 
-For this guide we will use the mushroom light card (which is smaller to start with) and use it to control a dimmable light. The screenshot shows a standard light card, a standard mushroom light card, a horizontal layout mushroom light card, a horizontal layout mushroom light card without any info / name and the minimalist light card we want to create (I duplicated the minimalist card to show we can also move them closer together and save more space):
+For this guide we will use the mushroom light card (which is smaller to start with) and use it to control a dimmable light. The screenshot shows a standard light card, a standard mushroom light card, a horizontal layout mushroom light card, a horizontal layout mushroom light card without any info / name and the minimalist light card we want to create (the minimalist card is duplicated to show we can also move them closer together and save more space):
 
 ![Alt text](assets/screenshots/various-light-cards.png)
 
