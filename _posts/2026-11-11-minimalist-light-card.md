@@ -191,7 +191,7 @@ We can achieve the same with a theme, as per below:
 
 ```
 
-Now we can remove ALL of the styling at card level and only need to set the CSS class. The example below shows two minimalist light cards and how to modify the gap and reduce the row height from the standard 56px.
+Now we can remove ALL of the styling at card level and only need to set the CSS class. The example below shows two minimalist light cards in a grid and how to modify the gap and reduce the row height from the standard 56px.
 
 ```
 type: grid
