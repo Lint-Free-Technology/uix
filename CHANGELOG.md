@@ -1,3 +1,10 @@
+## [9.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.5...v9.1.0-beta.6) (2026-11-15)
+
+
+### 🐞 Bug Fixes
+
+* **forge:** skip refreshForge until the mold exists ([#722](https://github.com/Lint-Free-Technology/uix/issues/722)) ([09d7725](https://github.com/Lint-Free-Technology/uix/commit/09d77251e4d2aa2f176e6e9701453ea0ca5e7aa9)), closes [#721](https://github.com/Lint-Free-Technology/uix/issues/721)
+
 ## [9.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.4...v9.1.0-beta.5) (2026-11-13)
 
 
