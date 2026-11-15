@@ -1259,6 +1259,10 @@ export class UixForge extends LitElement {
   }
 
   refreshForge(path: UixForgeConfigPath) {
+    // setConfig() defers until the UIX coordinator is ready, so the mold may not exist
+    // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
+    // after the config is applied covers what is skipped here.
+    if (!this._mold) return;
     if (path.includes("sparks")) {
       this._sparkController.setConfig(this.forgeConfig.sparks);
     } else {
