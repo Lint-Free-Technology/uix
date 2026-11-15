@@ -33,18 +33,20 @@ assertions:
       - hui-tile-card
     selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
 
-  - type: css_property
+  # Right/bottom positions become relative left/top calc() declarations. Their
+  # computed pixel values vary with the frontend's static inline layout.
+  - type: object_property_text_equals
     root: 
       - uix-forge
       - hui-tile-card
     selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
-    property: "left"
-    expected: "220px"
+    property: "style.left"
+    expected: "calc(100% - var(--uix-overlay-icon-size, 24px) - 2px)"
 
-  - type: css_property
+  - type: object_property_text_equals
     root: 
       - uix-forge
       - hui-tile-card
     selector: 'div[data-uix-forge-overlay-icon-id] > ha-icon'
-    property: "top"
-    expected: "30px"
+    property: "style.top"
+    expected: "calc(100% - var(--uix-overlay-icon-size, 24px) - 2px)"
