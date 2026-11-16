@@ -888,14 +888,18 @@ export class UixForge extends LitElement {
       const message = error instanceof Error ? error.message : String(error);
       if (this._transformError !== message) console.error("UIX Forge: Error applying transform Spark:", error);
       this._transformError = message;
-      // The target receives a complete, conventional error configuration
-      // rather than a partly transformed config. This also lets a later valid
-      // template/registry update replace the error through the normal refresh.
-      return {
-        type: "markdown",
-        content: `### UIX Forge\n\nUnable to apply a configuration transform:\n\n> ${message}`,
-      };
+      return this._transformErrorConfig(message, config);
     }
+  }
+
+  /** Build a valid target configuration for the active mold's native renderer. */
+  private _transformErrorConfig(message: string, originalConfig: any): any {
+    const content = `### UIX Forge\n\nUnable to apply a configuration transform:\n\n> ${message}`;
+    if (this._mold?.isBadge()) return { type: "error", error: message, origConfig: originalConfig };
+    if (this._mold?.isRow()) return { type: "section", label: `UIX Forge: ${message}` };
+    if (this._mold?.isPictureElement()) return { type: "icon", icon: "mdi:alert-circle", title: `UIX Forge: ${message}` };
+    if (this._mold?.isSection()) return { type: "grid", cards: [{ type: "markdown", content }] };
+    return { type: "markdown", content };
   }
 
   set forgedElementConfig(config: any) {
@@ -921,6 +925,10 @@ export class UixForge extends LitElement {
     if (this.forgedElement?.hidden) return true;
     let error = false;
     error = this._mold.isError();
+    // A transform failure is Forge-owned and must remain visible long enough
+    // to diagnose it, even when ordinary Home Assistant target errors are
+    // normally hidden by forge.show_error.
+    if (this._transformError) return false;
     if (error) return !this._showError;
     return this.hiddenByConfig() || this._mold.hidden();
   }

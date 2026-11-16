@@ -140,19 +140,37 @@ function metadata(hass: any, entityId: string) {
   return { state, entity, device, area, floor, labelIds: [...labelIds], labelNames };
 }
 
-function matchOne(hass: any, entityId: string, filter: any): boolean {
+type SelectionContext = {
+  groupMembers: Map<any, Set<string>>;
+  available: string[];
+};
+
+function groupMembers(context: SelectionContext, hass: any, expected: any): Set<string> {
+  const cached = context.groupMembers.get(expected);
+  if (cached) return cached;
+  const members = new Set<string>();
+  for (const group of context.available) {
+    if (!group.startsWith("group.") || !textMatches(group, expected)) continue;
+    const entityIds = hass?.states?.[group]?.attributes?.entity_id;
+    if (Array.isArray(entityIds)) entityIds.forEach((entityId) => members.add(entityId));
+  }
+  context.groupMembers.set(expected, members);
+  return members;
+}
+
+function matchOne(hass: any, entityId: string, filter: any, context: SelectionContext): boolean {
   if (!isMapping(filter)) throw new Error("uix-forge: entities Spark filter entries must be mappings");
   const data = metadata(hass, entityId);
   return Object.entries(filter).every(([key, expected]) => {
     if (key === "and") {
       if (!Array.isArray(expected)) throw new Error("uix-forge: entities Spark and must be a list");
-      return expected.every((child) => matchOne(hass, entityId, child));
+      return expected.every((child) => matchOne(hass, entityId, child, context));
     }
     if (key === "or") {
       if (!Array.isArray(expected)) throw new Error("uix-forge: entities Spark or must be a list");
-      return expected.some((child) => matchOne(hass, entityId, child));
+      return expected.some((child) => matchOne(hass, entityId, child, context));
     }
-    if (key === "not") return !matchOne(hass, entityId, expected);
+    if (key === "not") return !matchOne(hass, entityId, expected, context);
     if (key === "domain") return textMatches(entityId.split(".", 1)[0], expected);
     if (key === "entity_id") return textMatches(entityId, expected);
     if (key === "state") return textMatches(data.state?.state, expected);
@@ -166,7 +184,7 @@ function matchOne(hass: any, entityId: string, filter: any): boolean {
     if (key === "integration") return textMatches(data.entity.platform ?? data.entity.integration ?? data.device.integration, expected);
     if (key === "hidden_by") return textMatches(data.entity.hidden_by, expected);
     if (key === "entity_category") return textMatches(data.entity.entity_category, expected);
-    if (key === "group") return entityIds(hass).filter((id) => id.startsWith("group.")).some((group) => textMatches(group, expected) && (hass.states[group]?.attributes?.entity_id ?? []).includes(entityId));
+    if (key === "group") return groupMembers(context, hass, expected).has(entityId);
     if (key === "attributes") {
       if (!isMapping(expected)) throw new Error("uix-forge: entities Spark attributes must be a mapping");
       return Object.entries(expected).every(([attribute, value]) => textMatches(nestedAttribute(data.state?.attributes, attribute), value));
@@ -240,8 +258,7 @@ function sectionLabel(hass: any, entityId: string, level: EntitySortConfig, grou
   return typeof label === "string" && label.length > 0 ? label : fallback;
 }
 
-function sortedEntityEntries(ids: string[], spark: UixForgeEntitiesSpark, hass: any): any[] {
-  const levels = sortLevels(spark.sort);
+function sortedEntityEntries(ids: string[], spark: UixForgeEntitiesSpark, hass: any, levels = sortLevels(spark.sort)): any[] {
   if (levels.length === 0) return ids;
   const values = new Map<string, any[]>(ids.map((entityId) => [entityId, levels.map((level) => sortValue(hass, entityId, level))]));
   const sorted = [...ids].sort((left, right) => {
@@ -286,18 +303,24 @@ export function selectEntities(spark: UixForgeEntitiesSpark, hass: any): { ids: 
   const exclude = spark.filter?.exclude ?? [];
   if (!Array.isArray(include) || !Array.isArray(exclude)) throw new Error("uix-forge: entities Spark filter include and exclude must be lists");
   const available = entityIds(hass);
-  const included: string[] = include.reduce((result: string[], filter) => result.concat(available.filter((entityId) => matchOne(hass, entityId, filter))), []);
-  const exclusion = new Set<string>(exclude.reduce((result: string[], filter) => result.concat(available.filter((entityId) => matchOne(hass, entityId, filter))), []));
+  const context: SelectionContext = { available, groupMembers: new Map() };
+  const matching = (filter: any) => available.filter((entityId) => matchOne(hass, entityId, filter, context));
+  const includedByFilter = include.map(matching);
+  const included = includedByFilter.reduce((result: string[], entries) => result.concat(entries), []);
+  const exclusion = new Set<string>(exclude.reduce((result: string[], filter) => result.concat(matching(filter)), []));
   const ids = [...(spark.entities ?? []), ...included].filter((entityId, index, values) => values.indexOf(entityId) === index && !exclusion.has(entityId));
-  return { ids, included: [...new Set(included)], excluded: [...exclusion].sort(), counts: include.map((filter) => available.filter((entityId) => matchOne(hass, entityId, filter)).length) };
+  return { ids, included: [...new Set(included)], excluded: [...exclusion].sort(), counts: includedByFilter.map((entries) => entries.length) };
 }
 
 export function entitiesSparkEntries(spark: UixForgeEntitiesSpark, hass: any): { ids: string[]; entries: any[]; included: string[]; excluded: string[]; counts: number[] } {
   const selected = selectEntities(spark, hass);
-  const sorted = sortedEntityEntries(selected.ids, spark, hass);
+  const levels = sortLevels(spark.sort);
+  if (spark.element !== undefined && !isMapping(spark.element)) throw new Error("uix-forge: entities Spark element must be a mapping");
+  if (spark.element !== undefined && levels.some((level) => level.divider || level.section)) {
+    throw new Error("uix-forge: entities Spark divider or section sorting cannot use element");
+  }
+  const sorted = sortedEntityEntries(selected.ids, spark, hass, levels);
   if (spark.element === undefined) return { ...selected, entries: sorted };
-  if (!isMapping(spark.element)) throw new Error("uix-forge: entities Spark element must be a mapping");
-  if (sorted.some((entry) => typeof entry !== "string")) throw new Error("uix-forge: entities Spark divider or section sorting cannot use element");
   const entityPath = spark.entity_path ?? "/entity";
   return { ...selected, entries: sorted.map((entityId) => setEntryEntity(cloneConfig(spark.element), entityPath, entityId)) };
 }

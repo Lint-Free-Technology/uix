@@ -48,6 +48,7 @@ export class UixForgeSparkController {
   private _configSparks: Record<string, any>[] = [];
   private _entitiesSparks: Record<string, any>[] = [];
   private _entitiesRefreshTimer?: number;
+  private _entitiesRefreshPending = false;
 
   constructor(forge: UixForge) {
       this.forge = forge;
@@ -61,6 +62,7 @@ export class UixForgeSparkController {
       clearTimeout(this._entitiesRefreshTimer);
       this._entitiesRefreshTimer = undefined;
     }
+    if (!hasEntitiesSparks(this._entitiesSparks)) this._entitiesRefreshPending = false;
     const configs = (sparkConfigs ?? []).filter(config => config?.type && config.type !== "config" && config.type !== "entities");
     configs.forEach((config, index) => {
       const existingSpark = this.sparks[index];
@@ -109,11 +111,19 @@ export class UixForgeSparkController {
       return;
     }
     if (!changed) return;
+    this._entitiesRefreshPending = true;
+    this._scheduleEntitiesRefresh();
+  }
+
+  private _scheduleEntitiesRefresh(): void {
     if (this._entitiesRefreshTimer !== undefined) clearTimeout(this._entitiesRefreshTimer);
     this._entitiesRefreshTimer = window.setTimeout(() => {
       this._entitiesRefreshTimer = undefined;
-      this.forge.refreshForgedElement([]);
-      this.forge.refreshForge([]);
+      if (!this.forge.isConnected) return;
+      this._entitiesRefreshPending = false;
+      // The normal transform-aware refresh path reconfigures the target once,
+      // including when the last transform Spark has been removed.
+      this.forge.refreshForge(["sparks"]);
     }, 500);
   }
 
@@ -136,6 +146,7 @@ export class UixForgeSparkController {
 
   connectedCallback() {
     this.sparks.forEach(spark => spark.connectedCallback());
+    if (this._entitiesRefreshPending && this._entitiesRefreshTimer === undefined) this._scheduleEntitiesRefresh();
   }
 
   disconnectedCallback() {

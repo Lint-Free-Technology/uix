@@ -1,6 +1,6 @@
 import { buildBillets, buildMacros } from "../helpers/apply_uix";
 import { hasTemplate, render_template } from "../helpers/templates";
-import { applyConfigSparks, cloneConfig } from "./config-transform";
+import { applyConfigSparks, cloneConfig, setConfigValue } from "./config-transform";
 import { applyEntitiesSparks, entitiesSparkSignature, hasEntitiesSparks } from "./entities-transform";
 import { activeLayeredOverrideValues, composeLayeredElementConfig, _resolveFoundryConfig } from "./uix-forge";
 import {
@@ -214,9 +214,12 @@ async function resolveTemplates(
   if (isMapping(value)) {
     const result: Record<string, any> = {};
     for (const [key, child] of Object.entries(value)) {
-      result[key] = key === "uix"
+      const resolved = key === "uix"
         ? cloneConfig(child)
         : (await resolveTemplates(child, context, macros, billets, pairs, [...path, key], opaquePaths)).value;
+      // Configuration must retain an own `__proto__` data property rather
+      // than invoking Object.prototype's legacy prototype setter.
+      setConfigValue(result, key, resolved);
     }
     return { value: result, opaquePaths };
   }
