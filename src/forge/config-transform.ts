@@ -15,10 +15,22 @@ export function cloneConfig(value: any): any {
   if (Array.isArray(value)) return value.map(cloneConfig);
   if (isMapping(value)) {
     const result: JsonMapping = {};
-    for (const [key, child] of Object.entries(value)) result[key] = cloneConfig(child);
+    for (const [key, child] of Object.entries(value)) setConfigValue(result, key, cloneConfig(child));
     return result;
   }
   return value;
+}
+
+/**
+ * Assign an own configuration property without invoking Object.prototype's
+ * legacy __proto__ setter. Configuration is data, never an object prototype.
+ */
+export function setConfigValue(target: JsonMapping, key: string, value: any): void {
+  if (key === "__proto__") {
+    Object.defineProperty(target, key, { value, enumerable: true, configurable: true, writable: true });
+    return;
+  }
+  target[key] = value;
 }
 
 function decodePointer(pointer: string, name: string): string[] {
@@ -69,13 +81,23 @@ function matches(candidate: any, matcher: any): boolean {
     if (keys.length === 1 && keys[0] === "$contains") {
       if (!Array.isArray(candidate)) return false;
       const requested = Array.isArray(matcher.$contains) ? matcher.$contains : [matcher.$contains];
-      const remaining = [...candidate];
-      return requested.every((item) => {
-        const index = remaining.findIndex((candidateItem) => matches(candidateItem, item));
-        if (index === -1) return false;
-        remaining.splice(index, 1);
-        return true;
-      });
+      // A greedy first match is wrong when a broad matcher consumes the only
+      // member that a later, more specific matcher can use. Find an injective
+      // assignment instead, reassigning an earlier matcher when necessary.
+      const assigned = new Map<number, number>();
+      const assign = (requestedIndex: number, visited: Set<number>): boolean => {
+        for (let candidateIndex = 0; candidateIndex < candidate.length; candidateIndex++) {
+          if (visited.has(candidateIndex) || !matches(candidate[candidateIndex], requested[requestedIndex])) continue;
+          visited.add(candidateIndex);
+          const previous = assigned.get(candidateIndex);
+          if (previous === undefined || assign(previous, visited)) {
+            assigned.set(candidateIndex, requestedIndex);
+            return true;
+          }
+        }
+        return false;
+      };
+      return requested.every((_, index) => assign(index, new Set()));
     }
     return isMapping(candidate) && keys.every((key) => Object.prototype.hasOwnProperty.call(candidate, key) && matches(candidate[key], matcher[key]));
   }
@@ -126,8 +148,8 @@ function resolveTarget(root: any, patch: UixForgeConfigPatch): PatchTarget | nul
 
 function merge(target: JsonMapping, value: JsonMapping): void {
   for (const [key, child] of Object.entries(value)) {
-    if (isMapping(target[key]) && isMapping(child)) merge(target[key], child);
-    else target[key] = cloneConfig(child);
+    if (Object.prototype.hasOwnProperty.call(target, key) && isMapping(target[key]) && isMapping(child)) merge(target[key], child);
+    else setConfigValue(target, key, cloneConfig(child));
   }
 }
 
@@ -141,7 +163,10 @@ export function applyConfigPatches(config: any, patches: UixForgeConfigPatch[] =
     if (patch.op !== "remove" && !Object.prototype.hasOwnProperty.call(patch, "value")) throw new Error(`uix-forge: config Spark ${patch.op} requires value`);
     if (patch.op === "replace") {
       if (patch.path === "") result = cloneConfig(patch.value);
-      else if (target.parent && target.key !== undefined) target.parent[target.key as any] = cloneConfig(patch.value);
+      else if (target.parent && target.key !== undefined) {
+        if (Array.isArray(target.parent)) target.parent[target.key as number] = cloneConfig(patch.value);
+        else setConfigValue(target.parent, target.key as string, cloneConfig(patch.value));
+      }
       else throw new Error("uix-forge: config Spark replace requires a non-root target");
     } else if (patch.op === "merge") {
       if (!isMapping(target.value) || !isMapping(patch.value)) throw new Error("uix-forge: config Spark merge requires mapping target and value");

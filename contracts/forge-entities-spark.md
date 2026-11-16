@@ -33,7 +33,7 @@ The Spark selects every current `browser_mod` entity, appends the resulting IDs 
 
 `path` is an RFC 6901 JSON Pointer relative to the resolved `element` mapping. It identifies the array to receive generated entries. It must not be the root.
 
-The final path segment may be absent when its parent is an existing mapping; Forge creates that property as an empty array. Forge does not create missing intermediate mappings or array members. An existing target must be an array.
+The final path segment may be absent when its parent is an existing mapping; Forge creates that property as an empty array. Intermediate path segments may traverse existing mappings and existing numeric array members, such as `/sections/0/cards`. Forge does not create missing intermediate mappings or array members. An existing target must be an array.
 
 `mode` controls how generated entries combine with the target array:
 
@@ -62,7 +62,7 @@ element:
   title: Dashboard devices
 ```
 
-With `element`, Forge clones that mapping once per selected entity and writes the entity ID at `entity_path`. `entity_path` defaults to `/entity`; it is an RFC 6901 JSON Pointer relative to the generated mapping. The path's parent must exist and be a mapping. The selected entity ID replaces any value at that location.
+With `element`, Forge clones that mapping once per selected entity and writes the entity ID at `entity_path`. `entity_path` defaults to `/entity`; it is an RFC 6901 JSON Pointer relative to the generated mapping. Its intermediate segments may traverse existing mappings and numeric array members, while its final parent must be a mapping. The selected entity ID replaces any value at that location.
 
 ```yaml
 forge:
@@ -108,7 +108,7 @@ String rules support literal values, quoted `*` wildcards, and slash-delimited J
 
 The Spark must use the current Home Assistant state and registry data. Its owner must regenerate when data used by an active rule changes: state and attributes for state-based rules; entity, device, area, floor, label, integration, category, and hidden metadata for registry-based rules; and normal Forge template dependencies for templated Spark values. Changes that cannot affect an active rule must not trigger an Entities Spark regeneration.
 
-Entities Spark regeneration uses a 500 ms trailing debounce, matching the update behaviour users expect from `auto-entities`: relevant changes within the window are coalesced, and the list is regenerated once 500 ms after the most recent relevant change. Until then, the previously generated Forge or strategy configuration remains in use. For a strategy mold, the debounced refresh must call the normal Home Assistant strategy-generation lifecycle with the newly generated source `element`; UIX must not mutate a config already returned to Home Assistant. Unknown or inaccessible registry data never expands the selected set. Invalid filter syntax, an invalid target, an incompatible target list, or an invalid generated entry fails Forge generation visibly rather than returning a partial list.
+Entities Spark regeneration uses a 500 ms trailing debounce, matching the update behaviour users expect from `auto-entities`: relevant changes within the window are coalesced, and the list is regenerated once 500 ms after the most recent relevant change. Until then, the previously generated Forge or strategy configuration remains in use. For a strategy mold, the debounce begins when Home Assistant asks whether regeneration is required, so it coexists with rather than follows Home Assistant's own strategy debounce. The resulting refresh calls the normal Home Assistant strategy-generation lifecycle with the newly generated source `element`; UIX must not mutate a config already returned to Home Assistant. Delegated strategy dependencies and normal Forge template dependencies remain active alongside the Entities Spark selection. Unknown or inaccessible registry data never expands the selected set. Invalid filter syntax, an invalid target, an incompatible target list, or an invalid generated entry fails Forge generation visibly rather than returning a partial list.
 
 Filter results have deterministic entity-ID order unless `sort` is supplied. `sort` accepts one sort mapping or an ordered list of mappings. Its supported methods are `domain`, `entity_id`, `name`, `device`, `area`, `state`, and `attribute`; `attribute` requires `attribute`. `reverse`, `ignore_case`, and `numeric` are supported boolean options.
 

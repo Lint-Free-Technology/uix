@@ -41,13 +41,14 @@ When `element.type` is a recognised built-in Home Assistant strategy for the cur
 
 For a strategy mold, Forge resolves its configuration exactly as it does for a standard mold:
 
-1. Resolve global, mold-specific global, named, inherited, and local Foundry fragments in the normal order.
-2. Compose `element_base` and active `element` values when layered configuration is selected.
-3. Resolve Forge-owned templates and apply normal Forge template nesting rules.
-4. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping.
-5. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for the current scope; otherwise use the mapping directly as the scope config.
-6. Run Configuration Sparks, in resolved Spark order, over that config.
-7. Return the transformed config to Home Assistant, which performs its normal scope-specific strategy handling and rendering.
+1. Wait for the UIX coordinator's initial Foundry response, then resolve global, mold-specific global, named, inherited, and local Foundry fragments in the normal order.
+2. When layered configuration is selected, exclude disabled `element` paths before resolving Forge templates. `element_base` remains untouched.
+3. Resolve active Forge-owned templates, including normal nesting and pass-through handling. A valid JSON object or array template result is an opaque structural replacement.
+4. Compose `element_base` and the resolved active `element` values when layered configuration is selected.
+5. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping.
+6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for the current scope; otherwise use the mapping directly as the scope config.
+7. Run Configuration Sparks, in resolved Spark order, over that config.
+8. Return the transformed config to Home Assistant, which performs its normal scope-specific strategy handling and rendering.
 
 Direct strategy output has no required `type`; an empty mapping is a valid blank strategy. A selected base strategy must resolve to a concrete non-empty string type and must not be `custom:uix-forge`.
 
@@ -63,7 +64,7 @@ Because a strategy returns scope configuration rather than wrapping an element, 
 
 `forge.hidden`, `forge.grid_options`, `forge.show_error`, `forge.delayed_hass`, and `forge.uix` have no strategy-scope meaning and are invalid with `mold: strategy`. DOM Sparks are also invalid because the strategy mold does not create a Forge wrapper element. Only the pre-generation `type: entities` Spark and post-generation `type: config` Spark are valid for this mold.
 
-Forge-owned templates in strategy configuration have the same context and output rules as they do for an ordinary Forge. UIX must regenerate the delegated strategy whenever a Forge-owned template result changes, while retaining Home Assistant's normal regeneration behaviour for the delegated strategy. Element-base templates are not interpreted or subscribed to by Forge.
+Forge-owned templates in strategy configuration have the same context, nesting, pass-through, and structural-output rules as they do for an ordinary Forge. They are re-evaluated whenever Home Assistant performs its normal strategy regeneration for a state or registry update, alongside the delegated strategy's own regeneration conditions. A strategy is a static Home Assistant extension point, not a mounted Forge element: UIX must not patch Home Assistant to request an otherwise idle regeneration. Consequently, a time-only template such as `{{ now() }}` is refreshed by the next normal Home Assistant strategy update, but cannot independently wake a strategy. Element-base templates are not interpreted or subscribed to by Forge.
 
 An error during Forge resolution, an Entities Spark, base-strategy generation, or a Configuration Spark fails the whole strategy generation. UIX must return no partially transformed result; Home Assistant displays its standard error result for the affected strategy scope.
 
@@ -84,7 +85,7 @@ forge:
 
 Configuration Sparks run after template resolution and element-layer composition, but before Forge creates, configures, or refreshes the rendered target. All configuration Sparks run before DOM Sparks. Multiple configuration Sparks and the patches within each Spark run in their resolved order, so a later patch observes the output of every earlier patch.
 
-Configuration Spark values use the usual Forge template handling. The operation name and all pointer paths are literal structural syntax and cannot be templates. A structural template result is an opaque replacement value, following the existing Forge template rules.
+Configuration Spark values use the usual Forge template handling. The operation name and all pointer paths are literal structural syntax and cannot be templates. A structural template result is an opaque replacement value, following the existing Forge template rules. Clone, merge, replacement, and generated configuration writes operate only on own data properties; a `__proto__` key remains data and must never alter an object prototype.
 
 ### Paths and selection
 

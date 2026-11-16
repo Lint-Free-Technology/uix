@@ -970,7 +970,7 @@ strategy:
       content: Last updated {{ now() }}
 ```
 
-Strategies are YAML-only. They use the same `element`, `element_base`, Foundry, macro, billet, and template behaviour as every other Forge mold. As a strategy has no Forge DOM wrapper, it supports only [Entities Sparks](./sparks/entities.md) before generation and [Configuration Sparks](./sparks/config.md) afterwards. It does not support DOM Sparks or `hidden`, `grid_options`, `show_error`, `delayed_hass`, and `forge.uix`.
+Strategies are YAML-only. They use the same `element`, `element_base`, Foundry, macro, billet, template nesting, and template-output behaviour as every other Forge mold. Forge re-evaluates strategy templates during Home Assistant's normal state and registry-driven strategy updates. A time-only template such as `{{ now() }}` has no independent strategy wake-up, so it is refreshed with the next normal strategy update. As a strategy has no Forge DOM wrapper, it supports only [Entities Sparks](./sparks/entities.md) before generation and [Configuration Sparks](./sparks/config.md) afterwards. It does not support DOM Sparks or `hidden`, `grid_options`, `show_error`, `delayed_hass`, and `forge.uix`.
 
 Configuration Sparks run after Forge has resolved the direct config or after the base strategy has generated its Dashboard, View, or Section config, and before Home Assistant renders it. See [Configuration Spark](./sparks/config.md) for a Home Overview example that inserts a People map section after its summaries.
 

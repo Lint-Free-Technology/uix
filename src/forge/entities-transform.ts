@@ -1,4 +1,4 @@
-import { cloneConfig } from "./config-transform";
+import { cloneConfig, setConfigValue } from "./config-transform";
 
 type Mapping = Record<string, any>;
 
@@ -57,18 +57,23 @@ function pointerValue(root: any, pointer: string, name: string): any {
   return current;
 }
 
+function existingPointerChild(parent: any, segment: string, name: string): any {
+  if (Array.isArray(parent) && /^(0|[1-9]\d*)$/.test(segment) && Number(segment) < parent.length) {
+    return parent[Number(segment)];
+  }
+  if (isMapping(parent) && Object.prototype.hasOwnProperty.call(parent, segment)) return parent[segment];
+  throw new Error(`uix-forge: entities Spark ${name} has a missing intermediate mapping or array member`);
+}
+
 function setTargetArray(root: Mapping, pointer: string): any[] {
   const segments = decodePointer(pointer, "path");
   const key = segments.pop()!;
   let parent: any = root;
   for (const segment of segments) {
-    if (!isMapping(parent) || !Object.prototype.hasOwnProperty.call(parent, segment)) {
-      throw new Error("uix-forge: entities Spark path has a missing intermediate mapping");
-    }
-    parent = parent[segment];
+    parent = existingPointerChild(parent, segment, "path");
   }
   if (!isMapping(parent)) throw new Error("uix-forge: entities Spark path parent must be a mapping");
-  if (!Object.prototype.hasOwnProperty.call(parent, key)) parent[key] = [];
+  if (!Object.prototype.hasOwnProperty.call(parent, key)) setConfigValue(parent, key, []);
   if (!Array.isArray(parent[key])) throw new Error("uix-forge: entities Spark path must target an array");
   return parent[key];
 }
@@ -78,13 +83,10 @@ function setEntryEntity(entry: Mapping, pointer: string, entityId: string): Mapp
   const key = segments.pop()!;
   let parent: any = entry;
   for (const segment of segments) {
-    if (!isMapping(parent) || !Object.prototype.hasOwnProperty.call(parent, segment)) {
-      throw new Error("uix-forge: entities Spark entity_path has a missing mapping parent");
-    }
-    parent = parent[segment];
+    parent = existingPointerChild(parent, segment, "entity_path");
   }
   if (!isMapping(parent)) throw new Error("uix-forge: entities Spark entity_path parent must be a mapping");
-  parent[key] = entityId;
+  setConfigValue(parent, key, entityId);
   return entry;
 }
 

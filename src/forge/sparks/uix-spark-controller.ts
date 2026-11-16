@@ -53,7 +53,8 @@ export class UixForgeSparkController {
       this.forge = forge;
   }
 
-  setConfig(sparkConfigs?: Record<string, any>[]) {
+  setConfig(sparkConfigs?: Record<string, any>[]): boolean {
+    const hadTransforms = this.hasConfigSparks() || this.hasEntitiesSparks();
     this._configSparks = (sparkConfigs ?? []).filter(config => config?.type === "config");
     this._entitiesSparks = (sparkConfigs ?? []).filter(config => config?.type === "entities");
     if (!hasEntitiesSparks(this._entitiesSparks) && this._entitiesRefreshTimer !== undefined) {
@@ -83,6 +84,7 @@ export class UixForgeSparkController {
     if (this.sparks.length > configs.length) {
       this.sparks.splice(configs.length).forEach(spark => spark.disconnectedCallback());
     }
+    return hadTransforms || this.hasConfigSparks() || this.hasEntitiesSparks();
   }
 
   transformConfig(config: any): any {

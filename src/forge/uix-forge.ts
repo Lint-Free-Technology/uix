@@ -155,6 +155,12 @@ function _activeLayeredOverrideValues(
   return hasActiveChild ? result : LAYERED_OVERRIDE_INACTIVE;
 }
 
+/** Return the Forge-owned portion of a layered overlay after disabled paths. */
+export function activeLayeredOverrideValues(value: any, disabledPaths: UixForgeConfigPath[] = []): any {
+  const active = _activeLayeredOverrideValues(value, disabledPaths);
+  return active === LAYERED_OVERRIDE_INACTIVE ? {} : active;
+}
+
 function _composeLayeredValue(
   base: any,
   override: any,
@@ -669,8 +675,7 @@ export class UixForge extends LitElement {
     this._clearTemplateBindings(this._layeredOverridesConfig);
     this._layeredOverrideTemplatePaths = this._collectLayeredTemplatePaths(values);
     this._layeredOverridesConfig.nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
-    const activeValues = _activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
-    this._layeredOverridesConfig.config = activeValues === LAYERED_OVERRIDE_INACTIVE ? {} : activeValues;
+    this._layeredOverridesConfig.config = activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
     this._refreshLayeredForgedElement();
   }
 
@@ -1262,9 +1267,14 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
-    this._sparkController.setConfig(this.forgeConfig.sparks);
+    const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
     if (path.includes("sparks")) {
-      if (this._sparkController.hasConfigSparks()) this._mold.refresh([]);
+      // Both configuration-transform phases change the target's config. This
+      // must reconfigure the target itself (not merely refresh the mold), and
+      // must also run when the final Spark was removed so its original config
+      // is restored.
+      if (hasTransforms) this.refreshForgedElement([]);
+      else this._mold.refresh([]);
     } else {
       this._mold.refresh(path);
     }

@@ -16,6 +16,7 @@ BADGE_PICKER_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-badge-picker.ts"
 BLANK_BADGE_TS = REPO_ROOT / "src" / "cards" / "uix-forge-blank-badge.ts"
 CONFIG_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "config-transform.ts"
 ENTITIES_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "entities-transform.ts"
+FORGE_STRATEGY_TS = REPO_ROOT / "src" / "forge" / "uix-forge-strategy.ts"
 
 
 def test_config_spark_applies_ordered_patches_without_mutating_source() -> None:
@@ -68,6 +69,78 @@ def test_config_spark_applies_ordered_patches_without_mutating_source() -> None:
     assert "exactly one" in result["ambiguous"]
 
 
+def test_config_spark_matching_and_copying_are_safe() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' });"
+                "const moduleObj = { exports: {} };"
+                "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
+                "const selected = moduleObj.exports.applyConfigPatches({ sections: [{ cards: [{ type: 'tile', entity: 'light.kitchen' }, { type: 'tile', entity: 'light.bedroom' }] }] }, [{ op: 'append', select: { in: '/sections', match: { cards: { $contains: [{ type: 'tile' }, { entity: 'light.kitchen' }] } }, path: '/cards' }, value: { type: 'tile', entity: 'light.selected' } }]);"
+                "let duplicate; try { moduleObj.exports.applyConfigPatches({ cards: [{ type: 'tile' }] }, [{ op: 'remove', select: { in: '/cards', match: { $contains: [{ type: 'tile' }, { type: 'tile' }] } } }]); } catch (err) { duplicate = err.message; }"
+                "const polluted = moduleObj.exports.applyConfigPatches({}, [{ op: 'merge', path: '', value: JSON.parse('{\\\"__proto__\\\":{\\\"uix_polluted\\\":true}}') }]);"
+                "process.stdout.write(JSON.stringify({ selected, duplicate, pollutedOwn: Object.prototype.hasOwnProperty.call(polluted, '__proto__'), prototypePolluted: ({}).uix_polluted === true }));"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["selected"]["sections"][0]["cards"][-1]["entity"] == "light.selected"
+    assert "exactly one" in result["duplicate"]
+    assert result["pollutedOwn"] is True
+    assert result["prototypePolluted"] is False
+
+
+def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const handlers = {};"
+                "global.window = { uixCoordinator: { ready: false, foundries: {}, connectionPromise: Promise.resolve() }, addEventListener: (name, callback) => { (handlers[name] ||= []).push(callback); }, removeEventListener: (name, callback) => { handlers[name] = (handlers[name] || []).filter((entry) => entry !== callback); }, setTimeout, clearTimeout };"
+                "global.HTMLElement = class {}; global.customElements = { get: () => undefined, whenDefined: () => new Promise(() => {}), define: () => {} };"
+                "const compile = (path, customRequire) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
+                "const config = compile(process.argv[1], require);"
+                "const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : require(name));"
+                "const strategy = compile(process.argv[3], (name) => {"
+                " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
+                " if (name === '../helpers/templates') return { hasTemplate: (value) => typeof value === 'string' && (value.includes('{{') || value.includes('{%')), render_template: async () => '[{\\\"type\\\":\\\"tile\\\",\\\"entity\\\":\\\"light.kitchen\\\"}]' };"
+                " if (name === './config-transform') return config;"
+                " if (name === './entities-transform') return entities;"
+                " if (name === './uix-forge') return { _resolveFoundryConfig: (value, _foundries, ready) => ready ? { forge: value.forge || {}, element: value.element || {}, elementBase: value.element_base || {}, hasElementBase: Object.prototype.hasOwnProperty.call(value, 'element_base') } : null, activeLayeredOverrideValues: (value, disabled) => Object.fromEntries(Object.entries(value).filter(([key]) => !disabled.some((path) => path[0] === key))), composeLayeredElementConfig: (base, overlay, _disabled, opaque) => ({ ...base, ...Object.fromEntries(Object.entries(overlay).map(([key, value]) => [key, opaque.has(JSON.stringify([key])) ? value : value])) }) };"
+                " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'uix-forge.ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: (value) => value.includes('uix-forge.ignore'), getNestedTemplateRawDelimiters: () => ({ openRaw: '{{', closeRaw: '}}' }) };"
+                " throw new Error(`Unexpected strategy import: ${name}`);"
+                "});"
+                "const source = { forge: { mold: 'strategy', template_nesting: '<<>>' }, element_base: { cards: [{ type: 'markdown', content: 'Base' }], title: 'Base' }, element_disabled_paths: [['broken']], element: { cards: '<< cards | tojson >>', broken: '{{ invalid }}' } };"
+                "const pending = strategy.resolveStrategyConfig(source, 'view', {});"
+                "setTimeout(() => { window.uixCoordinator.ready = true; (handlers['uix-ready'] || []).forEach((callback) => callback()); }, 0);"
+                "pending.then((result) => process.stdout.write(JSON.stringify(result))).catch((error) => { console.error(error); process.exit(1); });"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+            str(ENTITIES_TRANSFORM_TS),
+            str(FORGE_STRATEGY_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {
+        "cards": [{"type": "tile", "entity": "light.kitchen"}],
+        "title": "Base",
+    }
+
+
 def test_entities_spark_generates_and_appends_entity_lists() -> None:
     output = subprocess.check_output(
         [
@@ -88,8 +161,9 @@ def test_entities_spark_generates_and_appends_entity_lists() -> None:
                 "const gridResult = moduleObj.exports.applyEntitiesSpark({ type: 'grid', cards: [] }, { type: 'entities', path: '/cards', element: { type: 'tile' }, filter: { include: [{ label: 'dashboard_devices' }], exclude: [{ state: 'unavailable' }] } }, hass);"
                 "const rowsResult = moduleObj.exports.applyEntitiesSpark({ type: 'custom:fold-entity-row', entities: [{ type: 'divider' }] }, { type: 'entities', path: '/entities', filter: { include: [{ domain: 'light' }, { domain: 'sensor' }] }, sort: [{ method: 'domain', divider: true }, { method: 'entity_id' }] }, hass);"
                 "const sectionsResult = moduleObj.exports.applyEntitiesSpark({ type: 'entities', entities: [{ type: 'divider' }] }, { type: 'entities', path: '/entities', entities: ['sensor.indoor_temperature', 'light.kitchen'], sort: [{ method: 'domain', divider: true, section: true, label: [{ type: 'text', text: 'Group' }, 'entity'] }] }, hass);"
+                "const nestedTargetResult = moduleObj.exports.applyEntitiesSpark({ sections: [{ cards: [] }] }, { type: 'entities', path: '/sections/0/cards', element: { type: 'tile', target: { entities: [{}] } }, entity_path: '/target/entities/0/entity_id', entities: ['light.kitchen'] }, hass);"
                 "let elementRowsError; try { moduleObj.exports.applyEntitiesSpark({ type: 'grid', cards: [] }, { type: 'entities', path: '/cards', element: { type: 'tile' }, entities: ['light.kitchen'], sort: { method: 'domain', section: true } }, hass); } catch (err) { elementRowsError = err.message; }"
-                "process.stdout.write(JSON.stringify({ maintenance, maintenanceResult, gridResult, rowsResult, sectionsResult, elementRowsError }));"
+                "process.stdout.write(JSON.stringify({ maintenance, maintenanceResult, gridResult, rowsResult, sectionsResult, nestedTargetResult, elementRowsError }));"
             ),
             str(ENTITIES_TRANSFORM_TS),
         ],
@@ -118,6 +192,9 @@ def test_entities_spark_generates_and_appends_entity_lists() -> None:
         "light.kitchen",
         {"type": "section", "label": "Group Indoor temperature"},
         "sensor.indoor_temperature",
+    ]
+    assert result["nestedTargetResult"]["sections"][0]["cards"] == [
+        {"type": "tile", "target": {"entities": [{"entity_id": "light.kitchen"}]}},
     ]
     assert result["elementRowsError"] == (
         "uix-forge: entities Spark sort.divider and sort.section cannot use element because they generate entity-row entries"
@@ -1080,7 +1157,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  if (name === '../helpers/templates') return templates;"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
                 "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: { card: CardMold, badge: BadgeMold } };"
-                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { templateVariables() { return {}; } setConfig() {} } };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { templateVariables() { return {}; } setConfig() { return false; } transformConfig(config) { return config; } } };"
                 "  throw new Error(`Unexpected forge import: ${name}`);"
                 "});"
                 "const forge = new forgeModule.UixForge();"
