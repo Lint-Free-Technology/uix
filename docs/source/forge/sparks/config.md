@@ -49,9 +49,11 @@ views:
 
 `merge` recursively merges mappings; scalars, lists, and `null` replace the value at that key. Array entries are never merged individually.
 
+Templates in a patch's `value` may return a JSON object or list (for example with `| tojson`); Forge uses that as the structured patch value. JSON-looking output in ordinary Forge fields remains text, preserving existing Forge configuration behaviour.
+
 ## Strategies
 
-Use `custom:uix-forge` as the Home Assistant strategy type. With `element.type: home-overview` (or another recognised built-in strategy), Forge runs that base strategy and then applies patches to its generated config. A registered matching `custom:` strategy is delegated too. Otherwise, `element` is the direct blank Dashboard, View, or Section config that Forge returns. `mold: strategy` is YAML-only, but `element`, `element_base`, Foundries, macros, billets, and templates have their normal Forge behaviour.
+Use `custom:uix-forge` as the Home Assistant strategy type. With `element.type: home-overview` (or another recognised built-in strategy), Forge runs that base strategy and then applies patches to its generated config. Built-in View and Section strategies load when needed; a Dashboard base strategy must already be loaded in the current browser session. A registered matching `custom:` strategy is delegated too. Otherwise, `element` is the direct blank Dashboard, View, or Section config that Forge returns. `mold: strategy` is YAML-only, but `element`, `element_base`, Foundries, macros, billets, and templates have their normal Forge behaviour.
 
 ```yaml
 views:

@@ -1,0 +1,37 @@
+id: forge_strategy_section_base
+description: "UIX Forge lazily loads a native Section strategy before a Configuration Spark augments its generated section"
+view_path: forge-strategy-section-base
+
+dashboard:
+  title: "Forge section strategy base"
+  views:
+    - path: forge-strategy-section-base
+      type: sections
+      sections:
+        - strategy:
+            type: custom:uix-forge
+            forge:
+              mold: strategy
+              sparks:
+                - type: config
+                  patches:
+                    - op: append
+                      path: /cards
+                      value:
+                        type: markdown
+                        content: "## Section loaded by Forge"
+            element:
+              type: entities
+              target:
+                entity_id: light.bed_light
+              entity_types:
+                - light
+
+assertions:
+  - type: snapshot
+    name: "80_forge_strategy_section_base"
+    threshold: 0.02
+  - type: text_startswith
+    root: ha-markdown
+    selector: h2
+    expected: "Section loaded by Forge"

@@ -28,15 +28,69 @@ function strategyTags(scope: StrategyScope, type: string): string[] {
   throw new Error(`uix-forge: unknown ${scope} strategy '${type}'`);
 }
 
-async function resolveStrategy(scope: StrategyScope, type: string): Promise<any> {
+const STRATEGY_LOAD_TIMEOUT_MS = 5000;
+
+function waitForStrategyTag(tag: string, description: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error(`uix-forge: timeout loading ${description}`)), STRATEGY_LOAD_TIMEOUT_MS);
+    customElements.whenDefined(tag).then(() => {
+      window.clearTimeout(timeout);
+      resolve();
+    }, (error) => {
+      window.clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
+
+/**
+ * Home Assistant exposes no public section-strategy loader to custom
+ * resources. A temporary hidden native section is nevertheless a safe bridge:
+ * its normal connected config lifecycle invokes Home Assistant's own loader
+ * and imports the requested built-in strategy before any content reaches the
+ * user.
+ */
+async function loadBuiltinSectionStrategy(type: string, hass: any): Promise<any> {
+  const tag = strategyTags("section", type)[0];
+  const existing = customElements.get(tag);
+  if (existing) return existing;
+  await waitForStrategyTag("hui-section", "Home Assistant section renderer");
+  const loader = document.createElement("hui-section") as any;
+  const loaded = waitForStrategyTag(tag, `section strategy '${type}'`);
+  loader.hass = hass;
+  // Supplying a minimal real Section strategy config takes Home Assistant's
+  // regular lazy-import path. It is hidden and removed immediately after its
+  // import completes, so it never becomes user-visible.
+  loader.config = { strategy: { type } };
+  loader.style.display = "none";
+  loader.setAttribute("aria-hidden", "true");
+  document.body.append(loader);
+  try {
+    await loaded;
+  } finally {
+    loader.remove();
+  }
+  const strategy = customElements.get(tag);
+  if (!strategy) throw new Error(`uix-forge: Home Assistant did not register section strategy '${type}'`);
+  return strategy;
+}
+
+async function resolveStrategy(scope: StrategyScope, type: string, hass: any): Promise<any> {
   const tags = strategyTags(scope, type);
   const defined = tags.map((tag) => customElements.get(tag)).find(Boolean);
   if (defined) return defined;
   if (!type.startsWith("custom:")) {
+    if (scope === "section") return loadBuiltinSectionStrategy(type, hass);
+    if (scope === "dashboard") {
+      throw new Error(`uix-forge: Dashboard base strategy '${type}' has not been loaded in this browser session; visit a dashboard using it first, or use direct Forge Dashboard output`);
+    }
     throw new Error(`uix-forge: Home Assistant has not loaded the ${scope} strategy '${type}'`);
   }
-  const timeout = new Promise<undefined>((resolve) => window.setTimeout(resolve, 5000));
-  await Promise.race([...tags.map((tag) => customElements.whenDefined(tag)), timeout]);
+  try {
+    await Promise.race(tags.map((tag) => waitForStrategyTag(tag, `${scope} strategy '${type}'`)));
+  } catch (_error) {
+    throw new Error(`uix-forge: timeout loading ${scope} strategy '${type}'`);
+  }
   const strategy = tags.map((tag) => customElements.get(tag)).find(Boolean);
   if (!strategy) throw new Error(`uix-forge: timeout loading ${scope} strategy '${type}'`);
   return strategy;
@@ -55,18 +109,6 @@ function hasRegisteredCustomStrategy(scope: StrategyScope, type: any): boolean {
   return strategyTags(scope, type).some((tag) => customElements.get(tag) !== undefined);
 }
 
-function resolvedEntitySparks(config: any): Record<string, any>[] {
-  const coordinator = (window as any).uixCoordinator;
-  try {
-    const resolved = _resolveFoundryConfig(config, coordinator?.foundries, coordinator?.ready);
-    return resolved?.forge?.sparks ?? [];
-  } catch (_error) {
-    // shouldRegenerate is synchronous. Until the asynchronous readiness phase
-    // below has completed, use the conservative normal strategy dependencies.
-    return [];
-  }
-}
-
 export async function generateBaseStrategy(
   scope: StrategyScope,
   config: Record<string, any>,
@@ -80,12 +122,13 @@ export async function generateBaseStrategy(
     onStrategy?.(registeredStrategy(scope, config.type));
     return generated;
   }
-  const strategy = await resolveStrategy(scope, config.type);
+  const strategy = await resolveStrategy(scope, config.type, hass);
   onStrategy?.(strategy);
-  if (typeof strategy.generate !== "function") throw new Error(`uix-forge: strategy '${config.type}' does not implement generate()`);
-  const baseConfig = cloneConfig(config);
-  delete baseConfig.type;
-  return strategy.generate(baseConfig, hass);
+  if (typeof strategy.generate === "function") return strategy.generate(cloneConfig(config), hass);
+  if (scope === "dashboard" && typeof strategy.generateDashboard === "function") {
+    return strategy.generateDashboard({ config: { strategy: cloneConfig(config), views: [] }, hass });
+  }
+  throw new Error(`uix-forge: strategy '${config.type}' does not implement generate()`);
 }
 
 function isMapping(value: any): value is Record<string, any> {
@@ -184,7 +227,10 @@ async function resolveTemplates(
   const template = replaceNestedTemplateDelimiters(value, pairs);
   const macroStr = buildMacros(macros, template);
   const billetStr = buildBillets(billets, `${macroStr}${template}`);
-  const parsed = parseStructuralTemplateResult(await render_template(`${macroStr}${billetStr}${template}`, context));
+  // Strategy generation must not wait for an initial view render merely to
+  // obtain panel variables. `render_template` supplies the latest known
+  // standard UIX context and falls back to a safe empty panel context.
+  const parsed = parseStructuralTemplateResult(await render_template(`${macroStr}${billetStr}${template}`, context, true));
   if (parsed.opaque) opaquePaths.add(JSON.stringify(path));
   return { value: parsed.value, opaquePaths };
 }
@@ -262,6 +308,7 @@ export async function resolveStrategyConfig(config: any, scope: StrategyScope, h
     ? composeLayeredElementConfig(elementBase, resolvedOverlay.value, disabledPaths, resolvedOverlay.opaquePaths)
     : resolvedOverlay.value;
   const resolvedSparks = (await resolveTemplates(forge.sparks ?? [], templateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting))).value;
+  if (refresh) refresh.entitiesSparks = cloneConfig(resolvedSparks.filter((spark: any) => spark?.type === "entities"));
   const sourceElement = applyEntitiesSparks(resolvedElement, resolvedSparks, hass);
   if (refresh) {
     refresh.sourceElement = undefined;
@@ -284,6 +331,7 @@ type StrategyRefreshState = {
   entityRefresh?: Promise<void>;
   resolveEntityRefresh?: () => void;
   hass?: any;
+  entitiesSparks?: Record<string, any>[];
   sourceElement?: any;
   delegateStrategy?: any;
 };
@@ -328,7 +376,15 @@ export class UixForgeStrategy extends HTMLElement {
   static scope: StrategyScope;
 
   static shouldRegenerate(config: any, oldHass: any, newHass: any): boolean {
-    const sparks = resolvedEntitySparks(config);
+    const state = refreshState(config);
+    // `generate()` may follow a later HA update whose entity selection does
+    // not change. Always retain that current Hass object, not just the one
+    // that started a debounced Entities Spark refresh.
+    if (state) state.hass = newHass;
+    // This synchronous lifecycle hook cannot safely resolve Foundries or
+    // templates. Use the fully evaluated Spark config from the last
+    // generation instead of reading raw authored values.
+    const sparks = state?.entitiesSparks ?? [];
     let entitiesChanged = false;
     if (hasEntitiesSparks(sparks)) {
       try {
@@ -339,7 +395,6 @@ export class UixForgeStrategy extends HTMLElement {
     }
     if (entitiesChanged) scheduleEntityRefresh(config, newHass);
 
-    const state = refreshState(config);
     let delegateChanged = false;
     try {
       if (state?.delegateStrategy?.shouldRegenerate) {

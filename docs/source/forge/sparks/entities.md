@@ -56,7 +56,7 @@ This example discovers the Bedroom entities at render time; the screenshot shows
 
 `filter.include` adds entities matching any include filter; `filter.exclude` removes entities matching any exclude filter afterwards. A filter's keys all match.
 
-Use `area` and `label`, as with auto-entities; reserve `entity_id` for an entity-ID match. Literal strings, quoted `*` wildcards, and slash-delimited regular expressions are supported.
+Use `area` and `label`, as with auto-entities; reserve `entity_id` for an entity-ID match. Literal strings, quoted `*` wildcards, and slash-delimited regular expressions are supported. A text rule never matches missing metadata, so `area: "*"` means an entity with an area, not every entity without one.
 
 Each filter mapping matches when all of its rules match. `include` and `exclude` each accept a list of those mappings.
 
@@ -67,10 +67,10 @@ Each filter mapping matches when all of its rules match. `include` and `exclude`
 | `name` | Entity friendly name. |
 | `state` | Current entity state. |
 | `attributes` | A mapping of state attribute names and values; every listed attribute must match. Use `:` to address a nested attribute value. |
-| `group` | A group entity ID, matching its member entities. |
+| `group` | A group entity ID, matching its member entities (not the group entity itself). |
 | `area` | An area name or ID, including entities that inherit their device's area. |
 | `floor` | A floor name or ID, through the entity's effective area. |
-| `device` | A device name or ID. |
+| `device` | A device ID, user-assigned name, or original name. |
 | `label` | A label name or ID on the entity, its device, or its effective area. |
 | `integration` | The entity's integration/platform metadata. |
 | `hidden_by` | Entity registry hidden-by value. |

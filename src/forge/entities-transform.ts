@@ -106,7 +106,11 @@ function entityIds(hass: any): string[] {
 function textMatches(value: any, expected: any): boolean {
   if (Array.isArray(expected)) return expected.some((candidate) => textMatches(value, candidate));
   if (typeof expected !== "string") return Object.is(value, expected);
-  const actual = String(value ?? "");
+  // A string matcher only matches actual text. Coercing an absent registry
+  // value to an empty string made `area: "*"` (and similar filters) include
+  // entities with no area at all.
+  if (value === null || value === undefined) return false;
+  const actual = String(value);
   if (expected.startsWith("/") && expected.lastIndexOf("/") > 0) {
     const end = expected.lastIndexOf("/");
     try { return new RegExp(expected.slice(1, end), expected.slice(end + 1)).test(actual); } catch (_error) {
@@ -155,12 +159,14 @@ function matchOne(hass: any, entityId: string, filter: any): boolean {
     if (key === "name") return textMatches(data.state?.attributes?.friendly_name ?? data.entity.name ?? data.entity.original_name, expected);
     if (key === "area") return textMatches(data.area.area_id ?? data.area.id, expected) || textMatches(data.area.name, expected);
     if (key === "floor") return textMatches(data.floor.floor_id ?? data.floor.id, expected) || textMatches(data.floor.name, expected);
-    if (key === "device") return textMatches(data.device.id ?? data.entity.device_id, expected) || textMatches(data.device.name ?? data.device.name_by_user, expected);
+    if (key === "device") return textMatches(data.device.id ?? data.entity.device_id, expected)
+      || textMatches(data.device.name_by_user, expected)
+      || textMatches(data.device.name, expected);
     if (key === "label") return data.labelIds.some((label) => textMatches(label, expected)) || data.labelNames.some((label) => textMatches(label, expected));
     if (key === "integration") return textMatches(data.entity.platform ?? data.entity.integration ?? data.device.integration, expected);
     if (key === "hidden_by") return textMatches(data.entity.hidden_by, expected);
     if (key === "entity_category") return textMatches(data.entity.entity_category, expected);
-    if (key === "group") return textMatches(entityId, expected) || entityIds(hass).filter((id) => id.startsWith("group.")).some((group) => textMatches(group, expected) && (hass.states[group]?.attributes?.entity_id ?? []).includes(entityId));
+    if (key === "group") return entityIds(hass).filter((id) => id.startsWith("group.")).some((group) => textMatches(group, expected) && (hass.states[group]?.attributes?.entity_id ?? []).includes(entityId));
     if (key === "attributes") {
       if (!isMapping(expected)) throw new Error("uix-forge: entities Spark attributes must be a mapping");
       return Object.entries(expected).every(([attribute, value]) => textMatches(nestedAttribute(data.state?.attributes, attribute), value));
@@ -366,5 +372,7 @@ export function hasEntitiesSparks(sparks: Record<string, any>[] = []): boolean {
 }
 
 export function entitiesSparkSignature(sparks: Record<string, any>[] = [], hass?: any): string {
-  return JSON.stringify(sparks.filter((spark) => spark?.type === "entities").map((spark) => entitiesSparkEntries(spark as UixForgeEntitiesSpark, hass)));
+  // Inspector diagnostics (included, excluded, and counts) must not influence
+  // regeneration. Only the resulting list can change the forged config.
+  return JSON.stringify(sparks.filter((spark) => spark?.type === "entities").map((spark) => entitiesSparkEntries(spark as UixForgeEntitiesSpark, hass).entries));
 }

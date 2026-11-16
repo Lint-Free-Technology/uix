@@ -439,6 +439,7 @@ export class UixForge extends LitElement {
   private _refreshOperation = 0;
   private _cancelTemplateRefresh?: () => void;
   private _templateGeneration = 0;
+  private _transformError?: string;
 
   constructor() {
       super();
@@ -873,9 +874,28 @@ export class UixForge extends LitElement {
 
   get forgedElementConfig() {
     const config = this._layeredMode ? this._layeredForgedElementConfig : this._forgedElementConfig.config;
-    if (!config?.uix) return this._sparkController.transformConfig(config);
-    const mergedUix = this._mergeForgeUix(config.uix);
-    return this._sparkController.transformConfig(mergedUix === config.uix ? config : { ...config, uix: mergedUix });
+    try {
+      const mergedConfig = !config?.uix
+        ? config
+        : (() => {
+          const mergedUix = this._mergeForgeUix(config.uix);
+          return mergedUix === config.uix ? config : { ...config, uix: mergedUix };
+        })();
+      const transformed = this._sparkController.transformConfig(mergedConfig);
+      this._transformError = undefined;
+      return transformed;
+    } catch (error: any) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (this._transformError !== message) console.error("UIX Forge: Error applying transform Spark:", error);
+      this._transformError = message;
+      // The target receives a complete, conventional error configuration
+      // rather than a partly transformed config. This also lets a later valid
+      // template/registry update replace the error through the normal refresh.
+      return {
+        type: "markdown",
+        content: `### UIX Forge\n\nUnable to apply a configuration transform:\n\n> ${message}`,
+      };
+    }
   }
 
   set forgedElementConfig(config: any) {
@@ -1053,11 +1073,28 @@ export class UixForge extends LitElement {
     }
   }
 
+  /**
+   * Structural JSON is meaningful for layered overrides and the data-bearing
+   * fields of transform Sparks. Ordinary Forge template values deliberately
+   * retain the long-standing scalar-string behaviour.
+   */
+  private _parseStructuralSparkTemplateResult(path: string[]): boolean {
+    if (path[0] !== "sparks" || !/^(0|[1-9]\d*)$/.test(path[1] ?? "")) return false;
+    const spark = this._forgeConfig.config?.sparks?.[Number(path[1])];
+    if (spark?.type === "config") {
+      return path[2] === "patches" && /^(0|[1-9]\d*)$/.test(path[3] ?? "") && path[4] === "value";
+    }
+    if (spark?.type === "entities") {
+      return ["entities", "filter", "sort", "element"].includes(path[2]);
+    }
+    return false;
+  }
+
   private async bindTemplates(
     base: any,
     current: any = undefined,
     path: string[] = [],
-    parseLayeredResults = false,
+    parseStructuralResults = false,
     templateGeneration = this._templateGeneration
   ) {
     const hs = await hass();
@@ -1072,7 +1109,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults, templateGeneration);
+        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -1104,7 +1141,7 @@ export class UixForge extends LitElement {
           if (typeof res === "string") {
             res = translate(hs, res);
           }
-          if (parseLayeredResults) {
+          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath)) {
             const parsed = this._parseLayeredTemplateValue(res);
             res = parsed.value;
             opaque = parsed.opaque;
@@ -1113,7 +1150,7 @@ export class UixForge extends LitElement {
           // A layered overlay is composed separately from its template builder.
           // Recompose as soon as an overlay value arrives, including during the
           // initial binding pass before templatesReady becomes true.
-          if (parseLayeredResults || this.templatesReady) {
+          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath) || this.templatesReady) {
             base.refreshCallback?.(currentPath);
           }
         };

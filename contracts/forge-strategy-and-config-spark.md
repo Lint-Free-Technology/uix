@@ -35,7 +35,7 @@ views:
 
 The outer `strategy.type` identifies UIX Forge to Home Assistant. A blank/direct strategy returns its resolved `element` mapping as the current scope's config, so a View becomes useful when `element.cards` or `element.sections` is supplied, a Section when `element.cards` is supplied, and a Dashboard when `element.views` is supplied.
 
-When `element.type` is a recognised built-in Home Assistant strategy for the current scope, Forge treats `element` as that base strategy configuration and delegates to it. A `custom:` type delegates when its matching Home Assistant custom-strategy element is already registered for the current scope; otherwise it remains direct output configuration. A custom type must not be used as both a strategy and an output type. A base strategy may not be `custom:uix-forge`.
+When `element.type` is a recognised built-in Home Assistant strategy for the current scope, Forge treats `element` as that base strategy configuration and delegates to it. View strategies use Home Assistant's normal View generator and Section strategies use a temporary hidden native Section renderer to lazily load their built-in base strategy. Home Assistant has no equivalent public Dashboard strategy loader for custom resources: a Dashboard base strategy must already be registered in the current browser session, otherwise Forge fails with a clear error and users must either visit a dashboard using that base strategy first or use direct Dashboard output. A `custom:` type delegates when its matching Home Assistant custom-strategy element is already registered for the current scope; otherwise it remains direct output configuration. A custom type must not be used as both a strategy and an output type. A base strategy may not be `custom:uix-forge`.
 
 ### Resolution and generation
 
@@ -46,7 +46,7 @@ For a strategy mold, Forge resolves its configuration exactly as it does for a s
 3. Resolve active Forge-owned templates, including normal nesting and pass-through handling. A valid JSON object or array template result is an opaque structural replacement.
 4. Compose `element_base` and the resolved active `element` values when layered configuration is selected.
 5. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping.
-6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for the current scope; otherwise use the mapping directly as the scope config.
+6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for View and Section scopes or, for an already registered Dashboard strategy, through its strategy class; otherwise use the mapping directly as the scope config.
 7. Run Configuration Sparks, in resolved Spark order, over that config.
 8. Return the transformed config to Home Assistant, which performs its normal scope-specific strategy handling and rendering.
 
@@ -64,9 +64,9 @@ Because a strategy returns scope configuration rather than wrapping an element, 
 
 `forge.hidden`, `forge.grid_options`, `forge.show_error`, `forge.delayed_hass`, and `forge.uix` have no strategy-scope meaning and are invalid with `mold: strategy`. DOM Sparks are also invalid because the strategy mold does not create a Forge wrapper element. Only the pre-generation `type: entities` Spark and post-generation `type: config` Spark are valid for this mold.
 
-Forge-owned templates in strategy configuration have the same context, nesting, pass-through, and structural-output rules as they do for an ordinary Forge. They are re-evaluated whenever Home Assistant performs its normal strategy regeneration for a state or registry update, alongside the delegated strategy's own regeneration conditions. A strategy is a static Home Assistant extension point, not a mounted Forge element: UIX must not patch Home Assistant to request an otherwise idle regeneration. Consequently, a time-only template such as `{{ now() }}` is refreshed by the next normal Home Assistant strategy update, but cannot independently wake a strategy. Element-base templates are not interpreted or subscribed to by Forge.
+Forge-owned templates in strategy configuration receive the normal UIX `user`, `browser`, hash, and latest known panel context, as well as Forge context, nesting, pass-through, and structural-output rules. Strategy generation must not wait for the initial Lovelace view render solely to obtain panel context; before it is known, Forge supplies an empty panel mapping and the current hash. Templates are re-evaluated whenever Home Assistant performs its normal strategy regeneration for a state or registry update, alongside the delegated strategy's own regeneration conditions. A strategy is a static Home Assistant extension point, not a mounted Forge element: UIX must not patch Home Assistant to request an otherwise idle regeneration. Consequently, a time-only template such as `{{ now() }}` is refreshed by the next normal Home Assistant strategy update, but cannot independently wake a strategy. Element-base templates are not interpreted or subscribed to by Forge.
 
-An error during Forge resolution, an Entities Spark, base-strategy generation, or a Configuration Spark fails the whole strategy generation. UIX must return no partially transformed result; Home Assistant displays its standard error result for the affected strategy scope.
+An error during Forge resolution, an Entities Spark, base-strategy generation, or a Configuration Spark fails the whole strategy generation. UIX must return no partially transformed result; Home Assistant displays its standard error result for the affected strategy scope. For an ordinary Forge mold, a transform error replaces the target configuration with a visible complete error target rather than leaving a stale or partly transformed target mounted.
 
 ## Configuration Spark
 
@@ -85,7 +85,7 @@ forge:
 
 Configuration Sparks run after template resolution and element-layer composition, but before Forge creates, configures, or refreshes the rendered target. All configuration Sparks run before DOM Sparks. Multiple configuration Sparks and the patches within each Spark run in their resolved order, so a later patch observes the output of every earlier patch.
 
-Configuration Spark values use the usual Forge template handling. The operation name and all pointer paths are literal structural syntax and cannot be templates. A structural template result is an opaque replacement value, following the existing Forge template rules. Clone, merge, replacement, and generated configuration writes operate only on own data properties; a `__proto__` key remains data and must never alter an object prototype.
+Configuration Spark values use the usual Forge template handling. The operation name and all pointer paths are literal structural syntax and cannot be templates. Template results in a patch `value`, and data-bearing Entities Spark fields (`entities`, `filter`, `sort`, and generated-entry `element`), parse a valid JSON object or array as an opaque structural replacement; ordinary Forge template fields preserve their established scalar-string behaviour. Clone, merge, replacement, and generated configuration writes operate only on own data properties; a `__proto__` key remains data and must never alter an object prototype.
 
 ### Paths and selection
 

@@ -3,6 +3,7 @@ import { selectTree } from "./selecttree";
 
 var PanelState: Promise<any> | null = null;
 var LastDispatchedPanelState: string | null = null;
+var ResolvedPanelState: any | null = null;
 
 function _panelStateKey(panelState: any): string {
   const key: { panel: any; hash?: string } = {
@@ -183,6 +184,7 @@ function _panel_state_update() {
 function _refresh_panel_state(dispatchOnChange = true) {
   _panel_state_update();
   PanelState.then((panelState) => {
+    ResolvedPanelState = panelState;
     const panelStateKey = _panelStateKey(panelState);
     const changed = panelStateKey !== LastDispatchedPanelState;
     if (dispatchOnChange && changed) {
@@ -200,10 +202,21 @@ export function getPanelState(): Promise<any> {
   if (!PanelState) {
     _panel_state_update();
     PanelState.then((panelState) => {
+      ResolvedPanelState = panelState;
       LastDispatchedPanelState = _panelStateKey(panelState);
     });
   }
   return PanelState as Promise<any>;
+}
+
+/** Return the latest panel context without waiting for Lovelace to render. */
+export function getKnownPanelState(): any {
+  if (ResolvedPanelState) return ResolvedPanelState;
+  const coordinator = (window as any).uixCoordinator;
+  return {
+    panel: {},
+    ...(coordinator?.disableHashTemplateVariable ? {} : { hash: location.hash.substr(1) || "" }),
+  };
 }
 
 window.addEventListener("uix-bootstrap", async (ev: Event) => {
