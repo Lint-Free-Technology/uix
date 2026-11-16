@@ -14,6 +14,114 @@ CARD_EDITOR_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-card-element-editor.ts
 BADGE_EDITOR_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-badge-element-editor.ts"
 BADGE_PICKER_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-badge-picker.ts"
 BLANK_BADGE_TS = REPO_ROOT / "src" / "cards" / "uix-forge-blank-badge.ts"
+CONFIG_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "config-transform.ts"
+ENTITIES_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "entities-transform.ts"
+
+
+def test_config_spark_applies_ordered_patches_without_mutating_source() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' });"
+                "const moduleObj = { exports: {} };"
+                "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
+                "const sourceConfig = { sections: [{ type: 'grid', cards: [{ type: 'home-summary', summary: 'favorites' }] }], title: 'Base' };"
+                "const transformed = moduleObj.exports.applyConfigSparks(sourceConfig, [{ type: 'config', patches: ["
+                "{ op: 'append', select: { in: '/sections', match: { cards: { $contains: [{ type: 'home-summary', summary: 'favorites' }] } }, path: '/cards' }, value: { type: 'tile', entity: 'light.kitchen', name: 'Kitchen' } },"
+                "{ op: 'insert_after', select: { in: '/sections', match: { type: 'grid' } }, value: { type: 'grid', cards: [] } },"
+                "{ op: 'replace', select: { in: '/sections', match: { cards: { $contains: [{ entity: 'light.kitchen' }] } }, path: '/cards/1/entity' }, value: 'light.dining_room' },"
+                "{ op: 'remove', select: { in: '/sections', match: { cards: { $contains: [{ entity: 'light.dining_room' }] } }, path: '/cards/1/name' } },"
+                "{ op: 'merge', path: '', value: { title: 'Kitchen' } }"
+                "] }]);"
+                "let ambiguous; try { moduleObj.exports.applyConfigPatches({ sections: [{}, {}] }, [{ op: 'remove', select: { in: '/sections', match: {} } }]); } catch (err) { ambiguous = err.message; }"
+                "process.stdout.write(JSON.stringify({ sourceConfig, transformed, ambiguous }));"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["sourceConfig"] == {
+        "sections": [{"type": "grid", "cards": [{"type": "home-summary", "summary": "favorites"}]}],
+        "title": "Base",
+    }
+    assert result["transformed"] == {
+        "sections": [
+            {
+                "type": "grid",
+                "cards": [
+                    {"type": "home-summary", "summary": "favorites"},
+                    {"type": "tile", "entity": "light.dining_room"},
+                ],
+            },
+            {"type": "grid", "cards": []},
+        ],
+        "title": "Kitchen",
+    }
+    assert "exactly one" in result["ambiguous"]
+
+
+def test_entities_spark_generates_and_appends_entity_lists() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const esbuild = require('esbuild');"
+                "const output = esbuild.buildSync({ entryPoints: [process.argv[1]], bundle: true, platform: 'node', write: false, format: 'cjs', target: 'es2020' }).outputFiles[0].text;"
+                "const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', output)(require, moduleObj, moduleObj.exports);"
+                "const hass = {"
+                " states: { 'browser_mod.kiosk': { state: 'on', attributes: { friendly_name: 'Kiosk' } }, 'light.kitchen': { state: 'on', attributes: { friendly_name: 'Kitchen' } }, 'light.unavailable': { state: 'unavailable', attributes: { friendly_name: 'Unavailable light' } }, 'sensor.indoor_temperature': { state: '21', attributes: { friendly_name: 'Indoor temperature' } } },"
+                " entities: { 'light.kitchen': { entity_id: 'light.kitchen', labels: ['dashboard_devices'] }, 'light.unavailable': { entity_id: 'light.unavailable', labels: ['dashboard_devices'] } },"
+                " labels: { dashboard_devices: { label_id: 'dashboard_devices', name: 'Dashboard devices' } },"
+                " formatEntityName: (state, parts, options) => parts.map((part) => part.type === 'text' ? part.text : part.type === 'entity' ? state.attributes.friendly_name : part.type).join(options?.separator ?? ' ')"
+                "};"
+                "const maintenance = { type: 'home-overview', maintenance_hidden_entities: ['sensor.keep_visible_elsewhere'] };"
+                "const maintenanceResult = moduleObj.exports.applyEntitiesSpark(maintenance, { type: 'entities', path: '/maintenance_hidden_entities', filter: { include: [{ domain: 'browser_mod' }] } }, hass);"
+                "const gridResult = moduleObj.exports.applyEntitiesSpark({ type: 'grid', cards: [] }, { type: 'entities', path: '/cards', element: { type: 'tile' }, filter: { include: [{ label: 'dashboard_devices' }], exclude: [{ state: 'unavailable' }] } }, hass);"
+                "const rowsResult = moduleObj.exports.applyEntitiesSpark({ type: 'custom:fold-entity-row', entities: [{ type: 'divider' }] }, { type: 'entities', path: '/entities', filter: { include: [{ domain: 'light' }, { domain: 'sensor' }] }, sort: [{ method: 'domain', divider: true }, { method: 'entity_id' }] }, hass);"
+                "const sectionsResult = moduleObj.exports.applyEntitiesSpark({ type: 'entities', entities: [{ type: 'divider' }] }, { type: 'entities', path: '/entities', entities: ['sensor.indoor_temperature', 'light.kitchen'], sort: [{ method: 'domain', divider: true, section: true, label: [{ type: 'text', text: 'Group' }, 'entity'] }] }, hass);"
+                "let elementRowsError; try { moduleObj.exports.applyEntitiesSpark({ type: 'grid', cards: [] }, { type: 'entities', path: '/cards', element: { type: 'tile' }, entities: ['light.kitchen'], sort: { method: 'domain', section: true } }, hass); } catch (err) { elementRowsError = err.message; }"
+                "process.stdout.write(JSON.stringify({ maintenance, maintenanceResult, gridResult, rowsResult, sectionsResult, elementRowsError }));"
+            ),
+            str(ENTITIES_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["maintenance"] == {
+        "type": "home-overview",
+        "maintenance_hidden_entities": ["sensor.keep_visible_elsewhere"],
+    }
+    assert result["maintenanceResult"]["maintenance_hidden_entities"] == [
+        "sensor.keep_visible_elsewhere",
+        "browser_mod.kiosk",
+    ]
+    assert result["gridResult"]["cards"] == [{"type": "tile", "entity": "light.kitchen"}]
+    assert result["rowsResult"]["entities"] == [
+        "light.kitchen",
+        "light.unavailable",
+        {"type": "divider"},
+        "sensor.indoor_temperature",
+    ]
+    assert result["sectionsResult"]["entities"] == [
+        {"type": "section", "label": "Group Kitchen"},
+        "light.kitchen",
+        {"type": "section", "label": "Group Indoor temperature"},
+        "sensor.indoor_temperature",
+    ]
+    assert result["elementRowsError"] == (
+        "uix-forge: entities Spark sort.divider and sort.section cannot use element because they generate entity-row entries"
+    )
 
 
 def test_map_spark_editor_options_exclude_map_card_fields() -> None:

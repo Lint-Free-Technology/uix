@@ -1,0 +1,32 @@
+id: doc_forge_strategy_config
+description: "Doc image: a complete Home Assistant View strategy augmented by a Forge Configuration Spark (config.md)"
+view_path: overview
+
+dashboard:
+  title: "Forge strategy configuration"
+  views:
+    - path: overview
+      strategy:
+        type: custom:uix-forge
+        forge:
+          mold: strategy
+          sparks:
+            - type: config
+              patches:
+                - op: prepend
+                  path: /cards
+                  value:
+                    type: markdown
+                    content: "## Added by Forge"
+                    grid_options:
+                      columns: full
+        element:
+          type: original-states
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/config-spark-strategy.png
+  root: hui-view
+  padding: 16
+  threshold: 1 # The generated view includes live camera imagery.

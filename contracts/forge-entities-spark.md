@@ -10,7 +10,7 @@ The Spark is available to every Forge mold. A strategy mold may use it to popula
 
 ## Configuration
 
-An Entities Spark has a `type`, target `path`, optional `mode`, optional explicit `entities`, optional `filter`, optional `element`, and optional `entity_path`.
+An Entities Spark has a `type`, target `path`, optional `mode`, optional explicit `entities`, optional `filter`, optional `sort`, optional `element`, and optional `entity_path`.
 
 ```yaml
 type: custom:uix-forge
@@ -110,7 +110,13 @@ The Spark must use the current Home Assistant state and registry data. Its owner
 
 Entities Spark regeneration uses a 500 ms trailing debounce, matching the update behaviour users expect from `auto-entities`: relevant changes within the window are coalesced, and the list is regenerated once 500 ms after the most recent relevant change. Until then, the previously generated Forge or strategy configuration remains in use. For a strategy mold, the debounced refresh must call the normal Home Assistant strategy-generation lifecycle with the newly generated source `element`; UIX must not mutate a config already returned to Home Assistant. Unknown or inaccessible registry data never expands the selected set. Invalid filter syntax, an invalid target, an incompatible target list, or an invalid generated entry fails Forge generation visibly rather than returning a partial list.
 
-Filter results have deterministic entity-ID order. Explicit `entities` retain their authored order before generated filter results in `append` mode, or after them in `prepend` mode. `type`, `options`, `card`, `card_param`, `show_empty`, and `else` are intentionally invalid: they are `auto-entities` card-wrapper concerns, whereas this Spark produces a general list.
+Filter results have deterministic entity-ID order unless `sort` is supplied. `sort` accepts one sort mapping or an ordered list of mappings. Its supported methods are `domain`, `entity_id`, `name`, `device`, `area`, `state`, and `attribute`; `attribute` requires `attribute`. `reverse`, `ignore_case`, and `numeric` are supported boolean options.
+
+Set `divider: true` on one or more sort levels to insert a `{ type: divider }` entry whenever the corresponding sorted value changes. Set `section: true` to insert a `{ type: section, label }` heading above every corresponding group, including the first. A section wins over a divider for the same group boundary.
+
+`label` optionally gives a section its Home Assistant entity-name parts, using `entity`, `device`, `area`, `floor`, or a `{ type: text, text: ... }` mapping; `separator` is the string placed between parts. The group's first entity supplies those name parts. Without `label`, Forge uses the plain sort value. If the active Home Assistant frontend cannot format entity names, Forge also falls back to that plain sort value.
+
+Dividers and sections are entity-row entries, so they are valid for any target array whose consumer accepts native Entities-card row configuration, including an Entities card and custom rows such as `custom:fold-entity-row`; they are invalid with the Spark's `element` option, which generates one structured entry for every entity. When divider or section sorting is configured, generated and authored entity rows are cleaned: leading and trailing dividers are removed, consecutive dividers are collapsed, dividers adjacent to sections are removed, and adjacent sections with the same label are collapsed. Sections are retained at either end of a list. Explicit `entities` retain their authored order before generated filter results in `append` mode, or after them in `prepend` mode when no sort is supplied. `type`, `options`, `card`, `card_param`, `show_empty`, and `else` are intentionally invalid: they are `auto-entities` card-wrapper concerns, whereas this Spark produces a general list.
 
 ## Resolution order and compatibility
 

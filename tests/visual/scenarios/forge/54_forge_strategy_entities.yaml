@@ -1,0 +1,25 @@
+id: forge_strategy_entities
+description: "UIX Forge Entities Spark generates direct View strategy cards before Home Assistant renders the strategy"
+view_path: forge-strategy-entities
+
+dashboard:
+  title: "Forge strategy entities"
+  views:
+    - path: forge-strategy-entities
+      strategy:
+        type: custom:uix-forge
+        forge:
+          mold: strategy
+          sparks:
+            - type: entities
+              path: /cards
+              element:
+                type: tile
+              entities:
+                - light.bed_light
+        element: {}
+
+assertions:
+  - type: snapshot
+    name: "77_forge_strategy_entities"
+    threshold: 0.02

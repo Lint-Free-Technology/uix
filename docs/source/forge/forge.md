@@ -141,7 +141,7 @@ element:
 
 | Key | Type | Allows Templates | Default | Description |
 | --- | ---- | ---------------- | ------- | ----------- |
-| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviors within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds). |
+| `mold` | string | | (required) | How the element is forged, with each `mold` handling required forged element behaviors within Home Assistant Frontend. Standard molds: `"card"`, `"badge"`, `"row"`, `"picture-element"`, `"section"`, `"footer"`, `"card-feature"`, `"strategy"`. Cross-context molds: `"card_as_row"`, `"card_as_badge"`, `"row_as_card"`, `"row_as_badge"`, `"badge_as_card"`, `"badge_as_row"`, `"badge_as_picture_element"`. See [Cross-context molds](#cross-context-molds) and [Strategies](#strategies). |
 | `macros` | mapping | | — | [template macros](../using/templates.md#macros) available to all templates in the forge config. Macros are also passed to `uix` config in both forge and forged element. See [UIX Styling - variables and macros](#template-variables-and-macros). |
 | `billets` | mapping | | — | [billets](#billets) — named YAML values available as template constants in all templates in the forge config. See [Billets](#billets) |
 | `hidden` | boolean | ✅ | `false` | When truthy the element is hidden. |
@@ -931,6 +931,74 @@ The theme type given to UIX forge container matches the mold type, including [cr
     ```
 
     ![Theming home-summary badges as cards](../assets/page-assets/forge/forge-theme.png)
+
+## Strategies
+
+Use `mold: strategy` in a Home Assistant Dashboard, View, or Section `strategy:` configuration. It can either return a blank/direct scope config from `element`, or run a Home Assistant base strategy and augment its generated config.
+
+```yaml
+views:
+  - path: overview
+    strategy:
+      type: custom:uix-forge
+      forge:
+        mold: strategy
+      element:
+        type: home-overview
+```
+
+For a direct blank View, add `element.cards` or `element.sections`; use `element.cards` for a Section, and `element.views` for a Dashboard. An empty `element` returns an empty config for that scope. View output can also include `badges`, `footer`, and any other normal View keys. When `element.type` is a recognised Home Assistant strategy such as `home-overview`, Forge delegates its source configuration to that strategy. Any configured [Entities Sparks](./sparks/entities.md) first augment the source configuration; configured [Configuration Sparks](./sparks/config.md) then receive the generated config. Forge also delegates to registered `custom:` strategies through Home Assistant's normal strategy registration.
+
+```yaml
+# A complete direct View config.
+strategy:
+  type: custom:uix-forge
+  forge:
+    mold: strategy
+  element:
+    type: sections
+    badges:
+      - type: entity
+        entity: person.darryn
+    sections:
+      - type: grid
+        cards:
+          - type: tile
+            entity: light.kitchen
+    footer:
+      type: markdown
+      content: Last updated {{ now() }}
+```
+
+Strategies are YAML-only. They use the same `element`, `element_base`, Foundry, macro, billet, and template behaviour as every other Forge mold. As a strategy has no Forge DOM wrapper, it supports only [Entities Sparks](./sparks/entities.md) before generation and [Configuration Sparks](./sparks/config.md) afterwards. It does not support DOM Sparks or `hidden`, `grid_options`, `show_error`, `delayed_hass`, and `forge.uix`.
+
+Configuration Sparks run after Forge has resolved the direct config or after the base strategy has generated its Dashboard, View, or Section config, and before Home Assistant renders it. See [Configuration Spark](./sparks/config.md) for a Home Overview example that inserts a People map section after its summaries.
+
+??? info "Create an augmented Home Overview dashboard"
+    Forge does not change Home Assistant's built-in Overview dashboard. Create a separate dashboard containing a Forge-backed `home-overview` View strategy, then set that dashboard as the default if it should open in place of the unmodified Overview. The built-in dashboard remains available.
+
+    ```yaml
+    title: My Home
+    views:
+      - title: Home
+        path: home
+        strategy:
+          type: custom:uix-forge
+          forge:
+            mold: strategy
+            sparks:
+              - type: config
+                patches:
+                  - op: prepend
+                    path: /cards
+                    value:
+                      type: markdown
+                      content: "## Added by Forge"
+          element:
+            type: home-overview
+    ```
+
+    An administrator can choose **Settings > Dashboards**, open the dashboard menu, and select **Set as default** for all users. An individual user can instead choose it in **User profile > Appearance**. See Home Assistant's [dashboard documentation](https://www.home-assistant.io/dashboards/dashboards/) for dashboard creation and default-dashboard details.
 
 ## Sections
 

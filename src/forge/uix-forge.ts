@@ -833,12 +833,12 @@ export class UixForge extends LitElement {
       cancelled.then(() => false),
     ]).then((templatesReady) => {
       if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
+      this._sparkController.setConfig(this.forgeConfig.sparks);
       if (!this.forgedElement) {
         this.forgeElement();
       }
       this.templatesReady = true;
       this.refreshForge([]);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }, (err) => {
       console.error("UIX Forge: Error applying forge config:", err);
     }).then(() => this.completeTemplateRefresh(refreshOperation));
@@ -868,10 +868,9 @@ export class UixForge extends LitElement {
 
   get forgedElementConfig() {
     const config = this._layeredMode ? this._layeredForgedElementConfig : this._forgedElementConfig.config;
-    if (!config?.uix) return config;
+    if (!config?.uix) return this._sparkController.transformConfig(config);
     const mergedUix = this._mergeForgeUix(config.uix);
-    if (mergedUix === config.uix) return config;
-    return { ...config, uix: mergedUix };
+    return this._sparkController.transformConfig(mergedUix === config.uix ? config : { ...config, uix: mergedUix });
   }
 
   set forgedElementConfig(config: any) {
@@ -982,9 +981,9 @@ export class UixForge extends LitElement {
         elementConfigBuilder.configIsReady()
       ]).then(() => {
         if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+        this._sparkController.setConfig(this.forgeConfig.sparks);
         this.templatesReady = true;
         this.refreshForge([]);
-        this._sparkController.setConfig(this.forgeConfig.sparks);
       });
     }
   }
@@ -1263,11 +1262,11 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
+    this._sparkController.setConfig(this.forgeConfig.sparks);
     if (path.includes("sparks")) {
-      this._sparkController.setConfig(this.forgeConfig.sparks);
+      if (this._sparkController.hasConfigSparks()) this._mold.refresh([]);
     } else {
       this._mold.refresh(path);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }
     const stylingConfig = this._layeredMode
       ? this._templateConfig()
@@ -1519,6 +1518,7 @@ export class UixForge extends LitElement {
   protected updated(_changedProperties: PropertyValues): void {
     if (_changedProperties.has("hass")) {
       this.forgedElement && (this.forgedElement.hass = this.hass);
+      this._sparkController.hassChanged(_changedProperties.get("hass"), this.hass);
     }
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);

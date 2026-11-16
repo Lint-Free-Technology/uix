@@ -20,6 +20,8 @@ import { UixForgeSparkOverlayIcon } from "./uix-spark-overlay-icon";
 import { UixForgeSparkMoreInfo } from "./uix-spark-more-info";
 import { UixForgeSparkForm } from "./uix-spark-form";
 import { selectTree } from "../../helpers/selecttree";
+import { applyConfigSparks } from "../config-transform";
+import { applyEntitiesSparks, entitiesSparkSignature, hasEntitiesSparks } from "../entities-transform";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
@@ -43,13 +45,22 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
 export class UixForgeSparkController {
   forge: UixForge;
   sparks: UixForgeSparkBase[] = [];
+  private _configSparks: Record<string, any>[] = [];
+  private _entitiesSparks: Record<string, any>[] = [];
+  private _entitiesRefreshTimer?: number;
 
   constructor(forge: UixForge) {
       this.forge = forge;
   }
 
   setConfig(sparkConfigs?: Record<string, any>[]) {
-    const configs = (sparkConfigs ?? []).filter(config => config?.type);
+    this._configSparks = (sparkConfigs ?? []).filter(config => config?.type === "config");
+    this._entitiesSparks = (sparkConfigs ?? []).filter(config => config?.type === "entities");
+    if (!hasEntitiesSparks(this._entitiesSparks) && this._entitiesRefreshTimer !== undefined) {
+      clearTimeout(this._entitiesRefreshTimer);
+      this._entitiesRefreshTimer = undefined;
+    }
+    const configs = (sparkConfigs ?? []).filter(config => config?.type && config.type !== "config" && config.type !== "entities");
     configs.forEach((config, index) => {
       const existingSpark = this.sparks[index];
       if (existingSpark) {
@@ -74,6 +85,36 @@ export class UixForgeSparkController {
     }
   }
 
+  transformConfig(config: any): any {
+    return applyConfigSparks(applyEntitiesSparks(config, this._entitiesSparks, this.forge.hass), this._configSparks);
+  }
+
+  hasConfigSparks(): boolean {
+    return this._configSparks.length > 0;
+  }
+
+  hasEntitiesSparks(): boolean {
+    return this._entitiesSparks.length > 0;
+  }
+
+  hassChanged(oldHass: any, newHass: any): void {
+    if (!this.hasEntitiesSparks()) return;
+    let changed = false;
+    try {
+      changed = entitiesSparkSignature(this._entitiesSparks, oldHass) !== entitiesSparkSignature(this._entitiesSparks, newHass);
+    } catch (error) {
+      console.error("UIX Forge: Error evaluating entities Spark refresh:", error);
+      return;
+    }
+    if (!changed) return;
+    if (this._entitiesRefreshTimer !== undefined) clearTimeout(this._entitiesRefreshTimer);
+    this._entitiesRefreshTimer = window.setTimeout(() => {
+      this._entitiesRefreshTimer = undefined;
+      this.forge.refreshForgedElement([]);
+      this.forge.refreshForge([]);
+    }, 500);
+  }
+
   templateVariables() {
     return Object.keys(UIX_FORGE_SPARK_CLASSES).reduce((acc, SparkType) => {
       acc[SparkType] = {};
@@ -96,6 +137,10 @@ export class UixForgeSparkController {
   }
 
   disconnectedCallback() {
+    if (this._entitiesRefreshTimer !== undefined) {
+      clearTimeout(this._entitiesRefreshTimer);
+      this._entitiesRefreshTimer = undefined;
+    }
     this.sparks.forEach(spark => spark.disconnectedCallback());
   }
 

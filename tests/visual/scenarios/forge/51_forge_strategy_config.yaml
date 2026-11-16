@@ -1,0 +1,23 @@
+id: forge_config_spark
+description: "UIX Forge Configuration Spark replaces a forged card config before it renders"
+view_path: forge-config-spark
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: config
+        patches:
+          - op: replace
+            path: /content
+            value: "## Added by UIX Forge"
+  element:
+    type: markdown
+    content: "Original card content"
+
+assertions:
+  - type: snapshot
+    name: "75_forge_config_spark"
+    threshold: 0.02
+
