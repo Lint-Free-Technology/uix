@@ -1,3 +1,14 @@
+## [9.1.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.6...v9.1.0-beta.7) (2026-11-18)
+
+
+### 🐞 Bug Fixes
+
+* Limit dialog template params to 512k. Fixes Marketplace install dialog crashing Frontend with infinite template retry loop when using any template in uix-dialog(-yaml). ([#730](https://github.com/Lint-Free-Technology/uix/issues/730)) ([c2f2849](https://github.com/Lint-Free-Technology/uix/commit/c2f2849176094cb12b6c2cdff1e6dc4170060289))
+
+### ⚙️ Miscellaneous
+
+* **translations:** Add Traditional Chinese (Taiwan) translation ([#729](https://github.com/Lint-Free-Technology/uix/issues/729)) ([a6939a6](https://github.com/Lint-Free-Technology/uix/commit/a6939a6a56f1b93e4380b536f060ada00a6cb0a7))
+
 ## [9.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.5...v9.1.0-beta.6) (2026-11-15)
 
 
