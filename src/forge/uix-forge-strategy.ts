@@ -64,7 +64,10 @@ async function loadBuiltinSectionStrategy(type: string, hass: any): Promise<any>
   loader.config = { strategy: { type } };
   loader.style.display = "none";
   loader.setAttribute("aria-hidden", "true");
-  document.body.append(loader);
+  // Keep temporary Home Assistant elements within the application's DOM
+  // boundary when it is available, matching UIX's other internal loaders.
+  // The body fallback keeps strategy generation safe during early startup.
+  (document.querySelector("home-assistant")?.shadowRoot ?? document.body).append(loader);
   try {
     await loaded;
   } finally {

@@ -156,7 +156,7 @@ def test_section_base_strategies_use_the_native_lazy_loader_and_dashboard_errors
                 "const define = (tag, value) => { definitions.set(tag, value); (waiters.get(tag) || []).splice(0).forEach((resolve) => resolve()); };"
                 "global.window = { setTimeout, clearTimeout, addEventListener: () => {} }; global.HTMLElement = class {};"
                 "global.customElements = { get: (tag) => definitions.get(tag), define, whenDefined: (tag) => definitions.has(tag) ? Promise.resolve() : new Promise((resolve) => { const entries = waiters.get(tag) || []; entries.push(resolve); waiters.set(tag, entries); }) };"
-                "let loaderConfig; global.document = { body: { append: () => {} }, createElement: (tag) => { if (tag !== 'hui-section') throw new Error(tag); return { style: {}, setAttribute: () => {}, remove: () => {}, set hass(_value) {}, set config(value) { loaderConfig = value; define('entities-section-strategy', { generate: async (config) => ({ type: 'grid', cards: [{ type: 'markdown', content: config.type }] }) }); } }; } };"
+                "let loaderConfig; let appendRoot; const appRoot = { append: () => { appendRoot = 'home-assistant shadow root'; } }; global.document = { body: { append: () => { appendRoot = 'body'; } }, querySelector: (selector) => selector === 'home-assistant' ? { shadowRoot: appRoot } : null, createElement: (tag) => { if (tag !== 'hui-section') throw new Error(tag); return { style: {}, setAttribute: () => {}, remove: () => {}, set hass(_value) {}, set config(value) { loaderConfig = value; define('entities-section-strategy', { generate: async (config) => ({ type: 'grid', cards: [{ type: 'markdown', content: config.type }] }) }); } }; } };"
                 "const compile = (path, customRequire) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
                 "const strategy = compile(process.argv[1], (name) => {"
                 " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
@@ -166,7 +166,7 @@ def test_section_base_strategies_use_the_native_lazy_loader_and_dashboard_errors
                 " if (name === './uix-forge') return { _resolveFoundryConfig: () => ({}), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (base, value) => ({ ...base, ...value }) };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
                 " throw new Error(name); });"
-                "(async () => { const section = await strategy.generateBaseStrategy('section', { type: 'entities' }, {}); let dashboard; try { await strategy.generateBaseStrategy('dashboard', { type: 'home' }, {}); } catch (error) { dashboard = error.message; } process.stdout.write(JSON.stringify({ section, loaderConfig, dashboard })); })().catch((error) => { console.error(error); process.exitCode = 1; });"
+                "(async () => { const section = await strategy.generateBaseStrategy('section', { type: 'entities' }, {}); let dashboard; try { await strategy.generateBaseStrategy('dashboard', { type: 'home' }, {}); } catch (error) { dashboard = error.message; } process.stdout.write(JSON.stringify({ section, loaderConfig, appendRoot, dashboard })); })().catch((error) => { console.error(error); process.exitCode = 1; });"
             ),
             str(FORGE_STRATEGY_TS),
         ],
@@ -177,6 +177,7 @@ def test_section_base_strategies_use_the_native_lazy_loader_and_dashboard_errors
     result = json.loads(output)
     assert result["section"] == {"type": "grid", "cards": [{"type": "markdown", "content": "entities"}]}
     assert result["loaderConfig"] == {"strategy": {"type": "entities"}}
+    assert result["appendRoot"] == "home-assistant shadow root"
     assert "Dashboard base strategy 'home' has not been loaded" in result["dashboard"]
 
 
