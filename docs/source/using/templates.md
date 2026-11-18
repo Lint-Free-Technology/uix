@@ -8,6 +8,7 @@ All styles may contain [Jinja2 templates](https://www.home-assistant.io/docs/con
 UI eXtension also makes the following variables available for templates:
 
 - `config` - The entire configuration of the card, entity or badge - (`config.entity` may be of special interest)
+- `params` - Parameters supplied by a dialog or notification. To keep template subscriptions below Home Assistant's WebSocket message limit, UIX limits parameters to 512 KiB by omitting complete top-level values from largest to smallest. Smaller dialog-specific details, such as `params.repository`, remain available when a large value such as `params.marketplace` is omitted.
 - `user` - The name of the currently logged in user
 - `browser` - The `browser_id` of your browser, if you have [browser_mod](https://github.com/thomasloven/hass-browser_mod) installed
 - `hash` - Whatever comes after `#` in the current URL. UIX watches for location changes through `location-changed` and `popstate` events so templates will be rebound with the updated `hash` (this can be disabled in Integration Options → Performance settings via **Disable hash template variable and updates**, which also makes `hash` unavailable)
