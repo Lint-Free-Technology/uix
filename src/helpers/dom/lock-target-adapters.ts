@@ -42,6 +42,8 @@ export function getLockTargetAdapter(element: HTMLElement): LockTargetAdapter | 
       return new HaTileIconLockAdapter();
     case "ha-list-item-button":
       return new HaListItemButtonLockAdapter();
+    case "hui-badge":
+      return new HuiBadgeLockAdapter();
     default:
       return null;
   }
@@ -76,6 +78,89 @@ class HaListItemButtonLockAdapter implements LockTargetAdapter {
 
   defaultIconPosition(): AdapterIconPosition | null {
     return null;
+  }
+}
+
+/**
+ * `hui-badge` is a light-DOM wrapper which rebuilds its children when its
+ * badge config changes. The actual interactive surface is the `.badge` div
+ * inside the rendered badge's `ha-badge` shadow root. Place the overlay there
+ * so it remains attached to the painted surface and shares its positioning
+ * context in every browser.
+ *
+ * `hui-entity-badge` listens for `action` on `ha-badge`. A lock action from
+ * the overlay would otherwise bubble to that listener, so capture handlers
+ * block underlying actions while retaining the overlay's local action.
+ */
+class HuiBadgeLockAdapter implements LockTargetAdapter {
+  private captureRoot: ShadowRoot | null = null;
+  private captureListener: ((event: Event) => void) | null = null;
+  private overlayActionListener: ((event: Event) => void) | null = null;
+  private overlay: HTMLElement | null = null;
+
+  lock(element: HTMLElement, overlay: HTMLElement): void {
+    const badge = (element as { _element?: HTMLElement })._element;
+    const haBadge = badge?.shadowRoot?.querySelector("ha-badge") as HTMLElement | null;
+    const shadowRoot = haBadge?.shadowRoot;
+    const surface = shadowRoot?.querySelector(".badge") as HTMLElement | null;
+
+    // Keep the generic lock behaviour for custom badge implementations which
+    // do not use Home Assistant's standard ha-badge surface.
+    if (!shadowRoot || !surface) return;
+
+    if (overlay.parentNode !== surface) surface.appendChild(overlay);
+    if (this.captureRoot === shadowRoot && this.overlay === overlay) return;
+
+    this.removeCapture();
+    this.captureRoot = shadowRoot;
+    this.overlay = overlay;
+    this.captureListener = (event: Event) => {
+      if (event.composedPath()[0] !== this.overlay) event.stopImmediatePropagation();
+    };
+    this.overlayActionListener = (event: Event) => {
+      // Let the overlay's own action listener run, but never let its action
+      // reach the `@action` listener on the underlying ha-badge.
+      event.stopPropagation();
+    };
+    shadowRoot.addEventListener("action", this.captureListener, true);
+    overlay.addEventListener("action", this.overlayActionListener, true);
+  }
+
+  unlock(_element: HTMLElement): void {
+    this.removeCapture();
+    this.overlay = null;
+  }
+
+  cleanup(element: HTMLElement): void {
+    this.unlock(element);
+  }
+
+  defaultIconSize(): string {
+    return "24px";
+  }
+
+  defaultIconPadding(): string | null {
+    return null;
+  }
+
+  defaultIconBorderRadius(): string | null {
+    return null;
+  }
+
+  defaultIconPosition(): AdapterIconPosition | null {
+    return { left: "24px" };
+  }
+
+  private removeCapture(): void {
+    if (this.captureRoot && this.captureListener) {
+      this.captureRoot.removeEventListener("action", this.captureListener, true);
+    }
+    if (this.overlay && this.overlayActionListener) {
+      this.overlay.removeEventListener("action", this.overlayActionListener, true);
+    }
+    this.captureRoot = null;
+    this.captureListener = null;
+    this.overlayActionListener = null;
   }
 }
 
