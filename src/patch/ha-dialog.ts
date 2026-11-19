@@ -8,6 +8,17 @@ import {
 
 
 const dialogParams = [];
+const MAX_TEMPLATE_PARAMS_BYTES = 512 * 1024;
+
+function jsonByteLength(value: unknown): number {
+  try {
+    const json = JSON.stringify(value);
+    return json === undefined ? 0 : new TextEncoder().encode(json).byteLength;
+  } catch {
+    // An unserialisable value cannot safely be sent as a template variable.
+    return Infinity;
+  }
+}
 
 export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
   if (value == null) return value;
@@ -46,6 +57,34 @@ export function stripHtmlAndFunctions(value: any, seen = new WeakSet()): any {
     if (cleaned !== undefined) out[k] = cleaned;
   }
   return out;
+}
+
+export function stripTemplateParams(value: any): any {
+  const params = stripHtmlAndFunctions(value);
+
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    return jsonByteLength(params) <= MAX_TEMPLATE_PARAMS_BYTES ? params : {};
+  }
+
+  if (jsonByteLength(params) <= MAX_TEMPLATE_PARAMS_BYTES) {
+    return params;
+  }
+
+  // Template variables are sent in their entirety, so consistently bound the
+  // payload rather than relying on individual Home Assistant dialog shapes.
+  // Removing complete top-level values makes the result deterministic and keeps
+  // the smaller, dialog-specific details (such as params.repository) available.
+  const keysBySize = Object.keys(params)
+    .map((key, index) => ({ key, index, size: jsonByteLength(params[key]) }))
+    .sort((a, b) => b.size - a.size || a.index - b.index);
+  for (const { key } of keysBySize) {
+    delete params[key];
+    if (jsonByteLength(params) <= MAX_TEMPLATE_PARAMS_BYTES) {
+      return params;
+    }
+  }
+
+  return {};
 }
 
 class HaDialogPatch extends ModdedElement {
@@ -100,7 +139,7 @@ function patchDialog(ev: Event) {
   // so we can store params to use when patching
   const params = (ev as CustomEvent).detail?.dialogParams;
   if (params) {
-    dialogParams[dialogTag] = stripHtmlAndFunctions(params);
+    dialogParams[dialogTag] = stripTemplateParams(params);
   }
 
   if (dialogTag && !is_patched(dialogTag)) {
@@ -132,18 +171,18 @@ class HaNotificationPatch extends ModdedElement {
 
       const toastUix = (haToast as ModdedElement)._uix?.[0];
 
-      if (toastUix && !compare_deep(toastUix.variables, { params: stripHtmlAndFunctions(params) ?? {} })) {
+      if (toastUix && !compare_deep(toastUix.variables, { params: stripTemplateParams(params) ?? {} })) {
         // If the toast already has a uix instance, it means it's being reused for a new notification
         // so we need to update self and child instance variables
         for (const key in toastUix.uix_children) {
           (await toastUix.uix_children[key])?.forEach(
             async (ch) => await ch.then((uix) => {
-              uix.variables = { params: stripHtmlAndFunctions(params) ?? {} };
+              uix.variables = { params: stripTemplateParams(params) ?? {} };
               uix.styles = uix._fixed_styles;
             }).catch(() => {})
           );
         }
-        toastUix.variables = { params: stripHtmlAndFunctions(params) ?? {} };
+        toastUix.variables = { params: stripTemplateParams(params) ?? {} };
         toastUix.styles = toastUix._fixed_styles;
         return;
       }
@@ -153,7 +192,7 @@ class HaNotificationPatch extends ModdedElement {
         haToast as ModdedElement,
         "toast",
         undefined,
-        { params: stripHtmlAndFunctions(params) ?? {} },
+        { params: stripTemplateParams(params) ?? {} },
         false,
         cls
       );

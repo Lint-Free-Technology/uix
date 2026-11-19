@@ -1,7 +1,7 @@
 import { LitElement } from "lit";
 import { patch_element } from "../helpers/patch_function";
 import { apply_uix, ModdedElement } from "../helpers/apply_uix";
-import { stripHtmlAndFunctions } from "./ha-dialog";
+import { stripTemplateParams } from "./ha-dialog";
 
 @patch_element("hui-dialog-edit-badge")
 class HuiDialogEditBadgePatch extends LitElement {
@@ -23,7 +23,7 @@ class HuiDialogEditBadgePatch extends LitElement {
         "dialog",
         undefined,
         {
-          params: stripHtmlAndFunctions(params),
+          params: stripTemplateParams(params),
         },
         false,
         "type-dialog-edit-badge"

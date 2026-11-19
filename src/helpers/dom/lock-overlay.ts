@@ -56,6 +56,8 @@ export class UixLockOverlay {
   private overlay: HTMLElement | null = null;
   private icon: (HTMLElement & { icon?: string }) | null = null;
   private relockTimer: ReturnType<typeof setTimeout> | null = null;
+  private borderObserver: ResizeObserver | null = null;
+  private borderSurface: HTMLElement | null = null;
   private unlocked = false;
   private retryState: LockRetryState = createLockRetryState();
   private visualNeedsUpdate = true;
@@ -118,6 +120,7 @@ export class UixLockOverlay {
       this.update();
       this.visualNeedsUpdate = false;
     }
+    this.observeBorderCoverage();
     return overlay;
   }
 
@@ -128,6 +131,9 @@ export class UixLockOverlay {
   detach(): void {
     if (this.relockTimer !== null) clearTimeout(this.relockTimer);
     this.relockTimer = null;
+    this.borderObserver?.disconnect();
+    this.borderObserver = null;
+    this.borderSurface = null;
     if (this.adapter && this.target) this.adapter.cleanup(this.target);
     this.adapter = null;
     this.target = null;
@@ -138,7 +144,17 @@ export class UixLockOverlay {
 
   private applyBaseStyles(overlay: HTMLElement): void {
     const styles: Record<string, string> = {
-      position: "absolute", inset: "0", "z-index": "var(--uix-lock-z-index, 10)",
+      position: "absolute",
+      top: "calc(-1 * var(--uix-lock-target-border-top-width, 0px))",
+      right: "calc(-1 * var(--uix-lock-target-border-right-width, 0px))",
+      bottom: "calc(-1 * var(--uix-lock-target-border-bottom-width, 0px))",
+      left: "calc(-1 * var(--uix-lock-target-border-left-width, 0px))",
+      "box-sizing": "border-box",
+      "padding-top": "var(--uix-lock-target-border-top-width, 0px)",
+      "padding-right": "var(--uix-lock-target-border-right-width, 0px)",
+      "padding-bottom": "var(--uix-lock-target-border-bottom-width, 0px)",
+      "padding-left": "var(--uix-lock-target-border-left-width, 0px)",
+      "z-index": "var(--uix-lock-z-index, 10)",
       display: "var(--uix-lock-display, block)", "align-items": "center", "justify-content": "center",
       cursor: "var(--uix-lock-cursor, pointer)", "touch-action": "none", "user-select": "none",
       "-webkit-user-select": "none",
@@ -167,6 +183,7 @@ export class UixLockOverlay {
       if (shouldShow && !this.unlocked) this.adapter.lock(this.target, overlay);
       else this.adapter.unlock(this.target);
     }
+    this.observeBorderCoverage();
     if (!shouldShow) {
       overlay.style.setProperty("display", "none");
       return;
@@ -211,10 +228,53 @@ export class UixLockOverlay {
       ?? (this.options.isRow?.() ? { top: "6px", left: "30px" } : this.adapter?.defaultIconPosition() ?? undefined);
     if (position) {
       this.icon.style.setProperty("position", "relative");
-      (["top", "bottom", "left", "right"] as const).forEach((side) => position[side] === undefined ? this.icon!.style.removeProperty(side) : this.icon!.style.setProperty(side, typeof position[side] === "number" ? `${position[side]}px` : position[side]!));
+      (["top", "bottom", "left", "right"] as const).forEach((side) => {
+        const value = position[side];
+        if (value === undefined) {
+          this.icon!.style.removeProperty(side);
+          return;
+        }
+        this.icon!.style.setProperty(side, typeof value === "number" ? `${value}px` : value);
+      });
     } else {
       ["position", "top", "bottom", "left", "right"].forEach((name) => this.icon!.style.removeProperty(name));
     }
+  }
+
+  /**
+   * Absolutely positioned children are sized from the target's padding box,
+   * which excludes its border. Extend the overlay over the painted border so a
+   * click on a styled card or badge border is handled by the lock as well.
+   *
+   * Target adapters can move the overlay onto the actual painted surface, so
+   * measure its parent rather than the original target. Matching overlay
+   * padding keeps the icon anchored to the original inner surface.
+   */
+  private syncBorderCoverage(): void {
+    const overlay = this.overlay;
+    const surface = overlay?.parentElement;
+    if (!overlay || !surface) return;
+    const style = window.getComputedStyle(surface);
+    const borderWidths = {
+      top: style.borderTopWidth,
+      right: style.borderRightWidth,
+      bottom: style.borderBottomWidth,
+      left: style.borderLeftWidth,
+    };
+    (["top", "right", "bottom", "left"] as const).forEach((side) => {
+      overlay.style.setProperty(`--uix-lock-target-border-${side}-width`, borderWidths[side]);
+    });
+  }
+
+  private observeBorderCoverage(): void {
+    const parent = this.overlay?.parentElement;
+    const surface = parent instanceof HTMLElement ? parent : null;
+    if (surface === this.borderSurface) return;
+    this.borderObserver?.disconnect();
+    this.borderSurface = surface;
+    this.borderObserver = surface ? new ResizeObserver(() => this.syncBorderCoverage()) : null;
+    this.borderObserver?.observe(surface);
+    this.syncBorderCoverage();
   }
 
   /** Match the Spark's forgiving icon-position parsing for both consumers. */

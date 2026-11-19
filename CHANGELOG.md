@@ -1,57 +1,23 @@
-## [9.1.0-beta.6](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.5...v9.1.0-beta.6) (2026-11-15)
-
-
-### 🐞 Bug Fixes
-
-* **forge:** skip refreshForge until the mold exists ([#722](https://github.com/Lint-Free-Technology/uix/issues/722)) ([09d7725](https://github.com/Lint-Free-Technology/uix/commit/09d77251e4d2aa2f176e6e9701453ea0ca5e7aa9)), closes [#721](https://github.com/Lint-Free-Technology/uix/issues/721)
-
-## [9.1.0-beta.5](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.4...v9.1.0-beta.5) (2026-11-13)
-
-
-### ⭐ New Features
-
-* **forge:** Add `bottom` config option to `mold: footer`. Allows bottom setting to be applied directly rather than waiting for async UIX Styling. ([#716](https://github.com/Lint-Free-Technology/uix/issues/716)) ([f905e70](https://github.com/Lint-Free-Technology/uix/commit/f905e7036d7d15b007c75fca2a7e7965a5ec3f18)), closes [#703](https://github.com/Lint-Free-Technology/uix/issues/703)
-
-## [9.1.0-beta.4](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.3...v9.1.0-beta.4) (2026-11-12)
-
-
-**IMPORTANT: Element configuraton defaults now removed from 9.1.0-beta. Use entity_name context.**
-
-### 🐞 Bug Fixes
-
-* close UIX popovers on browser Back ([#709](https://github.com/Lint-Free-Technology/uix/issues/709)) ([2e15c65](https://github.com/Lint-Free-Technology/uix/commit/2e15c65539aa5adb417945149faf315586bb2efd))
-
-* remove element configuration defaults ([2c099a1](https://github.com/Lint-Free-Technology/uix/commit/2c099a1d69f8d20b9d8bb73694e9aea6b4afa39b)), closes [#704](https://github.com/Lint-Free-Technology/uix/issues/704) [#705](https://github.com/Lint-Free-Technology/uix/issues/705) [#706](https://github.com/Lint-Free-Technology/uix/issues/706) [#707](https://github.com/Lint-Free-Technology/uix/issues/707)
-* remove element configuration defaults ([#712](https://github.com/Lint-Free-Technology/uix/issues/712)) ([df5f4d6](https://github.com/Lint-Free-Technology/uix/commit/df5f4d67ecbd36c37fca96f4bb2df5d0e14dc16c)), closes [#704](https://github.com/Lint-Free-Technology/uix/issues/704) [#705](https://github.com/Lint-Free-Technology/uix/issues/705) [#706](https://github.com/Lint-Free-Technology/uix/issues/706) [#707](https://github.com/Lint-Free-Technology/uix/issues/707)
-
-## [9.1.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.2...v9.1.0-beta.3) (2026-11-09)
+## [9.1.0](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0...v9.1.0) (2026-11-19)
 
 
 ### ⭐ New Features
 
 * Add UIX contexts and first context being entity_name to adjust entity name display in any context ([#707](https://github.com/Lint-Free-Technology/uix/issues/707)) ([602a017](https://github.com/Lint-Free-Technology/uix/commit/602a017124bf52d370c800080065bf9d13783891))
-
-## [9.1.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.1...v9.1.0-beta.2) (2026-11-08)
-
-
-### ⭐ New Features
-
-* Add glance uix_type to element configuration defaults to allow to set defaults for glance ([#705](https://github.com/Lint-Free-Technology/uix/issues/705)) ([0c09117](https://github.com/Lint-Free-Technology/uix/commit/0c09117ef5af41c0eeb81831e13183bfb7f3d6a0))
-* Allow dotted paths for config_key for element config defaults ([#706](https://github.com/Lint-Free-Technology/uix/issues/706)) ([e28976f](https://github.com/Lint-Free-Technology/uix/commit/e28976f96db019e009c4c604e80c0885c1b3ea67))
-
-## [9.1.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.0...v9.1.0-beta.1) (2026-11-08)
-
-
-### ⭐ New Features
-
-* add dashboard element configuration defaults ([#704](https://github.com/Lint-Free-Technology/uix/issues/704)) ([930ba26](https://github.com/Lint-Free-Technology/uix/commit/930ba263e43a3b61285c8a22e4f74df1cbcf10e3))
-
-## [9.1.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0...v9.1.0-beta.0) (2026-11-07)
-
-
-### ⭐ New Features
-
 * limit custom sidebar tabs to desktop ([#702](https://github.com/Lint-Free-Technology/uix/issues/702)) ([1d53592](https://github.com/Lint-Free-Technology/uix/commit/1d53592b241ec8666b34d67056671bb37d1c2a1f))
+* **forge:** Add `bottom` config option to `mold: footer`. Allows bottom setting to be applied directly rather than waiting for async UIX Styling. ([#716](https://github.com/Lint-Free-Technology/uix/issues/716)) ([f905e70](https://github.com/Lint-Free-Technology/uix/commit/f905e7036d7d15b007c75fca2a7e7965a5ec3f18)), closes [#703](https://github.com/Lint-Free-Technology/uix/issues/703)
+
+### 🐞 Bug Fixes
+
+* close UIX popovers on browser Back ([#709](https://github.com/Lint-Free-Technology/uix/issues/709)) ([2e15c65](https://github.com/Lint-Free-Technology/uix/commit/2e15c65539aa5adb417945149faf315586bb2efd))
+* **forge:** skip refreshForge until the mold exists ([#722](https://github.com/Lint-Free-Technology/uix/issues/722)) ([09d7725](https://github.com/Lint-Free-Technology/uix/commit/09d77251e4d2aa2f176e6e9701453ea0ca5e7aa9)), closes [#721](https://github.com/Lint-Free-Technology/uix/issues/721)
+* Apply lock spark to  Forge badges reliably ([#731](https://github.com/Lint-Free-Technology/uix/issues/731)) ([26494fc](https://github.com/Lint-Free-Technology/uix/commit/26494fc0d752f3c18fc6aa48d493556cdedf4151))
+* Limit dialog template params to 512k. Fixes Marketplace install dialog crashing Frontend with infinite template retry loop when using any template in uix-dialog(-yaml). ([#730](https://github.com/Lint-Free-Technology/uix/issues/730)) ([c2f2849](https://github.com/Lint-Free-Technology/uix/commit/c2f2849176094cb12b6c2cdff1e6dc4170060289))
+* **forge:** Lock spark to block interaction on element borders. Lock spark blocks ripple for badges. ([154de19](https://github.com/Lint-Free-Technology/uix/commit/154de19563f451a704a4e2a0be411ad5b070739f))
+
+### ⚙️ Miscellaneous
+
+* **translations:** Add Traditional Chinese (Taiwan) translation ([#729](https://github.com/Lint-Free-Technology/uix/issues/729)) ([a6939a6](https://github.com/Lint-Free-Technology/uix/commit/a6939a6a56f1b93e4380b536f060ada00a6cb0a7))
 
 ## [9.0.0](https://github.com/Lint-Free-Technology/uix/compare/v8.4.0...v9.0.0) (2026-11-04)
 
