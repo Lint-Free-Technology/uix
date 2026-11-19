@@ -88,15 +88,14 @@ class HaListItemButtonLockAdapter implements LockTargetAdapter {
  * so it remains attached to the painted surface and shares its positioning
  * context in every browser.
  *
- * `hui-entity-badge` listens for `action` on `ha-badge`. A lock action from
- * the overlay would otherwise bubble to that listener, so capture handlers
- * block underlying actions while retaining the overlay's local action.
+ * UIX's existing click handler prevents the native badge action handler from
+ * receiving the click. The action guard is deliberately added in the bubble
+ * phase after UIX's own action listener, so it opens the lock flow and then
+ * prevents that action from reaching `hui-entity-badge`.
  */
 class HuiBadgeLockAdapter implements LockTargetAdapter {
-  private captureRoot: ShadowRoot | null = null;
-  private captureListener: ((event: Event) => void) | null = null;
   private overlayActionListener: ((event: Event) => void) | null = null;
-  private overlay: HTMLElement | null = null;
+  private actionOverlay: HTMLElement | null = null;
 
   lock(element: HTMLElement, overlay: HTMLElement): void {
     const badge = (element as { _element?: HTMLElement })._element;
@@ -109,26 +108,20 @@ class HuiBadgeLockAdapter implements LockTargetAdapter {
     if (!shadowRoot || !surface) return;
 
     if (overlay.parentNode !== surface) surface.appendChild(overlay);
-    if (this.captureRoot === shadowRoot && this.overlay === overlay) return;
+    if (this.actionOverlay === overlay) return;
 
-    this.removeCapture();
-    this.captureRoot = shadowRoot;
-    this.overlay = overlay;
-    this.captureListener = (event: Event) => {
-      if (event.composedPath()[0] !== this.overlay) event.stopImmediatePropagation();
-    };
+    this.removeActionGuard();
+    this.actionOverlay = overlay;
     this.overlayActionListener = (event: Event) => {
-      // Let the overlay's own action listener run, but never let its action
-      // reach the `@action` listener on the underlying ha-badge.
+      // Registered after UixLockOverlay's listener, so it preserves the lock
+      // challenge while preventing the action reaching the native badge.
       event.stopPropagation();
     };
-    shadowRoot.addEventListener("action", this.captureListener, true);
-    overlay.addEventListener("action", this.overlayActionListener, true);
+    overlay.addEventListener("action", this.overlayActionListener);
   }
 
   unlock(_element: HTMLElement): void {
-    this.removeCapture();
-    this.overlay = null;
+    this.removeActionGuard();
   }
 
   cleanup(element: HTMLElement): void {
@@ -151,15 +144,11 @@ class HuiBadgeLockAdapter implements LockTargetAdapter {
     return { left: "24px" };
   }
 
-  private removeCapture(): void {
-    if (this.captureRoot && this.captureListener) {
-      this.captureRoot.removeEventListener("action", this.captureListener, true);
+  private removeActionGuard(): void {
+    if (this.actionOverlay && this.overlayActionListener) {
+      this.actionOverlay.removeEventListener("action", this.overlayActionListener);
     }
-    if (this.overlay && this.overlayActionListener) {
-      this.overlay.removeEventListener("action", this.overlayActionListener, true);
-    }
-    this.captureRoot = null;
-    this.captureListener = null;
+    this.actionOverlay = null;
     this.overlayActionListener = null;
   }
 }
