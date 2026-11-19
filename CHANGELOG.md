@@ -1,3 +1,10 @@
+## [9.1.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.7...v9.1.0-beta.8) (2026-11-19)
+
+
+### 🐞 Bug Fixes
+
+* Apply lock spark to  Forge badges reliably ([#731](https://github.com/Lint-Free-Technology/uix/issues/731)) ([26494fc](https://github.com/Lint-Free-Technology/uix/commit/26494fc0d752f3c18fc6aa48d493556cdedf4151))
+
 ## [9.1.0-beta.7](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.6...v9.1.0-beta.7) (2026-11-18)
 
 
