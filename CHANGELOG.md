@@ -1,3 +1,10 @@
+## [9.1.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.8...v9.1.0-beta.9) (2026-11-19)
+
+
+### 🐞 Bug Fixes
+
+* **beta:** Correct lock spark application to badge ([61611c1](https://github.com/Lint-Free-Technology/uix/commit/61611c1a7c1cef298e511822527728b33466ea79))
+
 ## [9.1.0-beta.8](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.7...v9.1.0-beta.8) (2026-11-19)
 
 
