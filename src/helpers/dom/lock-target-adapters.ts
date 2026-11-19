@@ -96,6 +96,7 @@ class HaListItemButtonLockAdapter implements LockTargetAdapter {
 class HuiBadgeLockAdapter implements LockTargetAdapter {
   private overlayActionListener: ((event: Event) => void) | null = null;
   private actionOverlay: HTMLElement | null = null;
+  private ripple: { element: HTMLElement & { disabled?: boolean }; disabled: boolean } | null = null;
 
   lock(element: HTMLElement, overlay: HTMLElement): void {
     const badge = (element as { _element?: HTMLElement })._element;
@@ -105,9 +106,13 @@ class HuiBadgeLockAdapter implements LockTargetAdapter {
 
     // Keep the generic lock behaviour for custom badge implementations which
     // do not use Home Assistant's standard ha-badge surface.
-    if (!shadowRoot || !surface) return;
+    if (!shadowRoot || !surface) {
+      this.restoreRipple();
+      return;
+    }
 
     if (overlay.parentNode !== surface) surface.appendChild(overlay);
+    this.disableRipple(surface);
     if (this.actionOverlay === overlay) return;
 
     this.removeActionGuard();
@@ -122,6 +127,7 @@ class HuiBadgeLockAdapter implements LockTargetAdapter {
 
   unlock(_element: HTMLElement): void {
     this.removeActionGuard();
+    this.restoreRipple();
   }
 
   cleanup(element: HTMLElement): void {
@@ -150,6 +156,20 @@ class HuiBadgeLockAdapter implements LockTargetAdapter {
     }
     this.actionOverlay = null;
     this.overlayActionListener = null;
+  }
+
+  private disableRipple(surface: HTMLElement): void {
+    const ripple = surface.querySelector("ha-ripple") as (HTMLElement & { disabled?: boolean }) | null;
+    if (!ripple || this.ripple?.element === ripple) return;
+    this.restoreRipple();
+    this.ripple = { element: ripple, disabled: ripple.disabled === true };
+    ripple.disabled = true;
+  }
+
+  private restoreRipple(): void {
+    if (!this.ripple) return;
+    this.ripple.element.disabled = this.ripple.disabled;
+    this.ripple = null;
   }
 }
 
