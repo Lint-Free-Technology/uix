@@ -1,3 +1,10 @@
+## [9.1.0-beta.10](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.9...v9.1.0-beta.10) (2026-11-19)
+
+
+### 🐞 Bug Fixes
+
+* **forge:** Lock spark to block interaction on element borders. Lock spark blocks ripple for badges. ([154de19](https://github.com/Lint-Free-Technology/uix/commit/154de19563f451a704a4e2a0be411ad5b070739f))
+
 ## [9.1.0-beta.9](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0-beta.8...v9.1.0-beta.9) (2026-11-19)
 
 
