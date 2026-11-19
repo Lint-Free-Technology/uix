@@ -1,0 +1,225 @@
+{
+    "config": {
+        "create_entry": {
+            "refresh_message": "新增 UIX 後，需要重新整理頁面才能載入前端資源。請按一下「完成」，然後重新整理頁面。"
+        },
+        "abort": {
+            "single_instance_allowed": "僅能新增一個 UIX 實例。",
+            "old_frontend_script_resource": "衝突的前端腳本資源 {resource} 已註冊為儀表板資源。請先將其移除，再新增 UIX。",
+            "old_frontend_script_extra_module": "衝突的前端腳本資源 {resource} 已註冊為額外模組。請先將其移除，再新增 UIX。"
+        },
+        "step": {}
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "UIX 設定",
+                "description": "{foundries_docs_link}",
+                "menu_options": {
+                    "foundry_menu": "管理 UI Foundry",
+                    "foundry_file_menu": "管理 Foundry 檔案",
+                    "broker_settings": "設定 Broker",
+                    "broker_file_menu": "管理 Broker 檔案",
+                    "custom_sidebar_panel_menu": "管理自訂側邊欄面板",
+                    "performance_settings": "效能設定",
+                    "experimental_settings": "實驗性設定"
+                }
+            },
+            "foundry_menu": {
+                "title": "UI Foundry",
+                "description": "{foundries_docs_link}\n\n**已載入的 UI Foundry：**\n{foundries_list}",
+                "menu_options": {
+                    "add_foundry": "新增 Foundry",
+                    "edit_foundry": "編輯 Foundry",
+                    "delete_foundry": "刪除 Foundry"
+                }
+            },
+            "foundry_file_menu": {
+                "title": "Foundry 檔案",
+                "description": "{foundries_docs_link}\n\n**已註冊的 Foundry 檔案：**\n{foundry_files_list}",
+                "menu_options": {
+                    "register_foundry_file": "註冊 Foundry 檔案",
+                    "deregister_foundry_file": "取消註冊 Foundry 檔案",
+                    "reload_foundry_files": "重新載入 Foundry 檔案"
+                }
+            },
+            "custom_sidebar_panel_menu": {
+                "title": "自訂側邊欄面板",
+                "description": "建立連結至 Home Assistant 頁面或網站的側邊欄項目。\n\n**已設定的面板：**\n{panels_list}",
+                "menu_options": {
+                    "add_custom_sidebar_panel": "新增自訂側邊欄面板",
+                    "edit_custom_sidebar_panel": "編輯自訂側邊欄面板",
+                    "delete_custom_sidebar_panel": "刪除自訂側邊欄面板"
+                }
+            },
+            "performance_settings": {
+                "title": "效能設定",
+                "description": "設定 UIX 的效能最佳化。",
+                "data": {
+                    "hass_throttle_enable": "節流實體狀態更新",
+                    "hass_throttle_ms": "節流間隔",
+                    "dialog_apply_after_show": "對話框完全顯示後才套用 UIX 樣式",
+                    "disable_hash_template_variable": "停用 hash 範本變數與更新",
+                    "disable_icon_styling": "停用圖示樣式修補",
+                    "disable_entity_picture_image_override": "停用實體圖片覆寫"
+                },
+                "data_description": {
+                    "hass_throttle_enable": "啟用後，當實體狀態快速變動時，會降低儀表板根元件重新繪製的頻率。",
+                    "hass_throttle_ms": "實體狀態更新後兩次重新繪製之間的最短間隔時間。僅在啟用節流時適用。",
+                    "dialog_apply_after_show": "啟用後，對話框的 UIX 樣式會在開啟動畫結束後才套用，而非立即套用。這可減少效能較差的裝置上的畫面閃爍。",
+                    "disable_hash_template_variable": "啟用後，hash（網址中 # 之後的部分）範本變數將無法使用，且 hash 變更不會觸發 UIX 範本重新繫結或 UIX Forge 更新。",
+                    "disable_icon_styling": "啟用後，將停用為自訂樣式而對圖示元素（ha-icon、ha-state-icon、ha-svg-icon）進行的修補。這可降低效能較差的裝置上的 CPU 負擔。",
+                    "disable_entity_picture_image_override": "啟用後，將停用為自訂實體圖片樣式而對徽章與標記元素（ha-entity-marker、ha-tile-icon、state-badge、ha-user-badge、ha-person-badge）進行的修補。這可降低效能較差的裝置上的 CPU 負擔。"
+                }
+            },
+            "experimental_settings": {
+                "title": "實驗性設定",
+                "description": "設定 UIX 的實驗性功能。",
+                "data": {
+                    "always_patch_ha_card": "一律修補 ha-card",
+                    "style_frame_panels": "為以 iframe 載入的框架面板套用樣式"
+                },
+                "data_description": {
+                    "always_patch_ha_card": "啟用後，即使沒有卡片設定也一律修補 ha-card。這讓 ha-card 用於設定儀表板或自訂面板時也能被修補。",
+                    "style_frame_panels": "啟用後，會在支援的應用程式與自訂面板框架內套用 UIX 主題樣式。"
+                }
+            },
+            "broker_settings": {
+                "title": "UIX Broker",
+                "description": "請輸入標準的 UIX Broker 物件，其互動項目須置於 `uix_broker` 鍵之下。",
+                "data": {
+                    "uix_broker": "Broker 設定"
+                }
+            },
+            "broker_file_menu": {
+                "title": "Broker 檔案",
+                "description": "**已註冊的 Broker 檔案：**\n{broker_files_list}",
+                "menu_options": {
+                    "register_broker_file": "註冊 Broker 檔案",
+                    "deregister_broker_file": "取消註冊 Broker 檔案",
+                    "reload_broker_files": "重新載入 Broker 檔案"
+                }
+            },
+            "register_broker_file": {
+                "title": "註冊 Broker 檔案",
+                "description": "請輸入 YAML 檔案的路徑，該檔案須在最上層 'uix_broker' 鍵下包含 Broker 互動項目。路徑可為絕對路徑，或相對於 Home Assistant 設定目錄的路徑。",
+                "data": {
+                    "file_path": "檔案路徑"
+                }
+            },
+            "deregister_broker_file": {
+                "title": "取消註冊 Broker 檔案",
+                "description": "請選擇要取消註冊的 Broker 檔案。檔案本身不會被刪除，只會移除其在 UIX 中的註冊。",
+                "data": {
+                    "file_path": "要取消註冊的檔案"
+                }
+            },
+            "add_foundry": {
+                "title": "新增 UI Foundry",
+                "description": "請輸入新 UI Foundry 的名稱與設定。設定須為對應表（mapping），可包含 'forge'、'element' 和／或 'uix' 鍵。",
+                "data": {
+                    "name": "Foundry 名稱",
+                    "config": "Foundry 設定"
+                }
+            },
+            "edit_foundry": {
+                "title": "編輯 UI Foundry",
+                "description": "請選擇要編輯的 UI Foundry。",
+                "data": {
+                    "name": "要編輯的 Foundry"
+                }
+            },
+            "edit_foundry_config": {
+                "title": "編輯 UI Foundry「{name}」",
+                "description": "更新此 UI Foundry 的設定。",
+                "data": {
+                    "config": "Foundry 設定"
+                }
+            },
+            "delete_foundry": {
+                "title": "刪除 UI Foundry",
+                "data": {
+                    "name": "要刪除的 Foundry"
+                }
+            },
+            "register_foundry_file": {
+                "title": "註冊 Foundry 檔案",
+                "description": "請輸入 YAML 檔案的路徑，該檔案須在最上層 'uix_foundries' 鍵下包含 Foundry。路徑可為絕對路徑，或相對於 Home Assistant 設定目錄的路徑。",
+                "data": {
+                    "file_path": "檔案路徑"
+                }
+            },
+            "deregister_foundry_file": {
+                "title": "取消註冊 Foundry 檔案",
+                "description": "請選擇要取消註冊的 Foundry 檔案。檔案本身不會被刪除，只會移除其在 UIX 中的註冊。",
+                "data": {
+                    "file_path": "要取消註冊的檔案"
+                }
+            },
+            "add_custom_sidebar_panel": {
+                "title": "新增自訂側邊欄面板",
+                "description": "請選擇要顯示在側邊欄的圖示與標題，然後輸入 Home Assistant 路徑或網站網址。",
+                "data": {
+                    "icon": "圖示",
+                    "open_in_new_tab": "在新分頁中開啟（僅限桌面版）",
+                    "require_admin": "需要管理員權限",
+                    "title": "標題",
+                    "target": "目標"
+                },
+                "data_description": {
+                    "open_in_new_tab": "在桌面瀏覽器的新分頁中開啟 Home Assistant 路徑。在 Companion 應用程式中以及對網站網址皆不適用。"
+                }
+            },
+            "edit_custom_sidebar_panel": {
+                "title": "編輯自訂側邊欄面板",
+                "description": "請選擇要編輯的自訂側邊欄面板。",
+                "data": {
+                    "panel_id": "自訂側邊欄面板"
+                }
+            },
+            "edit_custom_sidebar_panel_config": {
+                "title": "編輯自訂側邊欄面板「{name}」",
+                "description": "更新此自訂側邊欄面板。",
+                "data": {
+                    "icon": "圖示",
+                    "open_in_new_tab": "在新分頁中開啟（僅限桌面版）",
+                    "require_admin": "需要管理員權限",
+                    "title": "標題",
+                    "target": "目標"
+                },
+                "data_description": {
+                    "open_in_new_tab": "在桌面瀏覽器的新分頁中開啟 Home Assistant 路徑。在 Companion 應用程式中以及對網站網址皆不適用。"
+                }
+            },
+            "delete_custom_sidebar_panel": {
+                "title": "刪除自訂側邊欄面板",
+                "data": {
+                    "panel_id": "自訂側邊欄面板"
+                }
+            }
+        },
+        "abort": {
+            "no_foundries": "尚未設定任何 UI Foundry。請先新增一個。",
+            "no_foundry_files": "尚未註冊任何 Foundry 檔案。請先註冊一個。",
+            "no_custom_sidebar_panels": "尚未設定任何自訂側邊欄面板。請先新增一個。",
+            "no_broker_files": "尚未註冊任何 Broker 檔案。請先註冊一個。"
+        },
+        "error": {
+            "invalid_config": "設定必須是 YAML 對應表（mapping）。",
+            "invalid_broker_config": "設定必須是包含 'uix_broker' 清單的物件。",
+            "invalid_custom_sidebar_panel": "請輸入圖示與標題，並使用 Home Assistant 路徑或完整的 http 或 https 網址作為目標。",
+            "file_already_added": "此檔案路徑已註冊。",
+            "file_not_found": "找不到檔案。請檢查路徑後再試一次。",
+            "file_parse_error": "無法將檔案解析為 YAML。請檢查檔案是否有語法錯誤。",
+            "file_invalid_structure": "檔案必須是 YAML 對應表（mapping）。",
+            "file_missing_key": "檔案最上層必須有 'uix_foundries' 鍵。",
+            "file_invalid_foundries": "'uix_foundries' 鍵必須是由 Foundry 名稱對應到設定的 YAML 對應表。",
+            "broker_file_already_added": "此 Broker 檔案路徑已註冊。",
+            "broker_file_not_found": "找不到 Broker 檔案。請檢查路徑後再試一次。",
+            "broker_file_parse_error": "無法將 Broker 檔案解析為 YAML。請檢查檔案是否有語法錯誤。",
+            "broker_file_invalid_structure": "Broker 檔案必須是 YAML 對應表（mapping）。",
+            "broker_file_missing_key": "Broker 檔案最上層必須有 'uix_broker' 鍵。",
+            "broker_file_invalid_config": "'uix_broker' 鍵必須是 Broker 互動項目的 YAML 清單。"
+        }
+    }
+}

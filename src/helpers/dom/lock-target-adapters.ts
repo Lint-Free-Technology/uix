@@ -42,6 +42,8 @@ export function getLockTargetAdapter(element: HTMLElement): LockTargetAdapter | 
       return new HaTileIconLockAdapter();
     case "ha-list-item-button":
       return new HaListItemButtonLockAdapter();
+    case "hui-badge":
+      return new HuiBadgeLockAdapter();
     default:
       return null;
   }
@@ -76,6 +78,98 @@ class HaListItemButtonLockAdapter implements LockTargetAdapter {
 
   defaultIconPosition(): AdapterIconPosition | null {
     return null;
+  }
+}
+
+/**
+ * `hui-badge` is a light-DOM wrapper which rebuilds its children when its
+ * badge config changes. The actual interactive surface is the `.badge` div
+ * inside the rendered badge's `ha-badge` shadow root. Place the overlay there
+ * so it remains attached to the painted surface and shares its positioning
+ * context in every browser.
+ *
+ * UIX's existing click handler prevents the native badge action handler from
+ * receiving the click. The action guard is deliberately added in the bubble
+ * phase after UIX's own action listener, so it opens the lock flow and then
+ * prevents that action from reaching `hui-entity-badge`.
+ */
+class HuiBadgeLockAdapter implements LockTargetAdapter {
+  private overlayActionListener: ((event: Event) => void) | null = null;
+  private actionOverlay: HTMLElement | null = null;
+  private ripple: { element: HTMLElement & { disabled?: boolean }; disabled: boolean } | null = null;
+
+  lock(element: HTMLElement, overlay: HTMLElement): void {
+    const badge = (element as { _element?: HTMLElement })._element;
+    const haBadge = badge?.shadowRoot?.querySelector("ha-badge") as HTMLElement | null;
+    const shadowRoot = haBadge?.shadowRoot;
+    const surface = shadowRoot?.querySelector(".badge") as HTMLElement | null;
+
+    // Keep the generic lock behaviour for custom badge implementations which
+    // do not use Home Assistant's standard ha-badge surface.
+    if (!shadowRoot || !surface) {
+      this.restoreRipple();
+      return;
+    }
+
+    if (overlay.parentNode !== surface) surface.appendChild(overlay);
+    this.disableRipple(surface);
+    if (this.actionOverlay === overlay) return;
+
+    this.removeActionGuard();
+    this.actionOverlay = overlay;
+    this.overlayActionListener = (event: Event) => {
+      // Registered after UixLockOverlay's listener, so it preserves the lock
+      // challenge while preventing the action reaching the native badge.
+      event.stopPropagation();
+    };
+    overlay.addEventListener("action", this.overlayActionListener);
+  }
+
+  unlock(_element: HTMLElement): void {
+    this.removeActionGuard();
+    this.restoreRipple();
+  }
+
+  cleanup(element: HTMLElement): void {
+    this.unlock(element);
+  }
+
+  defaultIconSize(): string {
+    return "24px";
+  }
+
+  defaultIconPadding(): string | null {
+    return null;
+  }
+
+  defaultIconBorderRadius(): string | null {
+    return null;
+  }
+
+  defaultIconPosition(): AdapterIconPosition | null {
+    return { left: "24px" };
+  }
+
+  private removeActionGuard(): void {
+    if (this.actionOverlay && this.overlayActionListener) {
+      this.actionOverlay.removeEventListener("action", this.overlayActionListener);
+    }
+    this.actionOverlay = null;
+    this.overlayActionListener = null;
+  }
+
+  private disableRipple(surface: HTMLElement): void {
+    const ripple = surface.querySelector("ha-ripple") as (HTMLElement & { disabled?: boolean }) | null;
+    if (!ripple || this.ripple?.element === ripple) return;
+    this.restoreRipple();
+    this.ripple = { element: ripple, disabled: ripple.disabled === true };
+    ripple.disabled = true;
+  }
+
+  private restoreRipple(): void {
+    if (!this.ripple) return;
+    this.ripple.element.disabled = this.ripple.disabled;
+    this.ripple = null;
   }
 }
 

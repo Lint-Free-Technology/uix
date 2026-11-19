@@ -4,7 +4,7 @@ icon: material/lock
 ---
 # :material-lock: Lock spark
 
-The `lock` spark overlays a lock icon on any element inside a [UIX Forge](../index.md) forged element. While locked, all pointer interactions with the underlying element are blocked. The user unlocks it via a tap, hold, or double-tap, which can require a PIN code, a text passphrase, or a simple confirmation. After a configurable `duration` the overlay automatically re-locks.
+The `lock` spark overlays a lock icon on any element inside a [UIX Forge](../index.md) forged element. While locked, all pointer interactions with the underlying element, including its styled border, are blocked. The user unlocks it via a tap, hold, or double-tap, which can require a PIN code, a text passphrase, or a simple confirmation. After a configurable `duration` the overlay automatically re-locks.
 
 All dialogs for code/passphrase input, confirmation and feedback use native Home Assistant dialogs.
 
@@ -66,6 +66,29 @@ entities:
 !!! warning
     As rows in entities card are displayed inline (`display: inline`) deeper element targeting cannot take place as overlays do not work with elements which are displayed inline. This means that lock spark can only apply to an entire entity row.
 
+### Badge targets
+
+When a lock targets a `hui-badge`, including the usual `mold: badge` configuration, its overlay is attached to the rendered badge surface. The lock icon defaults to `left: 24px` with no vertical offset.
+
+Set `icon_position` to control the icon precisely. An explicit `icon_position` replaces the badge default, so include `left: 24px` when adding a `top` or `bottom` offset and you want to retain the standard horizontal placement.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: badge
+  sparks:
+    - type: lock
+      icon_position:
+        top: -10px
+        left: 24px
+      locks:
+        - code: 1234
+          admins: true
+element:
+  type: entity
+  entity: sensor.backup_next_scheduled_automatic_backup
+```
+
 ---
 
 ## Lock-matching logic
@@ -103,7 +126,7 @@ When no entry matches at all, including `active: false`:
 | `icon_unlocked` | string | — | MDI icon shown when unlocked. When not set, the lock icon fades out instead of being replaced. |
 | `icon_locked_color` | string | `--error-color` | CSS color for the locked icon. |
 | `icon_unlocked_color` | string | `--success-color` | CSS color for the unlocked icon (only used when `icon_unlocked` is set). |
-| `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}`; when target is `ha-tile-icon` `{top: 3, left: 3}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
+| `icon_position` | object | when forge mold is row default is `{top: 6, left: 30}`; when target is `ha-tile-icon` `{top: 3, left: 3}`; when target is `hui-badge` `{left: 24}` | Pixel offsets for the icon inside the overlay. Accepts any combination of `top`, `bottom` (exclusive pair) and `left`, `right` (exclusive pair). Numbers are treated as pixels; strings accept any CSS value. |
 | `icon_size` | number or string | `12px` for `ha-tile-icon` targets, `24px` otherwise | Size of the lock icon. Numbers are treated as pixels (e.g. `18` → `18px`); strings are passed through as-is (e.g. `"1.5rem"`). The CSS variable `--uix-lock-icon-size` takes precedence over this setting when set via UIX Styling or in a theme. |
 | `permissive` | boolean | `false` | When `true`, elements are accessible if no lock entry matches the current user. |
 | `entity` | string | — | Entity ID used when `unlocked_action` is a plain HA action. |

@@ -13,6 +13,78 @@ import {
 const lockedActionRetryStates = new Map<string, LockRetryState>();
 const fallbackLockedActionRetryStates = new WeakMap<EventTarget, Map<string, LockRetryState>>();
 const hassActionAnchors = new WeakMap<object, HTMLElement>();
+const openPopoverDialogTags = new Set<string>();
+
+interface PopoverDialogParams {
+  popover: HTMLElement & { open: boolean };
+  dismissible: boolean;
+}
+
+// The Home Assistant dialog manager tracks one open dialog per tag. Reuse
+// tags across openings and reserve separate tags for simultaneous popovers.
+class UixPopoverDialog extends HTMLElement {
+  readonly dialogNext = true;
+  params!: PopoverDialogParams;
+
+  connectedCallback() {
+    const { popover } = this.params;
+    popover.addEventListener("closed", this.handleClosed);
+    popover.open = true;
+  }
+
+  closeDialog() {
+    const { popover, dismissible } = this.params;
+    if (!popover.isConnected) {
+      // Direct removal skips the native close event and its cleanup.
+      popover.dispatchEvent(new Event("closed"));
+      return true;
+    }
+    if (popover.open && !dismissible) {
+      const { history } = window;
+      // Back already consumed the dialog entry. Home Assistant keeps this
+      // dialog on its stack when it refuses to close.
+      if (history.state?.opensDialog && !history.state.dialog) {
+        history.pushState({ dialog: this.localName }, "");
+      }
+      return false;
+    }
+    popover.open = false;
+    return true;
+  }
+
+  private handleClosed = (event: Event) => {
+    if (event.target !== this.params.popover) return;
+    this.params.popover.removeEventListener("closed", this.handleClosed);
+    const dialog = this.localName;
+    this.dispatchEvent(new CustomEvent("dialog-closed", { detail: { dialog } }));
+    this.remove();
+    openPopoverDialogTags.delete(dialog);
+  };
+}
+
+function showPopover(base: Element, params: PopoverDialogParams) {
+  if (base.localName !== "home-assistant") {
+    params.popover.open = true;
+    return;
+  }
+
+  let slot = 1;
+  while (openPopoverDialogTags.has(`uix-popover-dialog-${slot}`)) slot++;
+  const dialogTag = `uix-popover-dialog-${slot}`;
+  if (!customElements.get(dialogTag)) {
+    customElements.define(dialogTag, class extends UixPopoverDialog {});
+  }
+  openPopoverDialogTags.add(dialogTag);
+  base.dispatchEvent(new CustomEvent("show-dialog", {
+    detail: {
+      dialogTag,
+      dialogImport: () => Promise.resolve(),
+      dialogParams: params,
+    },
+    bubbles: true,
+    composed: true,
+  }));
+}
 
 function captureHassActionAnchor(event: Event) {
   const detail = (event as CustomEvent).detail;
@@ -504,7 +576,7 @@ export class Actions {
         "type-uix-popover",
       );
     }
-    popover.open = true;
+    showPopover(base, { popover, dismissible });
   }
   static async javascript(data: Record<string, any>) {
     if (!data || typeof data.code !== "string" || !data.code.trim()) {

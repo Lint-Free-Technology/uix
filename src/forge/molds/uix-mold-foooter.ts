@@ -4,6 +4,17 @@ import { UixForgeMoldBase } from "./uix-mold-base";
 export class UixForgeMoldFooter extends UixForgeMoldBase {
   type = "footer";
 
+  private updateConfigVariables() {
+    const { bottom, max_width } = this.forge.forgeConfig;
+
+    if (bottom === undefined) {
+      this.forge.style.removeProperty("--uix-forge-footer-config-bottom");
+    } else {
+      this.forge.style.setProperty("--uix-forge-footer-config-bottom", String(bottom));
+    }
+    this.forge.style.setProperty("--uix-forge-footer-config-max-width", `${max_width ?? "600"}px`);
+  }
+
   setParentDisplay() {
     // set parent forge hui-card to display:contents so it does not take up space where card id defined
     // For sections this also extends to the div.card so check for that as well
@@ -24,6 +35,7 @@ export class UixForgeMoldFooter extends UixForgeMoldBase {
   }
 
   refresh(path: UixForgeConfigPath): void {
+    this.updateConfigVariables();
     if (path.length === 1 && path[0] === "hidden") {
       // dispatch to hui-card so as wherever the footer is hosted does not take up space when hidden, such as row hosting the card
       this.forge.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.forge.hidden }, bubbles: true, composed: true }));
@@ -62,9 +74,9 @@ export class UixForgeMoldFooter extends UixForgeMoldBase {
           position: fixed;
           left: 0;
           right: 0;
-          bottom: var(--uix-forge-footer-bottom, var(--ha-space-2));
+          bottom: var(--uix-forge-footer-config-bottom, var(--uix-forge-footer-bottom, var(--ha-space-2)));
           padding: var(--uix-forge-footer-padding, 0 var(--ha-space-2));
-          max-width: ${this.forge.forgeConfig.max_width ?? "600"}px;
+          max-width: var(--uix-forge-footer-config-max-width, 600px);
           margin: 0 auto;
         }
       `;

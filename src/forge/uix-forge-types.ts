@@ -114,6 +114,7 @@ export interface UixForgeForge {
     uix?: UixConfig;
     delayed_hass?: boolean;
     max_width?: string;
+    bottom?: string;
 }
 
 export interface UixForgeElement {

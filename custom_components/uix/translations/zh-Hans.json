@@ -161,10 +161,13 @@
                 "description": "选择要在侧边栏显示的图标和标题，然后输入 Home Assistant 路径或网站 URL。",
                 "data": {
                     "icon": "图标",
-                    "open_in_new_tab": "在新标签页中打开",
+                    "open_in_new_tab": "在新标签页中打开（仅限桌面版）",
                     "require_admin": "需要管理员权限",
                     "title": "标题",
                     "target": "目标"
+                },
+                "data_description": {
+                    "open_in_new_tab": "在桌面浏览器的新标签页中打开 Home Assistant 路径。此选项在 Companion 应用和网站 URL 中会被忽略。"
                 }
             },
             "edit_custom_sidebar_panel": {
@@ -179,10 +182,13 @@
                 "description": "更新此自定义侧边栏面板。",
                 "data": {
                     "icon": "图标",
-                    "open_in_new_tab": "在新标签页中打开",
+                    "open_in_new_tab": "在新标签页中打开（仅限桌面版）",
                     "require_admin": "需要管理员权限",
                     "title": "标题",
                     "target": "目标"
+                },
+                "data_description": {
+                    "open_in_new_tab": "在桌面浏览器的新标签页中打开 Home Assistant 路径。此选项在 Companion 应用和网站 URL 中会被忽略。"
                 }
             },
             "delete_custom_sidebar_panel": {

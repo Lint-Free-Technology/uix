@@ -161,10 +161,13 @@
                 "description": "Kies het icoon en de titel voor de zijbalk en voer vervolgens een Home Assistant-pad of website-URL in.",
                 "data": {
                     "icon": "Icoon",
-                    "open_in_new_tab": "Openen in nieuw tabblad",
+                    "open_in_new_tab": "Openen in nieuw tabblad (alleen desktop)",
                     "require_admin": "Beheerder vereist",
                     "title": "Titel",
                     "target": "Doel"
+                },
+                "data_description": {
+                    "open_in_new_tab": "Opent een Home Assistant-pad in een nieuw tabblad in een desktopbrowser. Wordt genegeerd in de Companion-app en voor website-URL's."
                 }
             },
             "edit_custom_sidebar_panel": {
@@ -179,10 +182,13 @@
                 "description": "Werk dit aangepaste zijbalkpaneel bij.",
                 "data": {
                     "icon": "Icoon",
-                    "open_in_new_tab": "Openen in nieuw tabblad",
+                    "open_in_new_tab": "Openen in nieuw tabblad (alleen desktop)",
                     "require_admin": "Beheerder vereist",
                     "title": "Titel",
                     "target": "Doel"
+                },
+                "data_description": {
+                    "open_in_new_tab": "Opent een Home Assistant-pad in een nieuw tabblad in een desktopbrowser. Wordt genegeerd in de Companion-app en voor website-URL's."
                 }
             },
             "delete_custom_sidebar_panel": {

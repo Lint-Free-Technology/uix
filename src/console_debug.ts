@@ -23,6 +23,9 @@
  *
  *   uix_broker_absolute_path($0) – Broker helper: reports a compact select_tree path from the
  *                         document root to the selected element, ready for an interaction `anchor`.
+ *
+ *   uix_context($0)     – Context helper: reports the UIX contexts inherited by the selected
+ *                         element and offers a format() probe for entity-name rules.
  */
 
 interface UixParentInfo {
@@ -30,6 +33,44 @@ interface UixParentInfo {
   uixNodes: any[];
   primaryType: string;
 }
+
+// ---------------------------------------------------------------------------
+// uix_context($0) – Context inspection and entity-name formatting probe
+// ---------------------------------------------------------------------------
+
+(window as any).uix_context = function uix_context(element: Element) {
+  if (!element || !(element instanceof Element)) {
+    console.error(
+      "UIX context: provide a DOM element – e.g. uix_context($0) where $0 is selected in the Elements panel."
+    );
+    return null;
+  }
+
+  const inspectContext = (window as any).uix_context_inspect;
+  if (typeof inspectContext !== "function") {
+    console.error("UIX context: the context inspector is not available.");
+    return null;
+  }
+
+  const report = inspectContext(element);
+  const TITLE_STYLE = "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;";
+  console.group("%c💡 UIX Context 💡", TITLE_STYLE);
+  console.log("Target element:", element);
+
+  if (!report.scopes.length) {
+    console.warn("No UIX context scope contains this element.");
+    console.groupEnd();
+    return report;
+  }
+
+  console.log("Inherited scopes (outermost first):", report.scopes);
+  console.log(
+    "Formatting probe:",
+    "uix_context($0).format('sensor.sun_next_dusk', [{ type: 'device' }, { type: 'entity' }])"
+  );
+  console.groupEnd();
+  return report;
+};
 
 // ---------------------------------------------------------------------------
 // Utility: traverse the DOM upward, crossing shadow-root boundaries

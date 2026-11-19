@@ -38,12 +38,24 @@ def popover_page(page: Page) -> Page:
     page.clock.pause_at(1000)
     page.evaluate(
         """(source) => {
-          const base = document.createElement('div');
+          const base = document.createElement('home-assistant');
           base.attachShadow({ mode: 'open' });
           document.body.append(base);
           window.popovers = [];
+          window.dialogs = [];
           window.errors = [];
           console.error = (...args) => window.errors.push(args[0]);
+          base.addEventListener('show-dialog', ({ detail }) => {
+            const dialog = document.createElement(detail.dialogTag);
+            dialog.params = detail.dialogParams;
+            dialog.addEventListener('dialog-closed', event => {
+              if (event.detail.dialog === dialog.localName) {
+                window.dialogs.splice(window.dialogs.indexOf(dialog), 1);
+              }
+            });
+            window.dialogs.push(dialog);
+            base.shadowRoot.append(dialog);
+          });
 
           class Popover extends HTMLElement {
             _open = false;
@@ -88,7 +100,7 @@ def popover_page(page: Page) -> Page:
               },
               {}, document.body,
             );
-            const popover = base.shadowRoot.lastElementChild;
+            const popover = [...base.shadowRoot.querySelectorAll('ha-adaptive-popover')].at(-1);
             if (!popover) return;
             window.popovers.push(popover);
             if (opened) popover.dispatchEvent(new Event('opened'));
@@ -243,3 +255,101 @@ def test_removing_popover_does_not_change_detached_element(popover_page: Page) -
     page.clock.run_for(10000)
     assert page.evaluate("popovers[0].openChanges") == [True]
     assert page.evaluate("pendingTimers.size") == 0
+
+
+def test_dialog_manager_can_close_nested_popovers_in_order(popover_page: Page) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ title: 'Outer' })")
+    page.evaluate("openPopover({ title: 'Inner' })")
+    assert page.evaluate("new Set(dialogs.map(dialog => dialog.localName)).size") == 2
+    assert page.evaluate("dialogs.at(-1).closeDialog()") is True
+    assert page.evaluate("popovers.map(popover => popover.open)") == [True, False]
+    page.evaluate("popovers[1].dispatchEvent(new Event('closed'))")
+    assert page.evaluate("dialogs.length") == 1
+    assert page.evaluate("dialogs[0].closeDialog()") is True
+    page.evaluate("popovers[0].dispatchEvent(new Event('closed'))")
+    assert page.evaluate("dialogs.length") == 0
+
+
+def test_timed_close_releases_dialog_tag(popover_page: Page) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ timeout: 10000 })")
+    tag = page.evaluate("dialogs[0].localName")
+    page.clock.run_for(10000)
+    page.evaluate("popovers[0].dispatchEvent(new Event('closed'))")
+    assert page.evaluate("dialogs.length") == 0
+    page.evaluate("openPopover({})")
+    assert page.evaluate("dialogs[0].localName") == tag
+
+
+def test_dialog_manager_respects_nondismissible_popover(popover_page: Page) -> None:
+    page = popover_page
+    page.evaluate("""openPopover({
+      dismissible: false, buttons: { primary: { label: 'Close' } },
+    })""")
+    page.evaluate("history.replaceState({ dialog: dialogs[0].localName }, '')")
+    history_length = page.evaluate("history.length")
+    assert page.evaluate("dialogs[0].closeDialog()") is False
+    assert page.evaluate("popovers[0].open") is True
+    assert page.evaluate("history.length") == history_length
+
+
+def test_dialog_manager_allows_navigation_while_nondismissible_popover_closes(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("""openPopover({
+      dismissible: false, buttons: { primary: { label: 'Close' } },
+    })""")
+    page.evaluate("popovers[0].open = false")
+    assert page.evaluate("dialogs[0].closeDialog()") is True
+
+
+def test_rejected_back_restores_dialog_history_for_nested_popover(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ title: 'Outer' })")
+    page.evaluate("""openPopover({
+      title: 'Inner', dismissible: false, buttons: { primary: { label: 'Close' } },
+    })""")
+    inner_tag = page.evaluate("dialogs[1].localName")
+    result = page.evaluate("""() => new Promise(resolve => {
+      history.replaceState({ opensDialog: true }, '');
+      history.pushState({ dialog: dialogs[1].localName }, '');
+      window.addEventListener('popstate', event => {
+        const closed = dialogs[1].closeDialog();
+        resolve({ closed, consumed: event.state, restored: history.state });
+      }, { once: true });
+      history.back();
+    })""")
+    assert result == {
+        "closed": False,
+        "consumed": {"opensDialog": True},
+        "restored": {"dialog": inner_tag},
+    }
+    assert page.evaluate("popovers.map(popover => popover.open)") == [True, True]
+
+
+def test_dialog_manager_releases_disconnected_nondismissible_popover(
+    popover_page: Page,
+) -> None:
+    page = popover_page
+    page.evaluate("openPopover({ title: 'Outer' })")
+    page.evaluate("""openPopover({
+      title: 'Inner', dismissible: false, timeout: 10000,
+      buttons: { primary: { label: 'Close' } },
+    })""")
+    inner_tag = page.evaluate("dialogs[1].localName")
+    page.evaluate("popovers[1].remove()")
+    page.evaluate("history.replaceState({ opensDialog: true }, '')")
+
+    assert page.evaluate("dialogs[1].closeDialog()") is True
+    assert page.evaluate("dialogs.length") == 1
+    assert page.evaluate("popovers[0].open") is True
+    assert page.evaluate("popovers[1].openChanges") == [True]
+    assert page.evaluate("pendingTimers.size") == 0
+    assert page.evaluate("history.state") == {"opensDialog": True}
+
+    page.evaluate("openPopover({ title: 'Replacement' })")
+    assert page.evaluate("dialogs[1].localName") == inner_tag

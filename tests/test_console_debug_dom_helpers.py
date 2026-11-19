@@ -155,6 +155,28 @@ def test_uix_path_uses_matching_context_when_parent_has_multiple_uix_nodes(page:
     assert _has_message(messages, 'Path: "."', "log")
 
 
+def test_uix_context_reports_inherited_scopes(page: Page) -> None:
+    _load_console_debug(page)
+    messages = _run_helper(
+        page,
+        "uix_context",
+        """(() => {
+          const target = document.createElement("context-probe");
+          document.body.append(target);
+          window.uix_context_inspect = (element) => ({
+            target: element,
+            scopes: [{ host: element, effective: { entity_name: [] } }],
+            format: () => ({ formatted: "Probe name" }),
+          });
+          return target;
+        })()""",
+    )
+
+    assert _has_message(messages, "💡 UIX Context 💡", "group")
+    assert _has_message(messages, "Inherited scopes (outermost first):", "log")
+    assert _has_message(messages, "Formatting probe:", "log")
+
+
 def test_uix_forge_path_finds_forged_subtree_target(page: Page) -> None:
     _load_console_debug(page)
     messages = _run_helper(

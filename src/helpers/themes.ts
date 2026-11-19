@@ -1,6 +1,6 @@
 import { hass } from "./hass";
 import { yaml2json } from "./yaml2json";
-import { Uix } from "../uix";
+import type { Uix } from "../uix";
 import { MacroConfig, UixStyle } from "./apply_uix";
 import { themesReady } from "../theme-watcher";
 import { nextAnimationFrame } from "./raf";
@@ -16,6 +16,7 @@ function cssValueIsTrue(v: string): boolean {
 // uix-nodes don't each schedule their own rAF-based style read.
 const _themeInFlight = new WeakMap<Uix, Promise<UixStyle>>();
 const _themeMacrosInFlight = new WeakMap<Uix, Promise<Record<string, MacroConfig | string>>>();
+const _themeContextsInFlight = new WeakMap<Uix, Promise<unknown>>();
 
 export function getThemeTargetElement(root: Uix): HTMLElement {
   if (root.parentElement) return root.parentElement;
@@ -104,6 +105,42 @@ export async function get_theme(root: Uix): Promise<UixStyle> {
   })();
 
   _themeInFlight.set(root, promise);
+  return promise;
+}
+
+/**
+ * Gets structured context bindings for a UIX target type. Context bindings are
+ * deliberately separate from style YAML: they are configuration data rather
+ * than selector-to-CSS mappings.
+ */
+export async function get_theme_context(root: Uix): Promise<unknown> {
+  if (!root.type) return [];
+
+  if (_themeContextsInFlight.has(root)) return _themeContextsInFlight.get(root)!;
+
+  const promise = (async (): Promise<unknown> => {
+    try {
+      await themesReady();
+      await nextAnimationFrame();
+
+      const theme = getEffectiveThemeName(root);
+      const hs = await hass();
+      if (!hs) return [];
+      const themes = hs?.themes.themes ?? {};
+      if (!themes[theme]) return [];
+
+      const uixTheme = themes[theme]["uix-theme"] || themes[theme]["card-mod-theme"] || theme;
+      const key = `uix-${root.type}-context-yaml`;
+      const source = themes[uixTheme]?.[key];
+      if (!source) return [];
+
+      return await yaml2json(key, source, true);
+    } finally {
+      _themeContextsInFlight.delete(root);
+    }
+  })();
+
+  _themeContextsInFlight.set(root, promise);
   return promise;
 }
 

@@ -1,0 +1,52 @@
+id: entity_name_contexts
+description: "Theme view and direct card entity-name contexts reach hass and hassFormatters consumers"
+
+theme: uix-test-entity-name-context
+
+view_path: entity-name-contexts
+
+cards:
+  - type: custom:context-probe-card
+    title: "Theme context"
+  - type: custom:context-probe-card
+    title: "Direct card context"
+    context_probe:
+      entity_name:
+        rules:
+          - when:
+              - request: default
+              - request:
+                  - type: text
+                    text: Original name
+            use:
+              - type: text
+                text: Direct context name
+
+assertions:
+  - type: shadow_dom_host_property_text_equals
+    selector: context-probe-card
+    occurrence: 0
+    property: hassName
+    expected: "Theme context name"
+
+  - type: shadow_dom_host_property_text_equals
+    selector: context-formatters-probe
+    occurrence: 0
+    property: formattedName
+    expected: "Theme context name"
+
+  - type: shadow_dom_host_property_text_equals
+    selector: context-probe-card
+    occurrence: 1
+    property: hassName
+    expected: "Direct context name"
+
+  - type: shadow_dom_host_property_text_equals
+    selector: context-formatters-probe
+    occurrence: 1
+    property: formattedName
+    expected: "Direct context name"
+
+  - type: snapshot
+    name: "76_entity_name_contexts"
+    threshold: 0.02

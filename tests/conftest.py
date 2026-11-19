@@ -39,6 +39,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 # ---------------------------------------------------------------------------
 # UIX-specific env-var defaults — consumed by ha_testcontainer.pytest_plugin
 # ---------------------------------------------------------------------------
@@ -66,6 +68,12 @@ os.environ.setdefault("HA_CONFIG_PATH", str(_REPO_ROOT / "tests" / "ha-config"))
 os.environ.setdefault("HA_CUSTOM_COMPONENTS_PATH", str(_REPO_ROOT / "custom_components"))
 os.environ.setdefault("HA_SETUP_INTEGRATION", "uix")
 os.environ.setdefault("HA_PLUGINS_YAML", str(_REPO_ROOT / "tests" / "plugins.yaml"))
+
+
+@pytest.fixture(scope="session")
+def base_url(pytestconfig: pytest.Config) -> str | None:
+    """Provide pytest-playwright's base URL without its deprecated fixture method."""
+    return pytestconfig.getoption("--base-url") or pytestconfig.getini("base_url") or None
 
 # ---------------------------------------------------------------------------
 # Build test-card before running any tests.  This ensures that the card is always up-to-date

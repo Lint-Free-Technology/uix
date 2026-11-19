@@ -173,7 +173,7 @@ jobs:
       - name: Create GitHub release
         id: github_release
         if: ${{ !inputs.dry_run && steps.version.outputs.new_version != '' }}
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
           target_commitish: ${{ steps.release_commit.outputs.sha }}
@@ -183,7 +183,7 @@ jobs:
 
       - name: Recover GitHub release
         if: ${{ !inputs.dry_run && inputs.recover_release }}
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ steps.recovery.outputs.tag }}
           target_commitish: ${{ github.sha }}
