@@ -20,10 +20,9 @@ def _transpiled_console_debug() -> str:
                 "const fs = require('fs');"
                 "const esbuild = require('esbuild');"
                 "const path = process.argv[1];"
-                "const source = fs.readFileSync(path, 'utf8');"
-                "const { code: outputText } = esbuild.transformSync(source, {"
-                "  loader: 'ts', target: 'es2020'"
-                "});"
+                "const outputText = esbuild.buildSync({"
+                "  entryPoints: [path], bundle: true, write: false, platform: 'browser', format: 'iife', target: 'es2020'"
+                "}).outputFiles[0].text;"
                 "process.stdout.write(outputText);"
             ),
             str(CONSOLE_DEBUG_TS),

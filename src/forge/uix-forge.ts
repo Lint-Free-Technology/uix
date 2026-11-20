@@ -155,6 +155,12 @@ function _activeLayeredOverrideValues(
   return hasActiveChild ? result : LAYERED_OVERRIDE_INACTIVE;
 }
 
+/** Return the Forge-owned portion of a layered overlay after disabled paths. */
+export function activeLayeredOverrideValues(value: any, disabledPaths: UixForgeConfigPath[] = []): any {
+  const active = _activeLayeredOverrideValues(value, disabledPaths);
+  return active === LAYERED_OVERRIDE_INACTIVE ? {} : active;
+}
+
 function _composeLayeredValue(
   base: any,
   override: any,
@@ -433,6 +439,7 @@ export class UixForge extends LitElement {
   private _refreshOperation = 0;
   private _cancelTemplateRefresh?: () => void;
   private _templateGeneration = 0;
+  private _transformError?: string;
 
   constructor() {
       super();
@@ -669,8 +676,7 @@ export class UixForge extends LitElement {
     this._clearTemplateBindings(this._layeredOverridesConfig);
     this._layeredOverrideTemplatePaths = this._collectLayeredTemplatePaths(values);
     this._layeredOverridesConfig.nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
-    const activeValues = _activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
-    this._layeredOverridesConfig.config = activeValues === LAYERED_OVERRIDE_INACTIVE ? {} : activeValues;
+    this._layeredOverridesConfig.config = activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
     this._refreshLayeredForgedElement();
   }
 
@@ -833,12 +839,12 @@ export class UixForge extends LitElement {
       cancelled.then(() => false),
     ]).then((templatesReady) => {
       if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
+      this._sparkController.setConfig(this.forgeConfig.sparks);
       if (!this.forgedElement) {
         this.forgeElement();
       }
       this.templatesReady = true;
       this.refreshForge([]);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }, (err) => {
       console.error("UIX Forge: Error applying forge config:", err);
     }).then(() => this.completeTemplateRefresh(refreshOperation));
@@ -868,10 +874,32 @@ export class UixForge extends LitElement {
 
   get forgedElementConfig() {
     const config = this._layeredMode ? this._layeredForgedElementConfig : this._forgedElementConfig.config;
-    if (!config?.uix) return config;
-    const mergedUix = this._mergeForgeUix(config.uix);
-    if (mergedUix === config.uix) return config;
-    return { ...config, uix: mergedUix };
+    try {
+      const mergedConfig = !config?.uix
+        ? config
+        : (() => {
+          const mergedUix = this._mergeForgeUix(config.uix);
+          return mergedUix === config.uix ? config : { ...config, uix: mergedUix };
+        })();
+      const transformed = this._sparkController.transformConfig(mergedConfig);
+      this._transformError = undefined;
+      return transformed;
+    } catch (error: any) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (this._transformError !== message) console.error("UIX Forge: Error applying transform Spark:", error);
+      this._transformError = message;
+      return this._transformErrorConfig(message, config);
+    }
+  }
+
+  /** Build a valid target configuration for the active mold's native renderer. */
+  private _transformErrorConfig(message: string, originalConfig: any): any {
+    const content = `### UIX Forge\n\nUnable to apply a configuration transform:\n\n> ${message}`;
+    if (this._mold?.isBadge()) return { type: "error", error: message, origConfig: originalConfig };
+    if (this._mold?.isRow()) return { type: "section", label: `UIX Forge: ${message}` };
+    if (this._mold?.isPictureElement()) return { type: "icon", icon: "mdi:alert-circle", title: `UIX Forge: ${message}` };
+    if (this._mold?.isSection()) return { type: "grid", cards: [{ type: "markdown", content }] };
+    return { type: "markdown", content };
   }
 
   set forgedElementConfig(config: any) {
@@ -897,6 +925,10 @@ export class UixForge extends LitElement {
     if (this.forgedElement?.hidden) return true;
     let error = false;
     error = this._mold.isError();
+    // A transform failure is Forge-owned and must remain visible long enough
+    // to diagnose it, even when ordinary Home Assistant target errors are
+    // normally hidden by forge.show_error.
+    if (this._transformError) return false;
     if (error) return !this._showError;
     return this.hiddenByConfig() || this._mold.hidden();
   }
@@ -982,9 +1014,9 @@ export class UixForge extends LitElement {
         elementConfigBuilder.configIsReady()
       ]).then(() => {
         if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+        this._sparkController.setConfig(this.forgeConfig.sparks);
         this.templatesReady = true;
         this.refreshForge([]);
-        this._sparkController.setConfig(this.forgeConfig.sparks);
       });
     }
   }
@@ -1049,11 +1081,28 @@ export class UixForge extends LitElement {
     }
   }
 
+  /**
+   * Structural JSON is meaningful for layered overrides and the data-bearing
+   * fields of transform Sparks. Ordinary Forge template values deliberately
+   * retain the long-standing scalar-string behaviour.
+   */
+  private _parseStructuralSparkTemplateResult(path: string[]): boolean {
+    if (path[0] !== "sparks" || !/^(0|[1-9]\d*)$/.test(path[1] ?? "")) return false;
+    const spark = this._forgeConfig.config?.sparks?.[Number(path[1])];
+    if (spark?.type === "config") {
+      return path[2] === "patches" && /^(0|[1-9]\d*)$/.test(path[3] ?? "") && path[4] === "value";
+    }
+    if (spark?.type === "entities") {
+      return ["entities", "filter", "sort", "element"].includes(path[2]);
+    }
+    return false;
+  }
+
   private async bindTemplates(
     base: any,
     current: any = undefined,
     path: string[] = [],
-    parseLayeredResults = false,
+    parseStructuralResults = false,
     templateGeneration = this._templateGeneration
   ) {
     const hs = await hass();
@@ -1068,7 +1117,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults, templateGeneration);
+        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -1100,7 +1149,7 @@ export class UixForge extends LitElement {
           if (typeof res === "string") {
             res = translate(hs, res);
           }
-          if (parseLayeredResults) {
+          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath)) {
             const parsed = this._parseLayeredTemplateValue(res);
             res = parsed.value;
             opaque = parsed.opaque;
@@ -1109,7 +1158,7 @@ export class UixForge extends LitElement {
           // A layered overlay is composed separately from its template builder.
           // Recompose as soon as an overlay value arrives, including during the
           // initial binding pass before templatesReady becomes true.
-          if (parseLayeredResults || this.templatesReady) {
+          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath) || this.templatesReady) {
             base.refreshCallback?.(currentPath);
           }
         };
@@ -1263,11 +1312,16 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
+    const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
     if (path.includes("sparks")) {
-      this._sparkController.setConfig(this.forgeConfig.sparks);
+      // Both configuration-transform phases change the target's config. This
+      // must reconfigure the target itself (not merely refresh the mold), and
+      // must also run when the final Spark was removed so its original config
+      // is restored.
+      if (hasTransforms) this.refreshForgedElement([]);
+      else this._mold.refresh([]);
     } else {
       this._mold.refresh(path);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }
     const stylingConfig = this._layeredMode
       ? this._templateConfig()
@@ -1519,6 +1573,7 @@ export class UixForge extends LitElement {
   protected updated(_changedProperties: PropertyValues): void {
     if (_changedProperties.has("hass")) {
       this.forgedElement && (this.forgedElement.hass = this.hass);
+      this._sparkController.hassChanged(_changedProperties.get("hass"), this.hass);
     }
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);

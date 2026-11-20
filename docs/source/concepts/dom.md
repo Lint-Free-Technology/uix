@@ -400,6 +400,7 @@ uix_forge_path($0)
     After selecting `ha-tile-icon` in a tile card and running `uix_forge_path($0)`
 
     ```
+
     📦 Closest UIX Forge Parent
       Element: <uix-forge class=​"type-custom-uix-forge">​…​</uix-forge>​
     📍 Forge Path to Target
@@ -416,6 +417,16 @@ uix_forge_path($0)
         #   before: "hui-tile-card $ ha-card ha-tile-container ha-tile-icon"
         #   icon: mdi:home
     ```
+
+### `uix_strategy_inspect(scope, element)` — strategy config helper
+
+Resolve a Forge Dashboard, View, or Section strategy and inspect its real output before writing a [Configuration Spark](../forge/sparks/config.md). The helper returns an object with the generated or direct `config`, `paths(term)` to search its JSON Pointer index, `get(path)`, and `test(patches)` to validate complete patch lists without saving dashboard YAML.
+
+```js
+const overview = await uix_strategy_inspect("view", { type: "home-overview" });
+overview.paths("home-summary");
+overview.test([{ op: "merge", path: "", value: { title: "Overview" } }]);
+```
 
 ### `uix_broker_path($0)` — Broker directive-anchor helper
 

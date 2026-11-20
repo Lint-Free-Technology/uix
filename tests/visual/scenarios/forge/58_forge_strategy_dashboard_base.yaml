@@ -1,0 +1,29 @@
+id: forge_strategy_dashboard_base
+description: "UIX Forge lazily loads a native Dashboard strategy before a Configuration Spark augments its generated dashboard"
+view_path: forge-strategy-dashboard-base
+
+dashboard:
+  title: "Forge dashboard strategy base"
+  views: []
+  strategy:
+    type: custom:uix-forge
+    forge:
+      mold: strategy
+      sparks:
+        - type: config
+          patches:
+            - op: replace
+              path: /views/0
+              value:
+                path: forge-strategy-dashboard-base
+                cards:
+                  - type: markdown
+                    content: "## Dashboard loaded by Forge"
+    element:
+      type: original-states
+
+assertions:
+  - type: text_startswith
+    root: ha-markdown
+    selector: h2
+    expected: "Dashboard loaded by Forge"

@@ -1,0 +1,41 @@
+id: doc_forge_entities_spark
+description: "Doc image: Entities Spark generates Tile configs in a Grid card (entities.md)"
+view_path: overview
+
+setup:
+  - type: device_registry_update
+    entity_id: light.bed_light
+    area_name: bedroom
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: entities
+        path: /cards
+        element:
+          type: tile
+        filter:
+          include:
+            - area: bedroom
+          exclude:
+            - state: unavailable
+  element:
+    type: grid
+    columns: 2
+    square: false
+    cards: []
+
+assertions: []
+
+teardown:
+  - type: device_registry_update
+    entity_id: light.bed_light
+    area_id: null
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/entities-spark-grid.png
+  root: uix-forge
+  padding: 16
+  threshold: 0.02

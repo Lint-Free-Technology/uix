@@ -1,0 +1,65 @@
+id: doc_forge_strategy_people_map
+description: "Doc image: a Configuration Spark inserts a People map section after Home Overview summaries (config.md)"
+view_path: overview
+
+setup:
+  - type: webhook
+    webhook_id: uix_device_tracker_phone
+    payload:
+      latitude: 51.5074
+      longitude: -0.1278
+      resolution: 1
+  - type: webhook
+    webhook_id: uix_device_tracker_tablet
+    payload:
+      latitude: 51.5220
+      longitude: -0.1280
+      resolution: 1
+
+dashboard:
+  title: "Forge People Map"
+  views:
+    - path: overview
+      strategy:
+        type: custom:uix-forge
+        forge:
+          mold: strategy
+          sparks:
+            - type: config
+              patches:
+                - op: insert_after
+                  select:
+                    in: /sections
+                    match:
+                      type: grid
+                      cards:
+                        $contains:
+                          - type: home-summary
+                  value:
+                    type: grid
+                    column_span: 4
+                    cards:
+                      - type: heading
+                        heading: People
+                        icon: mdi:account-multiple
+                        tap_action:
+                          action: navigate
+                          navigation_path: /map
+                      - type: map
+                        entities:
+                          - device_tracker.phone
+                          - device_tracker.tablet
+                        grid_options:
+                          columns: full
+        element:
+          type: home-overview
+          favorite_entities:
+            - light.bed_light
+
+assertions: []
+
+doc_image:
+  output: docs/source/assets/page-assets/forge/config-spark-people-map.png
+  root: hui-view
+  padding: 16
+  threshold: 1 # Home Overview includes live and state-dependent content.

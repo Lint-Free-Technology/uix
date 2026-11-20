@@ -1,0 +1,31 @@
+id: forge_entities_divider
+description: "UIX Forge Entities Spark separates sorted entity-row groups with native divider rows"
+view_path: forge-entities-divider
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: entities
+        path: /entities
+        entities:
+          - light.bed_light
+          - sensor.attic_temperature
+        sort:
+          - method: domain
+            divider: true
+          - method: name
+  element:
+    type: entities
+    title: Grouped entity rows
+    entities: []
+
+assertions:
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElementConfig.entities.1.type
+    expected: divider
+  - type: snapshot
+    name: "78_forge_entities_divider"
+    threshold: 0.02
