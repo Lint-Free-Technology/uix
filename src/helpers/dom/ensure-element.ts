@@ -2,6 +2,20 @@ import { Unpromise } from "@watchable/unpromise";
 import { hass_base_el } from "../hass";
 
 const DEFAULT_TIMEOUT_MS = 2000;
+const STRATEGY_LOAD_TIMEOUT_MS = 5000;
+
+function waitForCustomElement(tag: string, description: string, timeoutMs = STRATEGY_LOAD_TIMEOUT_MS): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error(`Timeout while waiting for ${description}.`)), timeoutMs);
+    customElements.whenDefined(tag).then(() => {
+      window.clearTimeout(timeout);
+      resolve();
+    }, (error) => {
+      window.clearTimeout(timeout);
+      reject(error);
+    });
+  });
+}
 
 export async function ensureCustomElement(selector: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<CustomElementConstructor> {
   if (customElements.get(selector)) {
@@ -189,6 +203,159 @@ export async function ensureHuiBadgePicker(): Promise<CustomElementConstructor> 
   });
 
   return customElements.whenDefined("hui-badge-picker");
+}
+
+/**
+ * Built-in Section strategies are lazy-loaded only from Home Assistant's
+ * native Section renderer. Mounting an inert renderer takes that supported
+ * path without placing content in the user's dashboard.
+ */
+export async function ensureBuiltinSectionStrategy(type: string, hass: any): Promise<CustomElementConstructor> {
+  const tag = `${type}-section-strategy`;
+  const existing = customElements.get(tag);
+  if (existing) return existing;
+  await waitForCustomElement("hui-section", "Home Assistant section renderer");
+  const loader = document.createElement("hui-section") as any;
+  const loaded = waitForCustomElement(tag, `section strategy '${type}'`);
+  loader.hass = hass;
+  loader.config = { strategy: { type } };
+  loader.style.display = "none";
+  loader.setAttribute("aria-hidden", "true");
+  (document.querySelector("home-assistant")?.shadowRoot ?? document.body).append(loader);
+  try {
+    await loaded;
+  } finally {
+    loader.remove();
+  }
+  const strategy = customElements.get(tag);
+  if (!strategy) throw new Error(`Home Assistant did not register section strategy '${type}'.`);
+  return strategy;
+}
+
+/**
+ * Home Assistant's Dashboard strategy registry is lazy-loaded by its strategy
+ * editor. Bootstrap that editor through its native hidden dialog import, then
+ * ask the editor to resolve the requested strategy. The dialog event is
+ * intercepted before Home Assistant's dialog manager can render anything.
+ */
+async function loadDashboardStrategyEditor(): Promise<boolean> {
+  await waitForCustomElement("hui-root", "Home Assistant Lovelace root");
+  const Root = customElements.get("hui-root") as any;
+  const openStrategyEditor = Root?.prototype?._enableEditMode;
+  if (typeof openStrategyEditor !== "function") return false;
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error("Timed out loading the Home Assistant Dashboard strategy editor.")), STRATEGY_LOAD_TIMEOUT_MS);
+    const finish = () => window.clearTimeout(timeout);
+    const loader: any = {
+      _yamlMode: false,
+      lovelace: {
+        // Bootstrap the editor with a known built-in strategy. The requested
+        // type is resolved by hui-dashboard-strategy-element-editor below.
+        rawConfig: { strategy: { type: "original-states" } },
+        saveConfig: async () => {},
+      },
+      hass: {
+        loadFragmentTranslation: async () => {},
+        callWS: async () => [],
+        localize: () => "",
+      },
+      route: { prefix: "/uix-forge-loader" },
+      narrow: false,
+      dispatchEvent: (event: CustomEvent<{ dialogTag?: string; dialogImport?: () => Promise<unknown> }>) => {
+        if (event.type !== "show-dialog" || event.detail?.dialogTag !== "dialog-dashboard-strategy-editor") return true;
+        event.stopImmediatePropagation?.();
+        Promise.resolve(event.detail.dialogImport?.()).then(() => {
+          finish();
+          resolve();
+        }, (error) => {
+          finish();
+          reject(error);
+        });
+        return true;
+      },
+    };
+    Promise.resolve(openStrategyEditor.call(loader)).catch((error) => {
+      finish();
+      reject(error);
+    });
+  });
+
+  await waitForCustomElement("hui-dashboard-strategy-element-editor", "Home Assistant Dashboard strategy editor");
+  return true;
+}
+
+/**
+ * Older Home Assistant Frontends do not expose the strategy-editor action on
+ * Hui root. Their native new-dashboard dialog still resolves a selected
+ * Dashboard strategy through the same Home Assistant registry. Load just the
+ * two config-panel route components, then intercept that dialog and select
+ * the requested strategy without mounting a dialog.
+ */
+async function loadDashboardStrategyThroughConfigPanel(type: string, hass: any): Promise<void> {
+  await customElements.whenDefined("partial-panel-resolver");
+  const resolver: any = document.createElement("partial-panel-resolver");
+  const routes = resolver._getRoutes?.([
+    { component_name: "config", url_path: "uix-forge-dashboard-loader" },
+  ]);
+  await routes?.routes?.["uix-forge-dashboard-loader"]?.load?.();
+  await waitForCustomElement("ha-panel-config", "Home Assistant configuration panel");
+  const configPanel = document.createElement("ha-panel-config") as any;
+  await configPanel.routerOptions?.routes?.lovelace?.load?.();
+  await waitForCustomElement("ha-config-lovelace", "Home Assistant Lovelace configuration panel");
+  const lovelaceConfig = document.createElement("ha-config-lovelace") as any;
+  await lovelaceConfig.routerOptions?.routes?.dashboards?.load?.();
+  await waitForCustomElement("ha-config-lovelace-dashboards", "Home Assistant Dashboard configuration panel");
+
+  const Dashboards = customElements.get("ha-config-lovelace-dashboards") as any;
+  const addDashboard = Dashboards?.prototype?._addDashboard;
+  if (typeof addDashboard !== "function") {
+    throw new Error("Home Assistant does not expose the Dashboard strategy chooser.");
+  }
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error("Timed out loading the Home Assistant Dashboard strategy.")), STRATEGY_LOAD_TIMEOUT_MS);
+    const finish = () => window.clearTimeout(timeout);
+    const loader: any = {
+      hass,
+      _openDetailDialog: () => {},
+      dispatchEvent: (event: CustomEvent<{ dialogTag?: string; dialogImport?: () => Promise<unknown>; dialogParams?: { selectConfig?: (selection: any) => Promise<unknown> } }>) => {
+        if (event.type !== "show-dialog" || event.detail?.dialogTag !== "ha-dialog-new-dashboard") return true;
+        event.stopImmediatePropagation?.();
+        Promise.resolve(event.detail.dialogImport?.()).then(
+          () => event.detail.dialogParams?.selectConfig?.({ config: { strategy: { type } } }),
+        ).then(() => {
+          finish();
+          resolve();
+        }, (error) => {
+          finish();
+          reject(error);
+        });
+        return true;
+      },
+    };
+    Promise.resolve(addDashboard.call(loader)).catch((error) => {
+      finish();
+      reject(error);
+    });
+  });
+}
+
+export async function ensureBuiltinDashboardStrategy(type: string, hass: any): Promise<CustomElementConstructor> {
+  const tag = `${type}-dashboard-strategy`;
+  const existing = customElements.get(tag);
+  if (existing) return existing;
+  if (await loadDashboardStrategyEditor()) {
+    const editor = document.createElement("hui-dashboard-strategy-element-editor") as any;
+    editor.hass = hass;
+    editor.value = { type };
+    await editor.getConfigElement?.();
+  } else {
+    await loadDashboardStrategyThroughConfigPanel(type, hass);
+  }
+
+  const strategy = customElements.get(tag);
+  if (!strategy) throw new Error(`Home Assistant did not register dashboard strategy '${type}'.`);
+  return strategy;
 }
 
 function findShadowDescendant(root: ParentNode, selector: string): Element | null {

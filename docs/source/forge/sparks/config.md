@@ -53,7 +53,9 @@ Templates in a patch's `value` may return a JSON object or list (for example wit
 
 ## Strategies
 
-Use `custom:uix-forge` as the Home Assistant strategy type. With `element.type: home-overview` (or another recognised built-in strategy), Forge runs that base strategy and then applies patches to its generated config. Built-in View and Section strategies load when needed; a Dashboard base strategy must already be loaded in the current browser session. A registered matching `custom:` strategy is delegated too. Otherwise, `element` is the direct blank Dashboard, View, or Section config that Forge returns. `mold: strategy` is YAML-only, but `element`, `element_base`, Foundries, macros, billets, and templates have their normal Forge behaviour.
+Use `custom:uix-forge` as the Home Assistant strategy type. With `element.type: home-overview` (or another recognised built-in strategy), Forge runs that base strategy and then applies patches to its generated config. Built-in Dashboard, View, and Section strategies load when needed. A registered matching `custom:` strategy is delegated too. Otherwise, `element` is the direct blank Dashboard, View, or Section config that Forge returns. `mold: strategy` is YAML-only, but `element`, `element_base`, Foundries, macros, billets, and templates have their normal Forge behaviour.
+
+For a Dashboard strategy, write the Forge `strategy:` at the root of the dashboard configuration. Configuration Spark paths then address the generated dashboard tree, including `/views`, rather than a single View or Section.
 
 ```yaml
 views:

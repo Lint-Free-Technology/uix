@@ -17,6 +17,7 @@ BLANK_BADGE_TS = REPO_ROOT / "src" / "cards" / "uix-forge-blank-badge.ts"
 CONFIG_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "config-transform.ts"
 ENTITIES_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "entities-transform.ts"
 FORGE_STRATEGY_TS = REPO_ROOT / "src" / "forge" / "uix-forge-strategy.ts"
+ENSURE_ELEMENT_TS = REPO_ROOT / "src" / "helpers" / "dom" / "ensure-element.ts"
 
 
 def test_config_spark_applies_ordered_patches_without_mutating_source() -> None:
@@ -115,6 +116,7 @@ def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() 
                 "const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : require(name));"
                 "const strategy = compile(process.argv[3], (name) => {"
                 " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
+                " if (name === '../helpers/dom/ensure-element') return { ensureBuiltinDashboardStrategy: async () => ({}), ensureBuiltinSectionStrategy: async () => ({}) };"
                 " if (name === '../helpers/templates') return { hasTemplate: (value) => typeof value === 'string' && (value.includes('{{') || value.includes('{%')), render_template: async () => '[{\\\"type\\\":\\\"tile\\\",\\\"entity\\\":\\\"light.kitchen\\\"}]' };"
                 " if (name === './config-transform') return config;"
                 " if (name === './entities-transform') return entities;"
@@ -146,28 +148,33 @@ def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() 
     }
 
 
-def test_section_base_strategies_use_the_native_lazy_loader_and_dashboard_errors_are_clear() -> None:
+def test_builtin_strategy_loaders_use_native_inert_paths() -> None:
     output = subprocess.check_output(
         [
             "node",
             "-e",
             (
-                "const fs = require('fs'); const esbuild = require('esbuild'); const definitions = new Map([['hui-section', class {}]]); const waiters = new Map();"
+                "const fs = require('fs'); const esbuild = require('esbuild'); let editorType;"
+                "class HuiRoot { async _enableEditMode() { this.dispatchEvent({ type: 'show-dialog', stopImmediatePropagation: () => {}, detail: { dialogTag: 'dialog-dashboard-strategy-editor', dialogImport: async () => define('hui-dashboard-strategy-element-editor', class {}) } }); } }"
+                "const definitions = new Map([['hui-section', class {}], ['hui-root', HuiRoot]]); const waiters = new Map();"
                 "const define = (tag, value) => { definitions.set(tag, value); (waiters.get(tag) || []).splice(0).forEach((resolve) => resolve()); };"
                 "global.window = { setTimeout, clearTimeout, addEventListener: () => {} }; global.HTMLElement = class {};"
                 "global.customElements = { get: (tag) => definitions.get(tag), define, whenDefined: (tag) => definitions.has(tag) ? Promise.resolve() : new Promise((resolve) => { const entries = waiters.get(tag) || []; entries.push(resolve); waiters.set(tag, entries); }) };"
-                "let loaderConfig; let appendRoot; const appRoot = { append: () => { appendRoot = 'home-assistant shadow root'; } }; global.document = { body: { append: () => { appendRoot = 'body'; } }, querySelector: (selector) => selector === 'home-assistant' ? { shadowRoot: appRoot } : null, createElement: (tag) => { if (tag !== 'hui-section') throw new Error(tag); return { style: {}, setAttribute: () => {}, remove: () => {}, set hass(_value) {}, set config(value) { loaderConfig = value; define('entities-section-strategy', { generate: async (config) => ({ type: 'grid', cards: [{ type: 'markdown', content: config.type }] }) }); } }; } };"
+                "let loaderConfig; let appendRoot; const appRoot = { append: () => { appendRoot = 'home-assistant shadow root'; } }; global.document = { body: { append: () => { appendRoot = 'body'; } }, querySelector: (selector) => selector === 'home-assistant' ? { shadowRoot: appRoot } : null, createElement: (tag) => { if (tag === 'hui-section') return { style: {}, setAttribute: () => {}, remove: () => {}, set hass(_value) {}, set config(value) { loaderConfig = value; define('entities-section-strategy', { generate: async (config) => ({ type: 'grid', cards: [{ type: 'markdown', content: config.type }] }) }); } }; if (tag === 'hui-dashboard-strategy-element-editor') return { set hass(_value) {}, set value(value) { editorType = value.type; }, getConfigElement: async () => { define('home-dashboard-strategy', { generate: async (config) => ({ type: 'sections', title: config.type }) }); } }; throw new Error(tag); } };"
                 "const compile = (path, customRequire) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
-                "const strategy = compile(process.argv[1], (name) => {"
+                "const loaders = compile(process.argv[1], (name) => { if (name === '@watchable/unpromise') return { Unpromise: { race: Promise.race.bind(Promise) } }; if (name === '../hass') return { hass_base_el: async () => undefined }; throw new Error(name); });"
+                "const strategy = compile(process.argv[2], (name) => {"
                 " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
+                " if (name === '../helpers/dom/ensure-element') return loaders;"
                 " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
                 " if (name === './config-transform') return { cloneConfig: (value) => JSON.parse(JSON.stringify(value)), applyConfigSparks: (value) => value };"
                 " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSignature: () => '', hasEntitiesSparks: () => false };"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: () => ({}), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (base, value) => ({ ...base, ...value }) };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
                 " throw new Error(name); });"
-                "(async () => { const section = await strategy.generateBaseStrategy('section', { type: 'entities' }, {}); let dashboard; try { await strategy.generateBaseStrategy('dashboard', { type: 'home' }, {}); } catch (error) { dashboard = error.message; } process.stdout.write(JSON.stringify({ section, loaderConfig, appendRoot, dashboard })); })().catch((error) => { console.error(error); process.exitCode = 1; });"
+                "(async () => { const section = await strategy.generateBaseStrategy('section', { type: 'entities' }, {}); const dashboard = await strategy.generateBaseStrategy('dashboard', { type: 'home' }, {}); process.stdout.write(JSON.stringify({ section, dashboard, loaderConfig, appendRoot, editorType })); })().catch((error) => { console.error(error); process.exitCode = 1; });"
             ),
+            str(ENSURE_ELEMENT_TS),
             str(FORGE_STRATEGY_TS),
         ],
         cwd=REPO_ROOT,
@@ -178,7 +185,8 @@ def test_section_base_strategies_use_the_native_lazy_loader_and_dashboard_errors
     assert result["section"] == {"type": "grid", "cards": [{"type": "markdown", "content": "entities"}]}
     assert result["loaderConfig"] == {"strategy": {"type": "entities"}}
     assert result["appendRoot"] == "home-assistant shadow root"
-    assert "Dashboard base strategy 'home' has not been loaded" in result["dashboard"]
+    assert result["dashboard"] == {"type": "sections", "title": "home"}
+    assert result["editorType"] == "home"
 
 
 def test_entities_spark_generates_and_appends_entity_lists() -> None:

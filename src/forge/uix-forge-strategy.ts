@@ -1,4 +1,5 @@
 import { buildBillets, buildMacros } from "../helpers/apply_uix";
+import { ensureBuiltinDashboardStrategy, ensureBuiltinSectionStrategy } from "../helpers/dom/ensure-element";
 import { hasTemplate, render_template } from "../helpers/templates";
 import { applyConfigSparks, cloneConfig, setConfigValue } from "./config-transform";
 import { applyEntitiesSparks, entitiesSparkSignature, hasEntitiesSparks } from "./entities-transform";
@@ -28,75 +29,16 @@ function strategyTags(scope: StrategyScope, type: string): string[] {
   throw new Error(`uix-forge: unknown ${scope} strategy '${type}'`);
 }
 
-const STRATEGY_LOAD_TIMEOUT_MS = 5000;
-
-function waitForStrategyTag(tag: string, description: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const timeout = window.setTimeout(() => reject(new Error(`uix-forge: timeout loading ${description}`)), STRATEGY_LOAD_TIMEOUT_MS);
-    customElements.whenDefined(tag).then(() => {
-      window.clearTimeout(timeout);
-      resolve();
-    }, (error) => {
-      window.clearTimeout(timeout);
-      reject(error);
-    });
-  });
-}
-
-/**
- * Home Assistant exposes no public section-strategy loader to custom
- * resources. A temporary hidden native section is nevertheless a safe bridge:
- * its normal connected config lifecycle invokes Home Assistant's own loader
- * and imports the requested built-in strategy before any content reaches the
- * user.
- */
-async function loadBuiltinSectionStrategy(type: string, hass: any): Promise<any> {
-  const tag = strategyTags("section", type)[0];
-  const existing = customElements.get(tag);
-  if (existing) return existing;
-  await waitForStrategyTag("hui-section", "Home Assistant section renderer");
-  const loader = document.createElement("hui-section") as any;
-  const loaded = waitForStrategyTag(tag, `section strategy '${type}'`);
-  loader.hass = hass;
-  // Supplying a minimal real Section strategy config takes Home Assistant's
-  // regular lazy-import path. It is hidden and removed immediately after its
-  // import completes, so it never becomes user-visible.
-  loader.config = { strategy: { type } };
-  loader.style.display = "none";
-  loader.setAttribute("aria-hidden", "true");
-  // Keep temporary Home Assistant elements within the application's DOM
-  // boundary when it is available, matching UIX's other internal loaders.
-  // The body fallback keeps strategy generation safe during early startup.
-  (document.querySelector("home-assistant")?.shadowRoot ?? document.body).append(loader);
-  try {
-    await loaded;
-  } finally {
-    loader.remove();
-  }
-  const strategy = customElements.get(tag);
-  if (!strategy) throw new Error(`uix-forge: Home Assistant did not register section strategy '${type}'`);
-  return strategy;
-}
-
 async function resolveStrategy(scope: StrategyScope, type: string, hass: any): Promise<any> {
   const tags = strategyTags(scope, type);
   const defined = tags.map((tag) => customElements.get(tag)).find(Boolean);
   if (defined) return defined;
   if (!type.startsWith("custom:")) {
-    if (scope === "section") return loadBuiltinSectionStrategy(type, hass);
-    if (scope === "dashboard") {
-      throw new Error(`uix-forge: Dashboard base strategy '${type}' has not been loaded in this browser session; visit a dashboard using it first, or use direct Forge Dashboard output`);
-    }
+    if (scope === "section") return ensureBuiltinSectionStrategy(type, hass);
+    if (scope === "dashboard") return ensureBuiltinDashboardStrategy(type, hass);
     throw new Error(`uix-forge: Home Assistant has not loaded the ${scope} strategy '${type}'`);
   }
-  try {
-    await Promise.race(tags.map((tag) => waitForStrategyTag(tag, `${scope} strategy '${type}'`)));
-  } catch (_error) {
-    throw new Error(`uix-forge: timeout loading ${scope} strategy '${type}'`);
-  }
-  const strategy = tags.map((tag) => customElements.get(tag)).find(Boolean);
-  if (!strategy) throw new Error(`uix-forge: timeout loading ${scope} strategy '${type}'`);
-  return strategy;
+  throw new Error(`uix-forge: Home Assistant has not loaded the ${scope} strategy '${type}'`);
 }
 
 function registeredStrategy(scope: StrategyScope, type: string): any | undefined {

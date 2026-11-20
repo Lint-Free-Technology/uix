@@ -35,7 +35,7 @@ views:
 
 The outer `strategy.type` identifies UIX Forge to Home Assistant. A blank/direct strategy returns its resolved `element` mapping as the current scope's config, so a View becomes useful when `element.cards` or `element.sections` is supplied, a Section when `element.cards` is supplied, and a Dashboard when `element.views` is supplied.
 
-When `element.type` is a recognised built-in Home Assistant strategy for the current scope, Forge treats `element` as that base strategy configuration and delegates to it. View strategies use Home Assistant's normal View generator and Section strategies use a temporary hidden native Section renderer to lazily load their built-in base strategy. Home Assistant has no equivalent public Dashboard strategy loader for custom resources: a Dashboard base strategy must already be registered in the current browser session, otherwise Forge fails with a clear error and users must either visit a dashboard using that base strategy first or use direct Dashboard output. A `custom:` type delegates when its matching Home Assistant custom-strategy element is already registered for the current scope; otherwise it remains direct output configuration. A custom type must not be used as both a strategy and an output type. A base strategy may not be `custom:uix-forge`.
+When `element.type` is a recognised built-in Home Assistant strategy for the current scope, Forge treats `element` as that base strategy configuration and delegates to it. View strategies use Home Assistant's normal View generator. Section strategies use a temporary hidden native Section renderer. Dashboard strategies load Home Assistant's native Dashboard strategy editor without opening its dialog and ask that editor to resolve the requested strategy; on Frontends that do not expose that editor action, Forge uses the native hidden Dashboard chooser path instead. Both Dashboard paths lazily load the built-in base strategy. A `custom:` type delegates when its matching Home Assistant custom-strategy element is already registered for the current scope; otherwise it remains direct output configuration. A custom type must not be used as both a strategy and an output type. A base strategy may not be `custom:uix-forge`.
 
 ### Resolution and generation
 
@@ -46,7 +46,7 @@ For a strategy mold, Forge resolves its configuration exactly as it does for a s
 3. Resolve active Forge-owned templates, including normal nesting and pass-through handling. A valid JSON object or array template result is an opaque structural replacement.
 4. Compose `element_base` and the resolved active `element` values when layered configuration is selected.
 5. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping.
-6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for View and Section scopes or, for an already registered Dashboard strategy, through its strategy class; otherwise use the mapping directly as the scope config.
+6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for View, Section, and Dashboard scopes; otherwise use the mapping directly as the scope config.
 7. Run Configuration Sparks, in resolved Spark order, over that config.
 8. Return the transformed config to Home Assistant, which performs its normal scope-specific strategy handling and rendering.
 

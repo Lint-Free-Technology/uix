@@ -947,7 +947,30 @@ views:
         type: home-overview
 ```
 
-For a direct blank View, add `element.cards` or `element.sections`; use `element.cards` for a Section, and `element.views` for a Dashboard. An empty `element` returns an empty config for that scope. View output can also include `badges`, `footer`, and any other normal View keys. When `element.type` is a recognised Home Assistant strategy such as `home-overview`, Forge delegates its source configuration to that strategy. Built-in View and Section base strategies load when needed. A built-in Dashboard base strategy must already be loaded in the current browser session; otherwise Forge displays an error explaining that you can first visit a dashboard using that strategy or use direct Dashboard output. Any configured [Entities Sparks](./sparks/entities.md) first augment the source configuration; configured [Configuration Sparks](./sparks/config.md) then receive the generated config. Forge also delegates to registered `custom:` strategies through Home Assistant's normal strategy registration.
+For a direct blank View, add `element.cards` or `element.sections`; use `element.cards` for a Section, and `element.views` for a Dashboard. An empty `element` returns an empty config for that scope. View output can also include `badges`, `footer`, and any other normal View keys. When `element.type` is a recognised Home Assistant strategy such as `home-overview`, Forge delegates its source configuration to that strategy. Built-in Dashboard, View, and Section base strategies load when needed. Any configured [Entities Sparks](./sparks/entities.md) first augment the source configuration; configured [Configuration Sparks](./sparks/config.md) then receive the generated config. Forge also delegates to registered `custom:` strategies through Home Assistant's normal strategy registration.
+
+For a Dashboard strategy, put `strategy:` at the dashboard root rather than under a View. The required `views: []` is replaced by the generated Dashboard config. This example delegates to Home Assistant's `original-states` Dashboard strategy, then replaces its generated first View with a small direct View so the augmentation is easy to see.
+
+```yaml
+title: Alternate states
+views: []
+strategy:
+  type: custom:uix-forge
+  forge:
+    mold: strategy
+    sparks:
+      - type: config
+        patches:
+          - op: replace
+            path: /views/0
+            value:
+              path: states
+              cards:
+                - type: markdown
+                  content: "## Dashboard loaded by Forge"
+  element:
+    type: original-states
+```
 
 ```yaml
 # A complete direct View config.
