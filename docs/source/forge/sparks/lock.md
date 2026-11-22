@@ -172,7 +172,7 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 
 ### Retry events
 
-Set `retry_event` to react to every wrong code entry, and `failed_event` to react when the configured `max_retries` threshold is reached. Both events are fired on the Home Assistant event bus with `user`, `retry_count`, and `browser`; `browser_id` is included when the browser provides one. The final wrong attempt fires `retry_event` first, then `failed_event`, and both receive the count that reached the threshold.
+Set `retry_event` to react to every wrong code entry, and `failed_event` to react when the configured `max_retries` threshold is reached. Both events are fired on the Home Assistant event bus with `user`, `retry_count`, and `browser`; `browser_id` is included when the browser provides one. Both receive the count that reached the threshold on the final wrong attempt.
 
 ```yaml
 locks:

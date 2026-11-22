@@ -66,9 +66,15 @@ export const createLockRetryState = (): LockRetryState => ({
 const fireLockEvent = async (eventType: unknown, user: LockUser | undefined, retryCount: number): Promise<void> => {
   if (typeof eventType !== "string" || !eventType.trim()) return;
   const type = eventType.trim();
+  let browserId = "";
+  try {
+    browserId = BrowserID();
+  } catch {
+    // A restricted browser context may deny localStorage access. Browser IDs
+    // are optional, so still report the configured event without one.
+  }
 
   try {
-    const browserId = BrowserID();
     const eventData: Record<string, unknown> = {
       user: user?.name ?? "unknown",
       retry_count: retryCount,
@@ -169,14 +175,14 @@ export const requestLockAccess = async ({
       retryState.retryCount++;
       const retryCount = retryState.retryCount;
       const maxRetriesReached = lock.max_retries !== undefined && retryCount >= lock.max_retries;
-      await fireLockEvent(lock.retry_event, user, retryCount);
       if (maxRetriesReached) {
-        await fireLockEvent(lock.failed_event, user, retryCount);
         retryState.retryUntil = Date.now() + (parseDuration(lock.max_retries_delay) ?? 30000);
         retryState.retryCount = 0;
       } else if (lock.retry_delay) {
         retryState.retryUntil = Date.now() + (parseDuration(lock.retry_delay) ?? 0);
       }
+      void fireLockEvent(lock.retry_event, user, retryCount);
+      if (maxRetriesReached) void fireLockEvent(lock.failed_event, user, retryCount);
       await helpers.showAlertDialog(anchor, { title: "Wrong code" });
       return false;
     }
