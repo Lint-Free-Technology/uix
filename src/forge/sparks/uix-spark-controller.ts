@@ -110,6 +110,12 @@ export class UixForgeSparkController {
     return sets[id]!;
   }
 
+  /** Stable snapshot used to decide whether consumers need template rebinds. */
+  queryOnlyEntityResultsSignature(): string {
+    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    return JSON.stringify(Object.keys(sets).sort().map((id) => [id, [...(sets[id] ?? [])].sort()]));
+  }
+
   hasConfigSparks(): boolean {
     return this._configSparks.length > 0;
   }

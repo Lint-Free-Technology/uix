@@ -41,7 +41,7 @@ Only one Home Summary Spark can be used by a Forge, and the resolved card must b
 
 ## Filters
 
-Each ordinary `include` or `exclude` entry has the same familiar shape as an [Entities Spark filter](entities.md#filters). Entries within one option are combined as an OR. If `include` is omitted, the card starts with every currently available entity; when it is present, only its matching entities are considered. UIX then subtracts all `exclude` matches. The supported filter keys are `domain`, `entity_id`, `name`, `group`, `area`, `floor`, `device`, `label`, `integration`, `hidden_by`, `entity_category`, `state`, `attributes`, `and`, `or`, and `not`.
+Each ordinary `include` or `exclude` entry has the same familiar shape as an [Entities Spark filter](entities.md#filters). Entries within one option are combined as an OR. If `include` is omitted, the card starts with every currently available entity; when it is present, only its matching entities are considered. UIX then subtracts all `exclude` matches. The supported filter keys are `domain`, `entity_id`, `name`, `group`, `area`, `floor`, `device`, `label`, `integration`, `entity_category`, `state`, `attributes`, `and`, `or`, and `not`.
 
 ```yaml
 exclude:

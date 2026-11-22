@@ -495,7 +495,7 @@ export class UixForge extends LitElement {
       const resolved = this._resolveFoundry({ ...this.config });
       // An unresolved Foundry may still contain a consumer. Prefer a normal
       // template refresh over leaving that consumer stale when it resolves.
-      return resolved === null || containsEntityResult(resolved.element);
+      return resolved === null || containsEntityResult(resolved.element) || containsEntityResult(resolved.forge?.uix);
     } catch (_error) {
       return true;
     }
@@ -1133,6 +1133,7 @@ export class UixForge extends LitElement {
     parseStructuralResults = false,
     templateGeneration = this._templateGeneration,
     includeQueryOnlyEntities = true,
+    deferInitialRefresh = false,
   ) {
     const hs = await hass();
     if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
@@ -1146,7 +1147,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration, includeQueryOnlyEntities);
+        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration, includeQueryOnlyEntities, deferInitialRefresh);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -1187,7 +1188,7 @@ export class UixForge extends LitElement {
           // A layered overlay is composed separately from its template builder.
           // Recompose as soon as an overlay value arrives, including during the
           // initial binding pass before templatesReady becomes true.
-          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath) || this.templatesReady) {
+          if (this.templatesReady || (!deferInitialRefresh && (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath)))) {
             base.refreshCallback?.(currentPath);
           }
         };
@@ -1211,7 +1212,7 @@ export class UixForge extends LitElement {
   /** Resolve Spark source templates before binding element templates that consume query results. */
   private async bindForgeAndElementTemplates(elementConfigBuilder: any, templateGeneration: number) {
     await Promise.all([
-      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration, false),
+      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration, false, true),
       this._forgeConfig.configIsReady(),
     ]);
     if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
@@ -1350,8 +1351,18 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
+    const priorQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
     const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
+    const queryOnlyResultsChanged = priorQueryOnlyResults !== this._sparkController.queryOnlyEntityResultsSignature();
     if (path.includes("sparks")) {
+      // A source template can change the IDs exposed as uixForge.entities.
+      // Rebind consumers only after the source is fully resolved; source
+      // bindings themselves defer their initial callback to avoid evaluating
+      // templateVariables while a subscription is being established.
+      if (queryOnlyResultsChanged && this.templatesReady && this.hasQueryOnlyEntityTemplateReference()) {
+        this.refreshForgeTemplates();
+        return;
+      }
       // Both configuration-transform phases change the target's config. This
       // must reconfigure the target itself (not merely refresh the mold), and
       // must also run when the final Spark was removed so its original config
@@ -1612,6 +1623,10 @@ export class UixForge extends LitElement {
     if (_changedProperties.has("hass")) {
       this.forgedElement && (this.forgedElement.hass = this.hass);
       this._sparkController.hassChanged(_changedProperties.get("hass"), this.hass);
+      // A disconnected Home Summary Spark clears its exclusions but retains
+      // the scoped providers until its Forge is discarded. Keep that restored
+      // local context current on every later Hass update.
+      if (this._homeSummaryContextOwner === undefined) this._homeSummaryContext?.refresh(this.hass);
     }
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);

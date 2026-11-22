@@ -8,7 +8,7 @@ The Spark is only valid on a normal Card Forge whose final resolved card type is
 
 ## Configuration
 
-`include` and `exclude` are optional lists of entity selectors. An ordinary selector mapping uses the same filter language as an Entities Spark `filter.include` entry: supported keys are `domain`, `entity_id`, `name`, `group`, `area`, `floor`, `device`, `label`, `integration`, `hidden_by`, `entity_category`, `state`, `attributes`, `and`, `or`, and `not`. A selector may instead be exactly `{ $in_entities: <id> }`, which references a named query-only Entities Spark resolved by this same Forge.
+`include` and `exclude` are optional lists of entity selectors. An ordinary selector mapping uses the same filter language as an Entities Spark `filter.include` entry: supported keys are `domain`, `entity_id`, `name`, `group`, `area`, `floor`, `device`, `label`, `integration`, `entity_category`, `state`, `attributes`, `and`, `or`, and `not`. A selector may instead be exactly `{ $in_entities: <id> }`, which references a named query-only Entities Spark resolved by this same Forge.
 
 ```yaml
 forge:

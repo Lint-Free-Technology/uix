@@ -30,7 +30,13 @@ export class UixForgeSparkHomeSummary extends UixForgeSparkBase {
     // Preserve normal live summary updates immediately. Selection membership
     // uses the same trailing debounce as Entities Sparks.
     this.controller.forge.refreshHomeSummaryContext(this);
-    if (this._hasInlineSelectors()) this._scheduleSelectionRefresh();
+    // An explicit include also has to react when the available entity set
+    // changes: a newly appearing entity is excluded until it matches that
+    // include. Do not keep resetting the debounce for unrelated Hass changes,
+    // though; that could indefinitely postpone a genuine selection update.
+    if (this._selectionDependsOnHass() && this._selectionChanged()) {
+      this._scheduleSelectionRefresh();
+    }
   }
 
   /** Named query-only Entity Spark IDs consumed by include/exclude selectors. */
@@ -77,6 +83,10 @@ export class UixForgeSparkHomeSummary extends UixForgeSparkBase {
       .some((entry) => this._entitySparkId(entry) === undefined));
   }
 
+  private _selectionDependsOnHass(): boolean {
+    return this.config.include !== undefined || this._hasInlineSelectors();
+  }
+
   private _selected(key: "include" | "exclude"): string[] {
     const ids = new Set<string>();
     const filters: any[] = [];
@@ -100,16 +110,31 @@ export class UixForgeSparkHomeSummary extends UixForgeSparkBase {
     if (type !== "home-summary") {
       throw new Error("uix-forge: home-summary Spark requires a Home Assistant home-summary card");
     }
+    this._excluded = this._selectedExcluded();
+    this.controller.forge.setHomeSummaryExclusions(this, this._excluded);
+  }
+
+  private _selectedExcluded(): string[] {
     const available = Object.keys(this.controller.forge.hass?.states ?? {});
     const includeDefined = this.config.include !== undefined;
     const included = includeDefined ? new Set(this._selected("include")) : new Set(available);
     const excluded = new Set(this._selected("exclude"));
-    this._excluded = available.filter((entityId) => !included.has(entityId) || excluded.has(entityId));
-    this.controller.forge.setHomeSummaryExclusions(this, this._excluded);
+    return available.filter((entityId) => !included.has(entityId) || excluded.has(entityId));
+  }
+
+  private _selectionChanged(): boolean {
+    const candidate = this._selectedExcluded().sort();
+    const current = [...this._excluded].sort();
+    if (candidate.length === current.length && candidate.every((id, index) => id === current[index])) {
+      return false;
+    }
+    return true;
   }
 
   private _scheduleSelectionRefresh() {
-    if (this._refreshTimer !== undefined) clearTimeout(this._refreshTimer);
+    // Retain an existing trailing refresh. It already represents a changed
+    // membership set, so later unrelated Hass updates must not starve it.
+    if (this._refreshTimer !== undefined) return;
     this._refreshTimer = window.setTimeout(() => {
       this._refreshTimer = undefined;
       if (!this.controller.forge.isConnected) return;

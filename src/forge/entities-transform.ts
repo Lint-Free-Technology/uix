@@ -182,7 +182,6 @@ function matchOne(hass: any, entityId: string, filter: any, context: SelectionCo
       || textMatches(data.device.name, expected);
     if (key === "label") return data.labelIds.some((label) => textMatches(label, expected)) || data.labelNames.some((label) => textMatches(label, expected));
     if (key === "integration") return textMatches(data.entity.platform ?? data.entity.integration ?? data.device.integration, expected);
-    if (key === "hidden_by") return textMatches(data.entity.hidden_by, expected);
     if (key === "entity_category") return textMatches(data.entity.entity_category, expected);
     if (key === "group") return groupMembers(context, hass, expected).has(entityId);
     if (key === "attributes") {

@@ -20,6 +20,8 @@ const BUILTIN_STRATEGIES: Record<StrategyScope, Set<string>> = {
   section: new Set(["common-controls", "device", "entities"]),
 };
 
+const DEFAULT_REGISTRY_DEPENDENCIES = ["entities", "devices", "areas", "floors"];
+
 function strategyTags(scope: StrategyScope, type: string): string[] {
   if (BUILTIN_STRATEGIES[scope].has(type)) return [`${type}-${scope}-strategy`];
   if (type.startsWith("custom:")) {
@@ -343,6 +345,11 @@ export class UixForgeStrategy extends HTMLElement {
     try {
       if (state?.delegateStrategy?.shouldRegenerate) {
         delegateChanged = state.delegateStrategy.shouldRegenerate(state.sourceElement, oldHass, newHass) === true;
+      } else if (state?.delegateStrategy) {
+        // Match Home Assistant's fallback for strategies that do not provide
+        // shouldRegenerate(): registry identity changes are their dependencies.
+        const dependencies = state.delegateStrategy.registryDependencies ?? DEFAULT_REGISTRY_DEPENDENCIES;
+        delegateChanged = dependencies.some((dependency: string) => oldHass?.[dependency] !== newHass?.[dependency]);
       }
     } catch (_error) {
       delegateChanged = true;

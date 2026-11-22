@@ -220,7 +220,7 @@ def test_home_summary_spark_selects_excluded_entities_without_reconfiguring_card
             "-e",
             (
                 "const esbuild = require('esbuild');"
-                "global.window = { setTimeout, clearTimeout };"
+                "const timers = []; global.window = { setTimeout: (callback) => { timers.push(callback); return timers.length; }, clearTimeout: () => {} };"
                 "const output = esbuild.buildSync({ entryPoints: [process.argv[1]], bundle: true, platform: 'node', write: false, format: 'cjs', target: 'es2020' }).outputFiles[0].text;"
                 "const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', output)(require, moduleObj, moduleObj.exports);"
                 "const calls = [];"
@@ -232,9 +232,12 @@ def test_home_summary_spark_selects_excluded_entities_without_reconfiguring_card
                 "const querySets = { included_for_maintenance: ['light.keep', 'light.selected'], excluded_from_maintenance: ['light.selected'] };"
                 "const querySpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: (id) => querySets[id] }, { type: 'home-summary', include: [{ $in_entities: 'included_for_maintenance' }], exclude: [{ $in_entities: 'excluded_from_maintenance' }] });"
                 "querySpark.configUpdated(querySpark.config); querySpark.entitySparkResultsChanged();"
+                "const includeCalls = []; const includeForge = { ...forge, setHomeSummaryExclusions: (_owner, ids) => includeCalls.push(ids), refreshHomeSummaryContext: () => {} };"
+                "const includeSpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: includeForge }, { type: 'home-summary', include: [] });"
+                "includeSpark.configUpdated(includeSpark.config); hass.states['light.new'] = { state: 'on', attributes: {} }; includeSpark.updated(new Map([['hass', hass]])); includeSpark.updated(new Map([['hass', hass]])); const includeRefreshes = timers.length; timers.at(-1)();"
                 "let unknownQuery; try { const unknown = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: () => { throw new Error(\"uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark 'missing'\"); } }, { type: 'home-summary', exclude: [{ $in_entities: 'missing' }] }); unknown.configUpdated(unknown.config); } catch (error) { unknownQuery = error.message; }"
                 "let wrongTarget; try { const invalid = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: { ...forge, forgedElementConfig: { type: 'tile' } } }, { type: 'home-summary' }); invalid.configUpdated(invalid.config); } catch (error) { wrongTarget = error.message; }"
-                "process.stdout.write(JSON.stringify({ calls, queryCalls, queryIds: querySpark.entitySparkIds(), unknownQuery, wrongTarget }));"
+                "process.stdout.write(JSON.stringify({ calls, queryCalls, queryIds: querySpark.entitySparkIds(), includeCalls, includeRefreshes, unknownQuery, wrongTarget }));"
             ),
             str(HOME_SUMMARY_SPARK_TS),
         ],
@@ -253,6 +256,8 @@ def test_home_summary_spark_selects_excluded_entities_without_reconfiguring_card
         ["light.selected", "light.hidden", "light.other"],
     ]
     assert result["queryIds"] == ["included_for_maintenance", "excluded_from_maintenance"]
+    assert result["includeRefreshes"] == 1
+    assert result["includeCalls"][-1] == ["light.keep", "light.selected", "light.hidden", "light.other", "light.new"]
     assert "unknown or ambiguous query-only Entities Spark 'missing'" in result["unknownQuery"]
     assert "requires a Home Assistant home-summary card" in result["wrongTarget"]
 
@@ -412,6 +417,39 @@ def test_static_strategy_does_not_regenerate_for_unrelated_hass_snapshots() -> N
     assert json.loads(output) is False
 
 
+def test_delegated_strategy_without_hook_uses_home_assistant_registry_dependencies() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs'); const esbuild = require('esbuild');"
+                "global.window = { addEventListener: () => {}, setTimeout, clearTimeout, uixCoordinator: { ready: true, connectionPromise: Promise.resolve() } }; global.HTMLElement = class {};"
+                "class HomeStrategy { static registryDependencies = ['areas']; static async generate(config) { return { title: config.type }; } }"
+                "global.customElements = { get: (tag) => tag === 'home-dashboard-strategy' ? HomeStrategy : undefined, define: () => {} };"
+                "const source = fs.readFileSync(process.argv[1], 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
+                " if (name === '../helpers/dom/ensure-element') return { ensureBuiltinDashboardStrategy: async () => HomeStrategy, ensureBuiltinSectionStrategy: async () => ({}) };"
+                " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
+                " if (name === './config-transform') return { cloneConfig: (value) => value, setConfigValue: (target, key, value) => { target[key] = value; }, applyConfigSparks: (value) => value };"
+                " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSets: () => ({}), entitiesSparkSignature: () => '', hasEntitiesSparks: () => false, queryOnlyEntitiesSparkSets: () => ({}) };"
+                " if (name === './uix-forge') return { _resolveFoundryConfig: (config) => ({ forge: config.forge, element: config.element }), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (_base, value) => value };"
+                " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
+                " throw new Error(name); };"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const config = { forge: { mold: 'strategy' }, element: { type: 'home' } }; const before = { areas: {}, entities: {}, devices: {}, floors: {}, states: {} }; const afterAreas = { ...before, areas: {} }; const afterStates = { ...before, states: {} };"
+                "moduleObj.exports.UixForgeDashboardStrategy.generate(config, before).then(() => process.stdout.write(JSON.stringify({ areas: moduleObj.exports.UixForgeDashboardStrategy.shouldRegenerate(config, before, afterAreas), states: moduleObj.exports.UixForgeDashboardStrategy.shouldRegenerate(config, before, afterStates) })));"
+            ),
+            str(FORGE_STRATEGY_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) == {"areas": True, "states": False}
+
+
 def test_builtin_strategy_loaders_use_native_inert_paths() -> None:
     output = subprocess.check_output(
         [
@@ -529,7 +567,8 @@ def test_entities_spark_matching_uses_real_metadata_and_output_only_signatures()
                 "let groupOwnKeys = 0; const trackedHass = { ...hass, states: new Proxy(hass.states, { ownKeys(target) { groupOwnKeys++; return Reflect.ownKeys(target); } }) };"
                 "const grouped = moduleObj.exports.selectEntities({ type: 'entities', path: '/entities', filter: { include: [{ group: 'group.office' }] } }, trackedHass);"
                 "let dividerError; try { moduleObj.exports.entitiesSparkEntries({ type: 'entities', path: '/entities', element: { type: 'tile' }, sort: { method: 'domain', divider: true }, filter: { include: [{ domain: 'light' }] } }, hass); } catch (error) { dividerError = error.message; }"
-                "process.stdout.write(JSON.stringify({ wildcardArea: select({ area: '*' }), renamedDevice: select({ device: 'Office desk' }), originalDevice: select({ device: 'Original desk' }), deviceId: select({ device: 'desk-device' }), groupMembers: select({ group: 'group.office' }), grouped, groupOwnKeys, dividerError, sameSignature: moduleObj.exports.entitiesSparkSignature([spark], hass) === moduleObj.exports.entitiesSparkSignature([spark], decorated) }));"
+                "let hiddenByError; try { select({ hidden_by: 'integration' }); } catch (error) { hiddenByError = error.message; }"
+                "process.stdout.write(JSON.stringify({ wildcardArea: select({ area: '*' }), renamedDevice: select({ device: 'Office desk' }), originalDevice: select({ device: 'Original desk' }), deviceId: select({ device: 'desk-device' }), groupMembers: select({ group: 'group.office' }), grouped, groupOwnKeys, dividerError, hiddenByError, sameSignature: moduleObj.exports.entitiesSparkSignature([spark], hass) === moduleObj.exports.entitiesSparkSignature([spark], decorated) }));"
             ),
             str(ENTITIES_TRANSFORM_TS),
         ],
@@ -546,6 +585,7 @@ def test_entities_spark_matching_uses_real_metadata_and_output_only_signatures()
         "grouped": {"ids": ["light.desk"], "included": ["light.desk"], "excluded": [], "counts": [1]},
         "groupOwnKeys": 1,
         "dividerError": "uix-forge: entities Spark divider or section sorting cannot use element",
+        "hiddenByError": "uix-forge: entities Spark does not support filter key 'hidden_by'",
         "sameSignature": True,
     }
 
@@ -1399,16 +1439,18 @@ def test_uix_forge_preview_update_before_mold_does_not_throw() -> None:
                 "  if (name === '../helpers/templates') return { bind_template: () => {}, hasTemplate: () => false, unbind_template: () => {} };"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
                 "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
-                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { setConfig() {} updated() {} } };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { setConfig() {} updated() {} hassChanged() {} } };"
                 "  throw new Error(`Unexpected module import: ${name}`);"
                 "};"
                 "new Function('require', 'module', 'exports', outputText)(customRequire, moduleObj, moduleObj.exports);"
                 "const { UixForge } = moduleObj.exports;"
                 "const forge = new UixForge();"
                 "const errors = [];"
+                "let restoredSummaryContexts = 0; forge.hass = { states: {} }; forge._homeSummaryContext = { refresh: () => restoredSummaryContexts++ };"
+                "try { forge.updated(new Map([['hass', undefined]])); } catch (err) { errors.push(String(err)); }"
                 "try { forge.updated(new Map([['preview', undefined]])); } catch (err) { errors.push(String(err)); }"
                 "try { forge.refreshForge(['hidden']); } catch (err) { errors.push(String(err)); }"
-                "process.stdout.write(JSON.stringify({ errors }));"
+                "process.stdout.write(JSON.stringify({ errors, restoredSummaryContexts }));"
             ),
             str(FORGE_TS),
         ],
@@ -1416,7 +1458,7 @@ def test_uix_forge_preview_update_before_mold_does_not_throw() -> None:
         text=True,
     )
 
-    assert json.loads(output) == {"errors": []}
+    assert json.loads(output) == {"errors": [], "restoredSummaryContexts": 1}
 
 
 def test_layered_element_composition_preserves_base_and_disabled_source() -> None:

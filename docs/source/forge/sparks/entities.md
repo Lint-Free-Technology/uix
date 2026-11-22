@@ -136,7 +136,6 @@ Each filter mapping matches when all of its rules match. `include` and `exclude`
 | `device` | A device ID, user-assigned name, or original name. |
 | `label` | A label name or ID on the entity, its device, or its effective area. |
 | `integration` | The entity's integration/platform metadata. |
-| `hidden_by` | Entity registry hidden-by value. |
 | `entity_category` | Entity registry category, such as `config` or `diagnostic`. |
 | `and` | A list of nested filters; every nested filter must match. |
 | `or` | A list of nested filters; at least one nested filter must match. |
