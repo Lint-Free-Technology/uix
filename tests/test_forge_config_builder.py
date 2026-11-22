@@ -1811,6 +1811,33 @@ def test_transform_spark_error_replaces_the_target_with_a_complete_error_config(
     }
 
 
+def test_invalid_query_source_does_not_block_replacement_or_visible_transform_error() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs'); const esbuild = require('esbuild'); global.window = { addEventListener: () => {} }; global.customElements = { get: () => true, define: () => {} };"
+                "const source = fs.readFileSync(process.argv[1], 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                " if (name === 'lit') return { html: () => {}, LitElement: class {}, nothing: undefined }; if (name === 'lit/decorators.js') return { property: () => () => {}, state: () => () => {} };"
+                " if (name === './uix-forge-types') return { UIX_FORGE_ALLOWED_CONFIG_KEYS: [], UIX_FORGE_ARRAY_MERGE_STRATEGIES: {}, UIX_FORGE_DEFAULT_TEMPLATE_VALUE: '', UIX_FORGE_FORGE_MOLDS: [], UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_PASSTHROUGH_MARKER: '', UIX_FORGE_TYPE: 'uix-forge', UixForgeConfigBuilder: class {}, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }), ignoreTemplate: () => false };"
+                " if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: async () => ({}), translate: (_h, value) => value }; if (name === '../helpers/templates') return { bind_template: () => {}, hasTemplate: () => false, unbind_template: () => {} }; if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' }; if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} }; if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} }; throw new Error(name); };"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const makeForge = (next) => { let phase = 'invalid-old'; const events = []; const forge = Object.create(moduleObj.exports.UixForge.prototype); const mold = { type: 'card', refresh: () => events.push('mold'), templateVariables: () => ({}), isBadge: () => false, isRow: () => false, isPictureElement: () => false, isSection: () => false }; const controller = { queryOnlyEntityResultsSignature: () => { if (phase.startsWith('invalid')) throw new Error('empty query id'); return phase; }, setConfig: () => { phase = next; return true; }, transformConfig: (config) => { if (phase.startsWith('invalid')) throw new Error('empty query id'); return config; }, templateVariables: () => ({}) }; Object.assign(forge, { _mold: mold, _sparkController: controller, _forgeConfig: { config: { sparks: [{ type: 'entities' }] } }, _forgedElementConfig: { config: { type: 'tile' } }, _layeredMode: false, templatesReady: true, config: {}, _macros: undefined, _billets: undefined }); forge.hasQueryOnlyEntityTemplateReference = () => true; forge.refreshForgeTemplates = () => events.push('templates'); forge.refreshForgedElement = () => events.push(forge.forgedElementConfig); return { forge, events }; };"
+                "console.error = () => {}; const invalid = makeForge('invalid-new'); invalid.forge.refreshForge(['sparks']); const corrected = makeForge('valid'); corrected.forge.refreshForge(['sparks']); process.stdout.write(JSON.stringify({ invalid: invalid.events, corrected: corrected.events }));"
+            ),
+            str(FORGE_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["invalid"] == [{"type": "markdown", "content": "### UIX Forge\n\nUnable to apply a configuration transform:\n\n> empty query id"}]
+    assert result["corrected"] == ["templates"]
+
+
 def test_transform_spark_errors_use_visible_mold_appropriate_targets() -> None:
     output = subprocess.check_output(
         [

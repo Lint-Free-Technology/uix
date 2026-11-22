@@ -1351,10 +1351,28 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
-    const priorQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
-    const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
-    const queryOnlyResultsChanged = priorQueryOnlyResults !== this._sparkController.queryOnlyEntityResultsSignature();
+    let priorQueryOnlyResults: string | undefined;
+    let priorQueryOnlyResultsFailed = false;
     if (path.includes("sparks")) {
+      try {
+        priorQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
+      } catch (_error) {
+        // A source template may temporarily have produced an invalid query.
+        // Do not let that retained configuration prevent its replacement.
+        priorQueryOnlyResultsFailed = true;
+      }
+    }
+    const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
+    if (path.includes("sparks")) {
+      let queryOnlyResultsChanged = false;
+      try {
+        const currentQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
+        queryOnlyResultsChanged = priorQueryOnlyResultsFailed || priorQueryOnlyResults !== currentQueryOnlyResults;
+      } catch (_error) {
+        // The configuration was installed successfully but its transform is
+        // invalid. Continue to refresh below so forgedElementConfig() routes
+        // the failure through the mold-appropriate visible error target.
+      }
       // A source template can change the IDs exposed as uixForge.entities.
       // Rebind consumers only after the source is fully resolved; source
       // bindings themselves defer their initial callback to avoid evaluating
