@@ -31,6 +31,8 @@ UI eXtension also makes the following variables available for templates:
 
   You can debug UIX Jinja2 templates by placing the comment `{# uix.debug #}` anywhere in your template. You will see debug messages on template binding, value updated, reuse, unbinding and final unsubscribing. Any template is kept subscribed in cache for a 20s cooldown period to assist with template application, which can bring a slight speed improvement when switching back and forth to views, or using the same template on cards on different views.
 
+In UIX Forge, element templates and wrapper styling can also use the results of an Entities Spark, for example to show the number of entities with a label. See [Use a query result in templates](../forge/sparks/entities.md#use-a-query-result-in-templates).
+
 ## Macros
 
 UI eXtension supports reusable [Jinja2 macros](https://jinja.palletsprojects.com/en/stable/templates/#macros) that can be defined at card level or via a theme, and are prepended to every template in the card.

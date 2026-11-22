@@ -282,6 +282,8 @@ For **object values** (e.g. `forge`, `element`, and `element_base`), merging is 
 - Spark override matching requires both the same identifier and the same spark `type`.
 - Set `forge.sparks: []` locally to explicitly clear inherited sparks.
 
+For example, save a named Entities Spark filter once and reuse it in a Home Summary card, a strategy patch, or an Entities card. Each Forge can use the shared filter to collect IDs or fill its own list. See [Reuse a Foundry query in another element](sparks/entities.md#reuse-a-foundry-query-in-another-element).
+
 ### Merge example
 
 Foundry `weather_tile`:

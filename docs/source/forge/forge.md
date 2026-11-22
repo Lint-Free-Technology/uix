@@ -363,7 +363,7 @@ Templates will run in different contexts for forging, UIX styling the forge and 
 | Templates in forge `uix` styling | **forge config**: `config.forge`<br/>**element config**: `config.element` (the complete resolved element configuration, or the values Forge applies when `element_base` is present)<br/>**with `element_base`**: `config.element_base` (the resolved card/base settings)<br/>`config.entity` is available if included in global `uix-forge` config. |
 | Templates in element `uix` styling. Here the template is run in regular `uix` styling context for the forged element | **forge config**: unavailable<br/>**element config**: `config`<br/>`config.entity` is available if included in global `uix-forge` config. |
 
-A named query-only [Entities Spark](sparks/entities.md) is also available to element templates and Forge `uix` styling as its raw selected IDs at `uixForge.entities["spark-id"]`. Forge resolves the Spark's own configuration before that mapping, so a Spark cannot refer to the result it is defining.
+Element templates and Forge `uix` styling can read a named query-only Entities Spark's list of IDs at `uixForge.entities["spark-id"]`. For an example, see [Use a query result in templates](sparks/entities.md#use-a-query-result-in-templates).
 
 !!! tip
     If you specify `entity` on global `uix-forge` config it will always be available no matter the context. You always need to specifically specify the element entity if it needs one - you can use a template to use `config.entity`.
@@ -936,7 +936,7 @@ The theme type given to UIX forge container matches the mold type, including [cr
 
 ## Strategies
 
-Use `mold: strategy` in a Home Assistant Dashboard, View, or Section `strategy:` configuration. It can either return a blank/direct scope config from `element`, or run a Home Assistant base strategy and augment its generated config.
+Use `mold: strategy` to supply the configuration for a Home Assistant Dashboard, View, or Section. Start with your own configuration in `element`, or set `element.type` to a strategy such as `home-overview` to build on Home Assistant's output.
 
 ```yaml
 views:
@@ -949,7 +949,7 @@ views:
         type: home-overview
 ```
 
-For a direct blank View, add `element.cards` or `element.sections`; use `element.cards` for a Section, and `element.views` for a Dashboard. An empty `element` returns an empty config for that scope. View output can also include `badges`, `footer`, and any other normal View keys. When `element.type` is a recognised Home Assistant strategy such as `home-overview`, Forge delegates its source configuration to that strategy. Built-in Dashboard, View, and Section base strategies load when needed. Any configured [Entities Sparks](./sparks/entities.md) first augment the source configuration; configured [Configuration Sparks](./sparks/config.md) then receive the generated config. Forge also delegates to registered `custom:` strategies through Home Assistant's normal strategy registration.
+Forge can run built-in Dashboard, View, and Section strategies, as well as `custom:` strategies registered with Home Assistant. To build your own layout, use the normal keys for that scope. A Dashboard uses `views`, a Section uses `cards`, and a View can use `cards` or `sections` along with other View settings such as `badges` and `footer`. An empty `element` produces an empty config.
 
 For a Dashboard strategy, put `strategy:` at the dashboard root rather than under a View. The required `views: []` is replaced by the generated Dashboard config. This example delegates to Home Assistant's `original-states` Dashboard strategy, then replaces its generated first View with a small direct View so the augmentation is easy to see.
 
@@ -995,40 +995,23 @@ strategy:
       content: Last updated {{ now() }}
 ```
 
-Strategies are YAML-only. They use the same `element`, `element_base`, Foundry, macro, billet, template nesting, and template-output behaviour as every other Forge mold. Strategy templates receive the normal UIX user, browser, hash, and latest known panel context; they do not wait for the first Lovelace view render, so the initial panel mapping can be empty. Forge regenerates a strategy only when Home Assistant's base strategy requests it or an Entities Spark result changes, so unrelated busy state updates do not rebuild the strategy. Forge templates use one-shot rendering rather than individual state subscriptions, so they are re-evaluated during that normal strategy regeneration rather than whenever one of their source entities changes. A time-only template such as `{{ now() }}` also has no independent strategy wake-up. As a strategy has no Forge DOM wrapper, it supports only [Entities Sparks](./sparks/entities.md) before generation and [Configuration Sparks](./sparks/config.md) afterwards. It does not support DOM Sparks or `hidden`, `grid_options`, `show_error`, `delayed_hass`, and `forge.uix`.
+### Sparks and templates in strategies
 
-!!! info "Strategy generation is not live card updates"
-    A strategy is a configuration factory, not the component that displays ongoing data. For example, Home Assistant's Home Overview strategy generates an Energy summary card, but that card owns its own live energy updates after Home Assistant renders it. Forge forwards the base strategy's precise regeneration decision, so changing live energy data does not repeatedly regenerate an augmented Home Overview strategy. Rebuilding on every state update would recreate its generated config and can repeat generation-time requests such as the Energy preference lookup.
+Strategies are YAML-only and support the usual Foundries, `element_base`, macros, billets, and template nesting. If configured, an [Entities Spark](sparks/entities.md) can fill a list in the strategy's input or collect IDs for a later patch. A [Configuration Spark](sparks/config.md) edits the result before Home Assistant renders it. These are the two Spark types supported by `mold: strategy`.
 
-    Use an Entities Spark when the strategy's generated *configuration* must change as an entity selection changes. Use the generated native card or a normal Forge element when a value itself should update live. Forge templates inside a strategy are configuration-time values; they do not create a live card-template subscription.
+A strategy produces configuration without creating a Forge element on the page. Save display and styling options such as `hidden`, `grid_options`, `show_error`, `delayed_hass`, and `forge.uix` for an element Forge. To add a Spark to a generated card, [wrap the card](sparks/config.md#wrap-generated-cards) with a Configuration Spark.
 
-Configuration Sparks run after Forge has resolved the direct config or after the base strategy has generated its Dashboard, View, or Section config, and before Home Assistant renders it. They can also wrap a child strategy emitted by a Dashboard strategy, preserving its original source config as `element_base`. See [Configuration Spark](./sparks/config.md) for a complete Home Dashboard example that wraps its generated Overview strategy and inserts a People map section after its summaries.
+Strategy templates receive UIX's user, browser, and hash context, plus the last known panel context. The panel context can be empty during the first generation.
+
+!!! info "When a strategy updates"
+    Forge regenerates when the base strategy's Home Assistant update rules call for it or an Entities Spark result changes. Strategy templates are evaluated when this happens. A template such as `{{ now() }}` waits for the next generation.
+
+    A generated card still updates on its own. For example, the Energy summary card can receive new energy data while the surrounding Overview layout stays in place. Put values that need live template updates in an ordinary Card Forge.
 
 ??? info "Create an augmented Home Overview dashboard"
-    Forge does not change Home Assistant's built-in Overview dashboard. Create a separate dashboard containing a Forge-backed `home-overview` View strategy, then set that dashboard as the default if it should open in place of the unmodified Overview. The built-in dashboard remains available.
+    Create a separate dashboard using the `home` Dashboard strategy so Home Assistant still builds the area and other subviews. Then wrap its generated Overview View to make your changes. The [People map example](sparks/config.md#add-a-people-map-after-home-dashboard-summaries) has the full YAML and [editing instructions](sparks/config.md#create-or-edit-the-dashboard).
 
-    ```yaml
-    title: My Home
-    views:
-      - title: Home
-        path: home
-        strategy:
-          type: custom:uix-forge
-          forge:
-            mold: strategy
-            sparks:
-              - type: config
-                patches:
-                  - op: prepend
-                    path: /cards
-                    value:
-                      type: markdown
-                      content: "## Added by Forge"
-          element:
-            type: home-overview
-    ```
-
-    An administrator can choose **Settings > Dashboards**, open the dashboard menu, and select **Set as default** for all users. An individual user can instead choose it in **User profile > Appearance**. See Home Assistant's [dashboard documentation](https://www.home-assistant.io/dashboards/dashboards/) for dashboard creation and default-dashboard details.
+    To open your custom dashboard by default, choose **Settings > Dashboards** and select **Set as default** from its menu. Individual users can choose their own default under **User profile > Appearance**. See Home Assistant's [dashboard documentation](https://www.home-assistant.io/dashboards/dashboards/).
 
 ## Sections
 
