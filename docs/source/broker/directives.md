@@ -533,7 +533,7 @@ The directive anchor is the locked element by default. Set `for` to a relative s
       admins: true
 ```
 
-Use `anchor` to change the directive's root for `for` selectors. `locks`, `permissive`, `code_dialog`, `action`, `duration`, `icon_locked`, `icon_unlocked`, `icon_locked_color`, `icon_unlocked_color`, `icon_position`, and `icon_size` have the same meaning as the Forge lock spark.
+Use `anchor` to change the directive's root for `for` selectors. `locks`, `permissive`, `code_dialog`, `action`, `duration`, `icon_locked`, `icon_unlocked`, `icon_locked_color`, `icon_unlocked_color`, `icon_position`, and `icon_size` have the same meaning as the Forge lock spark. Lock entries can also set `retry_event` and `failed_event`; these Home Assistant bus events include `user`, `retry_count`, and `browser`, plus `browser_id` when available. `retry_event` fires for every wrong code and `failed_event` fires when a wrong code reaches `max_retries`.
 
 `unlocked_action` is optional. A normal Home Assistant action runs against `entity`; `element_tap`, `element_hold`, and `element_double_tap` dispatch the corresponding action from the locked element's `config` when it has one.
 
