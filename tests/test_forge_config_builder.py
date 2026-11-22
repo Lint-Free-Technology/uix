@@ -16,6 +16,7 @@ BADGE_PICKER_PATCH_TS = REPO_ROOT / "src" / "patch" / "hui-badge-picker.ts"
 BLANK_BADGE_TS = REPO_ROOT / "src" / "cards" / "uix-forge-blank-badge.ts"
 CONFIG_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "config-transform.ts"
 ENTITIES_TRANSFORM_TS = REPO_ROOT / "src" / "forge" / "entities-transform.ts"
+HOME_SUMMARY_SPARK_TS = REPO_ROOT / "src" / "forge" / "sparks" / "uix-spark-home-summary.ts"
 FORGE_STRATEGY_TS = REPO_ROOT / "src" / "forge" / "uix-forge-strategy.ts"
 ENSURE_ELEMENT_TS = REPO_ROOT / "src" / "helpers" / "dom" / "ensure-element.ts"
 
@@ -100,6 +101,238 @@ def test_config_spark_matching_and_copying_are_safe() -> None:
     assert result["prototypePolluted"] is False
 
 
+def test_config_spark_wraps_a_generated_child_strategy() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs');"
+                "const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' });"
+                "const moduleObj = { exports: {} };"
+                "new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
+                "const sourceConfig = { views: [{ path: 'overview', strategy: { type: 'home-overview', favorite_entities: ['light.kitchen'], home_panel: true } }, { path: 'areas-kitchen', strategy: { type: 'home-area', area: 'kitchen' } }] };"
+                "const patch = { op: 'wrap_strategy', select: { in: '/views', match: { strategy: { type: 'home-overview' } }, path: '/strategy' }, value: { forge: { mold: 'strategy', sparks: [{ type: 'config', patches: [] }] }, element: { hide_suggested_entities: true } } };"
+                "const wrapped = moduleObj.exports.applyConfigPatches(sourceConfig, [patch]);"
+                "let root; try { moduleObj.exports.applyConfigPatches({ type: 'home-overview' }, [{ op: 'wrap_strategy', path: '', value: { forge: { mold: 'strategy' } } }]); } catch (error) { root = error.message; }"
+                "let wrongMold; try { moduleObj.exports.applyConfigPatches({ strategy: { type: 'home-overview' } }, [{ op: 'wrap_strategy', path: '/strategy', value: { forge: { mold: 'card' } } }]); } catch (error) { wrongMold = error.message; }"
+                "let recursive; try { moduleObj.exports.applyConfigPatches({ strategy: { type: 'custom:uix-forge' } }, [{ op: 'wrap_strategy', path: '/strategy', value: { forge: { mold: 'strategy' } } }]); } catch (error) { recursive = error.message; }"
+                "process.stdout.write(JSON.stringify({ sourceConfig, wrapped, root, wrongMold, recursive }));"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["sourceConfig"] == {
+        "views": [
+            {
+                "path": "overview",
+                "strategy": {
+                    "type": "home-overview",
+                    "favorite_entities": ["light.kitchen"],
+                    "home_panel": True,
+                },
+            },
+            {"path": "areas-kitchen", "strategy": {"type": "home-area", "area": "kitchen"}},
+        ],
+    }
+    assert result["wrapped"] == {
+        "views": [
+            {
+                "path": "overview",
+                "strategy": {
+                    "type": "custom:uix-forge",
+                    "forge": {"mold": "strategy", "sparks": [{"type": "config", "patches": []}]},
+                    "element": {"hide_suggested_entities": True},
+                    "element_base": {
+                        "type": "home-overview",
+                        "favorite_entities": ["light.kitchen"],
+                        "home_panel": True,
+                    },
+                },
+            },
+            {"path": "areas-kitchen", "strategy": {"type": "home-area", "area": "kitchen"}},
+        ],
+    }
+    assert "non-root strategy mapping" in result["root"]
+    assert "forge.mold must be strategy" in result["wrongMold"]
+    assert "cannot wrap custom:uix-forge" in result["recursive"]
+
+
+def test_config_spark_wraps_generated_cards_in_every_cards_list() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs'); const esbuild = require('esbuild');"
+                "const source = fs.readFileSync(process.argv[1], 'utf8');"
+                "const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' });"
+                "const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(require, moduleObj, moduleObj.exports);"
+                "const sourceConfig = { sections: [{ cards: [{ type: 'home-summary', summary: 'maintenance' }, { type: 'home-summary', summary: 'light' }] }], sidebar: { sections: [{ cards: [{ type: 'home-summary', summary: 'maintenance' }] }] } };"
+                "const patch = { op: 'wrap_card', all: 'cards', where: { type: 'home-summary', summary: 'maintenance' }, value: { forge: { mold: 'card', sparks: [{ type: 'home-summary', exclude: [{ label: 'excluded_from_maintenance' }] }] } } };"
+                "const wrapped = moduleObj.exports.applyConfigPatches(sourceConfig, [patch]);"
+                "const noMatch = moduleObj.exports.applyConfigPatches({ cards: [{ type: 'tile' }] }, [{ ...patch, required: false }]);"
+                "let wrongMold; try { moduleObj.exports.applyConfigPatches({ cards: [{ type: 'home-summary', summary: 'maintenance' }] }, [{ ...patch, value: { forge: { mold: 'strategy' } } }]); } catch (error) { wrongMold = error.message; }"
+                "process.stdout.write(JSON.stringify({ sourceConfig, wrapped, noMatch, wrongMold }));"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["sourceConfig"]["sections"][0]["cards"][0] == {
+        "type": "home-summary",
+        "summary": "maintenance",
+    }
+    main_cards = result["wrapped"]["sections"][0]["cards"]
+    sidebar_cards = result["wrapped"]["sidebar"]["sections"][0]["cards"]
+    assert main_cards[0] == {
+        "type": "custom:uix-forge",
+        "forge": {
+            "mold": "card",
+            "sparks": [
+                {
+                    "type": "home-summary",
+                    "exclude": [{"label": "excluded_from_maintenance"}],
+                }
+            ],
+        },
+        "element_base": {"type": "home-summary", "summary": "maintenance"},
+    }
+    assert main_cards[1] == {"type": "home-summary", "summary": "light"}
+    assert sidebar_cards[0]["element_base"] == {"type": "home-summary", "summary": "maintenance"}
+    assert result["noMatch"] == {"cards": [{"type": "tile"}]}
+    assert "forge.mold must be card" in result["wrongMold"]
+
+
+def test_home_summary_spark_selects_excluded_entities_without_reconfiguring_card() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const esbuild = require('esbuild');"
+                "global.window = { setTimeout, clearTimeout };"
+                "const output = esbuild.buildSync({ entryPoints: [process.argv[1]], bundle: true, platform: 'node', write: false, format: 'cjs', target: 'es2020' }).outputFiles[0].text;"
+                "const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', output)(require, moduleObj, moduleObj.exports);"
+                "const calls = [];"
+                "const hass = { states: { 'light.keep': { state: 'on', attributes: {} }, 'light.selected': { state: 'on', attributes: {} }, 'light.hidden': { state: 'on', attributes: {} }, 'light.other': { state: 'on', attributes: {} } }, entities: { 'light.hidden': { entity_id: 'light.hidden', labels: ['excluded_from_home_summaries'] } }, labels: { excluded_from_home_summaries: { label_id: 'excluded_from_home_summaries', name: 'Excluded from Home summaries' } } };"
+                "const forge = { hass, isConnected: true, forgedElementConfig: { type: 'home-summary', summary: 'light' }, setHomeSummaryExclusions: (_owner, ids) => calls.push(['set', ids]), refreshHomeSummaryContext: () => calls.push(['refresh']), clearHomeSummaryExclusions: () => calls.push(['clear']) };"
+                "const spark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge }, { type: 'home-summary', exclude: [{ label: 'excluded_from_home_summaries' }] });"
+                "spark.configUpdated(spark.config); spark.updated(new Map([['hass', hass]])); spark.disconnectedCallback();"
+                "const queryCalls = []; const queryForge = { ...forge, setHomeSummaryExclusions: (_owner, ids) => queryCalls.push(ids) };"
+                "const querySets = { included_for_maintenance: ['light.keep', 'light.selected'], excluded_from_maintenance: ['light.selected'] };"
+                "const querySpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: (id) => querySets[id] }, { type: 'home-summary', include: [{ $in_entities: 'included_for_maintenance' }], exclude: [{ $in_entities: 'excluded_from_maintenance' }] });"
+                "querySpark.configUpdated(querySpark.config); querySpark.entitySparkResultsChanged();"
+                "let unknownQuery; try { const unknown = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: () => { throw new Error(\"uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark 'missing'\"); } }, { type: 'home-summary', exclude: [{ $in_entities: 'missing' }] }); unknown.configUpdated(unknown.config); } catch (error) { unknownQuery = error.message; }"
+                "let wrongTarget; try { const invalid = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: { ...forge, forgedElementConfig: { type: 'tile' } } }, { type: 'home-summary' }); invalid.configUpdated(invalid.config); } catch (error) { wrongTarget = error.message; }"
+                "process.stdout.write(JSON.stringify({ calls, queryCalls, queryIds: querySpark.entitySparkIds(), unknownQuery, wrongTarget }));"
+            ),
+            str(HOME_SUMMARY_SPARK_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["calls"] == [
+        ["set", ["light.hidden"]],
+        ["refresh"],
+        ["clear"],
+    ]
+    assert result["queryCalls"] == [
+        ["light.selected", "light.hidden", "light.other"],
+        ["light.selected", "light.hidden", "light.other"],
+    ]
+    assert result["queryIds"] == ["included_for_maintenance", "excluded_from_maintenance"]
+    assert "unknown or ambiguous query-only Entities Spark 'missing'" in result["unknownQuery"]
+    assert "requires a Home Assistant home-summary card" in result["wrongTarget"]
+
+
+def test_query_only_entities_spark_filters_generated_config_entries() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs'); const esbuild = require('esbuild');"
+                "const compile = (path, customRequire = require) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
+                "const config = compile(process.argv[1]); const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : require(name));"
+                "const hass = { states: { 'light.hidden_one': { state: 'on', attributes: {} }, 'light.hidden_two': { state: 'on', attributes: {} }, 'light.keep': { state: 'on', attributes: {} } }, entities: { 'light.hidden_one': { entity_id: 'light.hidden_one', labels: ['no_favs'] }, 'light.hidden_two': { entity_id: 'light.hidden_two', labels: ['no_favs'] }, 'light.keep': { entity_id: 'light.keep' } }, labels: { no_favs: { label_id: 'no_favs', name: 'No favorites' } } };"
+                "const sparks = [{ type: 'entities', id: 'no_favs', filter: { include: [{ label: 'no_favs' }] } }, { type: 'config', patches: [{ op: 'remove_matching', select: { in: '/sections', match: { cards: { $contains: [{ type: 'heading', heading: 'Favorites' }] } }, path: '/cards' }, where: { entity: { $in_entities: 'no_favs' } } }] }];"
+                "const source = { sections: [{ type: 'grid', cards: [{ type: 'heading', heading: 'Favorites' }, { type: 'tile', entity: 'light.hidden_one' }, { type: 'tile', entity: 'light.keep' }, { type: 'custom:other-card', entity: 'light.hidden_two' }] }] };"
+                "const sets = entities.entitiesSparkSets(sparks, hass); const transformed = config.applyConfigSparks(entities.applyEntitiesSparks(source, sparks, hass), sparks, sets);"
+                "const nested = { cards: [{ type: 'tile', entity: 'light.hidden_one' }, { type: 'vertical-stack', cards: [{ type: 'tile', entity: 'light.hidden_two' }, { type: 'tile', entity: 'light.keep' }] }], entities: ['light.hidden_one', 'light.keep'] };"
+                "const allCards = config.applyConfigPatches(nested, [{ op: 'remove_matching', all: 'cards', where: { entity: { $in_entities: 'no_favs' } } }], sets);"
+                "const allEntities = config.applyConfigPatches(nested, [{ op: 'remove_matching', all: 'entities', where: { $in_entities: 'no_favs' } }], sets);"
+                "const templateSets = entities.queryOnlyEntitiesSparkSets([{ type: 'entities', id: 'no_favs', entities: ['light.hidden_one'] }, { type: 'entities', id: 'path_backed', path: '/entities', entities: ['light.keep'] }], hass);"
+                "const duplicateTemplateSets = entities.queryOnlyEntitiesSparkSets([{ type: 'entities', id: 'duplicate', entities: ['light.hidden_one'] }, { type: 'entities', id: 'duplicate', entities: ['light.hidden_two'] }], hass);"
+                "const protoSets = entities.entitiesSparkSets([{ type: 'entities', id: '__proto__', entities: ['light.keep'] }], hass);"
+                "let unknown; try { config.applyConfigPatches({ cards: [] }, [{ op: 'remove_matching', path: '/cards', where: { entity: { $in_entities: 'missing' } } }], sets); } catch (error) { unknown = error.message; }"
+                "let invalidAll; try { config.applyConfigPatches({ cards: [] }, [{ op: 'append', all: 'cards', value: { type: 'tile' } }], sets); } catch (error) { invalidAll = error.message; }"
+                "let multipleTargets; try { config.applyConfigPatches({ cards: [] }, [{ op: 'remove_matching', path: '/cards', all: 'cards', where: {} }], sets); } catch (error) { multipleTargets = error.message; }"
+                "let queryPath; try { entities.applyEntitiesSpark({}, { type: 'entities', filter: { include: [{}] } }, hass); } catch (error) { queryPath = error.message; }"
+                "process.stdout.write(JSON.stringify({ source, sets, transformed, allCards, allEntities, templateSets, duplicateUnavailable: Object.hasOwn(duplicateTemplateSets, 'duplicate') && duplicateTemplateSets.duplicate === undefined, protoOwn: Object.prototype.hasOwnProperty.call(protoSets, '__proto__'), prototypePolluted: ({}).light === 'light.keep', unknown, invalidAll, multipleTargets, queryPath }));"
+            ),
+            str(CONFIG_TRANSFORM_TS),
+            str(ENTITIES_TRANSFORM_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    result = json.loads(output)
+    assert result["source"]["sections"][0]["cards"] == [
+        {"type": "heading", "heading": "Favorites"},
+        {"type": "tile", "entity": "light.hidden_one"},
+        {"type": "tile", "entity": "light.keep"},
+        {"type": "custom:other-card", "entity": "light.hidden_two"},
+    ]
+    assert result["sets"] == {"no_favs": ["light.hidden_one", "light.hidden_two"]}
+    assert result["templateSets"] == {"no_favs": ["light.hidden_one"]}
+    assert result["duplicateUnavailable"] is True
+    assert result["protoOwn"] is True
+    assert result["prototypePolluted"] is False
+    assert result["transformed"]["sections"][0]["cards"] == [
+        {"type": "heading", "heading": "Favorites"},
+        {"type": "tile", "entity": "light.keep"},
+    ]
+    assert result["allCards"] == {
+        "cards": [
+            {
+                "type": "vertical-stack",
+                "cards": [{"type": "tile", "entity": "light.keep"}],
+            },
+        ],
+        "entities": ["light.hidden_one", "light.keep"],
+    }
+    assert result["allEntities"] == {
+        "cards": [
+            {"type": "tile", "entity": "light.hidden_one"},
+            {
+                "type": "vertical-stack",
+                "cards": [
+                    {"type": "tile", "entity": "light.hidden_two"},
+                    {"type": "tile", "entity": "light.keep"},
+                ],
+            },
+        ],
+        "entities": ["light.keep"],
+    }
+    assert "unknown or ambiguous" in result["unknown"]
+    assert "only valid with remove_matching" in result["invalidAll"]
+    assert "exactly one of path, select, or all" in result["multipleTargets"]
+    assert "requires id or spark_id" in result["queryPath"]
+
+
 def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() -> None:
     output = subprocess.check_output(
         [
@@ -117,14 +350,14 @@ def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() 
                 "const strategy = compile(process.argv[3], (name) => {"
                 " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
                 " if (name === '../helpers/dom/ensure-element') return { ensureBuiltinDashboardStrategy: async () => ({}), ensureBuiltinSectionStrategy: async () => ({}) };"
-                " if (name === '../helpers/templates') return { hasTemplate: (value) => typeof value === 'string' && (value.includes('{{') || value.includes('{%')), render_template: async () => '[{\\\"type\\\":\\\"tile\\\",\\\"entity\\\":\\\"light.kitchen\\\"}]' };"
+                " if (name === '../helpers/templates') return { hasTemplate: (value) => typeof value === 'string' && (value.includes('{{') || value.includes('{%')), render_template: async (template, context) => template.includes('uixForge.entities') ? context.uixForge.entities.selected.join(',') : '[{\\\"type\\\":\\\"tile\\\",\\\"entity\\\":\\\"light.kitchen\\\"}]' };"
                 " if (name === './config-transform') return config;"
                 " if (name === './entities-transform') return entities;"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: (value, _foundries, ready) => ready ? { forge: value.forge || {}, element: value.element || {}, elementBase: value.element_base || {}, hasElementBase: Object.prototype.hasOwnProperty.call(value, 'element_base') } : null, activeLayeredOverrideValues: (value, disabled) => Object.fromEntries(Object.entries(value).filter(([key]) => !disabled.some((path) => path[0] === key))), composeLayeredElementConfig: (base, overlay, _disabled, opaque) => ({ ...base, ...Object.fromEntries(Object.entries(overlay).map(([key, value]) => [key, opaque.has(JSON.stringify([key])) ? value : value])) }) };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'uix-forge.ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: (value) => value.includes('uix-forge.ignore'), getNestedTemplateRawDelimiters: () => ({ openRaw: '{{', closeRaw: '}}' }) };"
                 " throw new Error(`Unexpected strategy import: ${name}`);"
                 "});"
-                "const source = { forge: { mold: 'strategy', template_nesting: '<<>>' }, element_base: { cards: [{ type: 'markdown', content: 'Base' }], title: 'Base' }, element_disabled_paths: [['broken']], element: { cards: '<< cards | tojson >>', broken: '{{ invalid }}' } };"
+                "const source = { forge: { mold: 'strategy', template_nesting: '<<>>', sparks: [{ type: 'entities', id: 'selected', entities: ['light.kitchen'] }] }, element_base: { cards: [{ type: 'markdown', content: 'Base' }], title: 'Base' }, element_disabled_paths: [['broken']], element: { cards: '<< cards | tojson >>', title: '{{ uixForge.entities.selected | join(\\\",\\\") }}', broken: '{{ invalid }}' } };"
                 "const protoSource = { ...source, forge: { ...source.forge, sparks: [{ type: 'entities', path: '/entities', filter: JSON.parse('{\"__proto__\":{\"uix_polluted\":true}}') }] } };"
                 "const pending = Promise.all([strategy.resolveStrategyConfig(source, 'view', {}), strategy.resolveStrategyEntitiesSparks(protoSource)]);"
                 "setTimeout(() => { window.uixCoordinator.ready = true; (handlers['uix-ready'] || []).forEach((callback) => callback()); }, 0);"
@@ -141,11 +374,42 @@ def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() 
     assert json.loads(output) == {
         "result": {
             "cards": [{"type": "tile", "entity": "light.kitchen"}],
-            "title": "Base",
+            "title": "light.kitchen",
         },
         "protoOwn": True,
         "prototypePolluted": False,
     }
+
+
+def test_static_strategy_does_not_regenerate_for_unrelated_hass_snapshots() -> None:
+    output = subprocess.check_output(
+        [
+            "node",
+            "-e",
+            (
+                "const fs = require('fs'); const esbuild = require('esbuild');"
+                "global.window = { addEventListener: () => {}, setTimeout, clearTimeout }; global.HTMLElement = class {}; global.customElements = { get: () => undefined, define: () => {} };"
+                "const source = fs.readFileSync(process.argv[1], 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} };"
+                "const customRequire = (name) => {"
+                " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
+                " if (name === '../helpers/dom/ensure-element') return { ensureBuiltinDashboardStrategy: async () => ({}), ensureBuiltinSectionStrategy: async () => ({}) };"
+                " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
+                " if (name === './config-transform') return { cloneConfig: (value) => value, setConfigValue: (target, key, value) => { target[key] = value; }, applyConfigSparks: (value) => value };"
+                " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSets: () => ({}), entitiesSparkSignature: () => '', hasEntitiesSparks: () => false };"
+                " if (name === './uix-forge') return { _resolveFoundryConfig: () => ({}), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (_base, value) => value };"
+                " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
+                " throw new Error(name); };"
+                "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
+                "const before = { states: {}, entities: {}, devices: {}, areas: {}, floors: {} }; const after = { states: {}, entities: {}, devices: {}, areas: {}, floors: {} };"
+                "process.stdout.write(JSON.stringify(moduleObj.exports.UixForgeViewStrategy.shouldRegenerate({}, before, after)));"
+            ),
+            str(FORGE_STRATEGY_TS),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert json.loads(output) is False
 
 
 def test_builtin_strategy_loaders_use_native_inert_paths() -> None:
@@ -298,15 +562,17 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
                 "const Spark = class { connectedCallback() {} disconnectedCallback() {} };"
                 "const customRequire = (name) => {"
                 " if (name === '../config-transform') return { applyConfigSparks: (config) => config };"
-                " if (name === '../entities-transform') return { applyEntitiesSparks: (config) => config, hasEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities'), entitiesSparkSignature: (_sparks, hass) => hass.signature };"
+                " if (name === '../entities-transform') return { applyEntitiesSparks: (config) => config, hasEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities'), hasQueryOnlyEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities' && spark.path === undefined), entitiesSparkSets: () => ({}), queryOnlyEntitiesSparkSets: () => ({ no_favs: ['light.hidden'] }), entitiesSparkSignature: (_sparks, hass) => hass.signature };"
                 " if (name === '../../helpers/selecttree') return { selectTree: () => [] };"
                 " if (name === './uix-spark-base') return { UixForgeSparkBase: Spark };"
+                " if (name === '../home-summary-context') return { HomeSummaryContextProjection: class {} };"
                 " if (name.startsWith('./uix-spark-')) return { default: Spark, UixForgeSparkDomEvents: Spark, UixForgeSparkTooltip: Spark, UixForgeSparkAttribute: Spark, UixForgeSparkTileIcon: Spark, UixForgeSparkStateBadge: Spark, UixForgeSparkGrid: Spark, UixForgeSparkSearch: Spark, UixForgeSparkButton: Spark, UixForgeSparkBadge: Spark, UixForgeSparkMap: Spark, UixForgeSparkLock: Spark, UixForgeSparkBackground: Spark, UixForgeSparkTheme: Spark, UixForgeSparkOverlayIcon: Spark, UixForgeSparkMoreInfo: Spark, UixForgeSparkForm: Spark };"
                 " throw new Error(name); }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
-                "const calls = []; const forge = { isConnected: true, refreshForge: (path) => calls.push(path) }; const controller = new moduleObj.exports.UixForgeSparkController(forge); controller.setConfig([{ type: 'entities' }]);"
+                "const calls = []; const forge = { isConnected: true, hass: {}, refreshForgeTemplates: () => calls.push('templates'), refreshForge: (path) => calls.push(path) }; const controller = new moduleObj.exports.UixForgeSparkController(forge); controller.setConfig([{ type: 'entities', path: '/entities' }]);"
+                "controller.hassChanged({ signature: 'initial' }, { signature: 'path' }); timers.at(-1)(); const pathCalls = calls.slice(); calls.length = 0; controller.setConfig([{ type: 'entities', id: 'no_favs' }]);"
                 "controller.hassChanged({ signature: 'before' }, { signature: 'after' }); timers.at(-1)(); const once = calls.slice();"
                 "controller.hassChanged({ signature: 'after' }, { signature: 'later' }); forge.isConnected = false; controller.disconnectedCallback(); forge.isConnected = true; controller.connectedCallback(); timers.at(-1)();"
-                "process.stdout.write(JSON.stringify({ once, calls }));"
+                "const variables = controller.templateVariables(); process.stdout.write(JSON.stringify({ pathCalls, once, calls, entities: variables.entities, sourceHasEntities: Object.hasOwn(controller.templateVariables(false), 'entities') }));"
             ),
             str(REPO_ROOT / "src" / "forge" / "sparks" / "uix-spark-controller.ts"),
         ],
@@ -315,8 +581,11 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
     )
 
     assert json.loads(output) == {
-        "once": [["sparks"]],
-        "calls": [["sparks"], ["sparks"]],
+        "pathCalls": [["sparks"]],
+        "once": ["templates"],
+        "calls": ["templates", "templates"],
+        "entities": {"no_favs": ["light.hidden"]},
+        "sourceHasEntities": False,
     }
 
 
@@ -631,6 +900,9 @@ def test_foundry_sparks_not_duplicated() -> None:
                 "  if (name === '../helpers/templates') return { bind_template: () => {}, hasTemplate: () => false, unbind_template: () => {} };"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
                 "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
+                "  if (name === './home-summary-context') return { HomeSummaryContextProjection: class { setExcluded() {} refresh() {} clear() {} } };"
+                "  throw new Error(`Unexpected module import: ${name}`);"
                 "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} };"
                 "  throw new Error(`Unexpected module import: ${name}`);"
                 "};"
@@ -1417,7 +1689,9 @@ def test_cancelled_template_refresh_does_not_block_queued_refresh() -> None:
     result = json.loads(output)
     assert result["templatesReady"] is False
     assert result["refreshCalls"] == 0
-    assert result["bindCalls"] == 4
+    # Spark source templates bind before element templates, so each cancelled
+    # refresh only begins its Forge-config binding while that binding is pending.
+    assert result["bindCalls"] == 2
     assert result["inFlight"] is True
 
 

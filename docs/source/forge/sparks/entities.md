@@ -41,7 +41,8 @@ This example discovers the Bedroom entities at render time; the screenshot shows
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `type` | string | — | Required. Must be `entities`. |
-| `path` | JSON Pointer | — | Required target array in the resolved Forge `element`, such as `/entities`, `/cards`, or `/maintenance_hidden_entities`. A missing final mapping key is created as an array. |
+| `id` / `spark_id` | string | — | Optional stable Spark identifier for Foundry merging and inspection. Required when `path` is omitted; its selected IDs can then be used by a Configuration Spark or Home Summary Spark `$in_entities` matcher and element templates. |
+| `path` | JSON Pointer | — | Target array in the resolved Forge `element`, such as `/entities`, `/cards`, or `/maintenance_hidden_entities`. Required unless this is a query-only Spark with `id` or `spark_id`. A missing final mapping key is created as an array. |
 | `mode` | `append`, `prepend`, or `replace` | `append` | Controls how generated entries combine with entries already at `path`. Duplicate entity IDs are removed, retaining the first entry. |
 | `entities` | list of entity IDs | — | Optional explicit IDs added before filter results. They can be combined with `filter`. |
 | `filter.include` | list of filters | — | Adds entities matching any filter. Use `[{}]` to start with every entity available to the current user. |
@@ -50,7 +51,69 @@ This example discovers the Bedroom entities at render time; the screenshot shows
 | `element` | mapping | — | Optional mapping cloned once per selected entity. Without it, the Spark writes entity-ID strings. |
 | `entity_path` | JSON Pointer | `/entity` | Location within each generated `element` mapping where Forge writes the selected entity ID. |
 
+Omit `path` to make a query-only Spark. It must have an `id` or `spark_id`; Forge keeps its selected raw entity IDs as a named result for a later [Configuration Spark](config.md), [Home Summary Spark](home-summary.md), and element templates, without writing anything into `element`. Query-only Sparks support `entities` and `filter`; `mode`, `sort`, `element`, and `entity_path` do not apply.
+
+### Use a query result in templates
+
+A named query-only result is a raw list of entity IDs at `uixForge.entities["spark-id"]` while Forge resolves its `element`. Use bracket notation so IDs containing `-` remain valid. The Spark's own configuration is resolved first, so it cannot read the result it is defining; a path-backed Spark ID is available to `$in_entities`, but not this template mapping.
+
+```yaml
+type: custom:uix-forge
+forge:
+  mold: card
+  sparks:
+    - type: entities
+      id: excluded_maintenance
+      filter:
+        include:
+          - label: exclude-maintenance
+element:
+  type: shortcut
+  label: Maintenance
+  description: >-
+    {{ uixForge.entities["excluded_maintenance"] | count }} excluded entities
+```
+
+Forge rebinds element templates after the usual 500 ms Entities Spark refresh debounce, so the description follows changes to the selected result. If two query-only Sparks resolve to the same ID, that template value is unavailable; use unique IDs.
+
 `mode` defaults to `append`, so existing entity IDs remain first and duplicates are removed. Use `prepend` to give generated entries priority, or `replace` when Forge should own the whole list.
+
+### Reuse a Foundry query in another element
+
+A Foundry can centralise a complex entity filter without choosing where its result is written. Define the named Spark without `path`, then let each consuming Forge decide whether it remains query-only or receives a local output path.
+
+```yaml
+# Foundry: maintenance-exclusions
+forge:
+  sparks:
+    - type: entities
+      id: excluded_from_maintenance
+      filter:
+        include:
+          - label: excluded_from_maintenance
+```
+
+For example, the complete [filtered Maintenance dashboard](config.md#wrap-generated-cards) keeps this Spark query-only and uses `$in_entities` from a Home Summary Spark and a Configuration Spark. An ordinary Entities card can instead add a target to the same Spark ID:
+
+```yaml
+type: custom:uix-forge
+foundry: maintenance-exclusions
+forge:
+  mold: card
+  sparks:
+    - type: entities
+      id: excluded_from_maintenance
+      path: /entities
+      mode: replace
+element:
+  type: entities
+  title: Excluded from Maintenance
+  entities: []
+```
+
+Foundry merging combines the same `type` and `id`, so this card receives the Foundry filter while its local `path` writes the selected IDs into the native Entities card. It has become a path-backed Entities Spark in this Forge; this is not a copy of a query result passed from another element.
+
+Do not put `path` in the shared Foundry when it must also feed a Home Summary Spark. Home Summary `$in_entities` intentionally accepts only a genuinely query-only Spark, whereas a Configuration Spark can use either a query-only or path-backed result.
 
 ### Filters
 
@@ -120,29 +183,6 @@ element:
 ```
 
 This is the direct Forge equivalent of an `auto-entities` card, directly forging an ordinary native Entities card.
-
-## Hide Browser Mod entities from Maintenance
-
-This View strategy keeps an explicitly hidden entity and adds every `browser_mod` entity to Home Assistant's native `maintenance_hidden_entities` list. Home Assistant then hides those entities from its Maintenance page and Home Overview maintenance summary.
-
-```yaml
-views:
-  - path: overview
-    strategy:
-      type: custom:uix-forge
-      forge:
-        mold: strategy
-        sparks:
-          - type: entities
-            path: /maintenance_hidden_entities
-            filter:
-              include:
-                - domain: browser_mod
-      element:
-        type: home-overview
-        maintenance_hidden_entities:
-          - sensor.keep_visible_elsewhere
-```
 
 ## Write entity IDs at another path
 
@@ -220,10 +260,11 @@ This produces `{ type: section, label: "Area: Kitchen" }` before the Kitchen sen
 
 ## Inspect a list
 
-`uix_entities_inspect(forge, spark?)` is a browser-console helper. Select a rendered `<uix-forge>` in DevTools and pass `$0`.
+`uix_entities_inspect(forge, spark?)` is a browser-console helper. Select a rendered `<uix-forge>` in DevTools and pass `$0`. It saves its latest result as `window.uix_inspect.entities`, so you can refer to its `ids`, generated `entries`, and filter `counts` in subsequent console commands.
 
 ```js
-uix_entities_inspect($0);
+await uix_entities_inspect($0);
+window.uix_inspect.entities.ids;
 ```
 
 When a Forge has more than one Entities Spark, pass its `id`/`spark_id` or zero-based Entities Spark index. Strategy Forges do not create a wrapper element, so pass their complete Forge configuration mapping instead. The helper returns generated IDs and entries, included and excluded IDs, and the match count for each include filter. It never changes the dashboard or saves configuration.

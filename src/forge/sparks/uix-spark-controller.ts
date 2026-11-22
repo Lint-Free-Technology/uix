@@ -19,9 +19,12 @@ import { UixForgeSparkTheme } from "./uix-spark-theme";
 import { UixForgeSparkOverlayIcon } from "./uix-spark-overlay-icon";
 import { UixForgeSparkMoreInfo } from "./uix-spark-more-info";
 import { UixForgeSparkForm } from "./uix-spark-form";
+import { UixForgeSparkHomeSummary } from "./uix-spark-home-summary";
 import { selectTree } from "../../helpers/selecttree";
 import { applyConfigSparks } from "../config-transform";
-import { applyEntitiesSparks, entitiesSparkSignature, hasEntitiesSparks } from "../entities-transform";
+import { applyEntitiesSparks, entitiesSparkSets, entitiesSparkSignature, hasEntitiesSparks, hasQueryOnlyEntitiesSparks, queryOnlyEntitiesSparkSets } from "../entities-transform";
+
+export { HomeSummaryContextProjection } from "../home-summary-context";
 
 export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "event": UixForgeSparkDomEvents,
@@ -40,6 +43,7 @@ export const UIX_FORGE_SPARK_CLASSES: Record<string, any> = {
     "theme": UixForgeSparkTheme,
     "more-info": UixForgeSparkMoreInfo,
     "form": UixForgeSparkForm,
+    "home-summary": UixForgeSparkHomeSummary,
 };
 
 export class UixForgeSparkController {
@@ -58,6 +62,9 @@ export class UixForgeSparkController {
     const hadTransforms = this.hasConfigSparks() || this.hasEntitiesSparks();
     this._configSparks = (sparkConfigs ?? []).filter(config => config?.type === "config");
     this._entitiesSparks = (sparkConfigs ?? []).filter(config => config?.type === "entities");
+    if ((sparkConfigs ?? []).filter(config => config?.type === "home-summary").length > 1) {
+      throw new Error("uix-forge: only one home-summary Spark may be used by a Forge");
+    }
     if (!hasEntitiesSparks(this._entitiesSparks) && this._entitiesRefreshTimer !== undefined) {
       clearTimeout(this._entitiesRefreshTimer);
       this._entitiesRefreshTimer = undefined;
@@ -90,7 +97,17 @@ export class UixForgeSparkController {
   }
 
   transformConfig(config: any): any {
-    return applyConfigSparks(applyEntitiesSparks(config, this._entitiesSparks, this.forge.hass), this._configSparks);
+    const entitySets = entitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    return applyConfigSparks(applyEntitiesSparks(config, this._entitiesSparks, this.forge.hass), this._configSparks, entitySets);
+  }
+
+  /** Resolve a named query-only Entities Spark for a local DOM Spark consumer. */
+  queryOnlyEntitySet(id: string): string[] {
+    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    if (!Object.prototype.hasOwnProperty.call(sets, id) || sets[id] === undefined) {
+      throw new Error(`uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark '${id}'`);
+    }
+    return sets[id]!;
   }
 
   hasConfigSparks(): boolean {
@@ -121,14 +138,35 @@ export class UixForgeSparkController {
       this._entitiesRefreshTimer = undefined;
       if (!this.forge.isConnected) return;
       this._entitiesRefreshPending = false;
-      // The normal transform-aware refresh path reconfigures the target once,
-      // including when the last transform Spark has been removed.
-      this.forge.refreshForge(["sparks"]);
+      const homeSummarySparks = this.sparks.filter((spark) => spark.type === "home-summary") as UixForgeSparkHomeSummary[];
+      homeSummarySparks.forEach((spark) => spark.entitySparkResultsChanged());
+      const homeSummaryOnly = this._entitiesSparks.length > 0 && this._entitiesSparks.every((spark) => {
+        const id = spark.id ?? spark.spark_id;
+        return spark.path === undefined && typeof id === "string" && homeSummarySparks.some((summary) => summary.entitySparkIds().includes(id));
+      }) && !this._configSparksReferenceEntityResult();
+      // A query-only result used solely to project a Home Summary's local
+      // entity universe does not need to reconfigure the native card. A
+      // template observing uixForge.entities still needs the normal rebind.
+      if (homeSummaryOnly && !this.forge.hasQueryOnlyEntityTemplateReference()) return;
+      // Query-only results are template variables as well as Config Spark
+      // match sets. Rebind only when templates can observe the new IDs.
+      if (hasQueryOnlyEntitiesSparks(this._entitiesSparks)) this.forge.refreshForgeTemplates();
+      else this.forge.refreshForge(["sparks"]);
     }, 500);
   }
 
-  templateVariables() {
-    return Object.keys(UIX_FORGE_SPARK_CLASSES).reduce((acc, SparkType) => {
+  private _configSparksReferenceEntityResult(): boolean {
+    const visit = (value: any): boolean => {
+      if (Array.isArray(value)) return value.some(visit);
+      if (!value || typeof value !== "object") return false;
+      if (typeof value.$in_entities === "string" && value.$in_entities) return true;
+      return Object.values(value).some(visit);
+    };
+    return this._configSparks.some(visit);
+  }
+
+  templateVariables(includeQueryOnlyEntities = true) {
+    const variables = Object.keys(UIX_FORGE_SPARK_CLASSES).reduce((acc, SparkType) => {
       acc[SparkType] = {};
       this.sparks.filter(s => s.type === SparkType).forEach(spark => {
         const vars = spark.templateVariables();
@@ -138,6 +176,13 @@ export class UixForgeSparkController {
       });
       return acc;
     }, {} as Record<string, any>);
+    // `entities` is intentionally a Forge-owned namespace, rather than a DOM
+    // Spark variable. It is available to element templates, not the Spark
+    // source that produces it. Only named query-only results are exposed.
+    if (includeQueryOnlyEntities) {
+      variables.entities = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    }
+    return variables;
   }
 
   beforeForgedElementRefresh() {

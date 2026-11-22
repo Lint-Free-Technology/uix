@@ -102,6 +102,7 @@ nav:
           - forge/sparks/index.md
           - forge/sparks/entities.md
           - forge/sparks/config.md
+          - forge/sparks/home-summary.md
           - forge/sparks/tooltip.md
           - forge/sparks/button.md
           - forge/sparks/badge.md

@@ -2,7 +2,7 @@ import { buildBillets, buildMacros } from "../helpers/apply_uix";
 import { ensureBuiltinDashboardStrategy, ensureBuiltinSectionStrategy } from "../helpers/dom/ensure-element";
 import { hasTemplate, render_template } from "../helpers/templates";
 import { applyConfigSparks, cloneConfig, setConfigValue } from "./config-transform";
-import { applyEntitiesSparks, entitiesSparkSignature, hasEntitiesSparks } from "./entities-transform";
+import { applyEntitiesSparks, entitiesSparkSets, entitiesSparkSignature, hasEntitiesSparks, queryOnlyEntitiesSparkSets } from "./entities-transform";
 import { activeLayeredOverrideValues, composeLayeredElementConfig, _resolveFoundryConfig } from "./uix-forge";
 import {
   getNestedTemplateRawDelimiters,
@@ -251,12 +251,16 @@ export async function resolveStrategyConfig(config: any, scope: StrategyScope, h
   const templateContext = { config: { ...config, forge, element, element_base: elementBase }, uixForge: {} };
   const disabledPaths = config.element_disabled_paths ?? [];
   const activeOverlay = elementBase ? activeLayeredOverrideValues(element, disabledPaths) : element;
-  const resolvedOverlay = await resolveTemplates(activeOverlay, templateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting));
+  // Resolve Spark sources first. Named query-only results then become a
+  // read-only template variable for the strategy element.
+  const resolvedSparks = (await resolveTemplates(forge.sparks ?? [], templateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting))).value;
+  const elementTemplateContext = { ...templateContext, uixForge: { entities: queryOnlyEntitiesSparkSets(resolvedSparks, hass) } };
+  const resolvedOverlay = await resolveTemplates(activeOverlay, elementTemplateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting));
   const resolvedElement = elementBase
     ? composeLayeredElementConfig(elementBase, resolvedOverlay.value, disabledPaths, resolvedOverlay.opaquePaths)
     : resolvedOverlay.value;
-  const resolvedSparks = (await resolveTemplates(forge.sparks ?? [], templateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting))).value;
   if (refresh) refresh.entitiesSparks = cloneConfig(resolvedSparks.filter((spark: any) => spark?.type === "entities"));
+  const entitySets = entitiesSparkSets(resolvedSparks, hass);
   const sourceElement = applyEntitiesSparks(resolvedElement, resolvedSparks, hass);
   if (refresh) {
     refresh.sourceElement = undefined;
@@ -264,14 +268,14 @@ export async function resolveStrategyConfig(config: any, scope: StrategyScope, h
   }
   const isBuiltinBase = typeof sourceElement.type === "string" && BUILTIN_STRATEGIES[scope].has(sourceElement.type);
   const isCustomBase = hasRegisteredCustomStrategy(scope, sourceElement.type);
-  if (!isBuiltinBase && !isCustomBase) return applyConfigSparks(sourceElement, resolvedSparks);
+  if (!isBuiltinBase && !isCustomBase) return applyConfigSparks(sourceElement, resolvedSparks, entitySets);
   if (typeof sourceElement.type !== "string" || !sourceElement.type || sourceElement.type === "custom:uix-forge") {
     throw new Error("uix-forge: a base strategy requires a concrete non-recursive element.type");
   }
   refresh && (refresh.sourceElement = cloneConfig(sourceElement));
   return applyConfigSparks(await generateBaseStrategy(scope, sourceElement, hass, (strategy) => {
     if (refresh) refresh.delegateStrategy = strategy;
-  }), resolvedSparks);
+  }), resolvedSparks, entitySets);
 }
 
 type StrategyRefreshState = {
@@ -312,14 +316,6 @@ function scheduleEntityRefresh(config: any, hass: any): void {
   }, 500);
 }
 
-function normalForgeDependenciesChanged(oldHass: any, newHass: any): boolean {
-  return oldHass.states !== newHass.states
-    || oldHass.entities !== newHass.entities
-    || oldHass.devices !== newHass.devices
-    || oldHass.areas !== newHass.areas
-    || oldHass.floors !== newHass.floors;
-}
-
 export class UixForgeStrategy extends HTMLElement {
   static scope: StrategyScope;
 
@@ -352,10 +348,10 @@ export class UixForgeStrategy extends HTMLElement {
       delegateChanged = true;
     }
 
-    // Forge-owned templates are re-evaluated by the ordinary Home Assistant
+    // Forge-owned templates are re-evaluated during Home Assistant's normal
     // strategy lifecycle. Entity Spark selection is an additional dependency,
     // never a replacement for the delegate's normal data dependencies.
-    return entitiesChanged || delegateChanged || normalForgeDependenciesChanged(oldHass, newHass);
+    return entitiesChanged || delegateChanged;
   }
 
   static async generate(config: any, hass: any): Promise<any> {

@@ -4,7 +4,7 @@ type Mapping = Record<string, any>;
 
 export type UixForgeEntitiesSpark = {
   type: "entities";
-  path: string;
+  path?: string;
   mode?: "append" | "prepend" | "replace";
   entities?: string[];
   filter?: { include?: any[]; exclude?: any[] };
@@ -325,6 +325,49 @@ export function entitiesSparkEntries(spark: UixForgeEntitiesSpark, hass: any): {
   return { ...selected, entries: sorted.map((entityId) => setEntryEntity(cloneConfig(spark.element), entityPath, entityId)) };
 }
 
+function sparkId(spark: UixForgeEntitiesSpark): string | undefined {
+  const id = spark.id ?? spark.spark_id;
+  if (id === undefined) return undefined;
+  if (typeof id !== "string" || !id) throw new Error("uix-forge: entities Spark id must be a non-empty string");
+  return id;
+}
+
+function assertQueryOnlySpark(spark: UixForgeEntitiesSpark): string {
+  const id = sparkId(spark);
+  if (!id) throw new Error("uix-forge: query-only entities Spark requires id or spark_id");
+  for (const key of ["mode", "sort", "element", "entity_path"]) {
+    if (spark[key as keyof UixForgeEntitiesSpark] !== undefined) {
+      throw new Error(`uix-forge: query-only entities Spark cannot use ${key}`);
+    }
+  }
+  return id;
+}
+
+/** Return raw selected IDs for every named Entities Spark. Query-only Sparks have no target path. */
+export function entitiesSparkSets(sparks: Record<string, any>[] = [], hass?: any): Record<string, string[] | undefined> {
+  const results: Record<string, string[] | undefined> = {};
+  for (const rawSpark of sparks) {
+    if (rawSpark?.type !== "entities") continue;
+    const spark = rawSpark as UixForgeEntitiesSpark;
+    const id = sparkId(spark);
+    if (spark.path === undefined) assertQueryOnlySpark(spark);
+    if (!id) continue;
+    // Do not silently choose between same-named results after Foundry merging.
+    // A Configuration Spark can then report the reference as ambiguous.
+    if (Object.prototype.hasOwnProperty.call(results, id)) {
+      setConfigValue(results, id, undefined);
+      continue;
+    }
+    setConfigValue(results, id, selectEntities(spark, hass).ids);
+  }
+  return results;
+}
+
+/** Return raw selected IDs for named query-only Sparks, for use by Forge templates. */
+export function queryOnlyEntitiesSparkSets(sparks: Record<string, any>[] = [], hass?: any): Record<string, string[] | undefined> {
+  return entitiesSparkSets(sparks.filter((spark) => spark?.type === "entities" && spark.path === undefined), hass);
+}
+
 function isDivider(entry: any): boolean {
   return isMapping(entry) && entry.type === "divider";
 }
@@ -363,7 +406,11 @@ function cleanupEntityRows(entries: any[]): any[] {
 
 export function applyEntitiesSpark(config: any, spark: UixForgeEntitiesSpark, hass: any): any {
   if (!isMapping(config)) throw new Error("uix-forge: entities Spark requires mapping element config");
-  if (typeof spark.path !== "string") throw new Error("uix-forge: entities Spark requires path");
+  if (spark.path === undefined) {
+    assertQueryOnlySpark(spark);
+    return cloneConfig(config);
+  }
+  if (typeof spark.path !== "string") throw new Error("uix-forge: entities Spark path must be an RFC 6901 JSON Pointer");
   const mode = spark.mode ?? "append";
   if (!( ["append", "prepend", "replace"] as string[]).includes(mode)) throw new Error("uix-forge: entities Spark mode must be append, prepend, or replace");
   const result = cloneConfig(config);
@@ -394,8 +441,24 @@ export function hasEntitiesSparks(sparks: Record<string, any>[] = []): boolean {
   return sparks.some((spark) => spark?.type === "entities");
 }
 
+/** Whether a Forge must rebind element templates when its entity selection changes. */
+export function hasQueryOnlyEntitiesSparks(sparks: Record<string, any>[] = []): boolean {
+  return sparks.some((spark) => spark?.type === "entities" && spark.path === undefined);
+}
+
 export function entitiesSparkSignature(sparks: Record<string, any>[] = [], hass?: any): string {
   // Inspector diagnostics (included, excluded, and counts) must not influence
-  // regeneration. Only the resulting list can change the forged config.
-  return JSON.stringify(sparks.filter((spark) => spark?.type === "entities").map((spark) => entitiesSparkEntries(spark as UixForgeEntitiesSpark, hass).entries));
+  // regeneration. Only output lists and named result sets can change Forge.
+  return JSON.stringify(sparks.filter((spark) => spark?.type === "entities").map((rawSpark) => {
+    const spark = rawSpark as UixForgeEntitiesSpark;
+    if (spark.path === undefined) {
+      assertQueryOnlySpark(spark);
+      return { ids: selectEntities(spark, hass).ids };
+    }
+    const id = sparkId(spark);
+    return {
+      entries: entitiesSparkEntries(spark, hass).entries,
+      ...(id ? { ids: selectEntities(spark, hass).ids } : {}),
+    };
+  }));
 }

@@ -176,6 +176,105 @@ def test_uix_context_reports_inherited_scopes(page: Page) -> None:
     assert _has_message(messages, "Formatting probe:", "log")
 
 
+def test_uix_dashboard_inspect_reads_open_lovelace_dashboard_strategy(page: Page) -> None:
+    _load_console_debug(page)
+    result = page.evaluate(
+        """async () => {
+          for (const tag of ["home-assistant", "home-assistant-main", "ha-panel-lovelace", "hui-root"]) {
+            if (!customElements.get(tag)) customElements.define(tag, class extends HTMLElement {});
+          }
+          const homeAssistant = document.createElement("home-assistant");
+          const main = document.createElement("home-assistant-main");
+          const panel = document.createElement("ha-panel-lovelace");
+          const root = document.createElement("hui-root");
+          root.lovelace = {
+            rawConfig: { strategy: { type: "home", hide_welcome_message: true } },
+            config: { views: [{ path: "overview", strategy: { type: "home-overview" } }] },
+          };
+          panel.attachShadow({ mode: "open" }).append(root);
+          main.attachShadow({ mode: "open" }).append(panel);
+          homeAssistant.attachShadow({ mode: "open" }).append(main);
+          document.body.append(homeAssistant);
+          const report = window.uix_dashboard_inspect();
+          return {
+            sameSavedReport: report === window.uix_inspect.dashboard,
+            panel: report.panel,
+            strategy: report.strategy,
+            rawConfig: report.rawConfig,
+            generatedConfig: report.generatedConfig,
+          };
+        }"""
+    )
+
+    assert result == {
+        "sameSavedReport": True,
+        "panel": "lovelace",
+        "strategy": {"type": "home", "hide_welcome_message": True},
+        "rawConfig": {"strategy": {"type": "home", "hide_welcome_message": True}},
+        "generatedConfig": {"views": [{"path": "overview", "strategy": {"type": "home-overview"}}]},
+    }
+
+
+def test_uix_dashboard_inspect_reads_native_home_panel_strategy(page: Page) -> None:
+    _load_console_debug(page)
+    result = page.evaluate(
+        """() => {
+          for (const tag of ["home-assistant", "home-assistant-main", "ha-panel-home"]) {
+            if (!customElements.get(tag)) customElements.define(tag, class extends HTMLElement {});
+          }
+          const homeAssistant = document.createElement("home-assistant");
+          const main = document.createElement("home-assistant-main");
+          const panel = document.createElement("ha-panel-home");
+          panel._strategyConfig = {
+            strategy: { type: "home", home_panel: true, hide_welcome_message: true },
+          };
+          panel._lovelace = {
+            config: { views: [{ path: "overview", strategy: { type: "home-overview" } }] },
+          };
+          main.attachShadow({ mode: "open" }).append(panel);
+          homeAssistant.attachShadow({ mode: "open" }).append(main);
+          document.body.append(homeAssistant);
+          const report = window.uix_dashboard_inspect();
+          return {
+            sameSavedReport: report === window.uix_inspect.dashboard,
+            panel: report.panel,
+            strategy: report.strategy,
+            rawConfig: report.rawConfig,
+            generatedConfig: report.generatedConfig,
+          };
+        }"""
+    )
+
+    assert result == {
+        "sameSavedReport": True,
+        "panel": "home",
+        "strategy": {"type": "home", "home_panel": True, "hide_welcome_message": True},
+        "rawConfig": {"strategy": {"type": "home", "home_panel": True, "hide_welcome_message": True}},
+        "generatedConfig": {"views": [{"path": "overview", "strategy": {"type": "home-overview"}}]},
+    }
+
+
+def test_uix_dashboard_inspect_reports_missing_dashboard_without_rejecting(page: Page) -> None:
+    _load_console_debug(page)
+    result = page.evaluate(
+        """() => {
+          const messages = [];
+          const originalError = console.error;
+          console.error = (...args) => messages.push(args.join(" "));
+          try {
+            return { report: window.uix_dashboard_inspect(), messages };
+          } finally {
+            console.error = originalError;
+          }
+        }"""
+    )
+
+    assert result == {
+        "report": None,
+        "messages": ["UIX dashboard inspector: open a loaded Home panel or Lovelace dashboard before inspecting it."],
+    }
+
+
 def test_uix_forge_path_finds_forged_subtree_target(page: Page) -> None:
     _load_console_debug(page)
     messages = _run_helper(

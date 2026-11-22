@@ -1,0 +1,35 @@
+id: forge_strategy_favorites_exclusion
+description: "UIX Forge removes matching Home Overview Favorites Tiles through a query-only Entities Spark"
+view_path: forge-strategy-favorites-exclusion
+
+dashboard:
+  title: "Forge Favorites exclusion"
+  views:
+    - path: forge-strategy-favorites-exclusion
+      strategy:
+        type: custom:uix-forge
+        forge:
+          mold: strategy
+          sparks:
+            - type: entities
+              id: no_favs
+              filter:
+                include:
+                  - entity_id: light.bed_light
+            - type: config
+              patches:
+                - op: remove_matching
+                  all: cards
+                  where:
+                    entity:
+                      $in_entities: no_favs
+        element:
+          type: home-overview
+          favorite_entities:
+            - light.bed_light
+            - light.ceiling_lights
+
+assertions:
+  - type: snapshot
+    name: "81_forge_strategy_favorites_exclusion"
+    threshold: 0.02

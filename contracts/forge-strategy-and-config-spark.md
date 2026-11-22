@@ -45,7 +45,7 @@ For a strategy mold, Forge resolves its configuration exactly as it does for a s
 2. When layered configuration is selected, exclude disabled `element` paths before resolving Forge templates. `element_base` remains untouched.
 3. Resolve active Forge-owned templates, including normal nesting and pass-through handling. A valid JSON object or array template result is an opaque structural replacement.
 4. Compose `element_base` and the resolved active `element` values when layered configuration is selected.
-5. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping.
+5. Run Entities Sparks, in resolved Spark order, over the resolved `element` mapping and retain any named query-only entity-ID results.
 6. When that `element` selects a base strategy, invoke it through Home Assistant's normal resolver for View, Section, and Dashboard scopes; otherwise use the mapping directly as the scope config.
 7. Run Configuration Sparks, in resolved Spark order, over that config.
 8. Return the transformed config to Home Assistant, which performs its normal scope-specific strategy handling and rendering.
@@ -64,7 +64,7 @@ Because a strategy returns scope configuration rather than wrapping an element, 
 
 `forge.hidden`, `forge.grid_options`, `forge.show_error`, `forge.delayed_hass`, and `forge.uix` have no strategy-scope meaning and are invalid with `mold: strategy`. DOM Sparks are also invalid because the strategy mold does not create a Forge wrapper element. Only the pre-generation `type: entities` Spark and post-generation `type: config` Spark are valid for this mold.
 
-Forge-owned templates in strategy configuration receive the normal UIX `user`, `browser`, hash, and latest known panel context, as well as Forge context, nesting, pass-through, and structural-output rules. Strategy generation must not wait for the initial Lovelace view render solely to obtain panel context; before it is known, Forge supplies an empty panel mapping and the current hash. Templates are re-evaluated whenever Home Assistant performs its normal strategy regeneration for a state or registry update, alongside the delegated strategy's own regeneration conditions. A strategy is a static Home Assistant extension point, not a mounted Forge element: UIX must not patch Home Assistant to request an otherwise idle regeneration. Consequently, a time-only template such as `{{ now() }}` is refreshed by the next normal Home Assistant strategy update, but cannot independently wake a strategy. Element-base templates are not interpreted or subscribed to by Forge.
+Forge-owned templates in strategy configuration receive the normal UIX `user`, `browser`, hash, and latest known panel context, as well as Forge context, nesting, pass-through, and structural-output rules. Strategy generation must not wait for the initial Lovelace view render solely to obtain panel context; before it is known, Forge supplies an empty panel mapping and the current hash. A strategy regenerates only when its delegated strategy requests it or an Entities Spark result changes; replacing a top-level Home Assistant states or registry object for an unrelated update must not regenerate it. A strategy is a configuration factory, not the live-data owner for the cards it generates: generated native cards retain their own Home Assistant subscriptions and updates without requiring strategy regeneration. UIX must forward the delegated strategy's precise dependency decision rather than treating those card updates as a generation dependency, because regeneration can recreate the generated configuration and repeat its generation-time data requests. Forge templates use one-shot rendering and do not independently subscribe to their individual Home Assistant dependencies, so their values are re-evaluated only during that normal strategy regeneration. A strategy is a static Home Assistant extension point, not a mounted Forge element: UIX must not patch Home Assistant to request an otherwise idle regeneration. Consequently, a time-only template such as `{{ now() }}` is refreshed by the next normal strategy update, but cannot independently wake a strategy. Element-base templates are not interpreted or subscribed to by Forge.
 
 An error during Forge resolution, an Entities Spark, base-strategy generation, or a Configuration Spark fails the whole strategy generation. UIX must return no partially transformed result; Home Assistant displays its standard error result for the affected strategy scope. For an ordinary Forge mold, a transform error replaces the target configuration with a visible complete target appropriate to that mold rather than leaving a stale or partly transformed target mounted: a card-compatible mold receives a detailed Markdown card, while badges, rows, picture elements, and Sections receive valid native error, row, icon, or Section configurations. A Forge-owned transform error is visible regardless of `forge.show_error` until a later successful transform clears it.
 
@@ -89,7 +89,7 @@ Configuration Spark values use the usual Forge template handling. The operation 
 
 ### Paths and selection
 
-Direct `path` values and `select.in`/`select.path` values are RFC 6901 JSON Pointers. The empty string (`""`) is the root. `/` separates path segments; `~1` represents `/` and `~0` represents `~`. Array indices are zero-based. A direct path must resolve to an existing value unless the operation explicitly operates on the root mapping.
+Direct `path` values and `select.in`/`select.path` values are RFC 6901 JSON Pointers. The empty string (`""`) is the root. `/` separates path segments; `~1` represents `/` and `~0` represents `~`. Array indices are zero-based. A direct path must resolve to an existing value unless the operation explicitly operates on the root mapping. `all` is not a JSON Pointer: it is the literal mapping key of every array to target while walking the generated tree.
 
 `select` locates one member of an array without coupling an augmentation to its generated array index. It is intentionally a small, inspectable matcher rather than a query language:
 
@@ -107,70 +107,92 @@ select:
 
 `select.in` must resolve to an array. `match` is a recursive partial matcher: mapping keys listed in the matcher must exist and match; scalar values must be equal; ordinary arrays match exactly in order; and `$contains` is valid only as the sole key of a mapping matched against an array. Its value is one matcher or a list of matchers, each of which must match a distinct member of the candidate array. `select.path`, when present, is a JSON Pointer relative to the selected array member and resolves the final target.
 
+`remove_matching.where` uses the same partial matcher against each direct member of its target array. Within `where`, `{ $in_entities: name }` matches a scalar entity ID contained in the named result from an Entities Spark. The referenced Spark must have an `id` or `spark_id`; an unknown or ambiguous name is an error. Omit `type` when every direct entry with that matching entity should be removed; `type: "*"` is a literal match, not a wildcard. This is a membership check, not a tree traversal: it does not inspect nested values unless `where` explicitly descends through their mapping keys.
+
 Selection must resolve exactly one member. No match or more than one match is an error by default. Set `required: false` to make no match a no-op; an ambiguous match remains an error. This fail-safe default prevents a Home Assistant strategy change from silently modifying an unintended part of the generated dashboard.
 
-An `insert_before` or `insert_after` patch uses the selected member itself as its anchor and therefore cannot set `select.path`. Other operations may use either a direct `path` or a `select` target, but not both.
+An `insert_before` or `insert_after` patch uses the selected member itself as its anchor and therefore cannot set `select.path`. Other operations may use either a direct `path` or a `select` target, but not both. `remove_matching` and `wrap_card` also accept `all`, which is exclusive with `path` and `select`.
 
 ### Patch operations
 
-Every patch has `op` and exactly one target (`path` or `select`). `value` is required by the operations that add data. Patches mutate an internal copy only; neither the generated base config nor the authored Forge configuration is modified.
+Every patch has `op` and exactly one target (`path`, `select`, or `all`). `value` is required by the operations that add data. Patches mutate an internal copy only; neither the generated base config nor the authored Forge configuration is modified.
 
 | Operation | Target | Behaviour |
 | --- | --- | --- |
 | `replace` | existing value | Replaces the target completely with `value`. Replacing the root is allowed. |
 | `merge` | mapping | Recursively merges mapping `value` into the target. Nested mappings merge; scalars, arrays, and `null` replace. The root mapping is always a valid target. |
 | `remove` | existing non-root value | Removes a mapping key or array member. Removing the root is invalid. |
+| `remove_matching` | array | Removes every direct array member matching `where`. It removes zero or more members; a missing `where` or non-array target is an error. |
+| `wrap_strategy` | existing non-root strategy mapping | Replaces an emitted child strategy descriptor with a Forge strategy while preserving the descriptor as `element_base`. |
+| `wrap_card` | existing non-root card mapping, or every matched `all: cards` member | Replaces a generated card with a Card Forge while preserving the original card mapping as `element_base`. |
 | `append` | array | Adds `value` as the last array member. |
 | `prepend` | array | Adds `value` as the first array member. |
 | `insert_before` | selected or directly addressed array member | Inserts `value` immediately before the anchor member. |
 | `insert_after` | selected or directly addressed array member | Inserts `value` immediately after the anchor member. |
 
-`merge` is the configuration equivalent of editing an object. It never attempts a per-array-item merge. Use `select` with `replace`, `remove`, `append`, `prepend`, or an insertion operation when changing generated arrays.
+`merge` is the configuration equivalent of editing an object. It never attempts a per-array-item merge. Use `select` with `replace`, `remove`, `remove_matching`, `wrap_strategy`, `wrap_card`, `append`, `prepend`, or an insertion operation when changing generated arrays. `remove_matching` deliberately filters only the direct entries in a target array. With `all: cards` or `all: entities`, it walks mappings and arrays in the generated config and applies that same direct-entry filter to every array stored under the literal named key. It does not search unrelated entity-valued configuration, so actions and conditions are unaffected.
+
+`wrap_strategy` is for a nested `strategy` mapping emitted by a base Dashboard, View, or Section strategy. Its target must be a non-root mapping with a non-empty `type` other than `custom:uix-forge`. It replaces that mapping with `type: custom:uix-forge`, copies the matched mapping to `element_base`, and copies its mapping `value` around it. `value` must not set `type` or `element_base`; it may set `foundry`, `forge`, `element`, and `element_disabled_paths`. If it supplies `forge` directly, `forge.mold` must be `strategy`; a Foundry may supply the Forge configuration instead. UIX does not immediately generate the child: Home Assistant later resolves the replacement through its normal strategy lifecycle and scope.
+
+`wrap_card` is the equivalent operation for a generated card. A direct target must be a non-root member of a card array. With `all: cards`, UIX walks every generated `cards` array and wraps every direct member matching `where`; this permits deliberate multi-card changes such as matching Home Overview's main and sidebar Home Summary cards. `all` must be exactly `cards`, and it requires `where`. A no-match is an error unless `required: false` is set. The wrapper preserves the source mapping as `element_base`, sets `type: custom:uix-forge`, and accepts the same `foundry`, `forge`, `element`, and `element_disabled_paths` values as `wrap_strategy`; when supplied directly, `forge.mold` must be `card`. It cannot wrap an existing `custom:uix-forge` card.
 
 Target-type mismatches, invalid pointers, an invalid matcher, an ambiguous match, a missing required match, and any operation that would create an invalid tree are errors. UIX does not infer a missing parent, auto-create array entries, or silently ignore a failed patch.
 
-### Example: add a People map after Summaries
+### Example: add a People map after Home Dashboard Summaries
 
-This View strategy delegates to Home Assistant's `home-overview` strategy. It inserts a separate People map section immediately after the uniquely matched summary grid. The matcher makes the placement independent of the grid's numeric index.
+The `home` Dashboard strategy emits a `home-overview` child View strategy alongside area subviews. The outer `wrap_strategy` retains that source mapping as the child Forge strategy's `element_base`, then the nested Configuration Spark inserts a People map section after the uniquely matched summary grid. This preserves Home's generated subviews without duplicating their strategy configuration.
 
 ```yaml
-views:
-  - path: overview
-    strategy:
-      type: custom:uix-forge
-      forge:
-        mold: strategy
-        sparks:
-          - type: config
-            patches:
-              - op: insert_after
-                select:
-                  in: /sections
-                  match:
-                    type: grid
-                    cards:
-                      $contains:
-                        - type: home-summary
-                value:
-                  type: grid
-                  column_span: 4
-                  cards:
-                    - type: heading
-                      heading: People
-                      icon: mdi:account-multiple
-                      tap_action:
-                        action: navigate
-                        navigation_path: /map
-                    - type: map
-                      entities:
-                        - device_tracker.phone
-                        - device_tracker.tablet
-                      grid_options:
-                        columns: full
-      element:
-        type: home-overview
-        favorite_entities:
-          - light.bed_light
+title: My Home
+views: []
+strategy:
+  type: custom:uix-forge
+  forge:
+    mold: strategy
+    sparks:
+      - type: config
+        patches:
+          - op: wrap_strategy
+            select:
+              in: /views
+              match:
+                strategy:
+                  type: home-overview
+              path: /strategy
+            value:
+              forge:
+                mold: strategy
+                sparks:
+                  - type: config
+                    patches:
+                      - op: insert_after
+                        select:
+                          in: /sections
+                          match:
+                            type: grid
+                            cards:
+                              $contains:
+                                - type: home-summary
+                        value:
+                          type: grid
+                          column_span: 4
+                          cards:
+                            - type: heading
+                              heading: People
+                              icon: mdi:account-multiple
+                              tap_action:
+                                action: navigate
+                                navigation_path: /map
+                            - type: map
+                              entities:
+                                - device_tracker.phone
+                                - device_tracker.tablet
+                              grid_options:
+                                columns: full
+  element:
+    type: home
+    favorite_entities:
+      - light.bed_light
 ```
 
 The exact shape emitted by Home Assistant strategies is not a UIX compatibility promise. Users should select distinctive stable config fields, keep each match unique, and use `required: false` only where an omitted augmentation is genuinely acceptable. A strategy output change that invalidates an augmentation must surface as a visible strategy error rather than produce a best-effort layout.
@@ -185,7 +207,7 @@ overview.paths("home-summary");
 overview.test([{ op: "append", path: "/sections/0/cards", value: { type: "tile", entity: "light.kitchen" } }]);
 ```
 
-The inspector and its `test()` method must use the same direct/base-strategy resolution and configuration patch implementation as the runtime. A successful rehearsal returns the transformed config but does not persist it, alter the open dashboard, or create a rendered target. A failing rehearsal reports the same invalid pointer, target type, selection cardinality, and patch validation errors that runtime generation would report.
+The inspector and its `test()` method must use the same direct/base-strategy resolution and configuration patch implementation as the runtime. For a `$in_entities` patch, pass the inspected raw IDs as the optional second `test()` argument, for example `overview.test(patches, { no_favs: report.ids })`. A successful rehearsal returns the transformed config but does not persist it, alter the open dashboard, or create a rendered target. A failing rehearsal reports the same invalid pointer, target type, selection cardinality, and patch validation errors that runtime generation would report.
 
 ## Foundries and compatibility
 

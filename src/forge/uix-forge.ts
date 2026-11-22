@@ -23,7 +23,7 @@ import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
 import { apply_uix, buildMacros, buildBillets, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
-import { UixForgeSparkController } from "./sparks/uix-spark-controller";
+import { HomeSummaryContextProjection, UixForgeSparkController } from "./sparks/uix-spark-controller";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -440,6 +440,8 @@ export class UixForge extends LitElement {
   private _cancelTemplateRefresh?: () => void;
   private _templateGeneration = 0;
   private _transformError?: string;
+  private _homeSummaryContext?: HomeSummaryContextProjection;
+  private _homeSummaryContextOwner?: unknown;
 
   constructor() {
       super();
@@ -459,6 +461,44 @@ export class UixForge extends LitElement {
 
   public static async getConfigElement(): Promise<HTMLElement> {
     return document.createElement("uix-forge-editor");
+  }
+
+  /** Give a wrapped Home Summary card a local filtered source universe. */
+  public setHomeSummaryExclusions(owner: unknown, ids: readonly string[]): void {
+    this._homeSummaryContextOwner = owner;
+    this._homeSummaryContext ??= new HomeSummaryContextProjection(this);
+    this._homeSummaryContext.setExcluded(ids);
+    this._homeSummaryContext.refresh(this.hass);
+  }
+
+  /** Keep the local projection live without replacing its native card. */
+  public refreshHomeSummaryContext(owner: unknown): void {
+    if (this._homeSummaryContextOwner !== owner) return;
+    this._homeSummaryContext?.refresh(this.hass);
+  }
+
+  /** Stop a disconnected or replaced Home Summary Spark from owning the projection. */
+  public clearHomeSummaryExclusions(owner: unknown): void {
+    if (this._homeSummaryContextOwner !== owner) return;
+    this._homeSummaryContextOwner = undefined;
+    this._homeSummaryContext?.clear();
+  }
+
+  /** Whether an element template observes a query-only Entities Spark result. */
+  public hasQueryOnlyEntityTemplateReference(): boolean {
+    const containsEntityResult = (value: any): boolean => {
+      if (typeof value === "string") return value.includes("uixForge.entities");
+      if (Array.isArray(value)) return value.some(containsEntityResult);
+      return value !== null && typeof value === "object" && Object.values(value).some(containsEntityResult);
+    };
+    try {
+      const resolved = this._resolveFoundry({ ...this.config });
+      // An unresolved Foundry may still contain a consumer. Prefer a normal
+      // template refresh over leaving that consumer stale when it resolves.
+      return resolved === null || containsEntityResult(resolved.element);
+    } catch (_error) {
+      return true;
+    }
   }
 
   private _applyBlankElementType(elementConfig: Record<string, any>, forgeConfig: Record<string, any> = this.forgeConfig): void {
@@ -828,18 +868,12 @@ export class UixForge extends LitElement {
     const { refreshOperation, cancelled } = this.beginTemplateRefresh();
     const templateGeneration = this._templateGeneration;
     const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-    const templatesBound = Promise.all([
-      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-      this._forgeConfig.configIsReady(),
-      elementConfigBuilder.configIsReady()
-    ]);
+    const templatesBound = this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration);
     void Promise.race([
       templatesBound.then(() => true),
       cancelled.then(() => false),
     ]).then((templatesReady) => {
       if (!templatesReady || !this.isTemplateGenerationCurrent(templateGeneration)) return;
-      this._sparkController.setConfig(this.forgeConfig.sparks);
       if (!this.forgedElement) {
         this.forgeElement();
       }
@@ -1007,14 +1041,8 @@ export class UixForge extends LitElement {
       }
       const templateGeneration = this._templateGeneration;
       const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-      Promise.all([
-        this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-        this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-        this._forgeConfig.configIsReady(),
-        elementConfigBuilder.configIsReady()
-      ]).then(() => {
+      this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration).then(() => {
         if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
-        this._sparkController.setConfig(this.forgeConfig.sparks);
         this.templatesReady = true;
         this.refreshForge([]);
       });
@@ -1103,7 +1131,8 @@ export class UixForge extends LitElement {
     current: any = undefined,
     path: string[] = [],
     parseStructuralResults = false,
-    templateGeneration = this._templateGeneration
+    templateGeneration = this._templateGeneration,
+    includeQueryOnlyEntities = true,
   ) {
     const hs = await hass();
     if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
@@ -1117,7 +1146,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration);
+        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration, includeQueryOnlyEntities);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -1165,7 +1194,7 @@ export class UixForge extends LitElement {
         await bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
-          { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
+          { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(includeQueryOnlyEntities), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
         if (!this.isTemplateGenerationCurrent(templateGeneration)) {
@@ -1177,6 +1206,20 @@ export class UixForge extends LitElement {
         base.nested = { keys: currentPath, value: translate(hs, current[k]) };
       }
     }
+  }
+
+  /** Resolve Spark source templates before binding element templates that consume query results. */
+  private async bindForgeAndElementTemplates(elementConfigBuilder: any, templateGeneration: number) {
+    await Promise.all([
+      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration, false),
+      this._forgeConfig.configIsReady(),
+    ]);
+    if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    this._sparkController.setConfig(this.forgeConfig.sparks);
+    await Promise.all([
+      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
+      elementConfigBuilder.configIsReady(),
+    ]);
   }
 
   private invalidateTemplates() {
@@ -1289,12 +1332,7 @@ export class UixForge extends LitElement {
       this.forgedElementConfig = elementConfig;
     }
     const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-    const templatesBound = Promise.all([
-      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-      this._forgeConfig.configIsReady(),
-      elementConfigBuilder.configIsReady()
-    ]);
+    const templatesBound = this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration);
     void Promise.race([
       templatesBound.then(() => true),
       cancelled.then(() => false),

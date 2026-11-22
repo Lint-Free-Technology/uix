@@ -1,7 +1,7 @@
 """UIX-specific extensions for the ha-tests scenario runner.
 
 Importing this module registers the UIX interaction types
-(``add_foundry``, ``delete_foundry``, ``add_foundry_file``,
+(``add_foundry``, ``delete_foundry``, ``assert_path``, ``playwright_click``, ``entity_registry_labels``, ``add_foundry_file``,
 ``remove_foundry_file``, ``reload_foundry_files``, ``add_broker_file``,
 ``remove_broker_file``, ``reload_broker_files``, ``set_theme_file``) with
 :mod:`scenario_runner` so they can be used in scenario YAML files.
@@ -33,6 +33,12 @@ delete_foundry
 
         - type: delete_foundry
           name: my-foundry
+
+assert_path
+    Assert the current browser path after an interaction that changes routes.
+
+playwright_click
+    Click an open-shadow-DOM selector using Playwright actionability checks. Set `occurrence` when a responsive layout renders multiple matching targets.
 
 add_foundry_file
     Register a YAML foundry file with UIX via ``uix/add_foundry_file``.
@@ -81,6 +87,18 @@ reload_broker_files
     .. code-block:: yaml
 
         - type: reload_broker_files
+
+entity_registry_labels
+    Create any named labels that are missing, then replace one entity's labels.
+
+    .. code-block:: yaml
+
+        - type: entity_registry_labels
+          entity_id: binary_sensor.test_binary_sensor
+          labels:
+            - excluded_from_maintenance
+          label_names:
+            excluded_from_maintenance: Excluded from maintenance
 
 set_theme_file
     Write Home Assistant ``themes.yaml`` for scenario setup/interactions.
@@ -155,6 +173,73 @@ def _delete_foundry(page: "Page | None", interaction: dict[str, Any], ha: Any = 
     )
     if not result.get("success"):
         raise RuntimeError(f"uix/delete_foundry failed for {name!r}: {result}")
+
+
+def _assert_path(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Assert the current browser path after a routed interaction."""
+    if page is None:
+        raise ValueError("assert_path requires the browser page")
+    expected = interaction["path"]
+    actual = "/" + page.url.split("/", 3)[3] if len(page.url.split("/", 3)) > 3 else "/"
+    if actual != expected:
+        raise AssertionError(f"Expected browser path {expected!r}, got {actual!r}")
+
+
+def _playwright_click(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
+    """Click an open-shadow-DOM selector with Playwright's actionability checks."""
+    if page is None:
+        raise ValueError("playwright_click requires the browser page")
+    page.locator(interaction["selector"]).nth(interaction.get("occurrence", 0)).click(no_wait_after=True, timeout=interaction.get("timeout_ms", 5000))
+    page.wait_for_timeout(interaction.get("settle_ms", 500))
+
+
+def _set_entity_registry_labels(
+    page: "Page | None", interaction: dict[str, Any], ha: Any = None
+) -> None:
+    """Create requested labels and replace one entity registry entry's labels."""
+    if ha is None:
+        raise ValueError(
+            "entity_registry_labels interaction requires the ha container — "
+            "pass ha= to run_interactions()"
+        )
+    entity_id = interaction["entity_id"]
+    labels = interaction.get("labels", [])
+    if not isinstance(labels, list) or not all(
+        isinstance(label, str) and label for label in labels
+    ):
+        raise ValueError(
+            "entity_registry_labels requires labels as a list of non-empty label IDs"
+        )
+    label_names = interaction.get("label_names", {})
+    listed = ha._ws_call({"id": 1, "type": "config/label_registry/list"})
+    if not listed.get("success"):
+        raise RuntimeError(f"Could not list labels: {listed}")
+    existing = {label["label_id"] for label in listed.get("result", [])}
+    for label_id in labels:
+        if label_id in existing:
+            continue
+        name = label_names.get(label_id, label_id.replace("_", " ").capitalize())
+        created = ha._ws_call(
+            {"id": 2, "type": "config/label_registry/create", "name": name}
+        )
+        if not created.get("success"):
+            raise RuntimeError(f"Could not create label {label_id!r}: {created}")
+        actual_id = created.get("result", {}).get("label_id")
+        if actual_id != label_id:
+            raise RuntimeError(
+                f"Label {name!r} received ID {actual_id!r}, expected {label_id!r}"
+            )
+        existing.add(label_id)
+    updated = ha._ws_call(
+        {
+            "id": 3,
+            "type": "config/entity_registry/update",
+            "entity_id": entity_id,
+            "labels": labels,
+        }
+    )
+    if not updated.get("success"):
+        raise RuntimeError(f"Could not update labels for {entity_id!r}: {updated}")
 
 
 def _add_foundry_file(page: "Page | None", interaction: dict[str, Any], ha: Any = None) -> None:
@@ -541,6 +626,9 @@ def _shadow_dom_host_property_text_equals(page: "Page | None", assertion: dict[s
 
 register_interaction_type("add_foundry", _add_foundry)
 register_interaction_type("delete_foundry", _delete_foundry)
+register_interaction_type("assert_path", _assert_path)
+register_interaction_type("playwright_click", _playwright_click)
+register_interaction_type("entity_registry_labels", _set_entity_registry_labels)
 register_interaction_type("add_foundry_file", _add_foundry_file)
 register_interaction_type("remove_foundry_file", _remove_foundry_file)
 register_interaction_type("reload_foundry_files", _reload_foundry_files)

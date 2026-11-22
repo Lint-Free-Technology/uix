@@ -1,11 +1,15 @@
 type JsonMapping = Record<string, any>;
 
 export type UixForgeConfigPatch = {
-  op: "replace" | "merge" | "remove" | "append" | "prepend" | "insert_before" | "insert_after";
+  op: "replace" | "merge" | "remove" | "remove_matching" | "append" | "prepend" | "insert_before" | "insert_after" | "wrap_strategy";
   path?: string;
   select?: { in: string; match: any; path?: string; required?: boolean };
+  all?: string;
+  where?: any;
   value?: any;
 };
+
+export type UixForgeEntitySets = Record<string, string[] | undefined>;
 
 function isMapping(value: any): value is JsonMapping {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -75,7 +79,7 @@ function resolveParent(root: any, pointer: string, name: string): ParentTarget {
   throw new Error(`uix-forge: config Spark ${name} points to a missing value`);
 }
 
-function matches(candidate: any, matcher: any): boolean {
+function matches(candidate: any, matcher: any, entitySets?: UixForgeEntitySets): boolean {
   if (isMapping(matcher)) {
     const keys = Object.keys(matcher);
     if (keys.length === 1 && keys[0] === "$contains") {
@@ -87,7 +91,7 @@ function matches(candidate: any, matcher: any): boolean {
       const assigned = new Map<number, number>();
       const assign = (requestedIndex: number, visited: Set<number>): boolean => {
         for (let candidateIndex = 0; candidateIndex < candidate.length; candidateIndex++) {
-          if (visited.has(candidateIndex) || !matches(candidate[candidateIndex], requested[requestedIndex])) continue;
+          if (visited.has(candidateIndex) || !matches(candidate[candidateIndex], requested[requestedIndex], entitySets)) continue;
           visited.add(candidateIndex);
           const previous = assigned.get(candidateIndex);
           if (previous === undefined || assign(previous, visited)) {
@@ -99,10 +103,43 @@ function matches(candidate: any, matcher: any): boolean {
       };
       return requested.every((_, index) => assign(index, new Set()));
     }
-    return isMapping(candidate) && keys.every((key) => Object.prototype.hasOwnProperty.call(candidate, key) && matches(candidate[key], matcher[key]));
+    if (keys.length === 1 && keys[0] === "$in_entities") {
+      const name = matcher.$in_entities;
+      if (typeof name !== "string" || !name) throw new Error("uix-forge: config Spark $in_entities must name an Entities Spark");
+      const ids = entitySet(entitySets, name);
+      return typeof candidate === "string" && ids.includes(candidate);
+    }
+    return isMapping(candidate) && keys.every((key) => Object.prototype.hasOwnProperty.call(candidate, key) && matches(candidate[key], matcher[key], entitySets));
   }
-  if (Array.isArray(matcher)) return Array.isArray(candidate) && candidate.length === matcher.length && matcher.every((item, index) => matches(candidate[index], item));
+  if (Array.isArray(matcher)) return Array.isArray(candidate) && candidate.length === matcher.length && matcher.every((item, index) => matches(candidate[index], item, entitySets));
   return Object.is(candidate, matcher);
+}
+
+function entitySet(entitySets: UixForgeEntitySets | undefined, name: string): string[] {
+  if (!entitySets || !Object.prototype.hasOwnProperty.call(entitySets, name) || entitySets[name] === undefined) {
+    throw new Error(`uix-forge: config Spark references unknown or ambiguous Entities Spark '${name}'`);
+  }
+  return entitySets[name];
+}
+
+function validateMatcher(matcher: any, entitySets?: UixForgeEntitySets): void {
+  if (isMapping(matcher)) {
+    const keys = Object.keys(matcher);
+    if (keys.length === 1 && keys[0] === "$in_entities") {
+      const name = matcher.$in_entities;
+      if (typeof name !== "string" || !name) throw new Error("uix-forge: config Spark $in_entities must name an Entities Spark");
+      entitySet(entitySets, name);
+      return;
+    }
+    if (keys.length === 1 && keys[0] === "$contains") {
+      const requested = Array.isArray(matcher.$contains) ? matcher.$contains : [matcher.$contains];
+      requested.forEach((item) => validateMatcher(item, entitySets));
+      return;
+    }
+    Object.values(matcher).forEach((value) => validateMatcher(value, entitySets));
+    return;
+  }
+  if (Array.isArray(matcher)) matcher.forEach((item) => validateMatcher(item, entitySets));
 }
 
 type PatchTarget = {
@@ -114,7 +151,7 @@ type PatchTarget = {
   selectedIndex?: number;
 };
 
-function resolveTarget(root: any, patch: UixForgeConfigPatch): PatchTarget | null {
+function resolveTarget(root: any, patch: UixForgeConfigPatch, entitySets?: UixForgeEntitySets): PatchTarget | null {
   if ((patch.path === undefined) === (patch.select === undefined)) throw new Error("uix-forge: config Spark patch requires exactly one of path or select");
   if (patch.path !== undefined) {
     const target: PatchTarget = { value: resolvePointer(root, patch.path, patch.op), path: patch.path };
@@ -124,7 +161,7 @@ function resolveTarget(root: any, patch: UixForgeConfigPatch): PatchTarget | nul
   const select = patch.select!;
   const source = resolvePointer(root, select.in, patch.op);
   if (!Array.isArray(source)) throw new Error("uix-forge: config Spark select.in must resolve to an array");
-  const found = source.map((candidate, index) => ({ candidate, index })).filter(({ candidate }) => matches(candidate, select.match));
+  const found = source.map((candidate, index) => ({ candidate, index })).filter(({ candidate }) => matches(candidate, select.match, entitySets));
   if (found.length === 0 && select.required === false) return null;
   if (found.length !== 1) throw new Error(`uix-forge: config Spark select matched ${found.length} entries; exactly one is required`);
   if ((patch.op === "insert_before" || patch.op === "insert_after") && select.path !== undefined) throw new Error(`uix-forge: config Spark ${patch.op} cannot use select.path`);
@@ -153,15 +190,110 @@ function merge(target: JsonMapping, value: JsonMapping): void {
   }
 }
 
-export function applyConfigPatches(config: any, patches: UixForgeConfigPatch[] = []): any {
+function removeMatchingFromAll(value: any, key: string, where: any, entitySets?: UixForgeEntitySets): void {
+  if (Array.isArray(value)) {
+    value.forEach((child) => removeMatchingFromAll(child, key, where, entitySets));
+    return;
+  }
+  if (!isMapping(value)) return;
+  for (const [childKey, child] of Object.entries(value)) {
+    if (childKey === key && Array.isArray(child)) {
+      const retained = child.filter((candidate) => !matches(candidate, where, entitySets));
+      child.splice(0, child.length, ...retained);
+    }
+    // Visit the retained list after filtering so a removed card's nested
+    // configuration is not separately considered a target.
+    removeMatchingFromAll(value[childKey], key, where, entitySets);
+  }
+}
+
+function wrapForgeElement(source: any, value: any, operation: "wrap_strategy" | "wrap_card"): JsonMapping {
+  const target = operation === "wrap_strategy" ? "strategy mapping" : "card mapping";
+  if (!isMapping(source) || typeof source.type !== "string" || !source.type) {
+    throw new Error(`uix-forge: config Spark ${operation} requires a ${target} with a non-empty type`);
+  }
+  if (source.type === "custom:uix-forge") {
+    throw new Error(`uix-forge: config Spark ${operation} cannot wrap custom:uix-forge`);
+  }
+  if (!isMapping(value)) throw new Error(`uix-forge: config Spark ${operation} value must be a mapping`);
+  const allowed = new Set(["foundry", "forge", "element", "element_disabled_paths"]);
+  if (Object.keys(value).some((key) => !allowed.has(key))) throw new Error(`uix-forge: config Spark ${operation} value has an unsupported key`);
+  const mold = operation === "wrap_strategy" ? "strategy" : "card";
+  if (value.forge !== undefined && (!isMapping(value.forge) || value.forge.mold !== mold)) {
+    throw new Error(`uix-forge: config Spark ${operation} forge.mold must be ${mold}`);
+  }
+  const wrapped = cloneConfig(value);
+  setConfigValue(wrapped, "type", "custom:uix-forge");
+  setConfigValue(wrapped, "element_base", cloneConfig(source));
+  return wrapped;
+}
+
+/** Wrap every matching direct member of every array stored at `key`. */
+function wrapCardsInAll(value: any, key: string, where: any, wrapper: any, entitySets?: UixForgeEntitySets): number {
+  if (Array.isArray(value)) return value.reduce((count, child) => count + wrapCardsInAll(child, key, where, wrapper, entitySets), 0);
+  if (!isMapping(value)) return 0;
+  let count = 0;
+  for (const [childKey, child] of Object.entries(value)) {
+    if (childKey === key && Array.isArray(child)) {
+      for (let index = 0; index < child.length; index++) {
+        // Descend before wrapping. The preserved element_base is source data,
+        // not another generated card tree for this operation to revisit.
+        count += wrapCardsInAll(child[index], key, where, wrapper, entitySets);
+        if (matches(child[index], where, entitySets)) {
+          child[index] = wrapForgeElement(child[index], wrapper, "wrap_card");
+          count++;
+        }
+      }
+      continue;
+    }
+    count += wrapCardsInAll(child, key, where, wrapper, entitySets);
+  }
+  return count;
+}
+
+export function applyConfigPatches(config: any, patches: UixForgeConfigPatch[] = [], entitySets?: UixForgeEntitySets): any {
   let result = cloneConfig(config);
   if (!Array.isArray(patches)) throw new Error("uix-forge: config Spark patches must be a list");
   for (const patch of patches) {
     if (!isMapping(patch) || typeof patch.op !== "string") throw new Error("uix-forge: config Spark patch must be a mapping with op");
-    const target = resolveTarget(result, patch);
+    const targetCount = Number(patch.path !== undefined) + Number(patch.select !== undefined) + Number(patch.all !== undefined);
+    if (targetCount !== 1) throw new Error("uix-forge: config Spark patch requires exactly one of path, select, or all");
+    if (patch.all !== undefined) {
+      if (typeof patch.all !== "string" || !patch.all) throw new Error("uix-forge: config Spark all must name a non-empty mapping key");
+      if (patch.op === "remove_matching") {
+        if (!Object.prototype.hasOwnProperty.call(patch, "where")) throw new Error("uix-forge: config Spark remove_matching requires where");
+        validateMatcher(patch.where, entitySets);
+        removeMatchingFromAll(result, patch.all, patch.where, entitySets);
+      } else if (patch.op === "wrap_card") {
+        if (patch.all !== "cards") throw new Error("uix-forge: config Spark wrap_card all target must be cards");
+        if (!Object.prototype.hasOwnProperty.call(patch, "where")) throw new Error("uix-forge: config Spark wrap_card requires where");
+        if (!Object.prototype.hasOwnProperty.call(patch, "value")) throw new Error("uix-forge: config Spark wrap_card requires value");
+        validateMatcher(patch.where, entitySets);
+        const count = wrapCardsInAll(result, patch.all, patch.where, patch.value, entitySets);
+        if (count === 0 && patch.required !== false) throw new Error("uix-forge: config Spark wrap_card matched no cards");
+      } else {
+        throw new Error("uix-forge: config Spark all is only valid with remove_matching or wrap_card");
+      }
+      continue;
+    }
+    const target = resolveTarget(result, patch, entitySets);
     if (target === null) continue;
-    if (patch.op !== "remove" && !Object.prototype.hasOwnProperty.call(patch, "value")) throw new Error(`uix-forge: config Spark ${patch.op} requires value`);
-    if (patch.op === "replace") {
+    if (patch.op !== "remove" && patch.op !== "remove_matching" && !Object.prototype.hasOwnProperty.call(patch, "value")) throw new Error(`uix-forge: config Spark ${patch.op} requires value`);
+    if (patch.op === "wrap_strategy") {
+      if (patch.path === "" || !target.parent || target.key !== "strategy") {
+        throw new Error("uix-forge: config Spark wrap_strategy requires a non-root strategy mapping target");
+      }
+      const wrapped = wrapForgeElement(target.value, patch.value, "wrap_strategy");
+      if (Array.isArray(target.parent)) target.parent[target.key as number] = wrapped;
+      else setConfigValue(target.parent, target.key as string, wrapped);
+    } else if (patch.op === "wrap_card") {
+      if (patch.path === "" || !Array.isArray(target.parent) || target.key === undefined) {
+        throw new Error("uix-forge: config Spark wrap_card requires a non-root card array member target");
+      }
+      const wrapped = wrapForgeElement(target.value, patch.value, "wrap_card");
+      if (Array.isArray(target.parent)) target.parent[target.key as number] = wrapped;
+      else setConfigValue(target.parent, target.key as string, wrapped);
+    } else if (patch.op === "replace") {
       if (patch.path === "") result = cloneConfig(patch.value);
       else if (target.parent && target.key !== undefined) {
         if (Array.isArray(target.parent)) target.parent[target.key as number] = cloneConfig(patch.value);
@@ -177,6 +309,12 @@ export function applyConfigPatches(config: any, patches: UixForgeConfigPatch[] =
         if (Array.isArray(target.parent)) target.parent.splice(target.key as number, 1);
         else delete target.parent[target.key as string];
       } else throw new Error("uix-forge: config Spark remove requires a non-root target");
+    } else if (patch.op === "remove_matching") {
+      if (!Object.prototype.hasOwnProperty.call(patch, "where")) throw new Error("uix-forge: config Spark remove_matching requires where");
+      if (!Array.isArray(target.value)) throw new Error("uix-forge: config Spark remove_matching requires an array target");
+      validateMatcher(patch.where, entitySets);
+      const retained = target.value.filter((candidate) => !matches(candidate, patch.where, entitySets));
+      target.value.splice(0, target.value.length, ...retained);
     } else if (patch.op === "append" || patch.op === "prepend") {
       if (!Array.isArray(target.value)) throw new Error(`uix-forge: config Spark ${patch.op} requires an array target`);
       if (patch.op === "append") target.value.push(cloneConfig(patch.value));
@@ -193,6 +331,6 @@ export function applyConfigPatches(config: any, patches: UixForgeConfigPatch[] =
   return result;
 }
 
-export function applyConfigSparks(config: any, sparks: Record<string, any>[] = []): any {
-  return sparks.filter((spark) => spark?.type === "config").reduce((result, spark) => applyConfigPatches(result, spark.patches), cloneConfig(config));
+export function applyConfigSparks(config: any, sparks: Record<string, any>[] = [], entitySets?: UixForgeEntitySets): any {
+  return sparks.filter((spark) => spark?.type === "config").reduce((result, spark) => applyConfigPatches(result, spark.patches, entitySets), cloneConfig(config));
 }

@@ -1,0 +1,109 @@
+id: doc_forge_home_maintenance_exclusion
+description: "Doc image: a Home dashboard replaces its Maintenance destination with a filtered Forge strategy (config.md)"
+view_path: overview
+
+setup:
+  - type: add_foundry
+    name: maintenance-exclusions
+    config:
+      forge:
+        sparks:
+          - type: entities
+            id: excluded_from_maintenance
+            filter:
+              include:
+                - label: excluded_from_maintenance
+  - type: entity_registry_labels
+    entity_id: sensor.carbon_dioxide_battery
+    labels:
+      - excluded_from_maintenance
+    label_names:
+      excluded_from_maintenance: Excluded from maintenance
+
+dashboard:
+  title: "Filtered Home Maintenance"
+  views: []
+  strategy:
+    type: custom:uix-forge
+    forge:
+      mold: strategy
+      sparks:
+        - type: config
+          patches:
+            - op: wrap_strategy
+              select:
+                in: /views
+                match:
+                  strategy:
+                    type: home-overview
+                path: /strategy
+              value:
+                forge:
+                  mold: strategy
+                  sparks:
+                    - type: config
+                      patches:
+                        - op: wrap_card
+                          all: cards
+                          where:
+                            type: home-summary
+                            summary: maintenance
+                          value:
+                            foundry: maintenance-exclusions
+                            forge:
+                              mold: card
+                              sparks:
+                                - type: home-summary
+                                  exclude:
+                                    - $in_entities: excluded_from_maintenance
+                            element:
+                              tap_action:
+                                action: navigate
+                                navigation_path: /ha-tests/maintenance?historyBack=1
+            - op: append
+              path: /views
+              value:
+                title: Maintenance
+                path: maintenance
+                subview: true
+                strategy:
+                  type: custom:uix-forge
+                  foundry: maintenance-exclusions
+                  forge:
+                    mold: strategy
+                    sparks:
+                      - type: config
+                        patches:
+                          - op: remove_matching
+                            all: cards
+                            where:
+                              entity:
+                                $in_entities: excluded_from_maintenance
+                  element:
+                    type: maintenance
+    element:
+      type: home
+
+teardown:
+  - type: entity_registry_labels
+    entity_id: sensor.carbon_dioxide_battery
+    labels: []
+  - type: delete_foundry
+    name: maintenance-exclusions
+
+doc_image:
+  - output: docs/source/assets/page-assets/forge/config-spark-maintenance-shortcut.png
+    root: hui-view
+    padding: 16
+    threshold: 1 # Home Overview includes live, state-dependent content.
+  - interactions:
+      - type: playwright_click
+        selector: uix-forge hui-home-summary-card ha-tile-container
+        occurrence: 1
+        settle_ms: 1500
+      - type: assert_path
+        path: /ha-tests/maintenance?historyBack=1
+    output: docs/source/assets/page-assets/forge/config-spark-maintenance-exclusion.png
+    root: hui-view
+    padding: 16
+    threshold: 1 # Maintenance output includes live, state-dependent content.
