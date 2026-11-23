@@ -350,6 +350,20 @@ tap_action:
 
 `locked_action` accepts any ordinary Home Assistant action object, including `perform-action`, `toggle`, `more-info`, `navigate`, and `fire-dom-event`.
 
+### Action data substitutions
+
+Lock actions can substitute runtime values in their `data:`. This is not template rendering: use an exact `$uix.*` token as a data value, not `{{ }}`. UIX resolves tokens recursively in maps and lists, preserves their type, and leaves ordinary strings unchanged. It never substitutes action names, targets, or data keys.
+
+| Token | Value |
+| --- | --- |
+| `$uix.user` or `$uix.user.name` | Current Home Assistant user's name, or `null` if unavailable. |
+| `$uix.user.id` | Current Home Assistant user's stable ID, or `null` if unavailable. |
+| `$uix.user.is_admin` | Whether the current user is an administrator. |
+| `$uix.retry` or `$uix.retry.count` | One-based wrong-code attempt count. This is `0` for a successful `locked_action`. |
+| `$uix.browser` or `$uix.browser_id` | Browser Mod browser ID, `CAST` for a Cast session, or `null` when neither is available. |
+
+The substitutions are available to `retry_action`, `failed_action`, `locked_action`, and a Forge lock spark's `unlocked_action`. This makes a nested `perform-action` suitable for passing useful script fields without adding another UIX template syntax.
+
 ### Lock matching
 
 `locks` is an ordered list. The first matching active entry determines the challenge. If no active entry matches, the first matching `active: false` entry allows the action without a challenge.
@@ -410,7 +424,35 @@ tap_action:
           admins: true
           max_retries: 3
           max_retries_delay: 5m
+          retry_action:
+            action: perform-action
+            perform_action: script.notify_uix_lock_attempt
+            data:
+              user: "$uix.user"
+              retry: "$uix.retry"
+              browser_id: "$uix.browser_id"
       locked_action:
         action: perform-action
         perform_action: homeassistant.restart
+```
+
+Define the script in Home Assistant and replace `mobile_app_your_phone` with your mobile app's notify action. The `{{ }}` expressions below are ordinary Home Assistant script templates, not UIX substitutions.
+
+```yaml
+script:
+  notify_uix_lock_attempt:
+    alias: Notify UIX Lock Attempt
+    fields:
+      user:
+        required: true
+      retry:
+        required: true
+      browser_id:
+        required: false
+    sequence:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: UIX lock attempt
+          message: >-
+            {{ user }} entered an incorrect code (attempt {{ retry }}) from {{ browser_id or "an unknown browser" }}.
 ```

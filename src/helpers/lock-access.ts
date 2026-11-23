@@ -1,4 +1,5 @@
 import { parseDuration } from "./common/parse-duration";
+import { BrowserID } from "./browser_id";
 
 export interface LockEntry {
   active?: boolean;
@@ -34,6 +35,7 @@ export interface CodeDialogConfig {
 }
 
 export interface LockUser {
+  id?: string;
   name?: string;
   is_admin?: boolean;
 }
@@ -55,18 +57,66 @@ export interface LockRetryState {
   retryUntil: number;
 }
 
+interface LockActionDataContext {
+  user: LockUser;
+  retryCount: number;
+  browserId: string | null;
+}
+
 export const createLockRetryState = (): LockRetryState => ({
   retryCount: 0,
   retryUntil: 0,
 });
 
+/**
+ * Resolve explicit UIX values in an action's `data`, without treating data as
+ * a template. Exact-token matching preserves the type of retry values.
+ */
+export const withLockActionData = (
+  action: Record<string, any>,
+  context: LockActionDataContext,
+): Record<string, any> => {
+  const values: Record<string, unknown> = {
+    "$uix.user": context.user.name ?? null,
+    "$uix.user.id": context.user.id ?? null,
+    "$uix.user.name": context.user.name ?? null,
+    "$uix.user.is_admin": context.user.is_admin === true,
+    "$uix.retry": context.retryCount,
+    "$uix.retry.count": context.retryCount,
+    "$uix.browser": context.browserId,
+    "$uix.browser_id": context.browserId,
+  };
+  const substitute = (value: unknown): unknown => {
+    if (typeof value === "string" && Object.prototype.hasOwnProperty.call(values, value)) return values[value];
+    if (Array.isArray(value)) return value.map(substitute);
+    if (value && typeof value === "object") {
+      const substituted: Record<string, unknown> = {};
+      for (const [key, item] of Object.entries(value)) substituted[key] = substitute(item);
+      return substituted;
+    }
+    return value;
+  };
+
+  if (!("data" in action)) return { ...action };
+  return { ...action, data: substitute(action.data) };
+};
+
+export const createLockActionDataContext = (
+  user?: LockUser,
+  retryCount = 0,
+): LockActionDataContext => ({
+  user: user ?? {},
+  retryCount,
+  browserId: BrowserID() || null,
+});
+
 /** Dispatch a configured lock action without letting it interrupt the lock flow. */
-const dispatchLockAction = (anchor: HTMLElement, action: unknown): void => {
+const dispatchLockAction = (anchor: HTMLElement, action: unknown, context: LockActionDataContext): void => {
   if (!action || typeof action !== "object" || Array.isArray(action) || typeof (action as Record<string, unknown>).action !== "string") return;
   anchor.dispatchEvent(new CustomEvent("hass-action", {
     bubbles: true,
     composed: true,
-    detail: { config: { tap_action: { ...action } }, action: "tap" },
+    detail: { config: { tap_action: withLockActionData(action as Record<string, any>, context) }, action: "tap" },
   }));
 };
 
@@ -161,8 +211,9 @@ export const requestLockAccess = async ({
       } else if (lock.retry_delay) {
         retryState.retryUntil = Date.now() + (parseDuration(lock.retry_delay) ?? 0);
       }
-      dispatchLockAction(anchor, lock.retry_action);
-      if (maxRetriesReached) dispatchLockAction(anchor, lock.failed_action);
+      const actionContext = createLockActionDataContext(user, retryCount);
+      dispatchLockAction(anchor, lock.retry_action, actionContext);
+      if (maxRetriesReached) dispatchLockAction(anchor, lock.failed_action, actionContext);
       await helpers.showAlertDialog(anchor, { title: "Wrong code" });
       return false;
     }

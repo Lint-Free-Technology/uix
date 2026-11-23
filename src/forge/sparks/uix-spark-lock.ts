@@ -1,5 +1,6 @@
 import { PropertyValues } from "lit";
 import { UixLockOverlay } from "../../helpers/dom/lock-overlay";
+import { createLockActionDataContext, withLockActionData } from "../../helpers/lock-access";
 import { UixForgeSparkBase } from "./uix-spark-base";
 
 /** Forge wrapper for the shared lock overlay. */
@@ -57,8 +58,9 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
   }
 
   private executeUnlockAction(source: HTMLElement): void {
-    const action = this.unlockedAction?.action;
-    if (!action) return;
+    const unlockedAction = this.unlockedAction;
+    if (!unlockedAction?.action) return;
+    const action = unlockedAction.action;
     if (action.startsWith("element_")) {
       source.dispatchEvent(new CustomEvent("hass-action", {
         bubbles: true,
@@ -67,7 +69,12 @@ export class UixForgeSparkLock extends UixForgeSparkBase {
       }));
       return;
     }
-    const config: Record<string, any> = { tap_action: { ...this.unlockedAction } };
+    const config: Record<string, any> = {
+      tap_action: withLockActionData(
+        unlockedAction,
+        createLockActionDataContext(this.controller.forge.hass?.user),
+      ),
+    };
     if (this.entity) config.entity = this.entity;
     source.dispatchEvent(new CustomEvent("hass-action", {
       bubbles: true,
