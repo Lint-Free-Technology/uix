@@ -5,9 +5,11 @@ import { actionHandlerBind } from "./helpers/dom/action-handler";
 import { createHaButton, dispatchHaButtonAction, UixButtonConfig } from "./helpers/dom/ha-button";
 import { withHaFormActionData } from "./helpers/dom/ha-form";
 import {
+  createLockActionDataContext,
   createLockRetryState,
   LockRetryState,
   requestLockAccess,
+  withLockActionData,
 } from "./helpers/lock-access";
 
 const lockedActionRetryStates = new Map<string, LockRetryState>();
@@ -637,7 +639,7 @@ export class Actions {
     if (!allowed) return;
 
     const config: Record<string, any> = {
-      tap_action: { ...data.locked_action },
+      tap_action: withLockActionData(data.locked_action, createLockActionDataContext(hs?.user)),
     };
     if (data.entity) config.entity = data.entity;
     source.dispatchEvent(new CustomEvent("hass-action", {

@@ -167,46 +167,41 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 | `retry_delay` | number or string | — | How long to wait between code attempts after a wrong entry. Numbers are milliseconds; strings use human-readable units (e.g. `"10s"`). |
 | `max_retries` | number | — | Maximum consecutive wrong attempts before the extended delay kicks in. |
 | `max_retries_delay` | number or string | `30000` | How long to lock out after `max_retries` wrong attempts. Numbers are milliseconds; strings use human-readable units (e.g. `"30s"`, `"5m"`). |
-| `retry_event` | string | — | Home Assistant event to fire after every wrong code entry. |
-| `failed_event` | string | — | Home Assistant event to fire when a wrong entry reaches `max_retries`. |
+| `retry_action` | object | — | Home Assistant action to run after every wrong code entry. |
+| `failed_action` | object | — | Home Assistant action to run when a wrong entry reaches `max_retries`. |
 
-### Retry events
+### Retry actions
 
 !!! info
-    Retry events available in 9.2.0-beta.0
+    Retry actions available in 9.2.0-beta.1
 
-Set `retry_event` to react to every wrong code entry, and `failed_event` to react when the configured `max_retries` threshold is reached. Both events are fired on the Home Assistant event bus with `user`, `retry_count`, and `browser`; `browser_id` is included when the browser provides one. Both receive the count that reached the threshold on the final wrong attempt.
+Set `retry_action` to run an action after every wrong code entry, and `failed_action` to run an action when the configured `max_retries` threshold is reached. These are ordinary Home Assistant action objects, so they work for users who are not administrators. On the final wrong attempt UIX runs both actions: `retry_action` first, then `failed_action`.
 
 ```yaml
 locks:
   - code: 1234
     admins: true
     max_retries: 3
-    retry_event: uix_lock_retry
-    failed_event: uix_lock_failed
+    failed_action:
+      action: perform-action
+      perform_action: persistent_notification.create
+      data:
+        title: UIX lock failed
+        message: A user reached the maximum number of incorrect code entries.
 ```
 
-Create a Home Assistant automation with the **Manual event received** trigger to react to the final failed attempt. This example creates a persistent notification that includes the UIX event data:
+The example sends a persistent notification directly after the third failed entry; no automation or event-bus permission is required. Use `retry_action` as well when every wrong entry needs a separate response.
 
 ```yaml
-alias: Alert when a UIX lock fails
-triggers:
-  - trigger: event
-    event_type: uix_lock_failed
-conditions: []
-actions:
-  - action: persistent_notification.create
-    data:
-      title: UIX lock failed
-      message: >-
-        {{ trigger.event.data.user }} entered an incorrect code
-        {{ trigger.event.data.retry_count }} times.
-mode: single
+retry_action:
+  action: perform-action
+  perform_action: persistent_notification.create
+  data:
+    title: UIX lock retry
+    message: An incorrect lock code was entered.
 ```
 
-To react to every wrong entry instead, set `event_type` to `uix_lock_retry`. When the final wrong entry reaches `max_retries`, UIX fires both events: `retry_event` first and then `failed_event`. Do not listen for both in one alert automation unless receiving two alerts for that final entry is intended. The same event data is available through `trigger.event.data.browser` and, when supplied by the browser, `trigger.event.data.browser_id`.
-
-For the visual editor, add a **Manual event received** trigger and enter the matching event type. Home Assistant documents the corresponding [event trigger YAML](https://www.home-assistant.io/triggers/event/) and [trigger data](https://www.home-assistant.io/docs/automation/trigger-data/#event-triggers).
+The action's own `data` is forwarded unchanged. Use a script action when your notification needs a dynamic message or additional routing.
 
 ---
 
