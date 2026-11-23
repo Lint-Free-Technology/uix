@@ -1,6 +1,4 @@
 import { parseDuration } from "./common/parse-duration";
-import { BrowserID } from "./browser_id";
-import { hass } from "./hass";
 
 export interface LockEntry {
   active?: boolean;
@@ -22,10 +20,10 @@ export interface LockEntry {
   max_retries?: number;
   /** Milliseconds (or a human-readable duration) to wait after `max_retries` wrong attempts. */
   max_retries_delay?: string | number;
-  /** Home Assistant event to fire after each wrong code attempt. */
-  retry_event?: string;
-  /** Home Assistant event to fire when `max_retries` is reached. */
-  failed_event?: string;
+  /** Home Assistant action to run after each wrong code attempt. */
+  retry_action?: Record<string, any>;
+  /** Home Assistant action to run when `max_retries` is reached. */
+  failed_action?: Record<string, any>;
 }
 
 /** Options forwarded to the HA `showEnterCodeDialog` helper. */
@@ -62,32 +60,14 @@ export const createLockRetryState = (): LockRetryState => ({
   retryUntil: 0,
 });
 
-/** Fire a configured lock event without allowing a reporting failure to block the lock flow. */
-const fireLockEvent = async (eventType: unknown, user: LockUser | undefined, retryCount: number): Promise<void> => {
-  if (typeof eventType !== "string" || !eventType.trim()) return;
-  const type = eventType.trim();
-  let browserId = "";
-  try {
-    browserId = BrowserID();
-  } catch {
-    // A restricted browser context may deny localStorage access. Browser IDs
-    // are optional, so still report the configured event without one.
-  }
-
-  try {
-    const eventData: Record<string, unknown> = {
-      user: user?.name ?? "unknown",
-      retry_count: retryCount,
-    };
-    if (browserId) eventData.browser_id = browserId;
-    if (typeof navigator !== "undefined" && navigator.userAgent) eventData.browser = navigator.userAgent;
-    await (await hass()).callService("event", "fire", {
-      event_type: type,
-      event_data: eventData,
-    });
-  } catch (error) {
-    console.error("UIX: Failed to fire lock event:", error);
-  }
+/** Dispatch a configured lock action without letting it interrupt the lock flow. */
+const dispatchLockAction = (anchor: HTMLElement, action: unknown): void => {
+  if (!action || typeof action !== "object" || Array.isArray(action) || typeof (action as Record<string, unknown>).action !== "string") return;
+  anchor.dispatchEvent(new CustomEvent("hass-action", {
+    bubbles: true,
+    composed: true,
+    detail: { config: { tap_action: { ...action } }, action: "tap" },
+  }));
 };
 
 /**
@@ -181,8 +161,8 @@ export const requestLockAccess = async ({
       } else if (lock.retry_delay) {
         retryState.retryUntil = Date.now() + (parseDuration(lock.retry_delay) ?? 0);
       }
-      void fireLockEvent(lock.retry_event, user, retryCount);
-      if (maxRetriesReached) void fireLockEvent(lock.failed_event, user, retryCount);
+      dispatchLockAction(anchor, lock.retry_action);
+      if (maxRetriesReached) dispatchLockAction(anchor, lock.failed_action);
       await helpers.showAlertDialog(anchor, { title: "Wrong code" });
       return false;
     }
