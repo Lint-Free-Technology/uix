@@ -167,6 +167,21 @@ Controls the appearance of the PIN / passphrase entry dialog shown when a lock e
 | `retry_delay` | number or string | — | How long to wait between code attempts after a wrong entry. Numbers are milliseconds; strings use human-readable units (e.g. `"10s"`). |
 | `max_retries` | number | — | Maximum consecutive wrong attempts before the extended delay kicks in. |
 | `max_retries_delay` | number or string | `30000` | How long to lock out after `max_retries` wrong attempts. Numbers are milliseconds; strings use human-readable units (e.g. `"30s"`, `"5m"`). |
+| `retry_event` | string | — | Home Assistant event to fire after every wrong code entry. |
+| `failed_event` | string | — | Home Assistant event to fire when a wrong entry reaches `max_retries`. |
+
+### Retry events
+
+Set `retry_event` to react to every wrong code entry, and `failed_event` to react when the configured `max_retries` threshold is reached. Both events are fired on the Home Assistant event bus with `user`, `retry_count`, and `browser`; `browser_id` is included when the browser provides one. Both receive the count that reached the threshold on the final wrong attempt.
+
+```yaml
+locks:
+  - code: 1234
+    admins: true
+    max_retries: 3
+    retry_event: uix_lock_retry
+    failed_event: uix_lock_failed
+```
 
 ---
 
