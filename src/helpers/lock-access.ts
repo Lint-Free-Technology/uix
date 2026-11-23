@@ -1,4 +1,6 @@
 import { parseDuration } from "./common/parse-duration";
+import { BrowserID } from "./browser_id";
+import { hass } from "./hass";
 
 export interface LockEntry {
   active?: boolean;
@@ -20,6 +22,10 @@ export interface LockEntry {
   max_retries?: number;
   /** Milliseconds (or a human-readable duration) to wait after `max_retries` wrong attempts. */
   max_retries_delay?: string | number;
+  /** Home Assistant event to fire after each wrong code attempt. */
+  retry_event?: string;
+  /** Home Assistant event to fire when `max_retries` is reached. */
+  failed_event?: string;
 }
 
 /** Options forwarded to the HA `showEnterCodeDialog` helper. */
@@ -55,6 +61,34 @@ export const createLockRetryState = (): LockRetryState => ({
   retryCount: 0,
   retryUntil: 0,
 });
+
+/** Fire a configured lock event without allowing a reporting failure to block the lock flow. */
+const fireLockEvent = async (eventType: unknown, user: LockUser | undefined, retryCount: number): Promise<void> => {
+  if (typeof eventType !== "string" || !eventType.trim()) return;
+  const type = eventType.trim();
+  let browserId = "";
+  try {
+    browserId = BrowserID();
+  } catch {
+    // A restricted browser context may deny localStorage access. Browser IDs
+    // are optional, so still report the configured event without one.
+  }
+
+  try {
+    const eventData: Record<string, unknown> = {
+      user: user?.name ?? "unknown",
+      retry_count: retryCount,
+    };
+    if (browserId) eventData.browser_id = browserId;
+    if (typeof navigator !== "undefined" && navigator.userAgent) eventData.browser = navigator.userAgent;
+    await (await hass()).callService("event", "fire", {
+      event_type: type,
+      event_data: eventData,
+    });
+  } catch (error) {
+    console.error("UIX: Failed to fire lock event:", error);
+  }
+};
 
 /**
  * Select the first active lock applicable to a user, falling back to the first
@@ -139,12 +173,16 @@ export const requestLockAccess = async ({
     if (entered === null) return false;
     if (String(entered) !== String(codeValue)) {
       retryState.retryCount++;
-      if (lock.max_retries !== undefined && retryState.retryCount >= lock.max_retries) {
+      const retryCount = retryState.retryCount;
+      const maxRetriesReached = lock.max_retries !== undefined && retryCount >= lock.max_retries;
+      if (maxRetriesReached) {
         retryState.retryUntil = Date.now() + (parseDuration(lock.max_retries_delay) ?? 30000);
         retryState.retryCount = 0;
       } else if (lock.retry_delay) {
         retryState.retryUntil = Date.now() + (parseDuration(lock.retry_delay) ?? 0);
       }
+      void fireLockEvent(lock.retry_event, user, retryCount);
+      if (maxRetriesReached) void fireLockEvent(lock.failed_event, user, retryCount);
       await helpers.showAlertDialog(anchor, { title: "Wrong code" });
       return false;
     }

@@ -1,3 +1,10 @@
+## [9.2.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0...v9.2.0-beta.0) (2026-11-23)
+
+
+### ⭐ New Features
+
+* **lock:** Fire retry and failed events for lock (spark/interaction) ([#736](https://github.com/Lint-Free-Technology/uix/issues/736)) ([6597c4d](https://github.com/Lint-Free-Technology/uix/commit/6597c4def884f1595a6c3ffcbd337b1579f3fd80))
+
 ## [9.1.0](https://github.com/Lint-Free-Technology/uix/compare/v9.0.0...v9.1.0) (2026-11-19)
 
 
