@@ -184,24 +184,37 @@ locks:
     max_retries: 3
     failed_action:
       action: perform-action
-      perform_action: persistent_notification.create
+      perform_action: script.notify_uix_lock_attempt
       data:
-        title: UIX lock failed
-        message: A user reached the maximum number of incorrect code entries.
+        user: "$uix.user"
+        retry: "$uix.retry"
+        browser_id: "$uix.browser_id"
 ```
 
-The example sends a persistent notification directly after the third failed entry; no automation or event-bus permission is required. Use `retry_action` as well when every wrong entry needs a separate response.
+Lock-action `data` supports the explicit [UIX action data substitutions](../../extras/uix-actions.md#action-data-substitutions), including the current user, retry count, and Browser Mod browser ID. These are exact `$uix.*` values, not `{{ }}` templates.
 
 ```yaml
-retry_action:
-  action: perform-action
-  perform_action: persistent_notification.create
-  data:
-    title: UIX lock retry
-    message: An incorrect lock code was entered.
+script:
+  notify_uix_lock_attempt:
+    alias: Notify about a UIX lock attempt
+    fields:
+      user:
+        required: true
+      retry:
+        required: true
+      browser_id:
+        required: false
+    sequence:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: UIX lock attempt
+          message: >-
+            {{ user }} entered an incorrect code (attempt {{ retry }}) from {{ browser_id or "an unknown browser" }}.
 ```
 
-The action's own `data` is forwarded unchanged. Use a script action when your notification needs a dynamic message or additional routing.
+Define the script in Home Assistant and replace `mobile_app_your_phone` with your mobile app's notify action. The script's `{{ }}` expressions are native Home Assistant templates; UIX only resolves the `$uix.*` fields in the lock action.
+
+Use the same action under `retry_action` when every wrong entry should send a notification rather than only the entry that reaches `max_retries`.
 
 ---
 
