@@ -1216,6 +1216,8 @@ export class UixForge extends LitElement {
       this._forgeConfig.configIsReady(),
     ]);
     if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    await this._sparkController.prepareSelection(this.forgeConfig.sparks, hass);
+    if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
     this._sparkController.setConfig(this.forgeConfig.sparks);
     await Promise.all([
       this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),

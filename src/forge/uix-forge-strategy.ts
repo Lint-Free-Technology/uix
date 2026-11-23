@@ -3,6 +3,7 @@ import { ensureBuiltinDashboardStrategy, ensureBuiltinSectionStrategy } from "..
 import { hasTemplate, render_template } from "../helpers/templates";
 import { applyConfigSparks, cloneConfig, setConfigValue } from "./config-transform";
 import { applyEntitiesSparks, entitiesSparkSets, entitiesSparkSignature, hasEntitiesSparks, queryOnlyEntitiesSparkSets } from "./entities-transform";
+import { entitySelectionHass, loadSelectionRegistries, selectionRegistries, selectionRegistryKinds } from "./entity-selection-registries";
 import { activeLayeredOverrideValues, composeLayeredElementConfig, _resolveFoundryConfig } from "./uix-forge";
 import {
   getNestedTemplateRawDelimiters,
@@ -256,14 +257,23 @@ export async function resolveStrategyConfig(config: any, scope: StrategyScope, h
   // Resolve Spark sources first. Named query-only results then become a
   // read-only template variable for the strategy element.
   const resolvedSparks = (await resolveTemplates(forge.sparks ?? [], templateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting))).value;
-  const elementTemplateContext = { ...templateContext, uixForge: { entities: queryOnlyEntitiesSparkSets(resolvedSparks, hass) } };
+  await loadSelectionRegistries(hass, selectionRegistryKinds(resolvedSparks));
+  // HA can deliver a registry or state update while templates and metadata load.
+  const currentHass = refresh?.hass ?? hass;
+  const registries = selectionRegistries(currentHass);
+  const selectionHass = entitySelectionHass(currentHass, registries);
+  const elementTemplateContext = { ...templateContext, uixForge: { entities: queryOnlyEntitiesSparkSets(resolvedSparks, selectionHass) } };
   const resolvedOverlay = await resolveTemplates(activeOverlay, elementTemplateContext, forge.macros, forge.billets, templatePairs(forge.template_nesting));
   const resolvedElement = elementBase
     ? composeLayeredElementConfig(elementBase, resolvedOverlay.value, disabledPaths, resolvedOverlay.opaquePaths)
     : resolvedOverlay.value;
-  if (refresh) refresh.entitiesSparks = cloneConfig(resolvedSparks.filter((spark: any) => spark?.type === "entities"));
-  const entitySets = entitiesSparkSets(resolvedSparks, hass);
-  const sourceElement = applyEntitiesSparks(resolvedElement, resolvedSparks, hass);
+  if (refresh) {
+    refresh.entitiesSparks = cloneConfig(resolvedSparks.filter((spark: any) => spark?.type === "entities"));
+    refresh.selectionRegistries = registries;
+    refresh.selectionTime = Date.now();
+  }
+  const entitySets = entitiesSparkSets(resolvedSparks, selectionHass);
+  const sourceElement = applyEntitiesSparks(resolvedElement, resolvedSparks, selectionHass);
   if (refresh) {
     refresh.sourceElement = undefined;
     refresh.delegateStrategy = undefined;
@@ -275,7 +285,7 @@ export async function resolveStrategyConfig(config: any, scope: StrategyScope, h
     throw new Error("uix-forge: a base strategy requires a concrete non-recursive element.type");
   }
   refresh && (refresh.sourceElement = cloneConfig(sourceElement));
-  return applyConfigSparks(await generateBaseStrategy(scope, sourceElement, hass, (strategy) => {
+  return applyConfigSparks(await generateBaseStrategy(scope, sourceElement, currentHass, (strategy) => {
     if (refresh) refresh.delegateStrategy = strategy;
   }), resolvedSparks, entitySets);
 }
@@ -286,6 +296,8 @@ type StrategyRefreshState = {
   resolveEntityRefresh?: () => void;
   hass?: any;
   entitiesSparks?: Record<string, any>[];
+  selectionRegistries?: ReturnType<typeof selectionRegistries>;
+  selectionTime?: number;
   sourceElement?: any;
   delegateStrategy?: any;
 };
@@ -333,10 +345,18 @@ export class UixForgeStrategy extends HTMLElement {
     const sparks = state?.entitiesSparks ?? [];
     let entitiesChanged = false;
     if (hasEntitiesSparks(sparks)) {
+      const registries = selectionRegistries(newHass);
+      const now = Date.now();
       try {
-        entitiesChanged = entitiesSparkSignature(sparks, oldHass) !== entitiesSparkSignature(sparks, newHass);
+        const previous = entitySelectionHass(oldHass, state?.selectionRegistries);
+        const current = entitySelectionHass(newHass, registries);
+        entitiesChanged = entitiesSparkSignature(sparks, previous, state?.selectionTime ?? now) !== entitiesSparkSignature(sparks, current, now);
       } catch (_error) {
         entitiesChanged = true;
+      }
+      if (state) {
+        state.selectionRegistries = registries;
+        state.selectionTime = now;
       }
     }
     if (entitiesChanged) scheduleEntityRefresh(config, newHass);

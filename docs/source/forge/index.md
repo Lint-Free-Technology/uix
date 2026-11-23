@@ -29,7 +29,7 @@ Sparks are optional behaviours that you add to the `forge.sparks` list. Each spa
 
 Available sparks:
 
-- :material-format-list-bulleted: [Entities](sparks/entities.md) — fill a list in your config or collect entity IDs for a patch or template.
+- :material-format-list-bulleted: [Entities](sparks/entities.md) — use auto-entities filters to fill a list or collect entity IDs for a patch or template.
 - :material-file-tree: [Configuration](sparks/config.md) — add, change, or remove parts of a config, including the output of a Home Assistant strategy.
 - :material-home-analytics: [Home Summary](sparks/home-summary.md) — choose which entities count toward a native Home Overview summary.
 - :speech_balloon: [Tooltip](./sparks/tooltip.md) — attach a styled tooltip to any element inside the forged element.

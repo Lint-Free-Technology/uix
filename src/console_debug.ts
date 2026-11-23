@@ -42,6 +42,7 @@
 
 import { applyConfigPatches } from "./forge/config-transform";
 import { entitiesSparkEntries, entitiesSparkSets } from "./forge/entities-transform";
+import { entitySelectionHass, loadSelectionRegistries, selectionRegistryKinds } from "./forge/entity-selection-registries";
 import { resolveStrategyConfig, resolveStrategyEntitiesSparks } from "./forge/uix-forge-strategy";
 import { hass } from "./helpers/hass";
 
@@ -204,8 +205,10 @@ function findShadowElement(tagName: string): any | undefined {
   }
   if (!spark) throw new Error("UIX entities inspector: selected Entities Spark was not found.");
   const currentHass = await hass();
-  if (spark.path === undefined) entitiesSparkSets([spark], currentHass);
-  const result = entitiesSparkEntries(spark, currentHass);
+  await loadSelectionRegistries(currentHass, selectionRegistryKinds([spark]));
+  const selectionHass = entitySelectionHass(currentHass);
+  if (spark.path === undefined) entitiesSparkSets([spark], selectionHass);
+  const result = entitiesSparkEntries(spark, selectionHass);
   const report = { spark, ...result };
   const reportPath = saveInspection("entities", report);
   console.group("%c💡 UIX Entities Inspector 💡", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");

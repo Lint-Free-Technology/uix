@@ -1,0 +1,51 @@
+id: forge_entities_label_refresh
+description: A Forge selects by label display name and picks up new assignments on an open dashboard
+view_path: forge-entities-label-refresh
+
+setup:
+  - type: entity_registry_labels
+    entity_id: light.bed_light
+    labels:
+      - forge_selection_test
+    label_names:
+      forge_selection_test: Forge selection test
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: entities
+        path: /entities
+        filter:
+          include:
+            - label: Forge selection test
+  element:
+    type: entities
+    title: Labelled lights
+
+interactions:
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElement.config.entities.0
+    expected: light.bed_light
+  - type: entity_registry_labels
+    entity_id: light.ceiling_lights
+    labels:
+      - forge_selection_test
+  - type: wait
+    ms: 1700
+
+assertions:
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElement.config.entities.1
+    expected: light.ceiling_lights
+
+teardown:
+  - type: entity_registry_labels
+    entity_id: light.bed_light
+    labels: []
+  - type: entity_registry_labels
+    entity_id: light.ceiling_lights
+    labels: []

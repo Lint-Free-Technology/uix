@@ -30,6 +30,10 @@ export class UixForgeSparkHomeSummary extends UixForgeSparkBase {
     // Preserve normal live summary updates immediately. Selection membership
     // uses the same trailing debounce as Entities Sparks.
     this.controller.forge.refreshHomeSummaryContext(this);
+    this.selectionDataChanged();
+  }
+
+  selectionDataChanged() {
     // An explicit include also has to react when the available entity set
     // changes: a newly appearing entity is excluded until it matches that
     // include. Do not keep resetting the debounce for unrelated Hass changes,
@@ -99,7 +103,7 @@ export class UixForgeSparkHomeSummary extends UixForgeSparkBase {
       }
     }
     if (filters.length > 0) {
-      selectEntities({ type: "entities", filter: { include: filters } }, this.controller.forge.hass).ids
+      selectEntities({ type: "entities", filter: { include: filters } }, this.controller.selectionHass()).ids
         .forEach((entityId) => ids.add(entityId));
     }
     return [...ids];

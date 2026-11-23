@@ -23,6 +23,7 @@ import { UixForgeSparkHomeSummary } from "./uix-spark-home-summary";
 import { selectTree } from "../../helpers/selecttree";
 import { applyConfigSparks } from "../config-transform";
 import { applyEntitiesSparks, entitiesSparkSets, entitiesSparkSignature, hasEntitiesSparks, hasQueryOnlyEntitiesSparks, queryOnlyEntitiesSparkSets } from "../entities-transform";
+import { entitySelectionHass, loadSelectionRegistries, selectionRegistries, selectionRegistryKinds, watchSelectionRegistries } from "../entity-selection-registries";
 
 export { HomeSummaryContextProjection } from "../home-summary-context";
 
@@ -53,6 +54,12 @@ export class UixForgeSparkController {
   private _entitiesSparks: Record<string, any>[] = [];
   private _entitiesRefreshTimer?: number;
   private _entitiesRefreshPending = false;
+  private _registryKinds: ReturnType<typeof selectionRegistryKinds> = [];
+  private _registryConnection?: object;
+  private _watchedKinds = "";
+  private _unwatchRegistries?: () => void;
+  private _lastSelectionRegistries?: ReturnType<typeof selectionRegistries>;
+  private _lastSelectionTime?: number;
 
   constructor(forge: UixForge) {
       this.forge = forge;
@@ -60,8 +67,12 @@ export class UixForgeSparkController {
 
   setConfig(sparkConfigs?: Record<string, any>[]): boolean {
     const hadTransforms = this.hasConfigSparks() || this.hasEntitiesSparks();
+    this._registryKinds = selectionRegistryKinds(sparkConfigs);
+    this._watchRegistries();
     this._configSparks = (sparkConfigs ?? []).filter(config => config?.type === "config");
     this._entitiesSparks = (sparkConfigs ?? []).filter(config => config?.type === "entities");
+    if (this._entitiesSparks.length) this._lastSelectionTime ??= Date.now();
+    else this._lastSelectionTime = undefined;
     if ((sparkConfigs ?? []).filter(config => config?.type === "home-summary").length > 1) {
       throw new Error("uix-forge: only one home-summary Spark may be used by a Forge");
     }
@@ -97,13 +108,43 @@ export class UixForgeSparkController {
   }
 
   transformConfig(config: any): any {
-    const entitySets = entitiesSparkSets(this._entitiesSparks, this.forge.hass);
-    return applyConfigSparks(applyEntitiesSparks(config, this._entitiesSparks, this.forge.hass), this._configSparks, entitySets);
+    const hass = this.selectionHass();
+    const entitySets = entitiesSparkSets(this._entitiesSparks, hass);
+    return applyConfigSparks(applyEntitiesSparks(config, this._entitiesSparks, hass), this._configSparks, entitySets);
+  }
+
+  async prepareSelection(sparks: Record<string, any>[] | undefined, getHass: () => Promise<any>): Promise<void> {
+    const kinds = selectionRegistryKinds(sparks);
+    if (kinds.length > 0) await loadSelectionRegistries(this.forge.hass ?? await getHass(), kinds);
+  }
+
+  selectionHass(hass = this.forge.hass): any {
+    return entitySelectionHass(hass);
+  }
+
+  private _watchRegistries(): void {
+    const hass = this.forge.hass;
+    const connection = hass?.connection;
+    const key = this._registryKinds.join(",");
+    if (this._unwatchRegistries && this._registryConnection === connection && this._watchedKinds === key) return;
+    this._unwatchRegistries?.();
+    this._unwatchRegistries = undefined;
+    this._registryConnection = connection;
+    this._watchedKinds = key;
+    if (!this.forge.isConnected || !connection || !key) return;
+    this._lastSelectionRegistries ??= selectionRegistries(hass);
+    this._unwatchRegistries = watchSelectionRegistries(hass, this._registryKinds, () => {
+      const current = this.forge.hass;
+      this.hassChanged(current, current);
+      for (const spark of this.sparks) {
+        if (spark.type === "home-summary") (spark as UixForgeSparkHomeSummary).selectionDataChanged();
+      }
+    });
   }
 
   /** Resolve a named query-only Entities Spark for a local DOM Spark consumer. */
   queryOnlyEntitySet(id: string): string[] {
-    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.selectionHass());
     if (!Object.prototype.hasOwnProperty.call(sets, id) || sets[id] === undefined) {
       throw new Error(`uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark '${id}'`);
     }
@@ -112,7 +153,7 @@ export class UixForgeSparkController {
 
   /** Stable snapshot used to decide whether consumers need template rebinds. */
   queryOnlyEntityResultsSignature(): string {
-    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+    const sets = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.selectionHass());
     return JSON.stringify(Object.keys(sets).sort().map((id) => [id, [...(sets[id] ?? [])].sort()]));
   }
 
@@ -125,10 +166,21 @@ export class UixForgeSparkController {
   }
 
   hassChanged(oldHass: any, newHass: any): void {
+    this._watchRegistries();
+    const current = selectionRegistries(newHass);
+    const previous = this._lastSelectionRegistries;
+    this._lastSelectionRegistries = current;
+    this._checkSelection(entitySelectionHass(oldHass, previous), entitySelectionHass(newHass, current));
+  }
+
+  private _checkSelection(oldHass: any, newHass: any): void {
     if (!this.hasEntitiesSparks()) return;
+    const now = Date.now();
+    const previousTime = this._lastSelectionTime ?? now;
+    this._lastSelectionTime = now;
     let changed = false;
     try {
-      changed = entitiesSparkSignature(this._entitiesSparks, oldHass) !== entitiesSparkSignature(this._entitiesSparks, newHass);
+      changed = entitiesSparkSignature(this._entitiesSparks, oldHass, previousTime) !== entitiesSparkSignature(this._entitiesSparks, newHass, now);
     } catch (error) {
       console.error("UIX Forge: Error evaluating entities Spark refresh:", error);
       return;
@@ -186,7 +238,7 @@ export class UixForgeSparkController {
     // Spark variable. It is available to element templates, not the Spark
     // source that produces it. Only named query-only results are exposed.
     if (includeQueryOnlyEntities) {
-      variables.entities = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.forge.hass);
+      variables.entities = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.selectionHass());
     }
     return variables;
   }
@@ -196,11 +248,15 @@ export class UixForgeSparkController {
   }
 
   connectedCallback() {
+    // The shared cache may have refreshed while this Forge was detached.
+    this.hassChanged(this.forge.hass, this.forge.hass);
     this.sparks.forEach(spark => spark.connectedCallback());
     if (this._entitiesRefreshPending && this._entitiesRefreshTimer === undefined) this._scheduleEntitiesRefresh();
   }
 
   disconnectedCallback() {
+    this._unwatchRegistries?.();
+    this._unwatchRegistries = undefined;
     if (this._entitiesRefreshTimer !== undefined) {
       clearTimeout(this._entitiesRefreshTimer);
       this._entitiesRefreshTimer = undefined;

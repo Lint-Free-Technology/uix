@@ -5,7 +5,7 @@ icon: material/format-list-bulleted
 ---
 # Entities Spark
 
-Use the Entities Spark to fill an Entities card with battery sensors, build a Grid of Tiles for a room, or collect IDs to use in another Spark. Filters such as `area`, `label`, and `entity_id` will look familiar if you use `auto-entities`.
+Use the Entities Spark to fill an Entities card with battery sensors, build a Grid of Tiles for a room, or collect IDs to use in another Spark. It uses the entity matching rules from the [Lint Free Technology fork of auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities).
 
 ## Create cards without an auto-entities wrapper
 
@@ -45,7 +45,7 @@ element:
 | `entities` | list of entity IDs | — | Add explicit IDs before the include filters run. The exclude filters can still remove those IDs if they match. |
 | `filter.include` | list of filters | — | Adds entities matching any filter. Use `[{}]` to start with every entity available to the current user. |
 | `filter.exclude` | list of filters | — | Removes entities matching any filter after explicit IDs and includes have been assembled. |
-| `sort` | mapping or list of mappings | — | Order generated entries by `domain`, `entity_id`, `name`, `device`, `area`, `state`, or `attribute`. See [sorting and grouping](#group-entity-rows). |
+| `sort` | mapping or list of mappings | — | Order, group, or limit the generated entries. See [sorting and grouping](#group-entity-rows). |
 | `element` | mapping | — | The config to copy for each selected entity. Omit it to write plain entity IDs. |
 | `entity_path` | JSON Pointer | `/entity` | Where to write the ID within each copy of the Spark's `element`. |
 
@@ -55,22 +55,28 @@ When appending or prepending, keep the existing entries in the same format as th
 
 `filter.include` adds entities that match any include entry. `filter.exclude` then removes entities that match any exclude entry. Within one entry, every rule must match. Filters search the entities for which Home Assistant gives the current user a state.
 
-Text rules accept exact names, quoted wildcards such as `entity_id: "sensor.*_battery"`, and slash-delimited regular expressions. A text rule only matches when the field has a value, so `area: "*"` selects entities assigned to an area.
+Text rules accept exact names, quoted wildcards such as `entity_id: "sensor.*_battery"`, and slash-delimited regular expressions. Numeric values can use quoted comparisons like `">= 20"`. Prefix a pattern with `$$` to match a value as JSON, such as a list-valued attribute. A text rule only matches when the field has a value, so `area: "*"` selects entities assigned to an area. Filters saved by the auto-entities editor can also use its `active_choice` format.
 
 | Rule | Matches |
 | --- | --- |
 | `domain` | The part of an entity ID before the dot, such as `light` in `light.kitchen`. |
 | `entity_id` | Full entity ID. |
 | `name` | Entity friendly name. |
-| `state` | Current entity state. |
+| `state` | Current entity state. Use a list to require several state conditions, or a mapping to compare with another entity's state. |
+| `state_translated` | The state as displayed in your Home Assistant language. Use `state` for numeric comparisons. |
 | `attributes` | A mapping of state attribute names and values; every listed attribute must match. Use `:` to address a nested attribute value. |
-| `group` | A group entity ID, matching its member entities (not the group entity itself). |
+| `group` | Direct members of a group, such as `group.office` or a light group. |
+| `group_expanded` | Members of a group, expanding any nested groups. |
 | `area` | An area name or ID, including entities that inherit their device's area. |
 | `floor` | A floor name or ID, using the entity's own area or the one it inherits from its device. |
+| `level` | The numeric level of that floor, such as `">= 1"`. |
 | `device` | A device ID, user-assigned name, or original name. |
-| `label` | A label name or ID on the entity, its device, or its area. |
-| `integration` | An integration name such as `browser_mod`, when available in Home Assistant's frontend data. |
+| `device_manufacturer` / `device_model` | The manufacturer or model of the entity's device. |
+| `label` | A label name or ID on the entity or its device. |
+| `integration` | An integration name such as `browser_mod`, or the ID of a specific configuration entry for that integration. |
+| `hidden_by` | Whether the entity was hidden by the `user` or by its `integration`. The entity must still have a state to be selected. |
 | `entity_category` | Entity registry category, such as `config` or `diagnostic`. |
+| `last_changed` / `last_updated` / `last_triggered` | Time since a state change, update, or automation trigger. For example, `"< 15"` means less than 15 minutes ago and `"< 2 h ago"` means less than two hours ago. |
 | `and` | A list of nested filters; every nested filter must match. |
 | `or` | A list of nested filters; at least one nested filter must match. |
 | `not` | One nested filter that must not match. |
@@ -89,7 +95,22 @@ filter:
     - state: unavailable
 ```
 
-Forge waits 500 ms after the latest state or registry change that affects the result, then updates the generated list. This lets several changes arrive together without rebuilding the card for each one. Strategy generation follows the [strategy update rules](../forge.md#strategies).
+To show battery sensors that currently read below 20%, add this include entry. You can also use `operator: "<"` with `entity_id: input_number.battery_threshold` in place of `value` to read the threshold from a helper.
+
+```yaml
+filter:
+  include:
+    - attributes:
+        device_class: battery
+        unit_of_measurement: "%"
+      state:
+        operator: "<"
+        value: 20
+```
+
+Forge waits 500 ms after an update that affects the generated list. This batches changes such as adding or removing labels. Time rules are checked as Home Assistant sends updates. Strategies follow the [strategy update rules](../forge.md#strategies).
+
+When migrating an auto-entities card, put the entity rules under `filter` and set the output list with `path`. Use the Spark's `element` for settings to apply to each generated entry. Use separate Sparks when groups of entries need different settings or sorting.
 
 ## Generate entity rows without auto-entities
 
@@ -135,7 +156,9 @@ For a schema that stores the entity ID somewhere other than `/entity`, set `enti
 
 ## Group entity rows
 
-Set `sort.method` for a single sort, or list several sorts in priority order. For example, sort by area first and by name within each area. Each level supports `reverse`, `ignore_case`, and `numeric`. With `method: attribute`, also set the `attribute` to sort by.
+Set `sort.method` for a single sort, or list several in priority order. Available methods are `none`, `domain`, `entity_id`, `name`, `friendly_name`, `device`, `area`, `state`, `attribute`, `last_changed`, `last_updated`, and `last_triggered`. For `method: attribute`, also set the attribute path.
+
+Each level supports `reverse`, `ignore_case`, `ip`, and `numeric`. Use `numeric: nan_first` or `numeric: nan_last` to control where non-numeric values go. To show only the first five matches, set `count: 5` on the first sort level. Use `first` to skip entries before taking that count. These options limit the generated list while named query results still contain all selected IDs.
 
 `divider: true` adds a line between groups. `section: true` adds a heading above every group, including the first, and takes priority over a divider at the same spot. Use these options for lists that accept entity rows, such as an Entities card or `custom:fold-entity-row`. Leave the Spark's `element` unset when grouping rows.
 

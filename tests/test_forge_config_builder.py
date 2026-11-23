@@ -226,16 +226,16 @@ def test_home_summary_spark_selects_excluded_entities_without_reconfiguring_card
                 "const calls = [];"
                 "const hass = { states: { 'light.keep': { state: 'on', attributes: {} }, 'light.selected': { state: 'on', attributes: {} }, 'light.hidden': { state: 'on', attributes: {} }, 'light.other': { state: 'on', attributes: {} } }, entities: { 'light.hidden': { entity_id: 'light.hidden', labels: ['excluded_from_home_summaries'] } }, labels: { excluded_from_home_summaries: { label_id: 'excluded_from_home_summaries', name: 'Excluded from Home summaries' } } };"
                 "const forge = { hass, isConnected: true, forgedElementConfig: { type: 'home-summary', summary: 'light' }, setHomeSummaryExclusions: (_owner, ids) => calls.push(['set', ids]), refreshHomeSummaryContext: () => calls.push(['refresh']), clearHomeSummaryExclusions: () => calls.push(['clear']) };"
-                "const spark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge }, { type: 'home-summary', exclude: [{ label: 'excluded_from_home_summaries' }] });"
+                "const spark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge, selectionHass: () => forge.hass }, { type: 'home-summary', exclude: [{ label: 'excluded_from_home_summaries' }] });"
                 "spark.configUpdated(spark.config); spark.updated(new Map([['hass', hass]])); spark.disconnectedCallback();"
                 "const queryCalls = []; const queryForge = { ...forge, setHomeSummaryExclusions: (_owner, ids) => queryCalls.push(ids) };"
                 "const querySets = { included_for_maintenance: ['light.keep', 'light.selected'], excluded_from_maintenance: ['light.selected'] };"
-                "const querySpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: (id) => querySets[id] }, { type: 'home-summary', include: [{ $in_entities: 'included_for_maintenance' }], exclude: [{ $in_entities: 'excluded_from_maintenance' }] });"
+                "const querySpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, selectionHass: () => queryForge.hass, queryOnlyEntitySet: (id) => querySets[id] }, { type: 'home-summary', include: [{ $in_entities: 'included_for_maintenance' }], exclude: [{ $in_entities: 'excluded_from_maintenance' }] });"
                 "querySpark.configUpdated(querySpark.config); querySpark.entitySparkResultsChanged();"
                 "const includeCalls = []; const includeForge = { ...forge, setHomeSummaryExclusions: (_owner, ids) => includeCalls.push(ids), refreshHomeSummaryContext: () => {} };"
                 "const includeSpark = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: includeForge }, { type: 'home-summary', include: [] });"
                 "includeSpark.configUpdated(includeSpark.config); hass.states['light.new'] = { state: 'on', attributes: {} }; includeSpark.updated(new Map([['hass', hass]])); includeSpark.updated(new Map([['hass', hass]])); const includeRefreshes = timers.length; timers.at(-1)();"
-                "let unknownQuery; try { const unknown = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, queryOnlyEntitySet: () => { throw new Error(\"uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark 'missing'\"); } }, { type: 'home-summary', exclude: [{ $in_entities: 'missing' }] }); unknown.configUpdated(unknown.config); } catch (error) { unknownQuery = error.message; }"
+                "let unknownQuery; try { const unknown = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: queryForge, selectionHass: () => queryForge.hass, queryOnlyEntitySet: () => { throw new Error(\"uix-forge: home-summary Spark references unknown or ambiguous query-only Entities Spark 'missing'\"); } }, { type: 'home-summary', exclude: [{ $in_entities: 'missing' }] }); unknown.configUpdated(unknown.config); } catch (error) { unknownQuery = error.message; }"
                 "let wrongTarget; try { const invalid = new moduleObj.exports.UixForgeSparkHomeSummary({ forge: { ...forge, forgedElementConfig: { type: 'tile' } } }, { type: 'home-summary' }); invalid.configUpdated(invalid.config); } catch (error) { wrongTarget = error.message; }"
                 "process.stdout.write(JSON.stringify({ calls, queryCalls, queryIds: querySpark.entitySparkIds(), includeCalls, includeRefreshes, unknownQuery, wrongTarget }));"
             ),
@@ -270,7 +270,7 @@ def test_query_only_entities_spark_filters_generated_config_entries() -> None:
             (
                 "const fs = require('fs'); const esbuild = require('esbuild');"
                 "const compile = (path, customRequire = require) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
-                "const config = compile(process.argv[1]); const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : require(name));"
+                "const config = compile(process.argv[1]); const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : name === './entity-filter-matcher' ? compile(require('path').join(require('path').dirname(process.argv[2]), 'entity-filter-matcher.ts'), require) : require(name));"
                 "const hass = { states: { 'light.hidden_one': { state: 'on', attributes: {} }, 'light.hidden_two': { state: 'on', attributes: {} }, 'light.keep': { state: 'on', attributes: {} } }, entities: { 'light.hidden_one': { entity_id: 'light.hidden_one', labels: ['no_favs'] }, 'light.hidden_two': { entity_id: 'light.hidden_two', labels: ['no_favs'] }, 'light.keep': { entity_id: 'light.keep' } }, labels: { no_favs: { label_id: 'no_favs', name: 'No favorites' } } };"
                 "const sparks = [{ type: 'entities', id: 'no_favs', filter: { include: [{ label: 'no_favs' }] } }, { type: 'config', patches: [{ op: 'remove_matching', select: { in: '/sections', match: { cards: { $contains: [{ type: 'heading', heading: 'Favorites' }] } }, path: '/cards' }, where: { entity: { $in_entities: 'no_favs' } } }] }];"
                 "const source = { sections: [{ type: 'grid', cards: [{ type: 'heading', heading: 'Favorites' }, { type: 'tile', entity: 'light.hidden_one' }, { type: 'tile', entity: 'light.keep' }, { type: 'custom:other-card', entity: 'light.hidden_two' }] }] };"
@@ -351,13 +351,14 @@ def test_strategy_templates_wait_for_foundries_and_preserve_layered_structure() 
                 "global.HTMLElement = class {}; global.customElements = { get: () => undefined, whenDefined: () => new Promise(() => {}), define: () => {} };"
                 "const compile = (path, customRequire) => { const source = fs.readFileSync(path, 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} }; new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports); return moduleObj.exports; };"
                 "const config = compile(process.argv[1], require);"
-                "const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : require(name));"
+                "const entities = compile(process.argv[2], (name) => name === './config-transform' ? config : name === './entity-filter-matcher' ? compile(require('path').join(require('path').dirname(process.argv[2]), 'entity-filter-matcher.ts'), require) : require(name));"
                 "const strategy = compile(process.argv[3], (name) => {"
                 " if (name === '../helpers/apply_uix') return { buildMacros: () => '', buildBillets: () => '' };"
                 " if (name === '../helpers/dom/ensure-element') return { ensureBuiltinDashboardStrategy: async () => ({}), ensureBuiltinSectionStrategy: async () => ({}) };"
                 " if (name === '../helpers/templates') return { hasTemplate: (value) => typeof value === 'string' && (value.includes('{{') || value.includes('{%')), render_template: async (template, context) => template.includes('uixForge.entities') ? context.uixForge.entities.selected.join(',') : '[{\\\"type\\\":\\\"tile\\\",\\\"entity\\\":\\\"light.kitchen\\\"}]' };"
                 " if (name === './config-transform') return config;"
                 " if (name === './entities-transform') return entities;"
+                " if (name === './entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: (value, _foundries, ready) => ready ? { forge: value.forge || {}, element: value.element || {}, elementBase: value.element_base || {}, hasElementBase: Object.prototype.hasOwnProperty.call(value, 'element_base') } : null, activeLayeredOverrideValues: (value, disabled) => Object.fromEntries(Object.entries(value).filter(([key]) => !disabled.some((path) => path[0] === key))), composeLayeredElementConfig: (base, overlay, _disabled, opaque) => ({ ...base, ...Object.fromEntries(Object.entries(overlay).map(([key, value]) => [key, opaque.has(JSON.stringify([key])) ? value : value])) }) };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'uix-forge.ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: (value) => value.includes('uix-forge.ignore'), getNestedTemplateRawDelimiters: () => ({ openRaw: '{{', closeRaw: '}}' }) };"
                 " throw new Error(`Unexpected strategy import: ${name}`);"
@@ -401,6 +402,7 @@ def test_static_strategy_does_not_regenerate_for_unrelated_hass_snapshots() -> N
                 " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
                 " if (name === './config-transform') return { cloneConfig: (value) => value, setConfigValue: (target, key, value) => { target[key] = value; }, applyConfigSparks: (value) => value };"
                 " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSets: () => ({}), entitiesSparkSignature: () => '', hasEntitiesSparks: () => false };"
+                " if (name === './entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: () => ({}), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (_base, value) => value };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
                 " throw new Error(name); };"
@@ -434,6 +436,7 @@ def test_delegated_strategy_without_hook_uses_home_assistant_registry_dependenci
                 " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
                 " if (name === './config-transform') return { cloneConfig: (value) => value, setConfigValue: (target, key, value) => { target[key] = value; }, applyConfigSparks: (value) => value };"
                 " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSets: () => ({}), entitiesSparkSignature: () => '', hasEntitiesSparks: () => false, queryOnlyEntitiesSparkSets: () => ({}) };"
+                " if (name === './entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: (config) => ({ forge: config.forge, element: config.element }), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (_base, value) => value };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
                 " throw new Error(name); };"
@@ -471,6 +474,7 @@ def test_builtin_strategy_loaders_use_native_inert_paths() -> None:
                 " if (name === '../helpers/templates') return { hasTemplate: () => false, render_template: async () => '' };"
                 " if (name === './config-transform') return { cloneConfig: (value) => JSON.parse(JSON.stringify(value)), applyConfigSparks: (value) => value };"
                 " if (name === './entities-transform') return { applyEntitiesSparks: (value) => value, entitiesSparkSignature: () => '', hasEntitiesSparks: () => false };"
+                " if (name === './entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === './uix-forge') return { _resolveFoundryConfig: () => ({}), activeLayeredOverrideValues: (value) => value, composeLayeredElementConfig: (base, value) => ({ ...base, ...value }) };"
                 " if (name === './uix-forge-types') return { UIX_FORGE_IGNORE_TEMPLATE_STRING: 'ignore', UIX_FORGE_NESTED_TEMPLATE_OPEN: '<<', UIX_FORGE_NESTED_TEMPLATE_CLOSE: '>>', ignoreTemplate: () => false, getNestedTemplateRawDelimiters: () => ({ openRaw: '', closeRaw: '' }) };"
                 " throw new Error(name); });"
@@ -567,8 +571,8 @@ def test_entities_spark_matching_uses_real_metadata_and_output_only_signatures()
                 "let groupOwnKeys = 0; const trackedHass = { ...hass, states: new Proxy(hass.states, { ownKeys(target) { groupOwnKeys++; return Reflect.ownKeys(target); } }) };"
                 "const grouped = moduleObj.exports.selectEntities({ type: 'entities', path: '/entities', filter: { include: [{ group: 'group.office' }] } }, trackedHass);"
                 "let dividerError; try { moduleObj.exports.entitiesSparkEntries({ type: 'entities', path: '/entities', element: { type: 'tile' }, sort: { method: 'domain', divider: true }, filter: { include: [{ domain: 'light' }] } }, hass); } catch (error) { dividerError = error.message; }"
-                "let hiddenByError; try { select({ hidden_by: 'integration' }); } catch (error) { hiddenByError = error.message; }"
-                "process.stdout.write(JSON.stringify({ wildcardArea: select({ area: '*' }), renamedDevice: select({ device: 'Office desk' }), originalDevice: select({ device: 'Original desk' }), deviceId: select({ device: 'desk-device' }), groupMembers: select({ group: 'group.office' }), grouped, groupOwnKeys, dividerError, hiddenByError, sameSignature: moduleObj.exports.entitiesSparkSignature([spark], hass) === moduleObj.exports.entitiesSparkSignature([spark], decorated) }));"
+                "const integrationHidden = select({ hidden_by: 'integration' });"
+                "process.stdout.write(JSON.stringify({ wildcardArea: select({ area: '*' }), renamedDevice: select({ device: 'Office desk' }), originalDevice: select({ device: 'Original desk' }), deviceId: select({ device: 'desk-device' }), groupMembers: select({ group: 'group.office' }), grouped, groupOwnKeys, dividerError, integrationHidden, sameSignature: moduleObj.exports.entitiesSparkSignature([spark], hass) === moduleObj.exports.entitiesSparkSignature([spark], decorated) }));"
             ),
             str(ENTITIES_TRANSFORM_TS),
         ],
@@ -585,7 +589,7 @@ def test_entities_spark_matching_uses_real_metadata_and_output_only_signatures()
         "grouped": {"ids": ["light.desk"], "included": ["light.desk"], "excluded": [], "counts": [1]},
         "groupOwnKeys": 1,
         "dividerError": "uix-forge: entities Spark divider or section sorting cannot use element",
-        "hiddenByError": "uix-forge: entities Spark does not support filter key 'hidden_by'",
+        "integrationHidden": [],
         "sameSignature": True,
     }
 
@@ -603,6 +607,7 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
                 "const customRequire = (name) => {"
                 " if (name === '../config-transform') return { applyConfigSparks: (config) => config };"
                 " if (name === '../entities-transform') return { applyEntitiesSparks: (config) => config, hasEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities'), hasQueryOnlyEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities' && spark.path === undefined), entitiesSparkSets: () => ({}), queryOnlyEntitiesSparkSets: () => ({ no_favs: ['light.hidden'] }), entitiesSparkSignature: (_sparks, hass) => hass.signature };"
+                " if (name === '../entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === '../../helpers/selecttree') return { selectTree: () => [] };"
                 " if (name === './uix-spark-base') return { UixForgeSparkBase: Spark };"
                 " if (name === '../home-summary-context') return { HomeSummaryContextProjection: class {} };"
@@ -1590,7 +1595,7 @@ def test_layered_template_result_is_composed_after_initial_binding() -> None:
                 "  if (name === '../helpers/templates') return templates;"
                 "  if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' };"
                 "  if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: { card: CardMold, badge: BadgeMold } };"
-                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { templateVariables() { return {}; } setConfig() { return false; } transformConfig(config) { return config; } } };"
+                "  if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class { templateVariables() { return {}; } async prepareSelection() {} setConfig() { return false; } transformConfig(config) { return config; } } };"
                 "  throw new Error(`Unexpected forge import: ${name}`);"
                 "});"
                 "const forge = new forgeModule.UixForge();"

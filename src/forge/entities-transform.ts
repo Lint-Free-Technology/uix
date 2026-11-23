@@ -1,4 +1,5 @@
 import { cloneConfig, setConfigValue } from "./config-transform";
+import { entityStateMatcher, entityValueMatcher, filterRuleKey } from "./entity-filter-matcher";
 
 type Mapping = Record<string, any>;
 
@@ -15,12 +16,18 @@ export type UixForgeEntitiesSpark = {
   spark_id?: string;
 };
 
+const SORT_METHODS = ["none", "domain", "entity_id", "name", "friendly_name", "device", "area", "state", "attribute",
+  "last_changed", "last_updated", "last_triggered"] as const;
+
 type EntitySortConfig = {
-  method: "domain" | "entity_id" | "name" | "device" | "area" | "state" | "attribute";
+  method: typeof SORT_METHODS[number];
   attribute?: string;
   reverse?: boolean;
   ignore_case?: boolean;
-  numeric?: boolean;
+  numeric?: boolean | "true" | "false" | "off" | "nan_first" | "nan_last";
+  ip?: boolean;
+  first?: number;
+  count?: number;
   divider?: boolean;
   section?: boolean;
   label?: EntityNamePart | EntityNamePart[];
@@ -90,106 +97,116 @@ function setEntryEntity(entry: Mapping, pointer: string, entityId: string): Mapp
   return entry;
 }
 
-function entriesOf(collection: any): any[] {
-  return Array.isArray(collection) ? collection : isMapping(collection) ? Object.values(collection) : [];
-}
-
-function registryEntry(collection: any, id: string): any {
-  if (isMapping(collection) && collection[id]) return collection[id];
-  return entriesOf(collection).find((entry) => entry?.entity_id === id || entry?.id === id || entry?.area_id === id || entry?.floor_id === id);
+function registryEntry(collection: any, id?: string): any {
+  if (id === undefined || id === null) return undefined;
+  if (isMapping(collection)) return Object.prototype.hasOwnProperty.call(collection, id) ? collection[id] : undefined;
+  return Array.isArray(collection)
+    ? collection.find((entry) => entry?.entity_id === id || entry?.id === id || entry?.area_id === id || entry?.floor_id === id)
+    : undefined;
 }
 
 function entityIds(hass: any): string[] {
   return Object.keys(hass?.states ?? {}).sort((left, right) => left.localeCompare(right));
 }
 
-function textMatches(value: any, expected: any): boolean {
-  if (Array.isArray(expected)) return expected.some((candidate) => textMatches(value, candidate));
-  if (typeof expected !== "string") return Object.is(value, expected);
-  // A string matcher only matches actual text. Coercing an absent registry
-  // value to an empty string made `area: "*"` (and similar filters) include
-  // entities with no area at all.
-  if (value === null || value === undefined) return false;
-  const actual = String(value);
-  if (expected.startsWith("/") && expected.lastIndexOf("/") > 0) {
-    const end = expected.lastIndexOf("/");
-    try { return new RegExp(expected.slice(1, end), expected.slice(end + 1)).test(actual); } catch (_error) {
-      throw new Error(`uix-forge: entities Spark has invalid regular expression ${expected}`);
-    }
-  }
-  if (expected.includes("*")) {
-    const pattern = expected.split("*").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*");
-    return new RegExp(`^${pattern}$`).test(actual);
-  }
-  return actual === expected;
-}
-
 function nestedAttribute(attributes: any, key: string): any {
-  return key.split(":").reduce((value, segment) => value === null || value === undefined ? undefined : value[segment], attributes);
+  return key.split(":").reduce((value, segment) => value == null ? undefined : value[segment], attributes);
 }
 
 function metadata(hass: any, entityId: string) {
   const state = hass?.states?.[entityId];
   const entity = registryEntry(hass?.entities, entityId) ?? {};
   const device = entity.device_id ? registryEntry(hass?.devices, entity.device_id) ?? {} : {};
-  const areaId = entity.area_id ?? device.area_id;
-  const area = areaId ? registryEntry(hass?.areas, areaId) ?? {} : {};
+  const area = registryEntry(hass?.areas, entity.area_id) ?? registryEntry(hass?.areas, device.area_id) ?? {};
   const floor = area.floor_id ? registryEntry(hass?.floors, area.floor_id) ?? {} : {};
-  const labelIds = new Set([...(entity.labels ?? []), ...(device.labels ?? []), ...(area.labels ?? [])]);
-  const labelNames = entriesOf(hass?.labels).filter((label) => labelIds.has(label?.label_id ?? label?.id)).map((label) => label.name ?? label.label_id ?? label.id);
-  return { state, entity, device, area, floor, labelIds: [...labelIds], labelNames };
+  return { state, entity, device, area, floor };
 }
 
-type SelectionContext = {
-  groupMembers: Map<any, Set<string>>;
-  available: string[];
-};
+type EntityMetadata = ReturnType<typeof metadata>;
+type EntityPredicate = (id: string, data: EntityMetadata) => boolean;
 
-function groupMembers(context: SelectionContext, hass: any, expected: any): Set<string> {
-  const cached = context.groupMembers.get(expected);
-  if (cached) return cached;
+function groupMembers(states: Record<string, any>, available: string[], pattern: any, now: number, expand: boolean): Set<string> {
+  const match = entityValueMatcher(pattern, now);
   const members = new Set<string>();
-  for (const group of context.available) {
-    if (!group.startsWith("group.") || !textMatches(group, expected)) continue;
-    const entityIds = hass?.states?.[group]?.attributes?.entity_id;
-    if (Array.isArray(entityIds)) entityIds.forEach((entityId) => members.add(entityId));
+  const visited = new Set<string>();
+  function visit(id: string) {
+    if (visited.has(id)) return;
+    visited.add(id);
+    const children = states[id]?.attributes?.entity_id;
+    if (!Array.isArray(children)) return;
+    for (const child of children) {
+      if (typeof child !== "string") continue;
+      if (expand && Array.isArray(states[child]?.attributes?.entity_id)) visit(child);
+      else members.add(child);
+    }
   }
-  context.groupMembers.set(expected, members);
+  for (const group of available) {
+    if (match(group)) visit(group);
+  }
   return members;
 }
 
-function matchOne(hass: any, entityId: string, filter: any, context: SelectionContext): boolean {
+function compileFilter(hass: any, available: string[], labels: Map<string, any>, filter: any, now: number): EntityPredicate {
   if (!isMapping(filter)) throw new Error("uix-forge: entities Spark filter entries must be mappings");
-  const data = metadata(hass, entityId);
-  return Object.entries(filter).every(([key, expected]) => {
-    if (key === "and") {
-      if (!Array.isArray(expected)) throw new Error("uix-forge: entities Spark and must be a list");
-      return expected.every((child) => matchOne(hass, entityId, child, context));
+  const states = hass?.states ?? {};
+  const compile = (child: any) => compileFilter(hass, available, labels, child, now);
+  const entries = Object.entries(filter);
+  // Auto-entities' editor may save an empty row options mapping.
+  const conditions = entries.filter(([key, value]) => !(filterRuleKey(key) === "options" && isMapping(value) && Object.keys(value).length === 0));
+  if (entries.length > 0 && conditions.length === 0) return () => false;
+  const rules = conditions.map(([rawKey, expected]): EntityPredicate => {
+    const key = filterRuleKey(rawKey);
+    if (key === "and" || key === "or") {
+      if (!Array.isArray(expected)) throw new Error(`uix-forge: entities Spark ${key} must be a list`);
+      const children = expected.map(compile);
+      return (id, data) => key === "and" ? children.every((match) => match(id, data)) : children.some((match) => match(id, data));
     }
-    if (key === "or") {
-      if (!Array.isArray(expected)) throw new Error("uix-forge: entities Spark or must be a list");
-      return expected.some((child) => matchOne(hass, entityId, child, context));
+    if (key === "not") {
+      const child = compile(expected);
+      return (id, data) => !child(id, data);
     }
-    if (key === "not") return !matchOne(hass, entityId, expected, context);
-    if (key === "domain") return textMatches(entityId.split(".", 1)[0], expected);
-    if (key === "entity_id") return textMatches(entityId, expected);
-    if (key === "state") return textMatches(data.state?.state, expected);
-    if (key === "name") return textMatches(data.state?.attributes?.friendly_name ?? data.entity.name ?? data.entity.original_name, expected);
-    if (key === "area") return textMatches(data.area.area_id ?? data.area.id, expected) || textMatches(data.area.name, expected);
-    if (key === "floor") return textMatches(data.floor.floor_id ?? data.floor.id, expected) || textMatches(data.floor.name, expected);
-    if (key === "device") return textMatches(data.device.id ?? data.entity.device_id, expected)
-      || textMatches(data.device.name_by_user, expected)
-      || textMatches(data.device.name, expected);
-    if (key === "label") return data.labelIds.some((label) => textMatches(label, expected)) || data.labelNames.some((label) => textMatches(label, expected));
-    if (key === "integration") return textMatches(data.entity.platform ?? data.entity.integration ?? data.device.integration, expected);
-    if (key === "entity_category") return textMatches(data.entity.entity_category, expected);
-    if (key === "group") return groupMembers(context, hass, expected).has(entityId);
+    if (key === "state") {
+      const match = entityStateMatcher(expected, states, now);
+      return (_id, data) => match(data.state?.state);
+    }
     if (key === "attributes") {
       if (!isMapping(expected)) throw new Error("uix-forge: entities Spark attributes must be a mapping");
-      return Object.entries(expected).every(([attribute, value]) => textMatches(nestedAttribute(data.state?.attributes, attribute), value));
+      const attributes = Object.entries(expected).map(([attribute, value]) => [filterRuleKey(attribute), entityValueMatcher(value, now)] as const);
+      return (_id, data) => attributes.every(([attribute, match]) => match(nestedAttribute(data.state?.attributes, attribute)));
     }
-    throw new Error(`uix-forge: entities Spark does not support filter key '${key}'`);
+    if (key === "group" || key === "group_expanded") {
+      const members = groupMembers(states, available, expected, now, key === "group_expanded");
+      return (id) => members.has(id);
+    }
+    const isTimeRule = key === "last_changed" || key === "last_updated" || key === "last_triggered";
+    const match = entityValueMatcher(expected, now, false, isTimeRule);
+    switch (key) {
+      case "domain": return (id) => match(id.split(".", 1)[0]);
+      case "entity_id": return (id) => match(id);
+      case "name": return (_id, { state }) => match(state?.attributes?.friendly_name);
+      case "state_translated": return (_id, { state }) => match(hass?.formatEntityState?.(state));
+      case "area": return (_id, { area }) => match(area.area_id ?? area.id) || match(area.name);
+      case "floor": return (_id, { floor }) => match(floor.floor_id ?? floor.id) || match(floor.name);
+      case "level": return (_id, { floor }) => match(floor.level);
+      case "device": return (_id, { device }) => match(device.id) || match(device.name_by_user) || match(device.name);
+      case "device_manufacturer": return (_id, { device }) => match(device.manufacturer);
+      case "device_model": return (_id, { device }) => match(device.model);
+      case "label": return (_id, { entity, device }) => [...(entity.labels ?? []), ...(device.labels ?? [])]
+        .some((label) => match(label) || match(labels.get(label)));
+      case "integration": return (id, { entity }) => match(entity.platform ?? entity.integration)
+        || match(hass?.uixEntityRegistry?.[id]?.config_entry_id ?? entity.config_entry_id);
+      case "hidden_by": return (id, { entity }) => {
+        const entry = hass?.uixEntityRegistry?.[id] ?? entity;
+        return match(entry.hidden_by);
+      };
+      case "entity_category": return (_id, { entity }) => match(entity.entity_category ?? (entity.entity_id ? null : undefined));
+      case "last_changed":
+      case "last_updated": return (_id, { state }) => match(state?.[key]);
+      case "last_triggered": return (_id, { state }) => match(state?.attributes?.last_triggered);
+      default: throw new Error(`uix-forge: entities Spark does not support filter key '${key}'`);
+    }
   });
+  return (id, data) => rules.every((match) => match(id, data));
 }
 
 function sortLevels(sort: UixForgeEntitiesSpark["sort"]): EntitySortConfig[] {
@@ -199,14 +216,22 @@ function sortLevels(sort: UixForgeEntitiesSpark["sort"]): EntitySortConfig[] {
     throw new Error("uix-forge: entities Spark sort must be a mapping or non-empty list with method");
   }
   for (const level of levels) {
-    if (!(["domain", "entity_id", "name", "device", "area", "state", "attribute"] as string[]).includes(level.method)) {
+    if (!SORT_METHODS.includes(level.method)) {
       throw new Error(`uix-forge: entities Spark does not support sort method '${level.method}'`);
     }
     if (level.method === "attribute" && typeof level.attribute !== "string") {
       throw new Error("uix-forge: entities Spark attribute sort requires attribute");
     }
-    for (const key of ["reverse", "ignore_case", "numeric", "divider", "section"] as const) {
+    for (const key of ["reverse", "ignore_case", "ip", "divider", "section"] as const) {
       if (level[key] !== undefined && typeof level[key] !== "boolean") throw new Error(`uix-forge: entities Spark sort ${key} must be boolean`);
+    }
+    if (level.numeric !== undefined && ![true, false, "true", "false", "off", "nan_first", "nan_last"].includes(level.numeric)) {
+      throw new Error("uix-forge: entities Spark sort numeric must be boolean, off, nan_first, or nan_last");
+    }
+    for (const key of ["first", "count"] as const) {
+      if (level[key] !== undefined && (!Number.isInteger(level[key]) || level[key] < 0)) {
+        throw new Error(`uix-forge: entities Spark sort ${key} must be a non-negative integer`);
+      }
     }
     if (level.separator !== undefined && typeof level.separator !== "string") {
       throw new Error("uix-forge: entities Spark sort separator must be a string");
@@ -230,23 +255,48 @@ function isEntityNamePart(value: any): value is EntityNamePart {
 
 function sortValue(hass: any, entityId: string, level: EntitySortConfig): any {
   const data = metadata(hass, entityId);
+  if (level.method === "none") return 0;
   if (level.method === "domain") return entityId.split(".", 1)[0];
   if (level.method === "entity_id") return entityId;
-  if (level.method === "name") return data.state?.attributes?.friendly_name ?? data.entity.name ?? data.entity.original_name ?? entityId;
-  if (level.method === "device") return data.device.name_by_user ?? data.device.name ?? data.entity.device_id ?? "";
-  if (level.method === "area") return data.area.name ?? data.area.area_id ?? data.area.id ?? "";
-  if (level.method === "state") return data.state?.state ?? "";
+  if (level.method === "name" || level.method === "friendly_name") return data.state?.attributes?.friendly_name || entityId.split(".")[1];
+  if (level.method === "device") return data.device.name_by_user ?? data.device.name;
+  if (level.method === "area") return data.area.name;
+  if (level.method === "state") return data.state?.state;
+  if (level.method.startsWith("last_")) {
+    const timestamp = level.method === "last_triggered" ? data.state?.attributes?.last_triggered : data.state?.[level.method];
+    return timestamp ? Date.parse(timestamp) : undefined;
+  }
   return nestedAttribute(data.state?.attributes, level.attribute!);
 }
 
 function compareSortValues(left: any, right: any, level: EntitySortConfig): number {
-  if (level.numeric) {
-    const leftNumber = Number(left);
-    const rightNumber = Number(right);
-    if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) return leftNumber - rightNumber;
+  const direction = level.reverse ? -1 : 1;
+  const numeric = level.numeric ?? level.method.startsWith("last_");
+  if (numeric === true || numeric === "true" || numeric === "nan_first" || numeric === "nan_last") {
+    left = parseFloat(left);
+    right = parseFloat(right);
+    const leftMissing = Number.isNaN(left);
+    const rightMissing = Number.isNaN(right);
+    if (leftMissing && rightMissing) return 0;
+    if (leftMissing || rightMissing) {
+      const order = numeric === "nan_first" ? -1 : numeric === "nan_last" ? 1 : direction;
+      return leftMissing ? order : -order;
+    }
+    return direction * (left < right ? -1 : left > right ? 1 : 0);
+  }
+  if (left === undefined && right === undefined) return 0;
+  if (left === undefined || right === undefined) return left === undefined ? direction : -direction;
+  if (level.ip && typeof left === "string" && typeof right === "string") {
+    const leftOctets = left.split(".");
+    const rightOctets = right.split(".");
+    for (let index = 0; index < 4; index++) {
+      const comparison = compareSortValues(leftOctets[index], rightOctets[index], { method: "state", numeric: true });
+      if (comparison !== 0) return direction * comparison;
+    }
+    return 0;
   }
   const normalise = (value: any) => level.ignore_case ? String(value ?? "").toLocaleLowerCase() : String(value ?? "");
-  return normalise(left).localeCompare(normalise(right), undefined, { numeric: level.numeric === true });
+  return direction * normalise(left).localeCompare(normalise(right));
 }
 
 function sectionLabel(hass: any, entityId: string, level: EntitySortConfig, groupValue: any): string {
@@ -265,16 +315,18 @@ function sortedEntityEntries(ids: string[], spark: UixForgeEntitiesSpark, hass: 
     const rightValues = values.get(right)!;
     for (let index = 0; index < levels.length; index++) {
       const comparison = compareSortValues(leftValues[index], rightValues[index], levels[index]);
-      if (comparison !== 0) return levels[index].reverse ? -comparison : comparison;
+      if (comparison !== 0) return comparison;
     }
-    return left.localeCompare(right);
+    return 0;
   });
+  const { first = 0, count } = levels[0];
+  const page = count === undefined ? sorted.slice(first) : sorted.slice(first, first + count);
   const dividerLevels = levels.map((level, index) => level.divider ? index : -1).filter((index) => index >= 0);
   const sectionLevels = levels.map((level, index) => level.section ? index : -1).filter((index) => index >= 0);
-  if (dividerLevels.length === 0 && sectionLevels.length === 0) return sorted;
+  if (dividerLevels.length === 0 && sectionLevels.length === 0) return page;
   const result: any[] = [];
   let previous: string | undefined;
-  for (const entityId of sorted) {
+  for (const entityId of page) {
     const changed = (index: number) => compareSortValues(values.get(previous!)![index], values.get(entityId)![index], levels[index]) !== 0;
     if (previous === undefined && sectionLevels.length > 0) {
       const index = sectionLevels[0];
@@ -293,7 +345,7 @@ function sortedEntityEntries(ids: string[], spark: UixForgeEntitiesSpark, hass: 
   return result;
 }
 
-export function selectEntities(spark: UixForgeEntitiesSpark, hass: any): { ids: string[]; included: string[]; excluded: string[]; counts: number[] } {
+export function selectEntities(spark: UixForgeEntitiesSpark, hass: any, now = Date.now()): { ids: string[]; included: string[]; excluded: string[]; counts: number[] } {
   if (!isMapping(spark) || spark.type !== "entities") throw new Error("uix-forge: entities Spark must have type: entities");
   if (spark.entities !== undefined && (!Array.isArray(spark.entities) || spark.entities.some((entity) => typeof entity !== "string"))) {
     throw new Error("uix-forge: entities Spark entities must be a list of entity IDs");
@@ -301,9 +353,22 @@ export function selectEntities(spark: UixForgeEntitiesSpark, hass: any): { ids: 
   const include = spark.filter?.include ?? [];
   const exclude = spark.filter?.exclude ?? [];
   if (!Array.isArray(include) || !Array.isArray(exclude)) throw new Error("uix-forge: entities Spark filter include and exclude must be lists");
-  const available = entityIds(hass);
-  const context: SelectionContext = { available, groupMembers: new Map() };
-  const matching = (filter: any) => available.filter((entityId) => matchOne(hass, entityId, filter, context));
+  const available = include.length || exclude.length ? entityIds(hass) : [];
+  const labels = Array.isArray(hass?.labels)
+    ? new Map<string, string>(hass.labels.map((label: any) => [label.label_id ?? label.id, label.name]))
+    : new Map(Object.entries(hass?.labels ?? {}).map(([id, label]: [string, any]) => [label.label_id ?? label.id ?? id, label.name]));
+  const metadataById = new Map<string, EntityMetadata>();
+  const matching = (filter: any) => {
+    const match = compileFilter(hass, available, labels, filter, now);
+    return available.filter((id) => {
+      let data = metadataById.get(id);
+      if (!data) {
+        data = metadata(hass, id);
+        metadataById.set(id, data);
+      }
+      return match(id, data);
+    });
+  };
   const includedByFilter = include.map(matching);
   const included = includedByFilter.reduce((result: string[], entries) => result.concat(entries), []);
   const exclusion = new Set<string>(exclude.reduce((result: string[], filter) => result.concat(matching(filter)), []));
@@ -311,8 +376,8 @@ export function selectEntities(spark: UixForgeEntitiesSpark, hass: any): { ids: 
   return { ids, included: [...new Set(included)], excluded: [...exclusion].sort(), counts: includedByFilter.map((entries) => entries.length) };
 }
 
-export function entitiesSparkEntries(spark: UixForgeEntitiesSpark, hass: any): { ids: string[]; entries: any[]; included: string[]; excluded: string[]; counts: number[] } {
-  const selected = selectEntities(spark, hass);
+export function entitiesSparkEntries(spark: UixForgeEntitiesSpark, hass: any, now = Date.now()): { ids: string[]; entries: any[]; included: string[]; excluded: string[]; counts: number[] } {
+  const selected = selectEntities(spark, hass, now);
   const levels = sortLevels(spark.sort);
   if (spark.element !== undefined && !isMapping(spark.element)) throw new Error("uix-forge: entities Spark element must be a mapping");
   if (spark.element !== undefined && levels.some((level) => level.divider || level.section)) {
@@ -445,19 +510,16 @@ export function hasQueryOnlyEntitiesSparks(sparks: Record<string, any>[] = []): 
   return sparks.some((spark) => spark?.type === "entities" && spark.path === undefined);
 }
 
-export function entitiesSparkSignature(sparks: Record<string, any>[] = [], hass?: any): string {
+export function entitiesSparkSignature(sparks: Record<string, any>[] = [], hass?: any, now = Date.now()): string {
   // Inspector diagnostics (included, excluded, and counts) must not influence
   // regeneration. Only output lists and named result sets can change Forge.
   return JSON.stringify(sparks.filter((spark) => spark?.type === "entities").map((rawSpark) => {
     const spark = rawSpark as UixForgeEntitiesSpark;
     if (spark.path === undefined) {
       assertQueryOnlySpark(spark);
-      return { ids: selectEntities(spark, hass).ids };
+      return { ids: selectEntities(spark, hass, now).ids };
     }
-    const id = sparkId(spark);
-    return {
-      entries: entitiesSparkEntries(spark, hass).entries,
-      ...(id ? { ids: selectEntities(spark, hass).ids } : {}),
-    };
+    const { entries, ids } = entitiesSparkEntries(spark, hass, now);
+    return sparkId(spark) ? { entries, ids } : { entries };
   }));
 }

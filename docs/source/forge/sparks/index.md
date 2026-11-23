@@ -8,7 +8,7 @@ Add Sparks to the `forge.sparks` list to extend what Forge does. Each Spark has 
 
 Available sparks:
 
-- :material-format-list-bulleted: [Entities](entities.md) — fill a list in your config or collect entity IDs for a patch or template.
+- :material-format-list-bulleted: [Entities](entities.md) — use auto-entities filters to fill a list or collect entity IDs for a patch or template.
 - :material-file-tree: [Configuration](config.md) — add, change, or remove parts of a config, including the output of a Home Assistant strategy.
 - :material-home-analytics: [Home Summary](home-summary.md) — choose which entities count toward a native Home Overview summary.
 - :speech_balloon: [Tooltip](./tooltip.md) — attach a styled tooltip to any element within the forged element.
