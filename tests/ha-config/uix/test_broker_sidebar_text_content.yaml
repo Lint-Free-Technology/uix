@@ -16,6 +16,8 @@ uix_broker:
           line-height: 1
           color: var(--success-color)
           width: min-content
+          position: relative
+          z-index: 1
       - type: tooltip
         for: previous
         content: All house alarm zones are secured
