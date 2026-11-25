@@ -34,7 +34,11 @@ const getEntityId = (el: any): string | null => {
     case "ha-entity-marker":
       return el.entityId || null;
     case "ha-user-badge":
-      return el._personEntityId || null;
+      const userId = el.user?.id;
+      const entity = Object.values(el._personStates ?? {}).find(
+        (entity) => (entity as any).attributes.user_id === userId
+      );
+      return (entity as any)?.entity_id || null;
     case "ha-person-badge":
       return el.person?.id ? `person.${el.person.id}` : null;
     case "hui-entity-badge":
