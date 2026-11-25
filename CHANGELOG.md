@@ -1,3 +1,12 @@
+## [9.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.1...v9.2.0-beta.2) (2026-11-25)
+
+
+**Requires Home Assistant 2026.12.0.devXXX or greater**
+
+### 🐞 Bug Fixes
+
+* Update ha-user-badge for `--uix-image-for-<entity_id>` for Home Assistant 2026.12 ([b223375](https://github.com/Lint-Free-Technology/uix/commit/b2233757d8d4a91decae3f0ff8cd21ec419ccb68))
+
 ## [9.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.0...v9.2.0-beta.1) (2026-11-23)
 
 
