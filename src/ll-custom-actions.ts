@@ -22,6 +22,53 @@ interface PopoverDialogParams {
   dismissible: boolean;
 }
 
+type ToastText = string | {
+  translationKey: string;
+  args?: Record<string, string | number>;
+};
+
+interface ToastActionData extends Record<string, any> {
+  tap_action?: Record<string, any>;
+  text?: ToastText;
+  icon?: string;
+  keepOpen?: boolean;
+}
+
+interface ToastData extends Record<string, any> {
+  supportingText?: ToastText;
+  action?: ToastActionData;
+  secondary_action?: ToastActionData;
+}
+
+async function resolveToastIcon(icon: string, base: Element): Promise<string | undefined> {
+  const iconElement = document.createElement("ha-icon") as HTMLElement & { icon?: string };
+  iconElement.icon = icon;
+  iconElement.style.display = "none";
+  base.appendChild(iconElement);
+  try {
+    return await new Promise<string | undefined>((resolve) => {
+      const deadline = Date.now() + 2000;
+      const check = () => {
+        const svg = iconElement.shadowRoot?.querySelector("ha-svg-icon") as (HTMLElement & {
+          path?: string;
+          secondaryPath?: string;
+          viewBox?: string;
+        }) | null;
+        if (svg?.path) {
+          // Toast actions accept only one path in the standard 24 by 24 viewBox.
+          const viewBox = svg.viewBox?.trim().split(/[\s,]+/).join(" ");
+          resolve(!svg.secondaryPath && (!viewBox || viewBox === "0 0 24 24") ? svg.path : undefined);
+        }
+        else if (Date.now() >= deadline) resolve(undefined);
+        else setTimeout(check, 50);
+      };
+      check();
+    });
+  } finally {
+    iconElement.remove();
+  }
+}
+
 // The Home Assistant dialog manager tracks one open dialog per tag. Reuse
 // tags across openings and reserve separate tags for simultaneous popovers.
 class UixPopoverDialog extends HTMLElement {
@@ -328,7 +375,7 @@ export class Actions {
     });
     base.dispatchEvent(event);
   }
-  static async toast(data: Record<string, any>) {
+  static async toast(data: ToastData) {
     const dataExtensible = { ...data };
     const base = await hass_base_el();
     const eventName = "hass-notification";
@@ -343,27 +390,32 @@ export class Actions {
         })
       );
     };
-    if (dataExtensible.action && typeof dataExtensible.action === "object") {
-      const tapAction = dataExtensible.action.tap_action ? { ...dataExtensible.action.tap_action } : {};
-      dataExtensible.action = {
-        ...dataExtensible.action,
+    const makeToastAction = async (action: ToastActionData) => {
+      const { tap_action, ...toastAction } = action;
+      const tapAction = tap_action ? { ...tap_action } : {};
+      if (typeof toastAction.icon === "string" && /^[^:\s]+:[^:\s]+$/.test(toastAction.icon)) {
+        const iconName = toastAction.icon;
+        toastAction.icon = await resolveToastIcon(iconName, base);
+        if (!toastAction.icon) {
+          console.warn(`UIX: Could not resolve toast icon "${iconName}"`);
+          toastAction.text ??= iconName;
+        }
+      }
+      return {
+        ...toastAction,
         action: () => {
           _triggerHassAction(tapAction, base as HTMLElement);
         },
       };
-      delete dataExtensible.action.tap_action;
-    }
-    if (dataExtensible.secondary_action && typeof dataExtensible.secondary_action === "object") {
-      dataExtensible.secondaryAction = { ...dataExtensible.secondary_action };
+    };
+    const [primary, secondary] = await Promise.all([
+      dataExtensible.action && typeof dataExtensible.action === "object" ? makeToastAction(dataExtensible.action) : undefined,
+      dataExtensible.secondary_action && typeof dataExtensible.secondary_action === "object" ? makeToastAction(dataExtensible.secondary_action) : undefined,
+    ]);
+    if (primary) dataExtensible.action = primary;
+    if (secondary) {
+      dataExtensible.secondaryAction = secondary;
       delete dataExtensible.secondary_action;
-      const secondaryAction = dataExtensible.secondaryAction.tap_action ? { ...dataExtensible.secondaryAction.tap_action } : {};
-      dataExtensible.secondaryAction = {
-        ...dataExtensible.secondaryAction,
-        action: () => {
-          _triggerHassAction(secondaryAction, base as HTMLElement);
-        },
-      };
-      delete dataExtensible.secondaryAction.tap_action;
     }
     const event = new CustomEvent(eventName, {
       detail: dataExtensible,
