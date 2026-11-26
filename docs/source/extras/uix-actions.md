@@ -100,6 +100,9 @@ tap_action:
 
 ## `toast` - show Home Assistant toast notification
 
+!!! info
+    `supportingText`, `action.keepOpen` and `action.icon` available in 9.1.0-beta.3
+
 Shows a Home Assistant toast notification.
 
 | config | setting | default | description |
@@ -108,19 +111,26 @@ Shows a Home Assistant toast notification.
 | `data:` | - | - | Toast options. |
 | | `id` | - | `id` of the toast message. Provide the same `id` to replace any existing toast message with the same `id` |
 | | `message` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `supportingText` | - | String or object rendered as smaller supporting text below `message`. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
 | | `duration` | `4000` | Duration in ms for which to show the toast. Any duration less than 4000 will be set to 4000 (4 seconds). Use `-1` to have the toast to show indefinitely - will be replaced if another toast is shown. |
 | | `dismissable` | `false` | Shows a close icon to allow the toast message to be immediately dismissed by the user. |
 | | `bottomOffset` | `0` | A positive offset to add to the vertical position above the bottom of the Browser window. toast messages show at a position `--ha-space-4` (Default: 16px) above the bottom of safe area of the Browser window. |
 | | `action` | - | If provided shows a button which will execute the configured `action.tap_action` when clicked. |
 | | `action.primary` | - | If `true` renders the `action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
-| | `action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `action.text` | Required when `action.icon` is omitted | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. When supplied with `action.icon`, it becomes the icon button's accessible label. |
+| | `action.icon` | Required when `action.text` is omitted | An icon name such as `mdi:lightbulb` or an SVG path. When provided, renders an icon button instead of `action.text`. |
+| | `action.keepOpen` | `false` | If `true`, leaves the toast open after the action runs. |
 | | `action.tap_action` | **REQUIRED** | Home Assistant action config |
 | | `secondary_action` | - | If provided shows a button to the left of the `action` button which will execute the configured `secondary_action.tap_action` when clicked. |
 | | `secondary_action.primary` | - | If `true` renders the `secondary_action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
-| | `secondary_action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `secondary_action.text` | Required when `secondary_action.icon` is omitted | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. When supplied with `secondary_action.icon`, it becomes the icon button's accessible label. |
+| | `secondary_action.icon` | Required when `secondary_action.text` is omitted | An icon name such as `mdi:lightbulb` or an SVG path. When provided, Home Assistant renders an icon button instead of `secondary_action.text`. |
+| | `secondary_action.keepOpen` | `false` | If `true`, leaves the toast open after the action runs. |
 | | `secondary_action.tap_action` | **REQUIRED** | Home Assistant action config |
 
-Example toast with action with translated action text.
+Example toast with supporting text and an action that stays open.
+
+Named icons, including custom icon packs, are resolved before showing the toast. Toast actions support icons with a single SVG path and the standard `0 0 24 24` viewBox. If an icon cannot be loaded within two seconds or uses an unsupported format, the toast shows the action text instead (or the icon name if no text was provided). Supply `text` with an icon to provide an accessible label.
 
 ```yaml
 type: tile
@@ -131,13 +141,14 @@ tap_action:
     action: toast
     data:
       message: "Bed Light"
+      supportingText: "The light can be controlled from this notification."
       duration: 10000
       dismissable: true
       bottomOffset: 550
       action:
-        primary: true
-        text:
-          translationKey: ui.dialogs.more_info_control.light.toggle
+        icon: mdi:lightbulb
+        text: Toggle bed light
+        keepOpen: true
         tap_action:
           action: perform-action
           perform_action: light.toggle
