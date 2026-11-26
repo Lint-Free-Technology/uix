@@ -1,3 +1,19 @@
+## [9.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.1...v9.2.0-beta.2) (2026-11-25)
+
+
+**Requires Home Assistant 2026.12.0.devXXX or greater**
+
+### 🐞 Bug Fixes
+
+* Update ha-user-badge for `--uix-image-for-<entity_id>` for Home Assistant 2026.12 ([b223375](https://github.com/Lint-Free-Technology/uix/commit/b2233757d8d4a91decae3f0ff8cd21ec419ccb68))
+
+## [9.2.0-beta.1](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.0...v9.2.0-beta.1) (2026-11-23)
+
+
+### ⭐ New Features
+
+* **lock:** Add retry and failed lock actions with lock even data repalcements (data repalcements also added to unlocked action) ([#738](https://github.com/Lint-Free-Technology/uix/issues/738)) ([9528baa](https://github.com/Lint-Free-Technology/uix/commit/9528baaee9cedc2cfb862cda2d6391b8a1fc647c))
+
 ## [9.2.0-beta.0](https://github.com/Lint-Free-Technology/uix/compare/v9.1.0...v9.2.0-beta.0) (2026-11-23)
 
 

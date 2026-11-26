@@ -43,8 +43,16 @@ def popover_page(page: Page) -> Page:
           document.body.append(base);
           window.popovers = [];
           window.dialogs = [];
+          window.hassActions = [];
+          window.toastNotifications = [];
           window.errors = [];
           console.error = (...args) => window.errors.push(args[0]);
+          base.addEventListener('hass-action', ({ detail }) =>
+            window.hassActions.push(detail)
+          );
+          base.addEventListener('hass-notification', ({ detail }) =>
+            window.toastNotifications.push(detail)
+          );
           base.addEventListener('show-dialog', ({ detail }) => {
             const dialog = document.createElement(detail.dialogTag);
             dialog.params = detail.dialogParams;
@@ -105,6 +113,7 @@ def popover_page(page: Page) -> Page:
             window.popovers.push(popover);
             if (opened) popover.dispatchEvent(new Event('opened'));
           };
+          window.showToast = data => module.exports.Actions.toast(data);
 
           // Track pending timers to check early-close cleanup without real waits.
           const set = window.setTimeout.bind(window);
@@ -134,7 +143,6 @@ def test_timeout_closes_only_after_opening(popover_page: Page) -> None:
     page.clock.run_for(30000)
     assert page.evaluate("popovers[0].open") is True
     assert page.evaluate("pendingTimers.size") == 0
-
     page.evaluate("popovers[0].dispatchEvent(new Event('opened'))")
     page.clock.run_for(19999)
     assert page.evaluate("popovers[0].open") is True
@@ -144,6 +152,115 @@ def test_timeout_closes_only_after_opening(popover_page: Page) -> None:
     assert page.evaluate("popovers[0].isConnected") is True
     page.evaluate("popovers[0].dispatchEvent(new Event('closed'))")
     assert page.evaluate("popovers[0].isConnected") is False
+    assert page.evaluate("pendingTimers.size") == 0
+
+
+def test_toast_forwards_supporting_text_and_icon_action_options(popover_page: Page) -> None:
+    page = popover_page
+    page.evaluate(
+        """showToast({
+          message: 'Starting',
+          supportingText: 'Some features may not be ready',
+          action: {
+            icon: 'M0 0',
+            keepOpen: true,
+            tap_action: { action: 'more-info', entity: 'light.bed_light' },
+          },
+          secondary_action: {
+            text: 'Toggle',
+            icon: 'M1 1',
+            keepOpen: true,
+            tap_action: { action: 'toggle' },
+          },
+        })"""
+    )
+
+    assert page.evaluate(
+        """() => {
+          const toast = toastNotifications[0];
+          return {
+            supportingText: toast.supportingText,
+            action: {
+              icon: toast.action.icon,
+              keepOpen: toast.action.keepOpen,
+              hasAction: typeof toast.action.action === 'function',
+              hasTapAction: 'tap_action' in toast.action,
+              hasText: 'text' in toast.action,
+            },
+            secondaryAction: {
+              text: toast.secondaryAction.text,
+              icon: toast.secondaryAction.icon,
+              keepOpen: toast.secondaryAction.keepOpen,
+              hasAction: typeof toast.secondaryAction.action === 'function',
+              hasTapAction: 'tap_action' in toast.secondaryAction,
+            },
+          };
+        }"""
+    ) == {
+        "supportingText": "Some features may not be ready",
+        "action": {
+            "icon": "M0 0",
+            "keepOpen": True,
+            "hasAction": True,
+            "hasTapAction": False,
+            "hasText": False,
+        },
+        "secondaryAction": {
+            "text": "Toggle",
+            "icon": "M1 1",
+            "keepOpen": True,
+            "hasAction": True,
+            "hasTapAction": False,
+        },
+    }
+
+    page.evaluate("toastNotifications[0].action.action()")
+    page.evaluate("toastNotifications[0].secondaryAction.action()")
+    assert page.evaluate("hassActions.map(({ detail }) => detail.config.tap_action)") == [
+        {"action": "more-info", "entity": "light.bed_light"},
+        {"action": "toggle"},
+    ]
+
+
+def test_toast_resolves_named_icons_and_falls_back_on_failure(popover_page: Page) -> None:
+    page = popover_page
+    page.evaluate("""() => {
+      customElements.define('ha-icon', class extends HTMLElement {
+        connectedCallback() {
+          const svg = document.createElement('ha-svg-icon');
+          this.attachShadow({ mode: 'open' }).append(svg);
+          if (this.icon === 'mdi:lightbulb') {
+            setTimeout(() => { svg.path = 'M2 3'; }, 100);
+          }
+          if (this.icon === 'custom:lamp') {
+            setTimeout(() => { svg.path = 'M4 5'; }, 100);
+          }
+          if (this.icon === 'custom:layered') {
+            setTimeout(() => { svg.path = 'M6 7'; svg.secondaryPath = 'M8 9'; }, 100);
+          }
+        }
+      });
+      window.toastPromise = showToast({
+        message: 'Test',
+        action: { icon: 'mdi:lightbulb', text: 'Toggle' },
+        secondary_action: { icon: 'mdi:missing' },
+      });
+      window.customToastPromise = showToast({
+        message: 'Custom',
+        action: { icon: 'custom:lamp', text: 'Lamp' },
+        secondary_action: { icon: 'custom:layered', text: 'Layered' },
+      });
+    }""")
+    page.clock.run_for(2100)
+    page.evaluate("toastPromise")
+    page.evaluate("customToastPromise")
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Test').action.icon") == "M2 3"
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Test').secondaryAction.icon") is None
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Test').secondaryAction.text") == "mdi:missing"
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Custom').action.icon") == "M4 5"
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Custom').secondaryAction.icon") is None
+    assert page.evaluate("toastNotifications.find(t => t.message === 'Custom').secondaryAction.text") == "Layered"
+    assert page.evaluate("document.querySelectorAll('home-assistant > ha-icon').length") == 0
     assert page.evaluate("pendingTimers.size") == 0
 
 

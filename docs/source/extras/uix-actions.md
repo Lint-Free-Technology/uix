@@ -100,6 +100,9 @@ tap_action:
 
 ## `toast` - show Home Assistant toast notification
 
+!!! info
+    `supportingText`, `action.keepOpen` and `action.icon` available in 9.1.0-beta.3
+
 Shows a Home Assistant toast notification.
 
 | config | setting | default | description |
@@ -108,19 +111,26 @@ Shows a Home Assistant toast notification.
 | `data:` | - | - | Toast options. |
 | | `id` | - | `id` of the toast message. Provide the same `id` to replace any existing toast message with the same `id` |
 | | `message` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `supportingText` | - | String or object rendered as smaller supporting text below `message`. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
 | | `duration` | `4000` | Duration in ms for which to show the toast. Any duration less than 4000 will be set to 4000 (4 seconds). Use `-1` to have the toast to show indefinitely - will be replaced if another toast is shown. |
 | | `dismissable` | `false` | Shows a close icon to allow the toast message to be immediately dismissed by the user. |
 | | `bottomOffset` | `0` | A positive offset to add to the vertical position above the bottom of the Browser window. toast messages show at a position `--ha-space-4` (Default: 16px) above the bottom of safe area of the Browser window. |
 | | `action` | - | If provided shows a button which will execute the configured `action.tap_action` when clicked. |
 | | `action.primary` | - | If `true` renders the `action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
-| | `action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `action.text` | Required when `action.icon` is omitted | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. When supplied with `action.icon`, it becomes the icon button's accessible label. |
+| | `action.icon` | Required when `action.text` is omitted | An icon name such as `mdi:lightbulb` or an SVG path. When provided, renders an icon button instead of `action.text`. |
+| | `action.keepOpen` | `false` | If `true`, leaves the toast open after the action runs. |
 | | `action.tap_action` | **REQUIRED** | Home Assistant action config |
 | | `secondary_action` | - | If provided shows a button to the left of the `action` button which will execute the configured `secondary_action.tap_action` when clicked. |
 | | `secondary_action.primary` | - | If `true` renders the `secondary_action` button in primary style which is filled appearance to make it stand out against the toast background. Button variant is always brand. |
-| | `secondary_action.text` | **REQUIRED** | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. |
+| | `secondary_action.text` | Required when `secondary_action.icon` is omitted | String or object. Provide string for a message without translation. Provide an object with `translationKey` and optional `args` to use a translated message from the Home Assistant translation collection. When supplied with `secondary_action.icon`, it becomes the icon button's accessible label. |
+| | `secondary_action.icon` | Required when `secondary_action.text` is omitted | An icon name such as `mdi:lightbulb` or an SVG path. When provided, Home Assistant renders an icon button instead of `secondary_action.text`. |
+| | `secondary_action.keepOpen` | `false` | If `true`, leaves the toast open after the action runs. |
 | | `secondary_action.tap_action` | **REQUIRED** | Home Assistant action config |
 
-Example toast with action with translated action text.
+Example toast with supporting text and an action that stays open.
+
+Named icons, including custom icon packs, are resolved before showing the toast. Toast actions support icons with a single SVG path and the standard `0 0 24 24` viewBox. If an icon cannot be loaded within two seconds or uses an unsupported format, the toast shows the action text instead (or the icon name if no text was provided). Supply `text` with an icon to provide an accessible label.
 
 ```yaml
 type: tile
@@ -131,13 +141,14 @@ tap_action:
     action: toast
     data:
       message: "Bed Light"
+      supportingText: "The light can be controlled from this notification."
       duration: 10000
       dismissable: true
       bottomOffset: 550
       action:
-        primary: true
-        text:
-          translationKey: ui.dialogs.more_info_control.light.toggle
+        icon: mdi:lightbulb
+        text: Toggle bed light
+        keepOpen: true
         tap_action:
           action: perform-action
           perform_action: light.toggle
@@ -350,6 +361,20 @@ tap_action:
 
 `locked_action` accepts any ordinary Home Assistant action object, including `perform-action`, `toggle`, `more-info`, `navigate`, and `fire-dom-event`.
 
+### Action data substitutions
+
+Lock actions can substitute runtime values in their `data:`. This is not template rendering: use an exact `$uix.*` token as a data value, not `{{ }}`. UIX resolves tokens recursively in maps and lists, preserves their type, and leaves ordinary strings unchanged. It never substitutes action names, targets, or data keys.
+
+| Token | Value |
+| --- | --- |
+| `$uix.user` or `$uix.user.name` | Current Home Assistant user's name, or `null` if unavailable. |
+| `$uix.user.id` | Current Home Assistant user's stable ID, or `null` if unavailable. |
+| `$uix.user.is_admin` | Whether the current user is an administrator. |
+| `$uix.retry` or `$uix.retry.count` | One-based wrong-code attempt count. This is `0` for a successful `locked_action`. |
+| `$uix.browser` or `$uix.browser_id` | Browser Mod browser ID, `CAST` for a Cast session, or `null` when neither is available. |
+
+The substitutions are available to `retry_action`, `failed_action`, `locked_action`, and a Forge lock spark's `unlocked_action`. This makes a nested `perform-action` suitable for passing useful script fields without adding another UIX template syntax.
+
 ### Lock matching
 
 `locks` is an ordered list. The first matching active entry determines the challenge. If no active entry matches, the first matching `active: false` entry allows the action without a challenge.
@@ -376,8 +401,8 @@ tap_action:
 | `retry_delay` | number or string | — | Delay after a wrong code before another attempt. Numbers are milliseconds; strings accept units such as `"10s"`. |
 | `max_retries` | number | — | Wrong-code attempts allowed before the extended lockout. |
 | `max_retries_delay` | number or string | `30000` | Lockout duration after `max_retries`. Numbers are milliseconds; strings accept units such as `"30s"` or `"5m"`. |
-| `retry_event` | string | — | Home Assistant event to fire after every wrong code entry. |
-| `failed_event` | string | — | Home Assistant event to fire when a wrong entry reaches `max_retries`. |
+| `retry_action` | object | — | Home Assistant action to run after every wrong code entry. |
+| `failed_action` | object | — | Home Assistant action to run when a wrong entry reaches `max_retries`. |
 
 ### Code dialog
 
@@ -393,7 +418,7 @@ Use `code_dialog` to customise the code or passphrase prompt.
 
 Retry state is retained in the current browser session. Set `id` whenever a retry delay or lockout matters, especially if dashboard configuration can be regenerated by a template or another custom card: an explicit ID survives control recreation. The same ID shares a retry count, so different protected actions should use different IDs.
 
-`retry_event` fires for every wrong code entry. When that entry reaches `max_retries`, `failed_event` also fires. Both Home Assistant bus events include `user`, `retry_count`, and `browser`; `browser_id` is included when available.
+`retry_action` runs for every wrong code entry. When that entry reaches `max_retries`, `failed_action` also runs after it. Both accept an ordinary Home Assistant action object, such as `perform-action` calling a script or notification service.
 
 ```yaml
 tap_action:
@@ -410,7 +435,35 @@ tap_action:
           admins: true
           max_retries: 3
           max_retries_delay: 5m
+          retry_action:
+            action: perform-action
+            perform_action: script.notify_uix_lock_attempt
+            data:
+              user: "$uix.user"
+              retry: "$uix.retry"
+              browser_id: "$uix.browser_id"
       locked_action:
         action: perform-action
         perform_action: homeassistant.restart
+```
+
+Define the script in Home Assistant and replace `mobile_app_your_phone` with your mobile app's notify action. The `{{ }}` expressions below are ordinary Home Assistant script templates, not UIX substitutions.
+
+```yaml
+script:
+  notify_uix_lock_attempt:
+    alias: Notify UIX Lock Attempt
+    fields:
+      user:
+        required: true
+      retry:
+        required: true
+      browser_id:
+        required: false
+    sequence:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: UIX lock attempt
+          message: >-
+            {{ user }} entered an incorrect code (attempt {{ retry }}) from {{ browser_id or "an unknown browser" }}.
 ```
