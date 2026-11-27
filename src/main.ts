@@ -8,6 +8,7 @@ import "./patch/ha-entity-picture";
 import "./patch/hui-map-overview";
 import "./forge/uix-forge-editor";
 import "./forge/uix-forge";
+import "./forge/uix-forge-strategy";
 import "./uix";
 
 import "./patch/hui-card";

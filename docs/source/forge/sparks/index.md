@@ -4,10 +4,13 @@ description: Sparks are self-contained behaviours that augment an element forged
 ---
 # Sparks
 
-Sparks are optional behaviours added to a [UIX Forge](../index.md) forged element via the `forge.sparks` list. Each spark has a `type` key and its own configuration options.
+Add Sparks to the `forge.sparks` list to extend what Forge does. Each Spark has a `type` and its own options. Entities and Configuration Sparks also work with [Forge strategies](../forge.md#strategies).
 
 Available sparks:
 
+- :material-format-list-bulleted: [Entities](entities.md) — use auto-entities filters to fill a list or collect entity IDs for a patch or template.
+- :material-file-tree: [Configuration](config.md) — add, change, or remove parts of a config, including the output of a Home Assistant strategy.
+- :material-home-analytics: [Home Summary](home-summary.md) — choose which entities count toward a native Home Overview summary.
 - :speech_balloon: [Tooltip](./tooltip.md) — attach a styled tooltip to any element within the forged element.
 - :material-button-cursor: [Button](button.md) — insert an interactive `ha-button` element as a sibling after any element within the forged element.
 - :material-badge-account-horizontal-outline: [Badge](badge.md) — insert a Web Awesome-styled `uix-badge` as a sibling before or after any element within the forged element.

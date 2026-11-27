@@ -1,0 +1,31 @@
+id: forge_strategy_base
+description: "UIX Forge delegates an HA View strategy before a Configuration Spark augments its generated config"
+view_path: forge-strategy-base
+
+dashboard:
+  title: "Forge strategy base"
+  views:
+    - path: forge-strategy-base
+      strategy:
+        type: custom:uix-forge
+        forge:
+          mold: strategy
+          sparks:
+            - type: config
+              patches:
+                - op: prepend
+                  path: /cards
+                  value:
+                    type: markdown
+                    content: "## Added by Forge"
+                    grid_options:
+                      columns: full
+        element:
+          type: original-states
+
+assertions:
+  - type: text_startswith
+    root: ha-markdown
+    selector: h2
+    expected: "Added by Forge"
+

@@ -1,0 +1,35 @@
+id: forge_entities_sections
+description: "UIX Forge Entities Spark adds section headings above sorted entity groups"
+view_path: forge-entities-sections
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: entities
+        path: /entities
+        entities:
+          - light.bed_light
+          - sensor.attic_temperature
+        sort:
+          - method: domain
+            section: true
+          - method: name
+  element:
+    type: entities
+    title: Grouped entity headings
+    entities: []
+
+assertions:
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElementConfig.entities.0.type
+    expected: section
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElementConfig.entities.2.type
+    expected: section
+  - type: snapshot
+    name: "79_forge_entities_sections"
+    threshold: 0.02

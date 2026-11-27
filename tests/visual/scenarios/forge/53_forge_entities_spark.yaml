@@ -1,0 +1,33 @@
+id: forge_entities_spark
+description: "UIX Forge Entities Spark generates Tile card configs from matching Home Assistant entities"
+view_path: forge-entities-spark
+
+card:
+  type: custom:uix-forge
+  forge:
+    mold: card
+    sparks:
+      - type: entities
+        path: /cards
+        element:
+          type: tile
+        entities:
+          - light.bed_light
+        filter:
+          include:
+            - domain: light
+          exclude:
+            - entity_id: light.ceiling_lights
+  element:
+    type: grid
+    columns: 1
+    cards: []
+
+assertions:
+  - type: shadow_dom_host_property_text_equals
+    selector: uix-forge
+    property: forgedElementConfig.cards.0.entity
+    expected: light.bed_light
+  - type: snapshot
+    name: "76_forge_entities_spark"
+    threshold: 0.02

@@ -1,6 +1,6 @@
 import { hass } from "./hass";
 import { BrowserID } from "./browser_id";
-import { getPanelState } from "./panel";
+import { getKnownPanelState, getPanelState } from "./panel";
 
 interface CachedTemplate {
   template: string;
@@ -89,10 +89,19 @@ export function hasTemplate(str) {
   return String(str).includes("{%") || String(str).includes("{{");
 }
 
+export function standardTemplateVariables(hs: any, variables: Record<string, any> = {}, panelState = getKnownPanelState()): Record<string, any> {
+  return {
+    user: hs.user.name,
+    browser: BrowserID(),
+    ...panelState,
+    ...variables,
+  };
+}
+
 /** Render a template once without creating a websocket subscription. */
-export async function render_template(template: string, variables: Record<string, any> = {}): Promise<string> {
+export async function render_template(template: string, variables: Record<string, any> = {}, includeStandardContext = false): Promise<string> {
   const hs = await hass();
-  const result = await hs.callApi("POST", "template", { template, variables });
+  const result = await hs.callApi("POST", "template", { template, variables: includeStandardContext ? standardTemplateVariables(hs, variables) : variables });
   if (typeof result !== "string") throw new Error("Home Assistant returned a non-string template result");
   return result;
 }
@@ -107,12 +116,7 @@ export async function bind_template(
   const panelState = await getPanelState();
   const connection = hs.connection;
 
-  variables = {
-    user: hs.user.name,
-    browser: BrowserID(),
-    ...panelState,
-    ...variables,
-  };
+  variables = standardTemplateVariables(hs, variables, panelState);
 
   const cacheKey = JSON.stringify([template, variables]);
   let cache = cachedTemplates[cacheKey];

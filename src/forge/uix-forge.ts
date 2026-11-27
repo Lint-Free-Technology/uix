@@ -23,7 +23,7 @@ import { getLovelaceRoot, hass, translate } from "../helpers/hass";
 import { bind_template, hasTemplate, unbind_template } from "../helpers/templates";
 import { apply_uix, buildMacros, buildBillets, UixConfig } from "../helpers/apply_uix";
 import { UIX_FORGE_MOLD_CLASSES, UixForgeMold } from "./molds/uix-mold";
-import { UixForgeSparkController } from "./sparks/uix-spark-controller";
+import { HomeSummaryContextProjection, UixForgeSparkController } from "./sparks/uix-spark-controller";
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -153,6 +153,12 @@ function _activeLayeredOverrideValues(
     hasActiveChild = true;
   }
   return hasActiveChild ? result : LAYERED_OVERRIDE_INACTIVE;
+}
+
+/** Return the Forge-owned portion of a layered overlay after disabled paths. */
+export function activeLayeredOverrideValues(value: any, disabledPaths: UixForgeConfigPath[] = []): any {
+  const active = _activeLayeredOverrideValues(value, disabledPaths);
+  return active === LAYERED_OVERRIDE_INACTIVE ? {} : active;
 }
 
 function _composeLayeredValue(
@@ -433,6 +439,9 @@ export class UixForge extends LitElement {
   private _refreshOperation = 0;
   private _cancelTemplateRefresh?: () => void;
   private _templateGeneration = 0;
+  private _transformError?: string;
+  private _homeSummaryContext?: HomeSummaryContextProjection;
+  private _homeSummaryContextOwner?: unknown;
 
   constructor() {
       super();
@@ -452,6 +461,52 @@ export class UixForge extends LitElement {
 
   public static async getConfigElement(): Promise<HTMLElement> {
     return document.createElement("uix-forge-editor");
+  }
+
+  /** Give a wrapped Home Summary card a local filtered source universe. */
+  public setHomeSummaryExclusions(owner: unknown, ids: readonly string[]): void {
+    this._homeSummaryContextOwner = owner;
+    this._homeSummaryContext ??= new HomeSummaryContextProjection(this);
+    this._homeSummaryContext.setExcluded(ids);
+    this._homeSummaryContext.refresh(this.hass);
+  }
+
+  /** Keep the local projection live without replacing its native card. */
+  public refreshHomeSummaryContext(owner: unknown): void {
+    if (this._homeSummaryContextOwner !== owner) return;
+    this._homeSummaryContext?.refresh(this.hass);
+  }
+
+  /** Stop a disconnected or replaced Home Summary Spark from owning the projection. */
+  public clearHomeSummaryExclusions(owner: unknown): void {
+    if (this._homeSummaryContextOwner !== owner) return;
+    this._homeSummaryContextOwner = undefined;
+    this._homeSummaryContext?.clear();
+  }
+
+  /** Whether an element template observes a query-only Entities Spark result. */
+  public hasQueryOnlyEntityTemplateReference(): boolean {
+    const containsEntityResult = (value: any): boolean => {
+      // Any use of uixForge may reach entities through bracket access, an
+      // alias, or a macro. Refresh conservatively when it is referenced.
+      if (typeof value === "string") return /\buixForge\b/.test(value);
+      if (Array.isArray(value)) return value.some(containsEntityResult);
+      return value !== null && typeof value === "object" && Object.values(value).some(containsEntityResult);
+    };
+    try {
+      const resolved = this._resolveFoundry({ ...this.config });
+      // An unresolved Foundry may still contain a consumer. Prefer a normal
+      // template refresh over leaving that consumer stale when it resolves.
+      // Imported macros may consume the query without their source appearing
+      // in the configuration, so their presence requires a conservative rebind.
+      return resolved === null
+        || Object.keys(resolved.forge?.macros ?? {}).length > 0
+        || Object.keys(resolved.forge?.billets ?? {}).length > 0
+        || containsEntityResult(resolved.element)
+        || containsEntityResult(resolved.forge?.uix);
+    } catch (_error) {
+      return true;
+    }
   }
 
   private _applyBlankElementType(elementConfig: Record<string, any>, forgeConfig: Record<string, any> = this.forgeConfig): void {
@@ -669,8 +724,7 @@ export class UixForge extends LitElement {
     this._clearTemplateBindings(this._layeredOverridesConfig);
     this._layeredOverrideTemplatePaths = this._collectLayeredTemplatePaths(values);
     this._layeredOverridesConfig.nestedTemplateOpen = this._templateNestingPairs().map(({ open }) => open);
-    const activeValues = _activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
-    this._layeredOverridesConfig.config = activeValues === LAYERED_OVERRIDE_INACTIVE ? {} : activeValues;
+    this._layeredOverridesConfig.config = activeLayeredOverrideValues(values, this.config.element_disabled_paths ?? []);
     this._refreshLayeredForgedElement();
   }
 
@@ -822,12 +876,7 @@ export class UixForge extends LitElement {
     const { refreshOperation, cancelled } = this.beginTemplateRefresh();
     const templateGeneration = this._templateGeneration;
     const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-    const templatesBound = Promise.all([
-      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-      this._forgeConfig.configIsReady(),
-      elementConfigBuilder.configIsReady()
-    ]);
+    const templatesBound = this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration);
     void Promise.race([
       templatesBound.then(() => true),
       cancelled.then(() => false),
@@ -838,7 +887,6 @@ export class UixForge extends LitElement {
       }
       this.templatesReady = true;
       this.refreshForge([]);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }, (err) => {
       console.error("UIX Forge: Error applying forge config:", err);
     }).then(() => this.completeTemplateRefresh(refreshOperation));
@@ -868,10 +916,32 @@ export class UixForge extends LitElement {
 
   get forgedElementConfig() {
     const config = this._layeredMode ? this._layeredForgedElementConfig : this._forgedElementConfig.config;
-    if (!config?.uix) return config;
-    const mergedUix = this._mergeForgeUix(config.uix);
-    if (mergedUix === config.uix) return config;
-    return { ...config, uix: mergedUix };
+    try {
+      const mergedConfig = !config?.uix
+        ? config
+        : (() => {
+          const mergedUix = this._mergeForgeUix(config.uix);
+          return mergedUix === config.uix ? config : { ...config, uix: mergedUix };
+        })();
+      const transformed = this._sparkController.transformConfig(mergedConfig);
+      this._transformError = undefined;
+      return transformed;
+    } catch (error: any) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (this._transformError !== message) console.error("UIX Forge: Error applying transform Spark:", error);
+      this._transformError = message;
+      return this._transformErrorConfig(message, config);
+    }
+  }
+
+  /** Build a valid target configuration for the active mold's native renderer. */
+  private _transformErrorConfig(message: string, originalConfig: any): any {
+    const content = `### UIX Forge\n\nUnable to apply a configuration transform:\n\n> ${message}`;
+    if (this._mold?.isBadge()) return { type: "error", error: message, origConfig: originalConfig };
+    if (this._mold?.isRow()) return { type: "section", label: `UIX Forge: ${message}` };
+    if (this._mold?.isPictureElement()) return { type: "icon", icon: "mdi:alert-circle", title: `UIX Forge: ${message}` };
+    if (this._mold?.isSection()) return { type: "grid", cards: [{ type: "markdown", content }] };
+    return { type: "markdown", content };
   }
 
   set forgedElementConfig(config: any) {
@@ -897,6 +967,10 @@ export class UixForge extends LitElement {
     if (this.forgedElement?.hidden) return true;
     let error = false;
     error = this._mold.isError();
+    // A transform failure is Forge-owned and must remain visible long enough
+    // to diagnose it, even when ordinary Home Assistant target errors are
+    // normally hidden by forge.show_error.
+    if (this._transformError) return false;
     if (error) return !this._showError;
     return this.hiddenByConfig() || this._mold.hidden();
   }
@@ -975,16 +1049,10 @@ export class UixForge extends LitElement {
       }
       const templateGeneration = this._templateGeneration;
       const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-      Promise.all([
-        this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-        this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-        this._forgeConfig.configIsReady(),
-        elementConfigBuilder.configIsReady()
-      ]).then(() => {
+      this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration).then(() => {
         if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
         this.templatesReady = true;
         this.refreshForge([]);
-        this._sparkController.setConfig(this.forgeConfig.sparks);
       });
     }
   }
@@ -1049,12 +1117,31 @@ export class UixForge extends LitElement {
     }
   }
 
+  /**
+   * Structural JSON is meaningful for layered overrides and the data-bearing
+   * fields of transform Sparks. Ordinary Forge template values deliberately
+   * retain the long-standing scalar-string behaviour.
+   */
+  private _parseStructuralSparkTemplateResult(path: string[]): boolean {
+    if (path[0] !== "sparks" || !/^(0|[1-9]\d*)$/.test(path[1] ?? "")) return false;
+    const spark = this._forgeConfig.config?.sparks?.[Number(path[1])];
+    if (spark?.type === "config") {
+      return path[2] === "patches" && /^(0|[1-9]\d*)$/.test(path[3] ?? "") && path[4] === "value";
+    }
+    if (spark?.type === "entities") {
+      return ["entities", "filter", "sort", "element"].includes(path[2]);
+    }
+    return false;
+  }
+
   private async bindTemplates(
     base: any,
     current: any = undefined,
     path: string[] = [],
-    parseLayeredResults = false,
-    templateGeneration = this._templateGeneration
+    parseStructuralResults = false,
+    templateGeneration = this._templateGeneration,
+    includeQueryOnlyEntities = true,
+    deferInitialRefresh = false,
   ) {
     const hs = await hass();
     if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
@@ -1068,7 +1155,7 @@ export class UixForge extends LitElement {
       if (k === "uix") continue;
       const currentPath = [...path, k];
       if (typeof current[k] === "object" || Array.isArray(current[k])) {
-        await this.bindTemplates(base, current[k], currentPath, parseLayeredResults, templateGeneration);
+        await this.bindTemplates(base, current[k], currentPath, parseStructuralResults, templateGeneration, includeQueryOnlyEntities, deferInitialRefresh);
       } else if (
         typeof current[k] === "string" &&
         this._stripPassthroughNesting(current[k]) !== current[k] &&
@@ -1100,7 +1187,7 @@ export class UixForge extends LitElement {
           if (typeof res === "string") {
             res = translate(hs, res);
           }
-          if (parseLayeredResults) {
+          if (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath)) {
             const parsed = this._parseLayeredTemplateValue(res);
             res = parsed.value;
             opaque = parsed.opaque;
@@ -1109,14 +1196,14 @@ export class UixForge extends LitElement {
           // A layered overlay is composed separately from its template builder.
           // Recompose as soon as an overlay value arrives, including during the
           // initial binding pass before templatesReady becomes true.
-          if (parseLayeredResults || this.templatesReady) {
+          if (this.templatesReady || (!deferInitialRefresh && (parseStructuralResults || this._parseStructuralSparkTemplateResult(currentPath)))) {
             base.refreshCallback?.(currentPath);
           }
         };
         await bind_template(
           callback,
           `${macroStr}${billetStr}${template}`,
-          { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(), ...this._mold.templateVariables() },
+          { config: this._templateConfig(), uixForge: this._sparkController.templateVariables(includeQueryOnlyEntities), ...this._mold.templateVariables() },
           UIX_FORGE_DEFAULT_TEMPLATE_VALUE
         );
         if (!this.isTemplateGenerationCurrent(templateGeneration)) {
@@ -1128,6 +1215,22 @@ export class UixForge extends LitElement {
         base.nested = { keys: currentPath, value: translate(hs, current[k]) };
       }
     }
+  }
+
+  /** Resolve Spark source templates before binding element templates that consume query results. */
+  private async bindForgeAndElementTemplates(elementConfigBuilder: any, templateGeneration: number) {
+    await Promise.all([
+      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration, false, true),
+      this._forgeConfig.configIsReady(),
+    ]);
+    if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    await this._sparkController.prepareSelection(this.forgeConfig.sparks, hass);
+    if (!this.isTemplateGenerationCurrent(templateGeneration)) return;
+    this._sparkController.setConfig(this.forgeConfig.sparks);
+    await Promise.all([
+      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
+      elementConfigBuilder.configIsReady(),
+    ]);
   }
 
   private invalidateTemplates() {
@@ -1240,12 +1343,7 @@ export class UixForge extends LitElement {
       this.forgedElementConfig = elementConfig;
     }
     const elementConfigBuilder = this._layeredMode ? this._layeredOverridesConfig : this._forgedElementConfig;
-    const templatesBound = Promise.all([
-      this.bindTemplates(this._forgeConfig, undefined, [], false, templateGeneration),
-      this.bindTemplates(elementConfigBuilder, undefined, [], this._layeredMode, templateGeneration),
-      this._forgeConfig.configIsReady(),
-      elementConfigBuilder.configIsReady()
-    ]);
+    const templatesBound = this.bindForgeAndElementTemplates(elementConfigBuilder, templateGeneration);
     void Promise.race([
       templatesBound.then(() => true),
       cancelled.then(() => false),
@@ -1263,11 +1361,44 @@ export class UixForge extends LitElement {
     // yet when Lit first updates (e.g. preview set by Home Assistant). The full refresh
     // after the config is applied covers what is skipped here.
     if (!this._mold) return;
+    let priorQueryOnlyResults: string | undefined;
+    let priorQueryOnlyResultsFailed = false;
     if (path.includes("sparks")) {
-      this._sparkController.setConfig(this.forgeConfig.sparks);
+      try {
+        priorQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
+      } catch (_error) {
+        // A source template may temporarily have produced an invalid query.
+        // Do not let that retained configuration prevent its replacement.
+        priorQueryOnlyResultsFailed = true;
+      }
+    }
+    const hasTransforms = this._sparkController.setConfig(this.forgeConfig.sparks);
+    if (path.includes("sparks")) {
+      let queryOnlyResultsChanged = false;
+      try {
+        const currentQueryOnlyResults = this._sparkController.queryOnlyEntityResultsSignature();
+        queryOnlyResultsChanged = priorQueryOnlyResultsFailed || priorQueryOnlyResults !== currentQueryOnlyResults;
+      } catch (_error) {
+        // The configuration was installed successfully but its transform is
+        // invalid. Continue to refresh below so forgedElementConfig() routes
+        // the failure through the mold-appropriate visible error target.
+      }
+      // A source template can change the IDs exposed as uixForge.entities.
+      // Rebind consumers only after the source is fully resolved; source
+      // bindings themselves defer their initial callback to avoid evaluating
+      // templateVariables while a subscription is being established.
+      if (queryOnlyResultsChanged && this.templatesReady && this.hasQueryOnlyEntityTemplateReference()) {
+        this.refreshForgeTemplates();
+        return;
+      }
+      // Both configuration-transform phases change the target's config. This
+      // must reconfigure the target itself (not merely refresh the mold), and
+      // must also run when the final Spark was removed so its original config
+      // is restored.
+      if (hasTransforms) this.refreshForgedElement([]);
+      else this._mold.refresh([]);
     } else {
       this._mold.refresh(path);
-      this._sparkController.setConfig(this.forgeConfig.sparks);
     }
     const stylingConfig = this._layeredMode
       ? this._templateConfig()
@@ -1519,6 +1650,11 @@ export class UixForge extends LitElement {
   protected updated(_changedProperties: PropertyValues): void {
     if (_changedProperties.has("hass")) {
       this.forgedElement && (this.forgedElement.hass = this.hass);
+      this._sparkController.hassChanged(_changedProperties.get("hass"), this.hass);
+      // A disconnected Home Summary Spark clears its exclusions but retains
+      // the scoped providers until its Forge is discarded. Keep that restored
+      // local context current on every later Hass update.
+      if (this._homeSummaryContextOwner === undefined) this._homeSummaryContext?.refresh(this.hass);
     }
     if (_changedProperties.has("preview")) {
       this.forgedElement && (this.forgedElement.preview = this.preview);

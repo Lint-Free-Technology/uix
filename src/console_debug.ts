@@ -26,7 +26,199 @@
  *
  *   uix_context($0)     – Context helper: reports the UIX contexts inherited by the selected
  *                         element and offers a format() probe for entity-name rules.
+ *
+ *   uix_strategy_inspect(scope, element) – Resolves direct or base Home Assistant strategy output
+ *                         and returns a path-searchable config inspector with a patch test helper.
+ *
+ *   uix_dashboard_inspect() – Reads the authored and generated configuration of the
+ *                         currently open Home panel or Lovelace dashboard, including its strategy input.
+ *
+ *   uix_entities_inspect(forge, spark?) – Inspects an active Forge Entities Spark and shows
+ *                         its generated entity IDs and filter results.
+ *
+ *   Each inspector also saves its latest result under window.uix_inspect.dashboard,
+ *   window.uix_inspect.strategy, or window.uix_inspect.entities.
  */
+
+import { applyConfigPatches } from "./forge/config-transform";
+import { entitiesSparkEntries, entitiesSparkSets } from "./forge/entities-transform";
+import { entitySelectionHass, loadSelectionRegistries, selectionRegistryKinds } from "./forge/entity-selection-registries";
+import { resolveStrategyConfig, resolveStrategyEntitiesSparks } from "./forge/uix-forge-strategy";
+import { hass } from "./helpers/hass";
+
+type StrategyScope = "dashboard" | "view" | "section";
+
+function saveInspection(kind: "dashboard" | "strategy" | "entities", report: any): string {
+  const existing = (window as any).uix_inspect;
+  const inspections = existing && typeof existing === "object" ? existing : ((window as any).uix_inspect = {});
+  inspections[kind] = report;
+  return `window.uix_inspect.${kind}`;
+}
+
+function pointerEscape(segment: string): string {
+  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
+function pointerEntries(value: any, pointer = "", entries: Array<{ path: string; value: any; preview: string }> = []) {
+  const preview = typeof value === "string"
+    ? value
+    : value === null || typeof value !== "object"
+      ? String(value)
+      : Array.isArray(value)
+        ? `Array(${value.length})`
+        : `{ ${Object.keys(value).join(", ")} }`;
+  entries.push({ path: pointer, value, preview: preview.length > 160 ? `${preview.slice(0, 157)}...` : preview });
+  if (Array.isArray(value)) value.forEach((child, index) => pointerEntries(child, `${pointer}/${index}`, entries));
+  else if (value !== null && typeof value === "object") {
+    Object.entries(value).forEach(([key, child]) => pointerEntries(child, `${pointer}/${pointerEscape(key)}`, entries));
+  }
+  return entries;
+}
+
+/** Generate and inspect the actual output of a Forge strategy before saving a Config Spark. */
+(window as any).uix_strategy_inspect = async function uix_strategy_inspect(scope: StrategyScope, element: Record<string, any>) {
+  if (!(["dashboard", "view", "section"] as string[]).includes(scope)) {
+    throw new Error("UIX strategy inspector: scope must be dashboard, view, or section.");
+  }
+  if (!element || typeof element !== "object" || Array.isArray(element)) {
+    throw new Error("UIX strategy inspector: element must be a config mapping.");
+  }
+  const generated = await resolveStrategyConfig({ forge: { mold: "strategy" }, element }, scope, await hass());
+  const entries = pointerEntries(generated);
+  const report = {
+    scope,
+    element,
+    config: generated,
+    get(path: string) {
+      const entry = entries.find((candidate) => candidate.path === path);
+      if (!entry) throw new Error(`UIX strategy inspector: no value at ${path}`);
+      return entry.value;
+    },
+    paths(term = "") {
+      const needle = String(term).toLowerCase();
+      const result = entries.filter(({ path, preview }) => !needle || `${path} ${preview}`.toLowerCase().includes(needle));
+      console.table(result.map(({ path, preview }) => ({ path: path || "(root)", preview })));
+      return result;
+    },
+    test(patches: Record<string, any>[], entitySets?: Record<string, string[]>) {
+      try {
+        const result = applyConfigPatches(generated, patches as any, entitySets);
+        console.group("%c✓ UIX Configuration Spark test", "color: white; background-color: #2e7d32; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+        console.log("Patches:", patches);
+        if (entitySets) console.log("Entities Spark results:", entitySets);
+        console.log("Result:", result);
+        console.groupEnd();
+        return result;
+      } catch (error) {
+        console.group("%c✗ UIX Configuration Spark test", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+        console.error(error);
+        console.groupEnd();
+        throw error;
+      }
+    },
+  };
+  const reportPath = saveInspection("strategy", report);
+  console.group("%c💡 UIX Strategy Inspector 💡", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+  console.log("Strategy element:", element);
+  console.log("Resolved config:", generated);
+  console.log(`Saved as ${reportPath}. Find likely anchors with ${reportPath}.paths('summary'), then test a complete patches list with ${reportPath}.test([...]).`);
+  console.groupEnd();
+  return report;
+};
+
+function findShadowElement(tagName: string): any | undefined {
+  const roots: ParentNode[] = [document];
+  const visited = new Set<ParentNode>();
+  while (roots.length) {
+    const root = roots.shift()!;
+    if (visited.has(root)) continue;
+    visited.add(root);
+    const found = root.querySelector(tagName);
+    if (found) return found;
+    root.querySelectorAll("*").forEach((element) => {
+      if (element.shadowRoot) roots.push(element.shadowRoot);
+    });
+  }
+  return undefined;
+}
+
+/** Inspect the authored source and generated output of the currently open dashboard or Home panel. */
+(window as any).uix_dashboard_inspect = function uix_dashboard_inspect() {
+  const homePanel = findShadowElement("ha-panel-home");
+  const homeStrategyConfig = homePanel?._strategyConfig;
+  const homeLovelace = homePanel?._lovelace;
+  if (homeStrategyConfig?.strategy && homeLovelace?.config) {
+    const report = {
+      panel: "home",
+      rawConfig: homeStrategyConfig,
+      generatedConfig: homeLovelace.config,
+      strategy: homeStrategyConfig.strategy,
+    };
+    const reportPath = saveInspection("dashboard", report);
+    console.group("%c💡 UIX Dashboard Inspector 💡", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+    console.log("Native Home strategy options:", report.strategy);
+    console.log("Generated Home config:", report.generatedConfig);
+    console.log(`Saved as ${reportPath}. Use ${reportPath}.strategy as the source when recreating Home as a Forge Dashboard strategy. Use uix_strategy_inspect('dashboard', ${reportPath}.strategy) to rehearse its generated output.`);
+    console.groupEnd();
+    return report;
+  }
+  const lovelaceRoot = findShadowElement("hui-root");
+  const lovelace = lovelaceRoot?.lovelace;
+  if (!lovelace?.rawConfig || !lovelace?.config) {
+    console.error("UIX dashboard inspector: open a loaded Home panel or Lovelace dashboard before inspecting it.");
+    return undefined;
+  }
+  const report = {
+    panel: "lovelace",
+    rawConfig: lovelace.rawConfig,
+    generatedConfig: lovelace.config,
+    strategy: lovelace.rawConfig.strategy,
+  };
+  const reportPath = saveInspection("dashboard", report);
+  console.group("%c💡 UIX Dashboard Inspector 💡", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+  console.log("Authored dashboard config:", report.rawConfig);
+  console.log("Dashboard strategy options:", report.strategy);
+  console.log("Generated dashboard config:", report.generatedConfig);
+  console.log(`Saved as ${reportPath}. Use ${reportPath}.strategy as the source when recreating this Dashboard strategy in Forge. Use uix_strategy_inspect('dashboard', ${reportPath}.strategy) to rehearse its generated output.`);
+  console.groupEnd();
+  return report;
+};
+
+/** Inspect the resolved output of an Entities Spark without changing dashboard configuration. */
+(window as any).uix_entities_inspect = async function uix_entities_inspect(forge: any, sparkSelector?: string | number) {
+  if (!forge || typeof forge !== "object") {
+    throw new Error("UIX entities inspector: provide a <uix-forge> element or complete Forge configuration mapping.");
+  }
+  const sparkConfigs = forge.localName === "uix-forge"
+    ? forge.forgeConfig?.sparks
+    : await resolveStrategyEntitiesSparks(forge);
+  const sparks = (sparkConfigs ?? []).filter((candidate: any) => candidate?.type === "entities");
+  if (sparks.length === 0) throw new Error("UIX entities inspector: this Forge has no type: entities Spark.");
+  let spark: any;
+  if (sparkSelector === undefined) {
+    if (sparks.length !== 1) throw new Error("UIX entities inspector: provide a Spark id or zero-based index when multiple Entities Sparks exist.");
+    spark = sparks[0];
+  } else if (typeof sparkSelector === "number") {
+    spark = sparks[sparkSelector];
+  } else {
+    spark = sparks.find((candidate: any) => candidate.id === sparkSelector || candidate.spark_id === sparkSelector);
+  }
+  if (!spark) throw new Error("UIX entities inspector: selected Entities Spark was not found.");
+  const currentHass = await hass();
+  await loadSelectionRegistries(currentHass, selectionRegistryKinds([spark]));
+  const selectionHass = entitySelectionHass(currentHass);
+  if (spark.path === undefined) entitiesSparkSets([spark], selectionHass);
+  const result = entitiesSparkEntries(spark, selectionHass);
+  const report = { spark, ...result };
+  const reportPath = saveInspection("entities", report);
+  console.group("%c💡 UIX Entities Inspector 💡", "color: white; background-color: #CE3226; padding: 2px 5px; font-weight: bold; border-radius: 5px;");
+  console.log("Spark:", spark);
+  console.log("Generated entries:", result.entries);
+  console.table(result.counts.map((count, index) => ({ filter: index, matches: count })));
+  console.log(`Saved as ${reportPath}.`);
+  console.groupEnd();
+  return report;
+};
 
 interface UixParentInfo {
   element: Element;
