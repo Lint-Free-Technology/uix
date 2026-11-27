@@ -603,10 +603,10 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
                 "const fs = require('fs'); const esbuild = require('esbuild'); const timers = [];"
                 "global.window = { setTimeout: (callback) => { timers.push(callback); return timers.length; }, clearTimeout: () => {} };"
                 "const source = fs.readFileSync(process.argv[1], 'utf8'); const { code } = esbuild.transformSync(source, { loader: 'ts', format: 'cjs', target: 'es2020' }); const moduleObj = { exports: {} };"
-                "const Spark = class { connectedCallback() {} disconnectedCallback() {} };"
+                "let invalidQuery = false; const Spark = class { connectedCallback() {} disconnectedCallback() {} };"
                 "const customRequire = (name) => {"
                 " if (name === '../config-transform') return { applyConfigSparks: (config) => config };"
-                " if (name === '../entities-transform') return { applyEntitiesSparks: (config) => config, hasEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities'), hasQueryOnlyEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities' && spark.path === undefined), entitiesSparkSets: () => ({}), queryOnlyEntitiesSparkSets: () => ({ no_favs: ['light.hidden'] }), entitiesSparkSignature: (_sparks, hass) => hass.signature };"
+                " if (name === '../entities-transform') return { applyEntitiesSparks: (config) => config, hasEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities'), hasQueryOnlyEntitiesSparks: (sparks) => sparks.some((spark) => spark.type === 'entities' && spark.path === undefined), entitiesSparkSets: () => { if (invalidQuery) throw new Error('invalid filter'); return {}; }, queryOnlyEntitiesSparkSets: () => { if (invalidQuery) throw new Error('invalid filter'); return { no_favs: ['light.hidden'] }; }, entitiesSparkSignature: (_sparks, hass) => hass.signature };"
                 " if (name === '../entity-selection-registries') return { entitySelectionHass: (hass) => hass, selectionRegistryKinds: () => [], loadSelectionRegistries: async () => {}, selectionRegistries: () => ({}), watchSelectionRegistries: () => () => {} };"
                 " if (name === '../../helpers/selecttree') return { selectTree: () => [] };"
                 " if (name === './uix-spark-base') return { UixForgeSparkBase: Spark };"
@@ -617,7 +617,7 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
                 "controller.hassChanged({ signature: 'initial' }, { signature: 'path' }); timers.at(-1)(); const pathCalls = calls.slice(); calls.length = 0; controller.setConfig([{ type: 'entities', id: 'no_favs' }]);"
                 "controller.hassChanged({ signature: 'before' }, { signature: 'after' }); timers.at(-1)(); const once = calls.slice();"
                 "controller.hassChanged({ signature: 'after' }, { signature: 'later' }); forge.isConnected = false; controller.disconnectedCallback(); forge.isConnected = true; controller.connectedCallback(); timers.at(-1)();"
-                "const variables = controller.templateVariables(); process.stdout.write(JSON.stringify({ pathCalls, once, calls, entities: variables.entities, sourceHasEntities: Object.hasOwn(controller.templateVariables(false), 'entities') }));"
+                "const variables = controller.templateVariables(); invalidQuery = true; const invalidVariables = controller.templateVariables(); let transformError; try { controller.transformConfig({}); } catch (error) { transformError = error.message; } process.stdout.write(JSON.stringify({ pathCalls, once, calls, entities: variables.entities, sourceHasEntities: Object.hasOwn(controller.templateVariables(false), 'entities'), invalidEntities: invalidVariables.entities, transformError }));"
             ),
             str(REPO_ROOT / "src" / "forge" / "sparks" / "uix-spark-controller.ts"),
         ],
@@ -631,6 +631,8 @@ def test_entities_spark_refreshes_once_and_resumes_after_reconnect() -> None:
         "calls": ["templates", "templates"],
         "entities": {"no_favs": ["light.hidden"]},
         "sourceHasEntities": False,
+        "invalidEntities": {},
+        "transformError": "invalid filter",
     }
 
 
@@ -1830,7 +1832,7 @@ def test_invalid_query_source_does_not_block_replacement_or_visible_transform_er
                 " if (name === '../helpers/hass') return { getLovelaceRoot: () => {}, hass: async () => ({}), translate: (_h, value) => value }; if (name === '../helpers/templates') return { bind_template: () => {}, hasTemplate: () => false, unbind_template: () => {} }; if (name === '../helpers/apply_uix') return { apply_uix: () => {}, buildMacros: () => '', buildBillets: () => '' }; if (name === './molds/uix-mold') return { UIX_FORGE_MOLD_CLASSES: {} }; if (name === './sparks/uix-spark-controller') return { UixForgeSparkController: class {} }; throw new Error(name); };"
                 "new Function('require', 'module', 'exports', code)(customRequire, moduleObj, moduleObj.exports);"
                 "const makeForge = (next) => { let phase = 'invalid-old'; const events = []; const forge = Object.create(moduleObj.exports.UixForge.prototype); const mold = { type: 'card', refresh: () => events.push('mold'), templateVariables: () => ({}), isBadge: () => false, isRow: () => false, isPictureElement: () => false, isSection: () => false }; const controller = { queryOnlyEntityResultsSignature: () => { if (phase.startsWith('invalid')) throw new Error('empty query id'); return phase; }, setConfig: () => { phase = next; return true; }, transformConfig: (config) => { if (phase.startsWith('invalid')) throw new Error('empty query id'); return config; }, templateVariables: () => ({}) }; Object.assign(forge, { _mold: mold, _sparkController: controller, _forgeConfig: { config: { sparks: [{ type: 'entities' }] } }, _forgedElementConfig: { config: { type: 'tile' } }, _layeredMode: false, templatesReady: true, config: {}, _macros: undefined, _billets: undefined }); forge.hasQueryOnlyEntityTemplateReference = () => true; forge.refreshForgeTemplates = () => events.push('templates'); forge.refreshForgedElement = () => events.push(forge.forgedElementConfig); return { forge, events }; };"
-                "console.error = () => {}; const invalid = makeForge('invalid-new'); invalid.forge.refreshForge(['sparks']); const corrected = makeForge('valid'); corrected.forge.refreshForge(['sparks']); process.stdout.write(JSON.stringify({ invalid: invalid.events, corrected: corrected.events }));"
+                "console.error = () => {}; const consumer = Object.create(moduleObj.exports.UixForge.prototype); consumer.config = {}; consumer._resolveFoundry = () => ({ element: { name: \"{{ uixForge['entities']['selected'] | count }}\" } }); const bracketConsumer = consumer.hasQueryOnlyEntityTemplateReference(); consumer._resolveFoundry = () => ({ element: { name: '{{ states(\"light.kitchen\") }}' } }); const unrelated = consumer.hasQueryOnlyEntityTemplateReference(); const invalid = makeForge('invalid-new'); invalid.forge.refreshForge(['sparks']); const corrected = makeForge('valid'); corrected.forge.refreshForge(['sparks']); process.stdout.write(JSON.stringify({ invalid: invalid.events, corrected: corrected.events, bracketConsumer, unrelated }));"
             ),
             str(FORGE_TS),
         ],
@@ -1841,6 +1843,8 @@ def test_invalid_query_source_does_not_block_replacement_or_visible_transform_er
     result = json.loads(output)
     assert result["invalid"] == [{"type": "markdown", "content": "### UIX Forge\n\nUnable to apply a configuration transform:\n\n> empty query id"}]
     assert result["corrected"] == ["templates"]
+    assert result["bracketConsumer"] is True
+    assert result["unrelated"] is False
 
 
 def test_transform_spark_errors_use_visible_mold_appropriate_targets() -> None:

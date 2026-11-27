@@ -238,7 +238,13 @@ export class UixForgeSparkController {
     // Spark variable. It is available to element templates, not the Spark
     // source that produces it. Only named query-only results are exposed.
     if (includeQueryOnlyEntities) {
-      variables.entities = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.selectionHass());
+      try {
+        variables.entities = queryOnlyEntitiesSparkSets(this._entitiesSparks, this.selectionHass());
+      } catch (_error) {
+        // Allow template binding to finish. The configuration transform will
+        // report the invalid query through Forge's visible error target.
+        variables.entities = {};
+      }
     }
     return variables;
   }

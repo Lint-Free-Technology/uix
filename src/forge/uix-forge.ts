@@ -487,7 +487,9 @@ export class UixForge extends LitElement {
   /** Whether an element template observes a query-only Entities Spark result. */
   public hasQueryOnlyEntityTemplateReference(): boolean {
     const containsEntityResult = (value: any): boolean => {
-      if (typeof value === "string") return value.includes("uixForge.entities");
+      // Any use of uixForge may reach entities through bracket access, an
+      // alias, or a macro. Refresh conservatively when it is referenced.
+      if (typeof value === "string") return /\buixForge\b/.test(value);
       if (Array.isArray(value)) return value.some(containsEntityResult);
       return value !== null && typeof value === "object" && Object.values(value).some(containsEntityResult);
     };
