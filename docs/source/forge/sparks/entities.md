@@ -5,6 +5,9 @@ icon: material/format-list-bulleted
 ---
 # Entities Spark
 
+!!! info
+    Entities Spark available in 9.2.0-beta.3
+
 Use the Entities Spark to fill an Entities card with filtered entities, build a Grid of Tiles for a room, or collect entity IDs to use in another Spark. It uses the entity matching rules from the [Lint Free Technology fork of auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities).
 
 ## Create cards without an auto-entities wrapper

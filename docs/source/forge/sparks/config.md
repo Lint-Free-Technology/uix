@@ -5,6 +5,9 @@ icon: material/file-tree
 ---
 # Configuration Spark
 
+!!! info
+    Configuration spark available in 9.2.0-beta.3
+
 Use the Configuration Spark to add a card to a generated dashboard, remove an unwanted section, or change an option before Home Assistant renders it. Each edit is a **patch**. Add a `type: config` Spark under `forge.sparks` and list its patches in the order you want them applied.
 
 In this dashboard example, Home Assistant's `original-states` View strategy builds the usual cards. The `prepend` patch puts a full-width Markdown card at the top of that View's `cards` list.

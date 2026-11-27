@@ -5,6 +5,9 @@ icon: material/home-analytics
 ---
 # Home Summary Spark
 
+!!! info
+    Home Summary spark available in 9.2.0-beta.3
+
 Choose which entities count toward a native Home Overview summary such as Maintenance, Lights, or Security. For example, you can keep an old tablet's battery sensor out of the Maintenance count.
 
 ## Filter one Home Summary card
