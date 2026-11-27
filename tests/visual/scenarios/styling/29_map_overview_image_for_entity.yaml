@@ -18,7 +18,8 @@ interactions:
     settle_ms: 500
   - type: snapshot
     name: "67a_map_overview_image_for_entity_override_1"
-    root: hui-map-overview
+    root:
+      - div.avatar:has(img)
     threshold: 0.02
   - type: set_theme_file
     theme: uix-image-for-entity-theme
@@ -38,7 +39,8 @@ interactions:
     ms: 1200
   - type: snapshot
     name: "67b_map_overview_image_for_entity_override_2"
-    root: hui-map-overview
+    root:
+      - div.avatar:has(img)
     threshold: 0.02
   - type: set_theme_file
     theme: uix-image-for-entity-theme
@@ -56,7 +58,8 @@ interactions:
 assertions:
   - type: snapshot
     name: "67c_map_overview_image_for_entity_final"
-    root: hui-map-overview
+    root:
+      - div.avatar:has(img)
     threshold: 0.02
 
 teardown:
