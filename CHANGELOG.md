@@ -1,3 +1,11 @@
+## [9.2.0-beta.3](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.2...v9.2.0-beta.3) (2026-11-27)
+
+
+### ⭐ New Features
+
+* **action:** Add new toast action options `supportingText`, `action.icon` and `action.keepOpen` ([#743](https://github.com/Lint-Free-Technology/uix/issues/743)) ([170f9e4](https://github.com/Lint-Free-Technology/uix/commit/170f9e45411538bcdd2fa191d3d88d78ac397333))
+* **forge:** Strategy mold, Configuration Spark, Entities Spark ([675a633](https://github.com/Lint-Free-Technology/uix/commit/675a6339204d3791f29b3a9046cc9cd38d70dba7))
+
 ## [9.2.0-beta.2](https://github.com/Lint-Free-Technology/uix/compare/v9.2.0-beta.1...v9.2.0-beta.2) (2026-11-25)
 
 
