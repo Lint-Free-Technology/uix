@@ -497,7 +497,13 @@ export class UixForge extends LitElement {
       const resolved = this._resolveFoundry({ ...this.config });
       // An unresolved Foundry may still contain a consumer. Prefer a normal
       // template refresh over leaving that consumer stale when it resolves.
-      return resolved === null || containsEntityResult(resolved.element) || containsEntityResult(resolved.forge?.uix);
+      // Imported macros may consume the query without their source appearing
+      // in the configuration, so their presence requires a conservative rebind.
+      return resolved === null
+        || Object.keys(resolved.forge?.macros ?? {}).length > 0
+        || Object.keys(resolved.forge?.billets ?? {}).length > 0
+        || containsEntityResult(resolved.element)
+        || containsEntityResult(resolved.forge?.uix);
     } catch (_error) {
       return true;
     }
