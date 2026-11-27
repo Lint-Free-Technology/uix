@@ -12,7 +12,7 @@ uix_broker:
         placement: left
         style:
           --uix-badge-font-size: var(--ha-font-size-m)
-          --uix-badge-offset-x: calc(var(--app-drawer-width, 248px) - 22px)
+          --uix-badge-offset-x: calc(var(--ha-sidebar-expanded-width, 256px) - 89px)
           --uix-badge-box-shadow: var(--ha-box-shadow-m)
           --uix-badge-color: purple
           --uix-badge-color-hover: rgb(255 0 0)
@@ -25,5 +25,5 @@ uix_broker:
         placement: left
         style:
           --uix-badge-font-size: var(--ha-font-size-m)
-          --uix-badge-offset-x: calc(var(--app-drawer-width, 248px) - 22px)
+          --uix-badge-offset-x: calc(var(--ha-sidebar-expanded-width, 256px) - 89px)
           --uix-badge-box-shadow: var(--ha-box-shadow-m)

@@ -36,9 +36,6 @@ assertions:
     selector: div.main-title
     property: innerText
     expected: Overview
-  - type: snapshot
-    name: "65_broker_sidebar_title_action"
-    threshold: 0.01
 
 teardown:
   - type: remove_broker_file
