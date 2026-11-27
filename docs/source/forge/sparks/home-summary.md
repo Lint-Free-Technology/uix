@@ -9,7 +9,7 @@ Choose which entities count toward a native Home Overview summary such as Mainte
 
 ## Filter one Home Summary card
 
-Create the label in Home Assistant and assign it to the entities you want to exclude. Then add this Card Forge to a dashboard. The card still uses Home Assistant's Maintenance display and updates as the remaining entities change.
+Create the label in Home Assistant and assign it to the entities you want to exclude. Then add this Card Forge to a dashboard. The card still uses Home Assistant's Maintenance summary logic and updates as the remaining entities change.
 
 ```yaml
 type: custom:uix-forge
@@ -65,7 +65,7 @@ forge:
         - $in_entities: excluded_from_maintenance
 ```
 
-Save the query in a Foundry when multiple Forges need the same filter. Each Forge runs the shared query for itself. See [how to share a filter through a Foundry](entities.md#reuse-a-foundry-query-in-another-element).
+Save the query in a Foundry when multiple Forges need the same filter. Each Forge runs the shared query for itself. See [how to share a filter through a Foundry](entities.md#reuse-an-entities-foundry-query-in-another-element).
 
 ## Updates
 

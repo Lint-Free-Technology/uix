@@ -35,10 +35,10 @@ views:
 
 ## Paths and operations
 
-For a patch with `path`, use a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to say where the edit goes. Use `/cards` for the whole cards list, `/cards/0` for its first card, or `""` for the whole config. If a key contains a literal `/` or `~`, write it as `~1` or `~0`.
+For a patch with `path`, use a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to say where the edit applies. Use `/cards` for the whole cards list, `/cards/0` for its first card, or `""` for the whole config. If a key contains a literal `/` or `~`, write it as `~1` or `~0`.
 
 ??? info "Why JSON Pointer rather than JSONPath?"
-    A JSON Pointer gives an exact address. For example, `/cards/0` means “the first card.” JSONPath can search for many results, which is handy for extracting data from a REST response. When a generated card or section may move, use Forge's `select` to find it by what it contains, then use a pointer to reach a field inside it.
+    A JSON Pointer gives an exact address. For example, `/cards/0` means “the first card.” JSONPath can search for multiple results. When a generated card or section may move, use Forge's `select` to find it by what it contains, then use a pointer to reach a field inside it.
 
 | Operation | Use it to |
 | --- | --- |
@@ -58,9 +58,9 @@ For a patch with `path`, use a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc
 | Field | Used by | Meaning |
 | --- | --- | --- |
 | `op` | every patch | The operation from the table above. |
-| `path` | every operation | Point to the target by its exact location. |
+| `path` | every operation | Point to the target by its exact [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) location. |
 | `select` | every operation | Find one item by its contents. See the fields below. |
-| `all` | `remove_matching`, `wrap_card` | Visit every list with this exact key, such as `cards` or `entities`. For `wrap_card`, use `all: cards`. |
+| `all` | `remove_matching`, `wrap_card` | Visit every list with this exact key, such as `cards` or `entities`. For `wrap_card`, use `all: cards` to find matching cards in every cards list. |
 | `value` | `merge`, `replace`, `wrap_strategy`, `wrap_card`, `append`, `prepend`, `insert_before`, `insert_after` | The data to write. |
 | `where` | `remove_matching`, `wrap_card` with `all` | Match each item in the target list. |
 | `required` | `wrap_card` with `all` | Set to `false` to allow zero matching cards. |
@@ -73,9 +73,9 @@ Use `select` when you know what an item looks like but its position can change. 
 
 | Field under `select` | What to write |
 | --- | --- |
-| `in` | A JSON Pointer to the list to search, such as `/sections`. |
+| `in` | A [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to the list to search, such as `/sections`. |
 | `match` | The fields that identify exactly one item in that list. |
-| `path` | An optional JSON Pointer within that item, such as `/cards`. Omit it to target the item itself or to insert beside it. |
+| `path` | An optional [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) within that item, such as `/cards`. Omit it to target the item itself or to insert beside it. |
 | `required` | Defaults to `true`. Set to `false` to skip the patch when no item matches. |
 
 `select.match` identifies one target. `where` checks each item in a target list. Both accept the same matching rules, including the Forge operators prefixed with `$`.
@@ -86,12 +86,23 @@ Use `select` when you know what an item looks like but its position can change. 
 | `$contains: [...]` | The list contains a distinct item for each rule. For example, find a section by one of its cards. |
 | `$in_entities: no_favs` | The value is an entity ID selected by the Entities Spark named `no_favs` in the same Forge. |
 
-This patch removes cards whose own `entity` matches the query, regardless of card type. Add `type: tile` under `where` to limit it to Tiles.
+This patch removes cards whose own `entity` matches the query, regardless of card type.
 
 ```yaml
 - op: remove_matching
   all: cards
   where:
+    entity:
+      $in_entities: no_favs
+```
+
+Add `type: tile` under `where` to limit it to Tiles.
+
+```yaml
+- op: remove_matching
+  all: cards
+  where:
+    type: tile
     entity:
       $in_entities: no_favs
 ```
@@ -102,7 +113,7 @@ A template in `value` can return a JSON object or list with `| tojson`. Forge us
 
 ## Strategies
 
-Put the Spark in the [Forge strategy](../forge.md#strategies) that generates the part you want to change. A Dashboard strategy can produce a `/views` list. A View strategy can produce `/cards` or `/sections`. The paths you use in a patch come from that strategy's output. Use the [strategy inspector](#inspect-generated-strategies) to see which lists and fields it actually produces.
+Use the Spark in the [Forge strategy](../forge.md#strategies) that generates the part you want to change. A Dashboard strategy can produce a `/views` list. A View strategy can produce `/cards` or `/sections`. The paths you use in a patch come from that strategy's output. Use the [strategy inspector](#inspect-generated-strategies) to see which lists and fields it actually produces.
 
 ### Wrap a generated child strategy
 
@@ -110,9 +121,9 @@ Home Assistant's `home` Dashboard strategy creates a list of Views, including an
 
 Point `path` or `select.path` at the nested `strategy` key. In `value`, provide the settings you want to add, including `forge.mold: strategy` or a Foundry that supplies it. Forge adds `type: custom:uix-forge` and saves the original strategy settings as `element_base`. You can edit an existing Forge strategy directly.
 
-### Add a People map after Home Dashboard Summaries
+### Wrap the Overview strategy to add a People map
 
-Add a People section with a map beneath Summaries in the main Overview layout while keeping Home's area subviews. Replace the two example trackers with your own people or device trackers. Use the full YAML when setting up the dashboard and check [which part to paste when editing it later](#create-or-edit-the-dashboard).
+This example wraps the Overview's strategy to add a People section with a map beneath Summaries in the main layout, while keeping Home's area subviews. Replace the two example trackers with your own people or device trackers. Use the full YAML when setting up the dashboard and check [which part to paste when editing it later](#create-or-edit-the-dashboard).
 
 ```yaml
 title: My Home
@@ -173,11 +184,17 @@ The outer patch finds the Overview View in `/views` and wraps its `/strategy`, k
 
 ### Wrap generated cards
 
-`wrap_card` turns a generated card into a Card Forge. Put your additions in `value` and let Forge save the original card settings as `element_base`. Use `path` or `select` to wrap one card, or `all: cards` with `where` to wrap every matching card. With `all: cards`, add `required: false` beside `all` if finding no cards is acceptable.
+`wrap_card` turns a card into a Card Forge, preserving its original settings as `element_base`. Put your additions in `value`.
+
+- Use `path` or `select` to wrap one card.
+- Use `all: cards` with `where` to wrap every matching card. Add `required: false` if finding no cards is acceptable.
 
 #### Filter Maintenance on Home and on the page it opens
 
-Use the same exclusion list for the Maintenance summary and the page it opens. This example wraps the summary in both the main layout and the sidebar, then sends both cards to a filtered Maintenance subview within your dashboard.
+!!! info
+    Home Assistant developers are working on a standard way to filter entities in the Home dashboard strategy. When available, it may allow you to exclude entities directly in the Home strategy.
+
+Use a shared exclusion list for the Home strategy Maintenance summary card and the page it opens. This example wraps the Maintenance summary card in both the main layout and the sidebar, then links both cards to a filtered Maintenance subview within the generated Home dashboard.
 
 1. In Home Assistant, create the label `excluded_from_maintenance` and assign it to the entities you want to leave out. Keep the Maintenance summary enabled in Home so Forge has a card to wrap.
 2. In UIX, create a [Foundry](../foundries.md) called `maintenance-exclusions` with the YAML below. It holds the filter for both the summary cards and the Maintenance subview.
@@ -268,7 +285,10 @@ The subview runs Home Assistant's Maintenance strategy and uses the same Foundry
 
 ![Filtered Maintenance subview generated by the Home dashboard](../../assets/page-assets/forge/config-spark-maintenance-exclusion.png)
 
-The built-in Maintenance page still uses Home Assistant's original list. You can use this same pattern for Lights or Security by wrapping the matching summary and creating a subview for its View strategy.
+!!! warning
+    The built-in Maintenance panel still uses Home Assistant's original list. Both it and the generated subview use the `maintenance` View strategy, but only the forged subview filters entities.
+
+You can use this same pattern for Lights or Security by wrapping the matching summary and creating a subview for its View strategy.
 
 ### Remove labelled Favorites suggestions
 
@@ -333,7 +353,10 @@ The Favorites patch targets the matched section's `/cards` list and removes any 
 
 ### Create or edit the dashboard
 
-When the raw editor shows the whole dashboard, paste the full example starting with `title`, `views`, and `strategy`. After you save a strategy dashboard, Home Assistant may open an editor for just the strategy. If it starts with `type: custom:uix-forge`, copy the contents under `strategy:` and remove two spaces of indentation so `type` starts at the left margin. Pasting the full dashboard there nests a second `strategy:` and causes “No strategy type found.”
+When the raw editor shows the whole dashboard, paste the full example starting with `title`, `views`, and `strategy`.
+
+!!! warning "Check which editor is open"
+    After you save a strategy dashboard, Home Assistant may open an editor just for the strategy config. If the editor starts with `type: custom:uix-forge`, copy only the contents under `strategy:` and remove two spaces of indentation so `type` starts at the left margin. Pasting the full dashboard there nests a second `strategy:` and causes “No strategy type found.”
 
 ## Inspect generated strategies
 

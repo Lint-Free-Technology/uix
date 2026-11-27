@@ -1009,7 +1009,7 @@ Strategy templates receive UIX's user, browser, and hash context, plus the last 
     A generated card still updates on its own. For example, the Energy summary card can receive new energy data while the surrounding Overview layout stays in place. Put values that need live template updates in an ordinary Card Forge.
 
 ??? info "Create an augmented Home Overview dashboard"
-    Create a separate dashboard using the `home` Dashboard strategy so Home Assistant still builds the area and other subviews. Then wrap its generated Overview View to make your changes. The [People map example](sparks/config.md#add-a-people-map-after-home-dashboard-summaries) has the full YAML and [editing instructions](sparks/config.md#create-or-edit-the-dashboard).
+    Create a separate dashboard using the `home` Dashboard strategy so Home Assistant still builds the area and other subviews. Then wrap its generated Overview View to make your changes. The [People map example](sparks/config.md#wrap-the-overview-strategy-to-add-a-people-map) has the full YAML and [editing instructions](sparks/config.md#create-or-edit-the-dashboard).
 
     To open your custom dashboard by default, choose **Settings > Dashboards** and select **Set as default** from its menu. Individual users can choose their own default under **User profile > Appearance**. See Home Assistant's [dashboard documentation](https://www.home-assistant.io/dashboards/dashboards/).
 
